@@ -7,6 +7,9 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 
+/** Query params that the renderer sets on every storefront request. */
+export const STOREFRONT_RENDERER_QUERY_PARAMS = {_fd: '0', pb: '0'}
+
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
   const headers = await buildHeaders(session, context)
@@ -119,10 +122,7 @@ export function buildCookies(session: DevServerSession, ctx: Pick<DevServerRende
 function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBlockId, query}: DevServerRenderContext) {
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}${path}`
-  const params = new URLSearchParams({
-    _fd: '0',
-    pb: '0',
-  })
+  const params = new URLSearchParams(STOREFRONT_RENDERER_QUERY_PARAMS)
 
   for (const [key, value] of query) {
     params.append(key, value)

@@ -37,16 +37,19 @@ export interface GenerateExtensionTemplateOptions {
   onGetTemplateRepository?: (url: string, destination: string) => Promise<void>
 }
 
-export type ExtensionFlavorValue =
-  | 'vanilla-js'
-  | 'preact'
-  | 'react'
-  | 'typescript'
-  | 'typescript-react'
-  | 'rust'
-  | 'wasm'
-  | 'liquid'
-  | 'config-only'
+export const extensionFlavorValues = [
+  'vanilla-js',
+  'preact',
+  'react',
+  'typescript',
+  'typescript-react',
+  'rust',
+  'wasm',
+  'liquid',
+  'config-only',
+] as const
+
+export type ExtensionFlavorValue = (typeof extensionFlavorValues)[number]
 
 export type TemplateLanguage = 'javascript' | 'rust' | 'wasm' | undefined
 function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): TemplateLanguage {

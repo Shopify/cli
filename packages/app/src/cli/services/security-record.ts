@@ -1,24 +1,22 @@
 import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
-import {countLabel} from './app-security-format.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {getEngineVersion, recordAgentFindings, type AgentFindingsDocument} from './app-security-engine/index.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import type {AppSecurityCommands} from './app-security-commands.js'
 
 const MAX_FINDINGS_DOCUMENT_BYTES = 5_000_000
 
 /** A recorded findings document: where it was written and what it holds. */
-interface SecurityRecordResult {
+export interface SecurityRecordResult {
   path: string
   checks: number
   findings: number
 }
 
-interface SecurityRecordOptions {
+export interface SecurityRecordOptions {
   selection: AppSecuritySelection
   /** The `--path` value that was typed. */
   path: string
@@ -44,12 +42,15 @@ function recordCommand(commands: AppSecurityCommands): string {
 
 /** Rejects a document that fails validation, listing every error so an agent can fix them all at once. */
 function abortRejectedDocument(errors: string[], commands: AppSecurityCommands): never {
-  throw new AbortError(
+  const error = new AbortError(
     'The findings document was rejected. Nothing was recorded.',
     null,
     [['Fix every error, then run', {command: recordCommand(commands)}, 'again.']],
     [{title: 'Errors', body: {list: {items: errors}}}],
   )
+  error.code = 'findings-document-rejected'
+  error.details = {errors}
+  throw error
 }
 
 async function readStdinDocument(
@@ -72,9 +73,11 @@ async function readInputDocument(
 ): Promise<unknown> {
   const input = await readStdinDocument(commands, dependencies)
   if (input === undefined) {
-    throw new AbortError('No findings document was piped on stdin.', null, [
+    const error = new AbortError('No findings document was piped on stdin.', null, [
       ['Pipe the findings document on stdin:', {command: recordCommand(commands)}],
     ])
+    error.code = 'findings-document-missing'
+    throw error
   }
 
   const size = Buffer.byteLength(input, 'utf8')
@@ -124,21 +127,4 @@ export default async function securityRecord(
   const findings = recorded.document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
   return {path, checks: recorded.document.checks.length, findings}
-}
-
-/** Presents a recorded document in the terminal. */
-export function renderSecurityRecordResult(
-  result: SecurityRecordResult,
-  selection: AppSecuritySelection,
-  path: string,
-): void {
-  const commands = resolveAppSecurityCommands(selection, path)
-  renderSuccess({
-    headline: 'Agent findings recorded.',
-    body: [
-      `Recorded ${countLabel(result.checks, 'check')} and ${countLabel(result.findings, 'finding')} in`,
-      {filePath: result.path},
-    ],
-    nextSteps: [['Run', {command: formatAppSecurityCommand(commands.review)}, 'to see the results.']],
-  })
 }

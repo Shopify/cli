@@ -270,7 +270,8 @@ describe('listBulkOperations', () => {
       .map((line) => line.trimEnd())
       .join('\n')
 
-    // terminal width in test environment is quite narrow, so values in the snapshot get wrapped
+    // The test environment has no terminal width, and the table takes the width it needs there,
+    // so every row stays on one line.
     expect(outputLinesWithoutTrailingWhitespace).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -282,15 +283,10 @@ describe('listBulkOperations', () => {
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
 
-      I STATUS  COUNT DATE CREATED   DATE FINISHED  RESULTS
-
-      ─ ─────── ───── ────────────── ────────────── ──────────────────────────────────
-        ─             ────           ────           ────────────
-      1 COMPLET 123.5 2025-11-10     2025-11-10     download (
-        D             12:37:52       16:37:12       https://example.com/results.jsonl
-                                                    )
-      2 RUNNING 100   2025-11-11
-                      15:37:52"
+      ID  STATUS     COUNT   DATE CREATED         DATE FINISHED        RESULTS
+      ──  ─────────  ──────  ───────────────────  ───────────────────  ──────────────────────────────────────────────
+      1   COMPLETED  123.5K  2025-11-10 12:37:52  2025-11-10 16:37:12  download ( https://example.com/results.jsonl )
+      2   RUNNING    100     2025-11-11 15:37:52"
     `)
   })
 

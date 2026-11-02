@@ -1,5 +1,5 @@
 import {deleteDevStoreJsonOutputSchema} from './types.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {businessPlatformTokenRefreshHandler, organizationStoresRequestDoc} from '../business-platform.js'
 import {fetchOptionalOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {DeleteAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
 import {
@@ -8,7 +8,6 @@ import {
   type OrganizationAccessibleShopQueryVariables,
 } from '../../../api/graphql/business-platform-organizations/generated/organization_accessible_shop.js'
 import {type Organization} from '@shopify/organizations'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {type UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -28,7 +27,7 @@ interface DeleteDevStoreOptions {
 
 interface StoreDeletionConfirmationOptions {
   shopifyShopId: string
-  organizationId: string
+  organization: Organization
   token: string
   unauthorizedHandler: UnauthorizedHandler
 }
@@ -37,12 +36,11 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
   const {organization: org, store} = options
   const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
-  let shopifyShopId = await fetchShopifyShopId({store, organizationId: org.id, token})
+  let shopifyShopId = await fetchShopifyShopId({store, organization: org, token})
 
-  const mutationResult = await businessPlatformOrganizationsRequestDoc({
+  const mutationResult = await organizationStoresRequestDoc(org, {
     query: DeleteAppDevelopmentStore,
     token,
-    organizationId: org.id,
     variables: {storeFqdn: store},
     unauthorizedHandler,
   })
@@ -61,12 +59,12 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
     throw new AbortError('Store deletion failed.')
   }
 
-  shopifyShopId ??= await fetchShopifyShopId({store, organizationId: org.id, token})
+  shopifyShopId ??= await fetchShopifyShopId({store, organization: org, token})
 
   const deletionConfirmed = shopifyShopId
     ? await waitForStoreDeletionConfirmation({
         shopifyShopId,
-        organizationId: org.id,
+        organization: org,
         token,
         unauthorizedHandler,
       })
@@ -92,10 +90,16 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
 
 async function fetchShopifyShopId(options: {
   store: string
-  organizationId: string
+  organization: Organization
   token: string
 }): Promise<string | undefined> {
-  const shop = await fetchOptionalOrganizationShop(options)
+  const {store, organization, token} = options
+  const shop = await fetchOptionalOrganizationShop({
+    store,
+    organizationId: organization.id,
+    organizationName: organization.businessName,
+    token,
+  })
   return shop?.shopifyShopId
 }
 
@@ -123,13 +127,12 @@ async function waitForStoreDeletionConfirmation(options: StoreDeletionConfirmati
         }
 
         // eslint-disable-next-line no-await-in-loop
-        const pollResult = await businessPlatformOrganizationsRequestDoc<
+        const pollResult = await organizationStoresRequestDoc<
           OrganizationAccessibleShopQuery,
           OrganizationAccessibleShopQueryVariables
-        >({
+        >(options.organization, {
           query: OrganizationAccessibleShop,
           token: options.token,
-          organizationId: options.organizationId,
           variables: {id: organizationsShopifyShopId},
           unauthorizedHandler: options.unauthorizedHandler,
         })

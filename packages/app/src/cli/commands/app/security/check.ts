@@ -1,9 +1,11 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityCheck from '../../../services/security-check.js'
+import {renderSecurityCheckPromptsTip, renderSecurityCheckResult} from '../../../services/security-check/result.js'
+import {appSecurityCheckJsonOutputSchema} from '../../../services/security-check/types.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityCheck extends BaseCommand {
   static summary =
@@ -17,13 +19,19 @@ The check scans the app directory and each \`--include-dir\`. Git ignore rules a
 
 Use \`--exclude\` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with \`../\`, and a name at any depth needs \`**/\`, for example \`--exclude '**/generated'\`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand \`*\`. The coding-agent instructions this check offers repeat the globs. Other \`app security\` commands don't take \`--exclude\` or \`--no-git-ignore\`, so pass the same flags each time you run the check.
 
-Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list.
+Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list. With \`--json\`, the result lists the files with absolute paths.
 
-In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later.
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later. With \`--json\`, the command offers to include the instructions in the result, with or without copying them, and \`--print-instructions\` includes them.
+
+With \`--json\`, the result describes the scan and the files it wrote, and whether \`--blocking\` passed, but not the findings: run \`shopify app security review --json\` for those.
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static get jsonOutputSchema() {
+    return appSecurityCheckJsonOutputSchema
+  }
+
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',
@@ -59,13 +67,14 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
     }),
     'list-files': Flags.boolean({
       description:
-        'Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for.',
+        'Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for. With --json, the result lists them with absolute paths.',
       env: 'SHOPIFY_FLAG_LIST_FILES',
       exclusive: ['print-instructions', 'skip-instructions', 'blocking'],
     }),
     ...appSecurityBlockingFlag,
     'print-instructions': Flags.boolean({
-      description: 'Print coding-agent instructions without prompting for how to deliver them.',
+      description:
+        'Print coding-agent instructions without prompting for how to deliver them. With --json, the instructions are included in the result.',
       default: false,
       exclusive: ['skip-instructions'],
       env: 'SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS',
@@ -84,24 +93,33 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
       exclusive: ['print-instructions'],
       env: 'SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS',
     }),
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityCheck)
 
-    await securityCheck({
+    const check = await securityCheck({
       directory: flags.path,
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      verbose: Boolean(flags.verbose),
       blocking: flags.blocking,
-      printInstructions: Boolean(flags['print-instructions'] || flags.yes),
-      skipInstructions: flags['skip-instructions'],
       includeDirs: flags['include-dir'] ?? [],
       excludePatterns: flags.exclude ?? [],
       noGitIgnore: Boolean(flags['no-git-ignore']),
       listFiles: Boolean(flags['list-files']),
+      onSelectionPrompted: renderSecurityCheckPromptsTip,
     })
+    await renderSecurityCheckResult(
+      check,
+      {
+        directory: flags.path,
+        verbose: Boolean(flags.verbose),
+        printInstructions: Boolean(flags['print-instructions'] || flags.yes),
+        skipInstructions: flags['skip-instructions'],
+      },
+      flags.json ? 'json' : 'text',
+    )
   }
 }

@@ -1,4 +1,3 @@
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {glob, createFileReadStream, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {createInterface} from 'readline'
@@ -22,9 +21,9 @@ const ignoredFilePatterns = [
   '*.toml',
 ]
 
-export async function themeExtensionFiles(themeExtension: ExtensionInstance): Promise<string[]> {
+export async function themeExtensionFiles(extensionDirectory: string): Promise<string[]> {
   const filename = '.shopifyignore'
-  const filepath = joinPath(themeExtension.directory, filename)
+  const filepath = joinPath(extensionDirectory, filename)
   const ignore = ignoredFilePatterns.map((pattern) => joinPath('*', pattern))
 
   if (fileExistsSync(filepath)) {
@@ -34,7 +33,7 @@ export async function themeExtensionFiles(themeExtension: ExtensionInstance): Pr
 
   return glob('*/*', {
     absolute: true,
-    cwd: themeExtension.directory,
+    cwd: extensionDirectory,
     ignore,
   })
 }

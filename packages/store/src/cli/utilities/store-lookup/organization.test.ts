@@ -1,8 +1,9 @@
 import {findStoreOwningOrganization, resolveOrganizationForStore} from './organization.js'
 import {fetchDestinationsContext} from './destinations.js'
-import {selectOrg} from '@shopify/organizations'
+import {fetchOrganizationsWithAccessInfo, selectOrg, selectOrganizationPrompt} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
@@ -10,8 +11,11 @@ vi.mock('./destinations.js')
 vi.mock('@shopify/cli-kit/node/system')
 
 vi.mock('@shopify/organizations', () => ({
+  fetchOrganizationsWithAccessInfo: vi.fn(),
   selectOrg: vi.fn(),
+  selectOrganizationPrompt: vi.fn(),
 }))
+vi.mock('@shopify/cli-kit/node/session')
 
 const STORE = 'shop.myshopify.com'
 
@@ -39,11 +43,19 @@ describe('findStoreOwningOrganization', () => {
 })
 
 describe('resolveOrganizationForStore', () => {
-  const selectedOrg = {id: '12345', businessName: 'Selected Org'}
+  const details = {status: 'ACTIVE', shopCount: 1, url: 'https://admin.shopify.com/org'} as const
+  const selectedOrg = {id: '12345', businessName: 'Selected Org', ...details}
   const inferredOrg = {id: '67890', businessName: 'Inferred Org'}
+  const otherOrg = {id: '24680', businessName: 'Other Org', ...details}
 
   beforeEach(() => {
     vi.mocked(selectOrg).mockResolvedValue(selectedOrg)
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('bp-token')
+    vi.mocked(fetchOrganizationsWithAccessInfo).mockResolvedValue({
+      organizations: [selectedOrg, otherOrg],
+      currentUserResolved: true,
+    })
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(selectedOrg)
     vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: {id: '67890', name: 'Inferred Org'}})
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     mockAndCaptureOutput().clear()
@@ -70,8 +82,36 @@ describe('resolveOrganizationForStore', () => {
 
     const organization = await resolveOrganizationForStore(STORE)
 
-    expect(selectOrg).toHaveBeenCalledWith()
+    expect(selectOrganizationPrompt).toHaveBeenCalledWith([selectedOrg, otherOrg])
     expect(organization).toEqual(selectedOrg)
+  })
+
+  test('uses the only organization the account belongs to when ownership cannot be inferred', async () => {
+    // A service account can only open the stores it created, so the destinations lookup misses the rest of
+    // its organization's stores. It belongs to one organization, which is the one to use.
+    vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: undefined})
+    vi.mocked(fetchOrganizationsWithAccessInfo).mockResolvedValue({
+      organizations: [otherOrg],
+      currentUserResolved: true,
+    })
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+    const output = mockAndCaptureOutput()
+
+    const organization = await resolveOrganizationForStore(STORE)
+
+    expect(organization).toEqual(otherOrg)
+    // Non-interactive runs never prompt to log in; the same token the lookup used lists the organizations.
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true, allowAutomationToken: true})
+    expect(fetchOrganizationsWithAccessInfo).toHaveBeenCalledWith('bp-token')
+    expect(selectOrganizationPrompt).not.toHaveBeenCalled()
+    expect(output.info()).toBe('')
+  })
+
+  test('reports that there are no organizations when the account belongs to none', async () => {
+    vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: undefined})
+    vi.mocked(fetchOrganizationsWithAccessInfo).mockResolvedValue({organizations: [], currentUserResolved: true})
+
+    await expect(resolveOrganizationForStore(STORE)).rejects.toThrow('No organizations found.')
   })
 
   test('explains why the organization prompt is appearing, naming the store the developer provided', async () => {
@@ -115,6 +155,6 @@ describe('resolveOrganizationForStore', () => {
     vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: undefined})
 
     await expect(resolveOrganizationForStore(STORE)).rejects.toThrow(AbortError)
-    expect(selectOrg).not.toHaveBeenCalled()
+    expect(selectOrganizationPrompt).not.toHaveBeenCalled()
   })
 })

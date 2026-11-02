@@ -1885,7 +1885,7 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value>]
-    [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-input]
+    [--install-mkcert --use-localhost] [-j] [--json-schema] [--localhost-port <value>] [--no-color] [--no-input]
     [--no-update] [--notify <value>] [--path <value>] [--reset | -c <value>] [--skip-dependencies-installation] [-s
     <value>] [--store-password <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port
     <value>] [--tunnel-url <value> | ] [--unsafe-validation] [--verbose]
@@ -1894,6 +1894,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development or Shopify Plus sandbox store.
@@ -1991,6 +1995,178 @@ DESCRIPTION
 
   Builds and previews your app on a dev store, and watches for changes. "Read more about testing apps locally"
   (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DevInstanceLogEntry` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "timestamp": {
+        "$ref": "#/definitions/DevInstance/properties/startedAt"
+      },
+      "source": {
+        "type": "string",
+        "description": "What produced the line, for example a process prefix like web or extensions."
+      },
+      "level": {
+        "type": "string",
+        "enum": [
+          "debug",
+          "info",
+          "warning",
+          "error"
+        ]
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "timestamp",
+      "source",
+      "message"
+    ],
+    "additionalProperties": false,
+    "title": "DevInstanceLogEntry",
+    "definitions": {
+      "DevInstance": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "const": 1
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string",
+            "const": "app dev"
+          },
+          "key": {
+            "type": "string"
+          },
+          "pid": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "starting",
+              "running"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "updatedAt": {
+            "$ref": "#/definitions/DevInstance/properties/startedAt"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "logFile": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "configPath": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              },
+              "clientId": {
+                "type": "string"
+              },
+              "storeFqdn": {
+                "type": "string"
+              },
+              "previewUrl": {
+                "type": "string"
+              },
+              "graphiqlUrl": {
+                "type": "string"
+              },
+              "appUrl": {
+                "type": "string"
+              },
+              "localUrl": {
+                "type": "string"
+              },
+              "preview": {
+                "$ref": "#/definitions/DevPreview",
+                "description": "The CLI-reported preview state in the instance file; this is not a health check."
+              }
+            },
+            "required": [
+              "configPath",
+              "appName",
+              "clientId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "sessionId",
+          "command",
+          "pid",
+          "status",
+          "startedAt",
+          "updatedAt",
+          "directory",
+          "logFile",
+          "details"
+        ],
+        "additionalProperties": false,
+        "description": "The instance JSON file under .shopify/dev/. This object is not emitted to stdout."
+      },
+      "DevPreview": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "starting",
+              "updating",
+              "ready",
+              "error"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "state",
+          "message",
+          "errors"
+        ],
+        "additionalProperties": false,
+        "description": "The CLI-reported preview state in the instance file; this is not a health check."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app dev clean`
@@ -3316,8 +3492,8 @@ Generate a new app Extension.
 ```
 USAGE
   $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor
-    vanilla-js|react|typescript|typescript-react|wasm|rust] [-j] [--json-schema] [-n <value>] [--no-color] [--no-input]
-    [--path <value>] [--reset | ] [-t <value>] [--verbose]
+    vanilla-js|preact|react|typescript|typescript-react|rust|wasm|liquid|config-only] [-j] [--json-schema] [-n <value>]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [-t <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -3345,10 +3521,10 @@ FLAGS
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --flavor=<option>
-      Choose a starting template for your extension, where applicable. Required if non interactive when the selected
-      extension template supports multiple flavors.
+      Choose a starting template for your extension, where applicable. Supported flavors depend on the selected extension
+      template. Required if non interactive when the selected extension template supports multiple flavors.
       [env: SHOPIFY_FLAG_FLAVOR]
-      <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
+      <options: vanilla-js|preact|react|typescript|typescript-react|rust|wasm|liquid|config-only>
 
   --json-schema
       Print the command's JSON schemas.
@@ -5356,7 +5532,7 @@ Check an app for Shopify-specific security issues and write deterministic-findin
 
 ```
 USAGE
-  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files |
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [-j] [--json-schema] [--list-files |
     --print-instructions | --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore]
     [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
@@ -5364,6 +5540,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
       [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
@@ -5389,7 +5569,7 @@ FLAGS
 
   --list-files
       Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and
-      nothing is prompted for.
+      nothing is prompted for. With --json, the result lists them with absolute paths.
       [env: SHOPIFY_FLAG_LIST_FILES]
 
   --no-color
@@ -5410,7 +5590,8 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --print-instructions
-      Print coding-agent instructions without prompting for how to deliver them.
+      Print coding-agent instructions without prompting for how to deliver them. With --json, the instructions are
+      included in the result.
       [env: SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS]
 
   --skip-instructions
@@ -5455,15 +5636,300 @@ DESCRIPTION
 
   Use `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line
   and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still
-  checked, but doesn't change the list.
+  checked, but doesn't change the list. With `--json`, the result lists the files with absolute paths.
 
   In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
   `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
-  write them later.
+  write them later. With `--json`, the command offers to include the instructions in the result, with or without copying
+  them, and `--print-instructions` includes them.
+
+  With `--json`, the result describes the scan and the files it wrote, and whether `--blocking` passed, but not the
+  findings: run `shopify app security review --json` for those.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityCheckResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Whether --blocking passed: no finding of the scan has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings."
+          },
+          "app": {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          "resultsDirectory": {
+            "type": "string",
+            "description": "The absolute path of the results directory that holds the files the scan wrote."
+          },
+          "deterministicFindingsPath": {
+            "type": "string",
+            "description": "The absolute path of deterministic-findings.json, which the scan replaced."
+          },
+          "agentChecksPath": {
+            "type": "string",
+            "description": "The absolute path of agent-checks.json, which the scan replaced."
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          },
+          "scanDirectories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityScanDirectory"
+            },
+            "description": "The directories that the scan walked."
+          },
+          "agentCheckCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of checks in agent-checks.json for a coding agent to investigate."
+          },
+          "blocking": {
+            "$ref": "#/definitions/AppSecurityBlocking"
+          },
+          "instructions": {
+            "$ref": "#/definitions/AppSecurityInstructions",
+            "description": "The coding-agent instructions for this scan, with --print-instructions or when chosen at the prompt. Left out otherwise."
+          }
+        },
+        "required": [
+          "status",
+          "valid",
+          "app",
+          "resultsDirectory",
+          "deterministicFindingsPath",
+          "agentChecksPath",
+          "scope",
+          "scanDirectories",
+          "agentCheckCount",
+          "blocking"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/AppSecurityCheckFileList"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false,
+        "description": "Asked whether to scan without app configuration, the user declined. Nothing was scanned or written."
+      }
+    ],
+    "description": "The scan and the files it wrote. With --list-files, the files that a scan would gather.",
+    "title": "AppSecurityCheckResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityScope": {
+        "type": "object",
+        "properties": {
+          "includeDirs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --include-dir values."
+          },
+          "excludes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --exclude globs."
+          },
+          "noGitIgnore": {
+            "type": "boolean",
+            "description": "Whether --no-git-ignore was passed."
+          }
+        },
+        "required": [
+          "includeDirs",
+          "excludes",
+          "noGitIgnore"
+        ],
+        "additionalProperties": false,
+        "description": "The check flags that chose which files were gathered, exactly as typed."
+      },
+      "AppSecurityScanDirectory": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute path of the directory."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app-directory",
+              "include-dir",
+              "app-config-directory"
+            ],
+            "description": "Why it was scanned: it is the app directory, an --include-dir value, or an extension or web directory of the app configuration."
+          }
+        },
+        "required": [
+          "directory",
+          "origin"
+        ],
+        "additionalProperties": false,
+        "description": "A directory that check scanned."
+      },
+      "AppSecurityBlocking": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "none"
+            ],
+            "description": "The --blocking severity."
+          },
+          "blockedCheckCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of checks with findings at or above that severity. Always 0 for none."
+          }
+        },
+        "required": [
+          "level",
+          "blockedCheckCount"
+        ],
+        "additionalProperties": false,
+        "description": "The --blocking policy and the checks that fail it."
+      },
+      "AppSecurityInstructions": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The instructions in Markdown, as printed without --json."
+          },
+          "copied": {
+            "type": "boolean",
+            "description": "Whether the instructions were also copied to the clipboard."
+          }
+        },
+        "required": [
+          "content",
+          "copied"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityCheckFileList": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          },
+          "scanDirectories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityScanDirectory"
+            },
+            "description": "The directories that a scan would walk."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The absolute path of the file."
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The files that a scan would gather, ordered by their paths relative to the app directory, as listed without --json."
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "scope",
+          "scanDirectories",
+          "files"
+        ],
+        "additionalProperties": false,
+        "description": "With --list-files, the files that a scan would gather. Nothing is scanned or written."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app security check
@@ -5487,13 +5953,17 @@ Remove local app security check results.
 
 ```
 USAGE
-  $ shopify app security clean [--all | -c <value> | --client-id <value>] [--json-schema] [--no-color] [--no-input]
+  $ shopify app security clean [--all | -c <value> | --client-id <value>] [-j] [--json-schema] [--no-color] [--no-input]
     [--path <value>] [--verbose] [--without-app-config | ]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --all
       Delete every results directory under .shopify/app-security/, not only the selected one.
@@ -5535,6 +6005,106 @@ DESCRIPTION
 
   Use `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config`
   nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityCleanResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "description": "Whether any results directory was removed."
+      },
+      "app": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          {
+            "$ref": "#/definitions/AppSecurityCleanAllApp"
+          }
+        ],
+        "description": "The selected app. With --all, only its directory."
+      },
+      "resultsDirectories": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "The absolute paths of the removed results directories, sorted. Empty when there was nothing to remove."
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "app",
+      "resultsDirectories"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityCleanResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityCleanAllApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          }
+        },
+        "required": [
+          "directory"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security instructions`
@@ -5543,20 +6113,24 @@ Provide app security check instructions to a coding agent.
 
 ```
 USAGE
-  $ shopify app security instructions [--copy | --write <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
-    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security instructions [--copy | --write <value>] [-j] [--json-schema] [--no-color] [--no-input] [--path
+    <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --copy
-      Copy the instructions to the clipboard instead of printing them.
+      Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.
       [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY]
 
   --json-schema
@@ -5584,7 +6158,8 @@ FLAGS
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
 
   --write=<value>
-      Write the instructions to a file instead of printing them.
+      Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and
+      Markdown format of the written file.
       [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE]
 
 DESCRIPTION
@@ -5595,6 +6170,127 @@ DESCRIPTION
   By default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write
   them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's
   generated review pack is trusted as workflow input.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityInstructionsResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          "resultsDirectory": {
+            "type": "string",
+            "description": "The absolute path of the results directory that the instructions use. It may not exist yet: the instructions start by running check, which creates it."
+          },
+          "instructions": {
+            "$ref": "#/definitions/AppSecurityInstructions"
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "resultsDirectory",
+          "instructions"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/AppSecurityInstructionsFile"
+      }
+    ],
+    "description": "The instructions and the app they are for. With --write, only the file they were written to.",
+    "title": "AppSecurityInstructionsResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityInstructions": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The instructions in Markdown, as printed without --json."
+          },
+          "copied": {
+            "type": "boolean",
+            "description": "Whether the instructions were also copied to the clipboard."
+          }
+        },
+        "required": [
+          "content",
+          "copied"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityInstructionsFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the file that the instructions were written to."
+          },
+          "format": {
+            "type": "string",
+            "const": "markdown",
+            "description": "The file holds the instructions in Markdown, not a JSON result."
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security record`
@@ -5603,13 +6299,17 @@ Record agent findings from an app security check.
 
 ```
 USAGE
-  $ shopify app security record [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
+  $ shopify app security record [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
     [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --client-id=<value>
       The Client ID of your app.
@@ -5655,6 +6355,94 @@ DESCRIPTION
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityRecordResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/AppSecurityApp"
+      },
+      "resultsDirectory": {
+        "type": "string",
+        "description": "The absolute path of the results directory."
+      },
+      "path": {
+        "type": "string",
+        "description": "The absolute path of the agent-findings.json file that was written."
+      },
+      "checkCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of checks recorded."
+      },
+      "findingCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of findings recorded, across every check."
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "resultsDirectory",
+      "path",
+      "checkCount",
+      "findingCount"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityRecordResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security review`
@@ -5663,13 +6451,17 @@ Show the combined app security check results.
 
 ```
 USAGE
-  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
       [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
@@ -5723,10 +6515,1018 @@ DESCRIPTION
 
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
   reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
-  above a severity.
+  above a severity. With `--json`, the result always includes every finding in full.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityReviewResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "valid": {
+        "type": "boolean",
+        "description": "Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes."
+      },
+      "app": {
+        "$ref": "#/definitions/AppSecurityApp"
+      },
+      "resultsDirectory": {
+        "type": "string",
+        "description": "The absolute path of the results directory."
+      },
+      "resultsFiles": {
+        "type": "object",
+        "properties": {
+          "deterministic": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityDeterministicResultsFile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "deterministic-findings.json, which check writes, with the scope of the scan."
+          },
+          "agent": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityAgentResultsFile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "agent-findings.json, which record writes, with the scope that the agent reported."
+          }
+        },
+        "required": [
+          "deterministic",
+          "agent"
+        ],
+        "additionalProperties": false,
+        "description": "The results files that the review combines. Null when a file does not exist."
+      },
+      "detection": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityDetection"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "What the latest check detected in the app, or null without deterministic-findings.json."
+      },
+      "coverage": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityCoverage"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "What the latest check covered, or null without deterministic-findings.json."
+      },
+      "scopeDiffers": {
+        "type": "boolean",
+        "description": "Whether the agent reported another scope than the latest scan used. False unless both results files exist."
+      },
+      "checks": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppSecurityCheck"
+        },
+        "description": "The checks after --check-id, most severe first, then by ID. Empty when no results file exists."
+      },
+      "blocking": {
+        "$ref": "#/definitions/AppSecurityBlocking"
+      }
+    },
+    "required": [
+      "status",
+      "valid",
+      "app",
+      "resultsDirectory",
+      "resultsFiles",
+      "detection",
+      "coverage",
+      "scopeDiffers",
+      "checks",
+      "blocking"
+    ],
+    "additionalProperties": false,
+    "description": "The combined results of the app security check.",
+    "title": "AppSecurityReviewResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityScope": {
+        "type": "object",
+        "properties": {
+          "includeDirs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --include-dir values."
+          },
+          "excludes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --exclude globs."
+          },
+          "noGitIgnore": {
+            "type": "boolean",
+            "description": "Whether --no-git-ignore was passed."
+          }
+        },
+        "required": [
+          "includeDirs",
+          "excludes",
+          "noGitIgnore"
+        ],
+        "additionalProperties": false,
+        "description": "The check flags that chose which files were gathered, exactly as typed."
+      },
+      "AppSecurityScanDirectory": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute path of the directory."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app-directory",
+              "include-dir",
+              "app-config-directory"
+            ],
+            "description": "Why it was scanned: it is the app directory, an --include-dir value, or an extension or web directory of the app configuration."
+          }
+        },
+        "required": [
+          "directory",
+          "origin"
+        ],
+        "additionalProperties": false,
+        "description": "A directory that check scanned."
+      },
+      "AppSecurityBlocking": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "none"
+            ],
+            "description": "The --blocking severity."
+          },
+          "blockedCheckCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of checks with findings at or above that severity. Always 0 for none."
+          }
+        },
+        "required": [
+          "level",
+          "blockedCheckCount"
+        ],
+        "additionalProperties": false,
+        "description": "The --blocking policy and the checks that fail it."
+      },
+      "AppSecurityDeterministicResultsFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of deterministic-findings.json."
+          },
+          "generatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When check wrote the file, or null when the recorded time is not a valid instant."
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "ruleset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "ruleset"
+            ],
+            "additionalProperties": false
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          }
+        },
+        "required": [
+          "path",
+          "generatedAt",
+          "engine",
+          "scope"
+        ],
+        "additionalProperties": false,
+        "description": "deterministic-findings.json, which check writes, with the scope of the scan."
+      },
+      "AppSecurityAgentResultsFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of agent-findings.json."
+          },
+          "generatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When record wrote the file, or null when the recorded time is not a valid instant."
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          }
+        },
+        "required": [
+          "path",
+          "generatedAt",
+          "engine",
+          "scope"
+        ],
+        "additionalProperties": false,
+        "description": "agent-findings.json, which record writes, with the scope that the agent reported."
+      },
+      "AppSecurityDetection": {
+        "type": "object",
+        "properties": {
+          "framework": {
+            "type": "string",
+            "enum": [
+              "react-router",
+              "none",
+              "unknown",
+              "mixed"
+            ]
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "react-router",
+              "theme-app-extension",
+              "config-only",
+              "unknown",
+              "mixed"
+            ]
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The language, such as typescript."
+                },
+                "support": {
+                  "type": "string",
+                  "enum": [
+                    "supported",
+                    "unsupported"
+                  ],
+                  "description": "Whether the deterministic checks analyze it."
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "support",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "framework",
+          "surface",
+          "languages"
+        ],
+        "additionalProperties": false,
+        "description": "What the latest check detected in the app."
+      },
+      "AppSecurityCoverage": {
+        "type": "object",
+        "properties": {
+          "filesScanned": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of files scanned."
+          },
+          "filesSkipped": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "too-large",
+                    "unreadable"
+                  ]
+                },
+                "sizeBytes": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The file size, or null when unknown."
+                },
+                "detail": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Why the file was unreadable, or null when none is recorded."
+                }
+              },
+              "required": [
+                "path",
+                "reason",
+                "sizeBytes",
+                "detail"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "skipped-file",
+                    "unsupported-framework",
+                    "unsupported-language",
+                    "unresolved-check"
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "checkId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The check that the gap concerns, or null."
+                },
+                "filePath": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The file that the gap concerns, or null."
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "checkId",
+                "filePath"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scanDirectories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityScanDirectory"
+            }
+          }
+        },
+        "required": [
+          "filesScanned",
+          "filesSkipped",
+          "gaps",
+          "scanDirectories"
+        ],
+        "additionalProperties": false,
+        "description": "What the latest check covered."
+      },
+      "AppSecurityCheck": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The check ID, such as CREDENTIAL_LOG_LEAKAGE."
+          },
+          "title": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "guide": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A guide to the check, or null when none is recorded."
+          },
+          "docsUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's page on shopify.dev, or null when the results files predate it."
+          },
+          "precedence": {
+            "type": "string",
+            "enum": [
+              "union",
+              "prefer-agent"
+            ],
+            "description": "How the sources combine: union keeps both sources' findings; prefer-agent lets the agent result replace the deterministic one."
+          },
+          "appliedPrecedence": {
+            "type": "string",
+            "enum": [
+              "union",
+              "prefer-agent"
+            ],
+            "description": "The precedence that applied: union when a prefer-agent agent result is older than the deterministic one."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "not-applicable",
+              "unresolved"
+            ],
+            "description": "The combined status. Under union, executed when either source executed the check."
+          },
+          "bySource": {
+            "type": "object",
+            "properties": {
+              "deterministic": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AppSecuritySourceResult"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "One source's own result for a check."
+              },
+              "agent": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AppSecuritySourceResult"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "One source's own result for a check."
+              }
+            },
+            "required": [
+              "deterministic",
+              "agent"
+            ],
+            "additionalProperties": false,
+            "description": "Each source's own result, or null when that source didn't record the check."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityFinding"
+            },
+            "description": "Every finding of both sources, including suppressed and superseded ones, whatever --verbose. Sorted by file, line, then source."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "description",
+          "guide",
+          "docsUrl",
+          "precedence",
+          "appliedPrecedence",
+          "status",
+          "bySource",
+          "findings"
+        ],
+        "additionalProperties": false,
+        "description": "One check, combined from both results files."
+      },
+      "AppSecuritySourceResult": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The check version: the catalog version for deterministic results, the one the agent claimed for agent results."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "not-applicable",
+              "unresolved"
+            ],
+            "description": "The source's own status for the check."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "A short code. Agent codes are free-form. Deterministic codes: capability_absent, no_relevant_files, unsupported_framework, unsupported_language, parser_unavailable, agent_investigation_required, input_rejected."
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the check is unresolved or not applicable, or null when none is recorded."
+          },
+          "analysisMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "regex",
+                  "structured-config",
+                  "ast"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the deterministic check analyzed the files. Null for agent results."
+          },
+          "generatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the source recorded the check, or null when the recorded time is not a valid instant."
+          }
+        },
+        "required": [
+          "version",
+          "status",
+          "reason",
+          "analysisMode",
+          "generatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "One source's own result for a check."
+      },
+      "AppSecurityFinding": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityDeterministicFinding"
+          },
+          {
+            "$ref": "#/definitions/AppSecurityAgentFinding"
+          }
+        ]
+      },
+      "AppSecurityDeterministicFinding": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "const": "deterministic"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suppressed",
+              "superseded"
+            ],
+            "description": "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+          },
+          "location": {
+            "$ref": "#/definitions/AppSecurityLocation"
+          },
+          "message": {
+            "type": "string",
+            "description": "What the finding is, redacted."
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The flagged code, redacted, or null when none is recorded."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityEvidence"
+            }
+          },
+          "fix": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "guide": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "A guide to the fix, or null when none is recorded."
+                  },
+                  "automated": {
+                    "type": "boolean",
+                    "description": "Whether the fix can be applied automatically."
+                  }
+                },
+                "required": [
+                  "description",
+                  "guide",
+                  "automated"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How to fix the finding, or null when none is recorded."
+          }
+        },
+        "required": [
+          "source",
+          "disposition",
+          "location",
+          "message",
+          "snippet",
+          "evidence",
+          "fix"
+        ],
+        "additionalProperties": false,
+        "description": "A finding from deterministic-findings.json."
+      },
+      "AppSecurityAgentFinding": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "const": "agent"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suppressed",
+              "superseded"
+            ],
+            "description": "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+          },
+          "location": {
+            "$ref": "#/definitions/AppSecurityLocation"
+          },
+          "message": {
+            "type": "string",
+            "description": "What the finding is, redacted."
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The flagged code, redacted, or null when none is recorded."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityEvidence"
+            }
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agent's confidence, or null when it didn't report one."
+          },
+          "reasoning": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agent's reasoning, redacted, or null when none is recorded."
+          },
+          "suppression": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "justification": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "justification"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the agent suppressed the finding, or null when it is not suppressed."
+          }
+        },
+        "required": [
+          "source",
+          "disposition",
+          "location",
+          "message",
+          "snippet",
+          "evidence",
+          "confidence",
+          "reasoning",
+          "suppression"
+        ],
+        "additionalProperties": false,
+        "description": "A finding from agent-findings.json."
+      },
+      "AppSecurityLocation": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute path of the file."
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The one-based line, or null for the whole file."
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The one-based column, or null when none is recorded."
+          }
+        },
+        "required": [
+          "filePath",
+          "line",
+          "column"
+        ],
+        "additionalProperties": false,
+        "description": "A place in a file."
+      },
+      "AppSecurityEvidence": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "$ref": "#/definitions/AppSecurityLocation"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The quoted source, redacted, or null when none is recorded."
+          }
+        },
+        "required": [
+          "location",
+          "quote"
+        ],
+        "additionalProperties": false,
+        "description": "Source that supports a finding."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app subscription-migrations cancel`
@@ -8823,15 +10623,19 @@ DESCRIPTION
 
 ## `shopify hydrogen build`
 
-Builds a Hydrogen storefront for production.
+Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.
 
 ```
 USAGE
   $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
-    [--entry <value>] [--force-client-sourcemap] [--json-schema] [--lockfile-check] [--path <value>] [--sourcemap]
-    [--watch]
+    [--entry <value>] [--force-client-sourcemap] [-j] [--json-schema] [--lockfile-check] [--no-color] [--no-input]
+    [--path <value>] [--sourcemap] [--verbose] [--watch]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --[no-]bundle-stats
       Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.
 
@@ -8863,6 +10667,14 @@ FLAGS
       `--no-lockfile-check`.
       [env: SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -8871,47 +10683,146 @@ FLAGS
       Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.
       [env: SHOPIFY_HYDROGEN_FLAG_SOURCEMAP]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
   --watch
       Watches for changes and rebuilds the project writing output to disk.
       [env: SHOPIFY_HYDROGEN_FLAG_WATCH]
 
 DESCRIPTION
-  Builds a Hydrogen storefront for production.
+  Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your
+  Hydrogen project directory.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenBuildResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "directory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "clientDirectory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "serverDirectory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "serverPath": {
+        "$ref": "#/definitions/AbsolutePath"
+      }
+    },
+    "required": [
+      "directory",
+      "clientDirectory",
+      "serverDirectory",
+      "serverPath"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenBuildResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen check RESOURCE`
 
-Returns diagnostic information about a Hydrogen storefront.
+Checks whether your Hydrogen app includes a set of standard Shopify routes.
 
 ```
 USAGE
-  $ shopify hydrogen check RESOURCE [--json-schema] [--path <value>]
+  $ shopify hydrogen check RESOURCE [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
 
 ARGUMENTS
   RESOURCE  (routes) The resource to check. Currently only 'routes' is supported.
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Returns diagnostic information about a Hydrogen storefront.
+  Checks whether your Hydrogen app includes a set of standard Shopify routes.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenCheckResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "missingRoutes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "reservedRoutes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "valid",
+      "missingRoutes",
+      "reservedRoutes"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenCheckResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen codegen`
 
-Generate types for the Storefront API queries found in your project.
+Automatically generates GraphQL types for your project’s Storefront API queries.
 
 ```
 USAGE
-  $ shopify hydrogen codegen [--codegen-config-path <value>] [--json-schema] [--path <value>] [--watch]
+  $ shopify hydrogen codegen [--codegen-config-path <value>] [-j] [--json-schema] [--no-color] [--no-input] [--path
+    <value>] [--verbose] [--watch]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --codegen-config-path=<value>
       Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.
 
@@ -8919,15 +10830,68 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
   --watch
       Watch the project for changes to update types on file save.
 
 DESCRIPTION
-  Generate types for the Storefront API queries found in your project.
+  Automatically generates GraphQL types for your project’s Storefront API queries.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenCodegenResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Source patterns from the GraphQL codegen configuration."
+            }
+          },
+          "required": [
+            "path",
+            "sources"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "files"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenCodegenResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen customer-account-push`
@@ -8936,10 +10900,15 @@ Push project configuration to admin
 
 ```
 USAGE
-  $ shopify hydrogen customer-account-push --dev-origin <value> [--javascript-origin <value>] [--json-schema] [--path <value>]
-    [--relative-logout-uri <value>] [--relative-redirect-uri <value>] [--storefront-id <value>]
+  $ shopify hydrogen customer-account-push --dev-origin <value> [--javascript-origin <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--relative-logout-uri <value>] [--relative-redirect-uri <value>] [--storefront-id
+    <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --dev-origin=<value>
       (required) The development domain of your application.
 
@@ -8951,6 +10920,14 @@ FLAGS
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -8966,8 +10943,50 @@ FLAGS
   --storefront-id=<value>
       The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Push project configuration to admin
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenCustomerAccountPushResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "storefrontGid": {
+        "type": "string",
+        "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefront\\/\\d+$",
+        "description": "A Shopify HydrogenStorefront GID."
+      },
+      "redirectUri": {
+        "type": "string",
+        "format": "uri"
+      },
+      "javascriptOrigin": {
+        "type": "string",
+        "format": "uri"
+      },
+      "logoutUri": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "required": [
+      "storefrontGid",
+      "redirectUri",
+      "javascriptOrigin",
+      "logoutUri"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenCustomerAccountPushResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen debug cpu`
@@ -8976,7 +10995,8 @@ Builds and profiles the server startup time the app.
 
 ```
 USAGE
-  $ shopify hydrogen debug cpu [--entry <value>] [--json-schema] [--output <value>] [--path <value>]
+  $ shopify hydrogen debug cpu [--entry <value>] [--json-schema] [--no-color] [--no-input] [--output <value>] [--path
+    <value>] [--verbose]
 
 FLAGS
   --entry=<value>
@@ -8987,6 +11007,14 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --output=<value>
       [default: startup.cpuprofile] Specify a path to generate the profile file. Defaults to "startup.cpuprofile".
 
@@ -8994,27 +11022,35 @@ FLAGS
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Builds and profiles the server startup time the app.
 ```
 
 ## `shopify hydrogen deploy`
 
-Builds and deploys a Hydrogen storefront to Oxygen.
+Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is "linked" (https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.
 
 ```
 USAGE
   $ shopify hydrogen deploy [--assets-dir <value>] [--auth-bypass-token-duration <value> --auth-bypass-token]
     [--build-command <value>] [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f]
-    [--force-client-sourcemap] [--json-output] [--json-schema] [--lockfile-check] [--metadata-description <value>]
-    [--metadata-user <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>] [--worker-dir
-    <value>]
+    [--force-client-sourcemap] [-j] [--json-output] [--json-schema] [--lockfile-check] [--metadata-description <value>]
+    [--metadata-user <value>] [--no-color] [--no-input] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t
+    <value>] [--verbose] [--worker-dir <value>]
 
 FLAGS
   -f, --force
       Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation
       prompts for non-preview environments.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --shop=<value>
       Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
@@ -9083,6 +11119,14 @@ FLAGS
       User that initiated the deployment. Will be saved and displayed in the Shopify admin
       [env: SHOPIFY_HYDROGEN_FLAG_METADATA_USER]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --no-verify
       Skip the routability verification step after deployment.
 
@@ -9093,13 +11137,79 @@ FLAGS
   --preview
       Deploys to the Preview environment.
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
   --worker-dir=<value>
       Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root.
       Defaults to the detected Vite server output directory, then falls back to `dist/server`.
       [env: SHOPIFY_HYDROGEN_FLAG_WORKER_DIR]
 
 DESCRIPTION
-  Builds and deploys a Hydrogen storefront to Oxygen.
+  Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the
+  `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is "linked"
+  (https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked
+  storefront will be used automatically.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenDeployResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "cancelled"
+        ]
+      },
+      "deployment": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Deployment"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "deployment"
+    ],
+    "additionalProperties": false,
+    "description": "The command result. The existing h2_deploy_log.json file retains Oxygen CompletedDeployment format, independently of this result.",
+    "title": "HydrogenDeployResult",
+    "definitions": {
+      "Deployment": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "authBypassToken": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "authBypassToken"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen dev`
@@ -9110,8 +11220,8 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--customer-account-push] [--debug]
     [--disable-deps-optimizer] [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> |
-    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--json-schema] [--path <value>]
-    [--port <value>] [--verbose]
+    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--port <value>] [--verbose]
 
 FLAGS
   --codegen
@@ -9166,6 +11276,14 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9184,38 +11302,185 @@ DESCRIPTION
 
 ## `shopify hydrogen env list`
 
-List the environments on your linked Hydrogen storefront.
+Lists all environments available on the linked Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env list [--json-schema] [--path <value>]
+  $ shopify hydrogen env list [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  List the environments on your linked Hydrogen storefront.
+  Lists all environments available on the linked Hydrogen storefront.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenEnvListResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "cancelled"
+        ]
+      },
+      "storefront": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Storefront"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "environments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Environment"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "storefront",
+      "environments"
+    ],
+    "additionalProperties": false,
+    "description": "The complete environment list for the linked storefront.",
+    "title": "HydrogenEnvListResult",
+    "definitions": {
+      "Environment": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefrontEnvironment\\/\\d+$",
+            "description": "A Shopify HydrogenStorefrontEnvironment GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string",
+            "description": "Upstream environment type; known values are PREVIEW, PRODUCTION, CUSTOM."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "handle",
+          "branch",
+          "createdAt",
+          "type",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "Storefront": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefront\\/\\d+$",
+            "description": "A Shopify HydrogenStorefront GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "productionUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "productionUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen env pull`
 
-Populate your .env with variables from your Hydrogen storefront.
+Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.
 
 ```
 USAGE
-  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--json-schema] [--path
-    <value>]
+  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --env=<value>
       Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
@@ -9232,12 +11497,174 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Populate your .env with variables from your Hydrogen storefront.
+  Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenEnvPullResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "cancelled"
+        ]
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "path": {
+        "type": "string"
+      },
+      "storefrontGid": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefront\\/\\d+$",
+            "description": "A Shopify HydrogenStorefront GID."
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "A Shopify HydrogenStorefront GID."
+      },
+      "storefrontName": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "environment": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Environment"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "variables": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Variable"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "path",
+      "storefrontGid",
+      "storefrontName",
+      "environment",
+      "variables"
+    ],
+    "additionalProperties": false,
+    "description": "The dotenv file keeps its native format. The result reports variable metadata without values.",
+    "title": "HydrogenEnvPullResult",
+    "definitions": {
+      "Environment": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefrontEnvironment\\/\\d+$",
+            "description": "A Shopify HydrogenStorefrontEnvironment GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string",
+            "description": "Upstream environment type; known values are PREVIEW, PRODUCTION, CUSTOM."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "handle",
+          "branch",
+          "createdAt",
+          "type",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "Variable": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal HydrogenStorefrontEnvironmentVariable ID, not a GID."
+          },
+          "isSecret": {
+            "type": "boolean"
+          },
+          "readOnly": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "Metadata only: variable spelling is preserved and values are never included. Unknown metadata is omitted."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen env push`
@@ -9246,12 +11673,17 @@ Push environment variables from the local .env file to your linked Hydrogen stor
 
 ```
 USAGE
-  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--json-schema] [--path <value>]
+  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
   -f, --force
       Push environment variable changes without confirmation.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --dry-run
       Preview environment variable changes without pushing them.
@@ -9268,22 +11700,178 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Push environment variables from the local .env file to your linked Hydrogen storefront.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenEnvPushResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "cancelled"
+        ]
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "wouldChange": {
+        "type": "boolean",
+        "description": "Whether the compared local and remote variables differ, excluding protected variables."
+      },
+      "dryRun": {
+        "type": "boolean"
+      },
+      "path": {
+        "type": "string"
+      },
+      "environment": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Environment"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "variables": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Variable"
+        }
+      },
+      "skipped": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Variable"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "wouldChange",
+      "dryRun",
+      "path",
+      "environment",
+      "variables",
+      "skipped"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenEnvPushResult",
+    "definitions": {
+      "Environment": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefrontEnvironment\\/\\d+$",
+            "description": "A Shopify HydrogenStorefrontEnvironment GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string",
+            "description": "Upstream environment type; known values are PREVIEW, PRODUCTION, CUSTOM."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "handle",
+          "branch",
+          "createdAt",
+          "type",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "Variable": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal HydrogenStorefrontEnvironmentVariable ID, not a GID."
+          },
+          "isSecret": {
+            "type": "boolean"
+          },
+          "readOnly": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "Metadata only: variable spelling is preserved and values are never included. Unknown metadata is omitted."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen generate route ROUTENAME`
 
-Generates a standard Shopify route.
+Generates a set of default routes from the starter template.
 
 ```
 USAGE
-  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--json-schema] [--locale-param <value>] [--path
-    <value>] [--typescript]
+  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [-j] [--json-schema] [--locale-param <value>]
+    [--no-color] [--no-input] [--path <value>] [--typescript] [--verbose]
 
 ARGUMENTS
   ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
@@ -9294,6 +11882,10 @@ FLAGS
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --adapter=<value>
       React Router adapter used in the route. The default is `react-router`.
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
@@ -9306,6 +11898,14 @@ FLAGS
       The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9314,8 +11914,96 @@ FLAGS
       Generate TypeScript files
       [env: SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Generates a standard Shopify route.
+  Generates a set of default routes from the starter template.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenGenerateRoutesResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "skipped"
+        ]
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "routes": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Route"
+        }
+      },
+      "routeGroups": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "isTypescript": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "routes",
+      "routeGroups",
+      "isTypescript"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenGenerateRoutesResult",
+    "definitions": {
+      "Route": {
+        "type": "object",
+        "properties": {
+          "sourceRoute": {
+            "type": "string"
+          },
+          "destinationRoute": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "created",
+              "skipped",
+              "replaced"
+            ]
+          },
+          "skipReason": {
+            "type": "string",
+            "enum": [
+              "declined",
+              "exists"
+            ]
+          }
+        },
+        "required": [
+          "sourceRoute",
+          "destinationRoute",
+          "operation"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen generate routes`
@@ -9324,13 +12012,17 @@ Generates all supported standard shopify routes.
 
 ```
 USAGE
-  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--json-schema] [--locale-param <value>] [--path <value>]
-    [--typescript]
+  $ shopify hydrogen generate routes [--adapter <value>] [-f] [-j] [--json-schema] [--locale-param <value>] [--no-color]
+    [--no-input] [--path <value>] [--typescript] [--verbose]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --adapter=<value>
       React Router adapter used in the route. The default is `react-router`.
@@ -9344,6 +12036,14 @@ FLAGS
       The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9352,8 +12052,96 @@ FLAGS
       Generate TypeScript files
       [env: SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Generates all supported standard shopify routes.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenGenerateRoutesResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "skipped"
+        ]
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "routes": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Route"
+        }
+      },
+      "routeGroups": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "isTypescript": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "routes",
+      "routeGroups",
+      "isTypescript"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenGenerateRoutesResult",
+    "definitions": {
+      "Route": {
+        "type": "object",
+        "properties": {
+          "sourceRoute": {
+            "type": "string"
+          },
+          "destinationRoute": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "created",
+              "skipped",
+              "replaced"
+            ]
+          },
+          "skipReason": {
+            "type": "string",
+            "enum": [
+              "declined",
+              "exists"
+            ]
+          }
+        },
+        "required": [
+          "sourceRoute",
+          "destinationRoute",
+          "operation"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen init`
@@ -9362,13 +12150,18 @@ Creates a new Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen init [-f] [--git] [--install-deps] [--json-schema] [--language <value>] [--markets <value>]
-    [--mock-shop] [--path <value>] [--quickstart] [--shortcut] [--styling <value>] [--template <value>]
+  $ shopify hydrogen init [-f] [--git] [--install-deps] [-j] [--json-schema] [--language <value>] [--markets
+    <value>] [--mock-shop] [--no-color] [--no-input] [--path <value>] [--quickstart] [--shortcut] [--styling <value>]
+    [--template <value>] [--verbose]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --[no-]git
       Init Git and create initial commits.
@@ -9395,6 +12188,14 @@ FLAGS
       Use mock.shop as the data source for the storefront.
       [env: SHOPIFY_HYDROGEN_FLAG_MOCK_DATA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the new Hydrogen storefront.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9416,23 +12217,197 @@ FLAGS
       Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.
       [env: SHOPIFY_HYDROGEN_FLAG_TEMPLATE]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Creates a new Hydrogen storefront.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenInitResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial",
+          "skipped",
+          "cancelled"
+        ]
+      },
+      "project": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Project"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "All projected fields are present; unavailable settings are null. Route values are relative route names."
+      },
+      "failures": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "dependencies",
+            "markets",
+            "routes"
+          ]
+        }
+      }
+    },
+    "required": [
+      "status",
+      "project",
+      "failures"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenInitResult",
+    "definitions": {
+      "Project": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "storefrontName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "js",
+                  "ts"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn",
+              "bun",
+              "unknown"
+            ]
+          },
+          "dependenciesInstalled": {
+            "type": "boolean"
+          },
+          "cssStrategy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "tailwind",
+                  "vanilla-extract",
+                  "css-modules",
+                  "postcss"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "i18n": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "subfolders",
+                  "domains",
+                  "subdomains"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "routes": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "directory",
+          "storefrontName",
+          "language",
+          "packageManager",
+          "dependenciesInstalled",
+          "cssStrategy",
+          "i18n",
+          "routes"
+        ],
+        "additionalProperties": false,
+        "description": "All projected fields are present; unavailable settings are null. Route values are relative route names."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen link`
 
-Link a local project to one of your shop's Hydrogen storefronts.
+Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--json-schema] [--name <value> | ]
-    [--path <value>] [-s <value>]
+  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [-j] [--json-schema] [--name <value> |
+    ] [--no-color] [--no-input] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --shop=<value>
       Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
@@ -9451,6 +12426,14 @@ FLAGS
       The name to use when creating a new Hydrogen storefront.
       [env: SHOPIFY_HYDROGEN_FLAG_NAME]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9459,40 +12442,269 @@ FLAGS
       The name of a Hydrogen Storefront (e.g. "Jane's Apparel")
       [env: SHOPIFY_HYDROGEN_STOREFRONT]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Link a local project to one of your shop's Hydrogen storefronts.
+  Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of
+  development environments to a single Hydrogen storefront.
+
+  Linking to a Hydrogen storefront enables you to run "dev"
+  (https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen
+  storefront's environment variables directly into the server runtime.
+
+  After you run the `link` command, you can access the "env list"
+  (https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), "env pull"
+  (https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and "unlink"
+  (https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenLinkResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial",
+          "skipped",
+          "cancelled"
+        ]
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "storeDomain": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "storefront": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Storefront"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "All projected fields are present; unavailable productionUrl is null."
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "storeDomain",
+      "storefront"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenLinkResult",
+    "definitions": {
+      "Storefront": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefront\\/\\d+$",
+            "description": "A Shopify HydrogenStorefront GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "productionUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "productionUrl"
+        ],
+        "additionalProperties": false,
+        "description": "All projected fields are present; unavailable productionUrl is null."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen list`
 
-Returns a list of Hydrogen storefronts available on a given shop.
+Lists all remote Hydrogen storefronts available to link to your local development environment.
 
 ```
 USAGE
-  $ shopify hydrogen list [--json-schema] [--path <value>]
+  $ shopify hydrogen list [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Returns a list of Hydrogen storefronts available on a given shop.
+  Lists all remote Hydrogen storefronts available to link to your local development environment.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenListResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "storeDomain": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "storefronts": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Storefront"
+        }
+      }
+    },
+    "required": [
+      "storeDomain",
+      "storefronts"
+    ],
+    "additionalProperties": false,
+    "description": "The complete list of Hydrogen storefronts for the store.",
+    "title": "HydrogenListResult",
+    "definitions": {
+      "Storefront": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefront\\/\\d+$",
+            "description": "A Shopify HydrogenStorefront GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "productionUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currentProductionDeployment": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Deployment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "productionUrl",
+          "currentProductionDeployment"
+        ],
+        "additionalProperties": false,
+        "description": "All projected fields are present; unavailable productionUrl is null."
+      },
+      "Deployment": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefrontDeployment\\/\\d+$",
+            "description": "A Shopify HydrogenStorefrontDeployment GID."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "commitMessage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "createdAt",
+          "commitMessage"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen login`
 
-Login to your Shopify account.
+Logs in to the specified shop and saves the shop domain to the project.
 
 ```
 USAGE
-  $ shopify hydrogen login [--json-schema] [--path <value>] [-s <value>]
+  $ shopify hydrogen login [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --shop=<value>
       Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
       https://janes-apparel.myshopify.com).
@@ -9502,33 +12714,136 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Login to your Shopify account.
+  Logs in to the specified shop and saves the shop domain to the project.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenLoginResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "storeDomain": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "name": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "email": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "email"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "storeDomain",
+      "name",
+      "email"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenLoginResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen logout`
 
-Logout of your local session.
+Log out from the current shop.
 
 ```
 USAGE
-  $ shopify hydrogen logout [--json-schema] [--path <value>]
+  $ shopify hydrogen logout [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Logout of your local session.
+  Log out from the current shop.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenLogoutResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "loggedOut": {
+        "type": "boolean",
+        "const": true
+      }
+    },
+    "required": [
+      "status",
+      "loggedOut"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenLogoutResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen preview`
@@ -9538,8 +12853,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--json-schema] [--path <value>]
-    [--port <value>] [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--port <value>] [--verbose] [--watch ]
 
 FLAGS
   --build
@@ -9578,6 +12893,14 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9603,12 +12926,17 @@ Scaffold routes and core functionality.
 
 ```
 USAGE
-  $ shopify hydrogen setup [-f] [--install-deps] [--json-schema] [--markets <value>] [--path <value>] [--shortcut]
+  $ shopify hydrogen setup [-f] [--install-deps] [-j] [--json-schema] [--markets <value>] [--no-color] [--no-input]
+    [--path <value>] [--shortcut] [--verbose]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --[no-]install-deps
       Auto installs dependencies using the active package manager.
@@ -9623,6 +12951,14 @@ FLAGS
       Example: `--markets subfolders`.
       [env: SHOPIFY_HYDROGEN_FLAG_I18N]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -9631,17 +12967,122 @@ FLAGS
       Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.
       [env: SHOPIFY_HYDROGEN_FLAG_SHORTCUT]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Scaffold routes and core functionality.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenSetupResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "directory": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "i18n": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "subfolders",
+              "domains",
+              "subdomains"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "routes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "sourceRoute": {
+              "type": "string"
+            },
+            "destinationRoute": {
+              "type": "string"
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "created",
+                "skipped",
+                "replaced"
+              ]
+            },
+            "skipReason": {
+              "type": "string",
+              "enum": [
+                "declined",
+                "exists"
+              ]
+            }
+          },
+          "required": [
+            "sourceRoute",
+            "destinationRoute",
+            "operation"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "routeGroups": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "shortcut": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "directory",
+      "name",
+      "i18n",
+      "routes",
+      "routeGroups",
+      "shortcut"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenSetupResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen setup css [STRATEGY]`
 
-Setup CSS strategies for your project.
+Adds support for certain CSS strategies to your project.
 
 ```
 USAGE
-  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--json-schema] [--path <value>]
+  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [-j] [--json-schema] [--no-color] [--no-input] [--path
+    <value>] [--verbose]
 
 ARGUMENTS
   [STRATEGY]  (tailwind|vanilla-extract|css-modules|postcss) The CSS strategy to setup. One of
@@ -9652,6 +13093,10 @@ FLAGS
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --[no-]install-deps
       Auto installs dependencies using the active package manager.
       [env: SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS]
@@ -9660,37 +13105,186 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Setup CSS strategies for your project.
+  Adds support for certain CSS strategies to your project.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenSetupCssResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "cancelled"
+        ]
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "directory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "strategy": {
+        "type": "string",
+        "enum": [
+          "tailwind",
+          "vanilla-extract",
+          "css-modules",
+          "postcss"
+        ]
+      },
+      "filePaths": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AbsolutePath"
+        }
+      },
+      "dependenciesInstalled": {
+        "type": "boolean"
+      },
+      "needsNpmReinstall": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "directory",
+      "strategy",
+      "filePaths",
+      "dependenciesInstalled",
+      "needsNpmReinstall"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenSetupCssResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen setup markets [STRATEGY]`
 
-Setup support for multiple markets in your project.
+Adds support for multiple "markets" (https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.
 
 ```
 USAGE
-  $ shopify hydrogen setup markets [STRATEGY] [--json-schema] [--path <value>]
+  $ shopify hydrogen setup markets [STRATEGY] [-j] [--json-schema] [--no-color] [--no-input] [--path <value>]
+  [--verbose]
 
 ARGUMENTS
   [STRATEGY]  (subfolders|domains|subdomains) The URL structure strategy to setup multiple markets. One of
               subfolders,domains,subdomains
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Setup support for multiple markets in your project.
+  Adds support for multiple "markets" (https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by
+  using the URL structure.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenSetupMarketsResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "const": true
+      },
+      "directory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "strategy": {
+        "type": "string",
+        "enum": [
+          "subfolders",
+          "domains",
+          "subdomains"
+        ]
+      },
+      "serverPath": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AbsolutePath"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "directory",
+      "strategy",
+      "serverPath"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenSetupMarketsResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen setup vite`
@@ -9699,71 +13293,284 @@ EXPERIMENTAL: Upgrades the project to use Vite.
 
 ```
 USAGE
-  $ shopify hydrogen setup vite [--json-schema] [--path <value>]
+  $ shopify hydrogen setup vite [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   EXPERIMENTAL: Upgrades the project to use Vite.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenSetupViteResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "const": true
+      },
+      "directory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "viteConfigPath": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "serverPath": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "dependenciesInstalled": {
+        "type": "boolean",
+        "const": true
+      },
+      "needsMdxSetup": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "directory",
+      "viteConfigPath",
+      "serverPath",
+      "dependenciesInstalled",
+      "needsMdxSetup"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenSetupViteResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen shortcut`
 
-Creates a global `h2` shortcut for the Hydrogen CLI
+Creates a global h2 shortcut for Shopify CLI using shell aliases.
 
 ```
 USAGE
-  $ shopify hydrogen shortcut [--json-schema]
+  $ shopify hydrogen shortcut [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Creates a global `h2` shortcut for the Hydrogen CLI
+  Creates a global h2 shortcut for Shopify CLI using shell aliases.
+
+  The following shells are supported:
+
+  - Bash (using `~/.bashrc`)
+  - ZSH (using `~/.zshrc`)
+  - Fish (using `~/.config/fish/functions`)
+  - PowerShell (added to `$PROFILE`)
+
+  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenShortcutResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "alias": {
+        "type": "string"
+      },
+      "shells": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "bash",
+            "zsh",
+            "fish",
+            "powershell",
+            "powershell-7",
+            "cmd"
+          ]
+        },
+        "minItems": 1
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "alias",
+      "shells"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenShortcutResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen unlink`
 
-Unlink a local project from a Hydrogen storefront.
+Unlinks your local development environment from a remote Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen unlink [--json-schema] [--path <value>]
+  $ shopify hydrogen unlink [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Unlink a local project from a Hydrogen storefront.
+  Unlinks your local development environment from a remote Hydrogen storefront.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenUnlinkResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean"
+      },
+      "storefront": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "gid": {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/HydrogenStorefront\\/\\d+$",
+                "description": "A Shopify HydrogenStorefront GID."
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "gid",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "storefront"
+    ],
+    "additionalProperties": false,
+    "title": "HydrogenUnlinkResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen upgrade`
 
-Upgrade Remix and Hydrogen npm dependencies.
+Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.
 
 ```
 USAGE
-  $ shopify hydrogen upgrade [-f] [--json-schema] [--path <value>] [-v <value>]
+  $ shopify hydrogen upgrade [-f] [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose] [-v
+    <value>]
 
 FLAGS
   -f, --force
       Ignore warnings and force the upgrade to the target version
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -v, --version=<value>
       A target hydrogen version to update to
@@ -9772,12 +13579,150 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
 
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
-  Upgrade Remix and Hydrogen npm dependencies.
+  Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an
+  instruction file for each upgrade.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HydrogenUpgradeResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "directory": {
+            "$ref": "#/definitions/AbsolutePath"
+          },
+          "previousVersion": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "boolean",
+            "const": true
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removedPackages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "instructionsPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AbsolutePath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "directory",
+          "previousVersion",
+          "version",
+          "changed",
+          "packages",
+          "removedPackages",
+          "instructionsPath"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "directory": {
+            "$ref": "#/definitions/AbsolutePath"
+          },
+          "previousVersion": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "boolean",
+            "const": false
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0,
+            "maxItems": 0
+          },
+          "removedPackages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0,
+            "maxItems": 0
+          },
+          "instructionsPath": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "status",
+          "directory",
+          "previousVersion",
+          "version",
+          "changed",
+          "packages",
+          "removedPackages",
+          "instructionsPath"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "HydrogenUpgradeResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify organization list`
@@ -12228,7 +16173,8 @@ USAGE
 
 FLAGS
   -C, --config=<value>
-      Use the config provided, overriding .theme-check.yml if present
+      Path to a config file to use, overriding .theme-check.yml if present
+      Use --path to set the theme directory
       Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
       theme-check:recommended, theme-check:all
       For backwards compatibility, :theme_app_extension is also supported
@@ -12351,23 +16297,23 @@ DESCRIPTION
           },
           "startRow": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based starting line."
+            "exclusiveMinimum": 0,
+            "description": "The one-based starting line."
           },
           "startColumn": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based starting column."
+            "exclusiveMinimum": 0,
+            "description": "The one-based starting column."
           },
           "endRow": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based ending line."
+            "exclusiveMinimum": 0,
+            "description": "The one-based ending line."
           },
           "endColumn": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based ending column."
+            "exclusiveMinimum": 0,
+            "description": "The one-based ending column."
           },
           "message": {
             "type": "string"
@@ -15888,7 +19834,8 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE_PASSWORD]
 
   --url=<value>
-      [default: /] The url to be used as context
+      [default: /] The path of the page to profile, with an optional query string. For a full URL, only the path and query
+      string are used.
       [env: SHOPIFY_FLAG_URL]
 
   --verbose

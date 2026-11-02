@@ -9,6 +9,7 @@ import {
   type AppSecurityShell,
 } from './app-security-commands.js'
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
@@ -26,6 +27,7 @@ const CODE_FENCE_LANGUAGES: {[shell in AppSecurityShell]: string} = {
 interface AppSecurityInstructionPaths {
   commands: AppSecurityCommands
   scanCommand: string
+  deterministicScanCommand: string
   recordInstructions: string
   reviewCommand: string
   cleanCommand: string
@@ -50,6 +52,11 @@ function markdownPath(value: string): string {
 
 function codeBlock(content: string, shell: AppSecurityShell): string {
   return `\`\`\`${CODE_FENCE_LANGUAGES[shell]}\n${content}\n\`\`\``
+}
+
+/** The agent reads the workflow's results, so its commands print JSON and never wait for input. */
+function nonInteractiveJsonCommand(command: AppSecurityCommand): AppSecurityCommand {
+  return {...command, args: [...command.args, '--json', '--no-input']}
 }
 
 /** Shows only the stdin form that works in the agent's shell, so the agent doesn't have to translate it. */
@@ -95,10 +102,12 @@ function instructionPaths(
   )
   return {
     commands,
-    scanCommand: formatAppSecurityCommand(commands.scan, shell),
-    recordInstructions: recordInstructions(commands.record, shell),
-    reviewCommand: formatAppSecurityCommand(commands.review, shell),
-    cleanCommand: formatAppSecurityCommand(commands.clean, shell),
+    scanCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.scan), shell),
+    // A deterministic-only scan is read from its terminal report: `check --json` has no findings.
+    deterministicScanCommand: formatAppSecurityCommand(commands.scan, shell),
+    recordInstructions: recordInstructions(nonInteractiveJsonCommand(commands.record), shell),
+    reviewCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.review), shell),
+    cleanCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.clean), shell),
     deterministicFindingsPath,
     agentChecksPath,
     agentFindingsPath,
@@ -109,7 +118,7 @@ function instructionPaths(
 function initialScanInstructions(paths: AppSecurityInstructionPaths): string {
   return `### 1. Run the scan
 
-Decide what to scan before running the check. By default, \`check\` scans the app directory. If the app's code also lives elsewhere (a backend, a shared library, another repository), add each of those directories with \`--include-dir\`. Skip paths with \`--exclude\`. Use \`--no-git-ignore\` only if Git-ignored files must be scanned. Include only directories relevant to the app. Check the scope with ${markdownPath(`${paths.scanCommand} --list-files`)} and adjust the flags until the list is right. Then run \`check\` with the same flags, and use the same flags every time you run \`check\` again.`
+Decide what to scan before running the check. By default, \`check\` scans the app directory. If the app's code also lives elsewhere (a backend, a shared library, another repository), add each of those directories with \`--include-dir\`. Skip paths with \`--exclude\`. Use \`--no-git-ignore\` only if Git-ignored files must be scanned. Include only directories relevant to the app. Check the scope with ${markdownPath(`${paths.scanCommand} --list-files`)} and adjust the flags until its \`files\` list is right. Then run \`check\` with the same flags, and use the same flags every time you run \`check\` again.`
 }
 
 function completedScanInstructions(paths: AppSecurityInstructionPaths): string {
@@ -147,30 +156,37 @@ function fillTemplate(template: string, values: {[placeholder: string]: string})
   )
 }
 
-interface AppSecurityInstructionsOptions {
-  appDirectory: string
-  resultsKey: string
+/** How the instructions reach the agent: copied to the clipboard, written to `writePath`, or else printed. */
+export interface AppSecurityInstructionsDelivery {
   copy: boolean
   writePath?: string
-  commands: AppSecurityCommands
-  /** Present when `check` has just run in this process. */
-  scanScope?: AppSecurityScope
+}
+
+/** The instructions couldn't be copied, for example because the system has no clipboard tool. */
+export class ClipboardUnavailableError extends AbortError {
+  constructor(cause: unknown) {
+    const message = cause instanceof Error ? cause.message : String(cause)
+    super(`Couldn't copy the app security check instructions to the clipboard: ${message}`, null, [
+      [
+        'Run the command without',
+        {command: '--copy'},
+        'to print the instructions, or with',
+        {command: '--write <file>'},
+        'to write them to a file.',
+      ],
+    ])
+    this.code = 'clipboard-unavailable'
+  }
 }
 
 interface AppSecurityInstructionsDependencies {
   copyToClipboard(content: string): Promise<void>
   writeToFile(path: string, content: string): Promise<void>
-  output(content: string): void
-  outputConfirmation(content: string): void
 }
 
 const defaultDependencies: AppSecurityInstructionsDependencies = {
   copyToClipboard: (content) => clipboard.write(content),
   writeToFile: writeFile,
-  output: outputResult,
-  outputConfirmation: (content) => {
-    renderSuccess({headline: content})
-  },
 }
 
 export function appSecurityInstructions(options: {
@@ -192,6 +208,7 @@ export function appSecurityInstructions(options: {
     '{{SCOPE_JSON}}': scope.json,
     '{{SCOPE_GUIDANCE}}': scope.guidance,
     '{{SCAN_COMMAND}}': paths.scanCommand,
+    '{{DETERMINISTIC_SCAN_COMMAND}}': paths.deterministicScanCommand,
     '{{RECORD_COMMAND}}': paths.recordInstructions,
     '{{REVIEW_COMMAND}}': paths.reviewCommand,
     '{{CLEAN_COMMAND}}': paths.cleanCommand,
@@ -201,24 +218,35 @@ export function appSecurityInstructions(options: {
   }).trimEnd()
 }
 
-export default async function deliverAppSecurityInstructions(
-  options: AppSecurityInstructionsOptions,
+/**
+ * Copies the instructions to the clipboard or writes them to a file. Printed instructions need no delivery.
+ * A failed copy throws a {@link ClipboardUnavailableError}.
+ */
+export async function deliverAppSecurityInstructions(
+  instructions: string,
+  delivery: AppSecurityInstructionsDelivery,
   dependencies: AppSecurityInstructionsDependencies = defaultDependencies,
 ): Promise<void> {
-  const instructions = appSecurityInstructions({
-    appDirectory: options.appDirectory,
-    resultsKey: options.resultsKey,
-    commands: options.commands,
-    scanScope: options.scanScope,
-  })
+  if (delivery.copy) {
+    try {
+      await dependencies.copyToClipboard(instructions)
+    } catch (error) {
+      throw new ClipboardUnavailableError(error)
+    }
+  } else if (delivery.writePath) {
+    await dependencies.writeToFile(delivery.writePath, `${instructions}\n`)
+  }
+}
 
-  if (options.copy) {
-    await dependencies.copyToClipboard(instructions)
-    dependencies.outputConfirmation('Copied app security check instructions to the clipboard')
-  } else if (options.writePath) {
-    await dependencies.writeToFile(options.writePath, `${instructions}\n`)
-    dependencies.outputConfirmation(`Wrote app security check instructions to ${options.writePath}`)
+/** Prints the instructions, or confirms in the terminal that they were copied or written. */
+export function renderAppSecurityInstructions(instructions: string, delivery: AppSecurityInstructionsDelivery): void {
+  if (delivery.copy) {
+    // No trailing period, like the write confirmation, whose file path a period would run into.
+    // eslint-disable-next-line @shopify/cli/banner-headline-format
+    renderSuccess({headline: 'Copied app security check instructions to the clipboard'})
+  } else if (delivery.writePath) {
+    renderSuccess({headline: `Wrote app security check instructions to ${delivery.writePath}`})
   } else {
-    dependencies.output(instructions)
+    outputResult(instructions)
   }
 }

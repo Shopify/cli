@@ -215,11 +215,18 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       }
     : undefined
 
+  const handleErrors = responseOptions?.handleErrors !== false
+
   const request = () =>
-    retryAwareRequest(
-      {request: rawGraphQLRequest, url, ...behaviour},
-      responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-    )
+    retryAwareRequest({request: rawGraphQLRequest, url, ...behaviour}, handleErrors ? errorHandler(api) : undefined)
+
+  // `retryAwareRequest` hands a 401 back raw so the token can be refreshed and the request repeated. Once that is
+  // settled, the error goes through the same handler as every other failed response: a raw graphql-request error
+  // carries the whole request, query text included, and would otherwise reach the user as a CLI bug.
+  const unauthorizedError = (error: unknown): unknown => {
+    if (!handleErrors || !(error instanceof ClientError) || error.response.status !== 401) return error
+    return errorHandler(api)(error, requestIdFromClientError(error))
+  }
 
   const executeWithTimer = () =>
     runWithTimer('cmd_all_timing_network_ms')(async () => {
@@ -229,12 +236,16 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       } catch (error) {
         if (error instanceof ClientError && error.response.status === 401 && tokenRefreshUnauthorizedHandlerFunction) {
           if (await tokenRefreshUnauthorizedHandlerFunction()) {
-            response = await request()
+            try {
+              response = await request()
+            } catch (retryError) {
+              throw unauthorizedError(retryError)
+            }
           } else {
-            throw error
+            throw unauthorizedError(error)
           }
         } else {
-          throw error
+          throw unauthorizedError(error)
         }
       }
 
@@ -272,6 +283,17 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   )
 
   return JSON.parse(result) as TResult
+}
+
+function requestIdFromClientError(error: ClientError): string | undefined {
+  try {
+    // graphql-request types the response without headers, but it carries the fetch Response's headers.
+    const headers = (error.response as {headers?: {get?: (name: string) => string | null}}).headers
+    return headers?.get?.('x-request-id') ?? undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
 }
 
 function graphQLCachePrincipalHash(url: string, token: string | undefined): string {

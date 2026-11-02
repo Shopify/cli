@@ -15,6 +15,7 @@ const DevSessionStaticMessages = {
 
 export interface DevSessionStatus {
   isReady: boolean
+  errors?: string[]
   previewURL?: string
   graphiqlURL?: string
   appEmbedded?: boolean
@@ -44,8 +45,10 @@ export class DevSessionStatusManager extends EventEmitter {
     this.emit('dev-session-update', newStatus)
   }
 
-  setMessage(message: keyof typeof DevSessionStaticMessages) {
-    this.updateStatus({statusMessage: DevSessionStaticMessages[message]})
+  setMessage(message: keyof typeof DevSessionStaticMessages, errors?: string[]) {
+    const statusMessage = DevSessionStaticMessages[message]
+    const nextErrors = statusMessage.type === 'success' ? [] : errors
+    this.updateStatus({statusMessage, ...(nextErrors ? {errors: nextErrors} : {})})
   }
 
   get status(): DevSessionStatus {

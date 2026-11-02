@@ -10,10 +10,10 @@ const ThemeCheckIssueSchema = zod
     filePath: zod.string().refine(isAbsolutePath).describe('The absolute native path of the file.'),
     check: zod.string(),
     severity: zod.enum(['error', 'warning', 'info']),
-    startRow: zod.number().int().nonnegative().describe('The zero-based starting line.'),
-    startColumn: zod.number().int().nonnegative().describe('The zero-based starting column.'),
-    endRow: zod.number().int().nonnegative().describe('The zero-based ending line.'),
-    endColumn: zod.number().int().nonnegative().describe('The zero-based ending column.'),
+    startRow: zod.number().int().positive().describe('The one-based starting line.'),
+    startColumn: zod.number().int().positive().describe('The one-based starting column.'),
+    endRow: zod.number().int().positive().describe('The one-based ending line.'),
+    endColumn: zod.number().int().positive().describe('The one-based ending column.'),
     message: zod.string(),
   })
   .strict()
@@ -46,6 +46,11 @@ export type ThemeCheckResult = {
   infoCount: number
 }[]
 
+// Theme Check reports line and character -1 for an offense it cannot place, such as one in an empty file.
+function oneBasedPosition(zeroBasedPosition: number): number {
+  return Math.max(zeroBasedPosition + 1, 1)
+}
+
 export const themeCheckJsonOutputSchema = defineThemeJsonOutputSchema({
   name: 'ThemeCheckResult',
   schema: ThemeCheckResultSchema,
@@ -61,10 +66,10 @@ export const themeCheckJsonOutputSchema = defineThemeJsonOutputSchema({
           filePath: resolvePath(file.path),
           check: offense.check,
           severity: offense.severity,
-          startRow: offense.start_row,
-          startColumn: offense.start_column,
-          endRow: offense.end_row,
-          endColumn: offense.end_column,
+          startRow: oneBasedPosition(offense.start_row),
+          startColumn: oneBasedPosition(offense.start_column),
+          endRow: oneBasedPosition(offense.end_row),
+          endColumn: oneBasedPosition(offense.end_column),
           message: offense.message,
         })),
       ),
