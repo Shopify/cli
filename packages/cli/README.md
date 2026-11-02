@@ -5546,8 +5546,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum confirmed finding severity that causes a non-zero exit code: high, medium, or low.
+      Defaults to none. Storefront unsafe-eval candidates require agent review before they can block.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -6464,8 +6464,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum confirmed finding severity that causes a non-zero exit code: high, medium, or low.
+      Defaults to none. Storefront unsafe-eval candidates require agent review before they can block.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
