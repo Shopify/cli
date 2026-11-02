@@ -47,7 +47,6 @@ export interface ExecOptions {
 interface BuildExecOptions {
   /** Whether to throw on non-zero exit codes (default: true). */
   reject?: boolean
-  signal?: AbortSignal
 }
 
 /**
@@ -147,18 +146,37 @@ export async function captureOutputWithExitCode(
   args: string[],
   options?: ExecOptions,
 ): Promise<CaptureOutputResult> {
-  const result = await buildExec(command, args, options, {reject: false, signal: options?.signal})
-  if (result.exitCode === undefined) {
-    throw new ExternalError(
-      result instanceof Error ? result.message : 'Command terminated without an exit code.',
-      command,
-      args,
-    )
+  const signal = options?.signal
+  if (signal?.aborted) throw new ExternalError('Command was cancelled.', command, args)
+
+  const commandProcess = buildExec(command, args, options, {reject: false})
+  let aborted = false
+  const onAbort = () => {
+    if (aborted) return
+    aborted = true
+    commandProcess.kill()
   }
-  return {
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode,
+
+  try {
+    signal?.addEventListener('abort', onAbort, {once: true})
+    if (signal?.aborted) onAbort()
+
+    const result = await commandProcess
+    if (aborted) throw new ExternalError('Command was cancelled.', command, args)
+    if (result.exitCode === undefined) {
+      throw new ExternalError(
+        result instanceof Error ? result.message : 'Command terminated without an exit code.',
+        command,
+        args,
+      )
+    }
+    return {
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+    }
+  } finally {
+    signal?.removeEventListener('abort', onAbort)
   }
 }
 
