@@ -26,7 +26,6 @@ import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/met
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import chalk from '@shopify/cli-kit/node/colors'
 import {withDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
-import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {Config} from '@oclif/core'
 
 import readline from 'readline'
@@ -58,8 +57,6 @@ interface DevOptions {
   only: string[]
   notify?: string
   listing?: string
-  /** Mirrors the session log records to stdout. */
-  json?: boolean
 }
 
 export async function dev(options: DevOptions) {
@@ -104,7 +101,6 @@ export async function dev(options: DevOptions) {
         themeName: options.theme.name,
         listing: options.listing,
       },
-      logOutput: options.json ? process.stdout : undefined,
     },
     async (instance) => {
       const controller = new AbortController()
@@ -226,8 +222,7 @@ async function runDev(options: DevOptions, instance: DevInstance, controller: Ab
     options.theme,
     ctx,
   )
-  // JSON mode has no keyboard shortcuts. Ctrl+C still stops dev through SIGINT.
-  const acceptsInput = commandEventOutputMode() !== 'json' && terminalSupportsPrompting()
+  const acceptsInput = terminalSupportsPrompting()
   const keypressHandler = createKeypressHandler(urls, ctx, () => controller.abort())
   const {promise: stopped, resolve: resolveStopped} = Promise.withResolvers<void>()
   const onAbort = () => resolveStopped()

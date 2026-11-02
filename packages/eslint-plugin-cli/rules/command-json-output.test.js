@@ -41,14 +41,14 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'allow-listed streaming command',
-      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
-      code: 'export default class Logs extends Command {}',
+      filename: '/repo/packages/app/src/cli/commands/app/dev.ts',
+      code: 'export default class Dev extends Command {}',
     },
     {
       name: 'omitted exceptions preserve the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/dev.ts',
       options: [{}],
-      code: 'export default class Logs extends Command {}',
+      code: 'export default class Dev extends Command {}',
     },
     {
       name: 'custom exception in another repository',
@@ -90,24 +90,18 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'custom exceptions replace the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/dev.ts',
       options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class Logs extends Command {}',
+      code: 'export default class Dev extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
       name: 'empty exceptions remove the streaming command exemption',
-      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/dev.ts',
       options: [{exceptions: []}],
-      code: 'export default class Logs extends Command {}',
-      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
-    },
-    ...['app/src/cli/commands/app/dev.ts', 'theme/src/cli/commands/theme/dev.ts'].map((path) => ({
-      name: `dev commands with JSON streams are not exempt: ${path}`,
-      filename: `/repo/packages/${path}`,
       code: 'export default class Dev extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
-    })),
+    },
     {
       name: 'custom exceptions do not leak into other configurations',
       filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev.ts',
@@ -126,8 +120,8 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'new subcommand of an allow-listed streaming command',
-      filename: '/repo/packages/app/src/cli/commands/app/logs/status.ts',
-      code: 'export default class LogsStatus extends Command {}',
+      filename: '/repo/packages/app/src/cli/commands/app/dev/status.ts',
+      code: 'export default class DevStatus extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {

@@ -1,13 +1,12 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {dev} from '../../services/dev.js'
-import {themeDevOutputSchema} from '../../services/dev/schema.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
 import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -46,15 +45,10 @@ Development themes are deleted when you run \`shopify auth logout\`. If you need
 
 You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).`
 
-  static get jsonOutputSchema() {
-    return themeDevOutputSchema
-  }
-
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
-    ...jsonFlag,
     ...themeFlags,
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
@@ -203,7 +197,6 @@ You can run this command only in a directory that matches the [default Shopify t
       ignore,
       only,
       notify: flags.notify,
-      json: flags.json,
     })
 
     await metafieldsPull({
@@ -215,10 +208,5 @@ You can run this command only in a directory that matches the [default Shopify t
       noColor: flags['no-color'],
       silent: true,
     })
-  }
-
-  // The JSON stream has no final result, so an environment never produces a batch result.
-  protected collectsEnvironmentResults(): boolean {
-    return false
   }
 }
