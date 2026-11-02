@@ -117,7 +117,10 @@
       "protobufjs",
       "unrs-resolver",
       "yarn"
-    ]
+    ],
+    "patchedDependencies": {
+      "when-exit@2.1.5": "patches/when-exit@2.1.5.patch"
+    }
   },
   "resolutions": {
     "@types/react": "18.3.12",

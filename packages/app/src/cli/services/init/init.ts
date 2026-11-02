@@ -1,5 +1,6 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './template/npm.js'
 import cleanup from './template/cleanup.js'
+import {InitResult} from './types.js'
 import link from '../app/config/link.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -13,7 +14,7 @@ import {
   UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -33,7 +34,6 @@ import {
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 interface InitOptions {
@@ -50,7 +50,7 @@ interface InitOptions {
   }
 }
 
-async function init(options: InitOptions) {
+async function init(options: InitOptions): Promise<InitResult> {
   const packageManager: PackageManager = options.packageManager
   const hyphenizedName = hyphenate(options.name)
   const outputDirectory = joinPath(options.directory, hyphenizedName)
@@ -249,32 +249,13 @@ async function init(options: InitOptions) {
     userProvidedConfigName: undefined,
   })
 
-  renderSuccess({
-    headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
-    nextSteps: [
-      ['Run', {command: `cd ${hyphenizedName}`}],
-      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'shopify app generate extension')}],
-      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'shopify app dev')}],
-    ],
-    reference: [
-      {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
-      [
-        {
-          link: {
-            label: 'Shopify Dev MCP,',
-            url: 'https://shopify.dev/docs/apps/build/devmcp',
-          },
-        },
-        'connect your AI assistant to development resources',
-      ],
-      [
-        'For an overview of commands, run',
-        {command: formatPackageManagerCommand(packageManager, 'shopify app', '--help')},
-      ],
-    ],
-  })
-
-  return {app: appContextResult.app}
+  return {
+    app: appContextResult.app,
+    remoteApp: app,
+    projectName: hyphenizedName,
+    packageManager,
+    template: options.template,
+  }
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {

@@ -35,6 +35,7 @@ vi.mock('../theme-uploader.js', async () => {
       return {
         workPromise: Promise.resolve(),
         uploadResults: new Map(),
+        hasChanges: false,
         renderThemeSyncProgress: () => Promise.resolve(),
       }
     }),
@@ -42,7 +43,12 @@ vi.mock('../theme-uploader.js', async () => {
 })
 beforeEach(() => {
   vi.mocked(uploadTheme).mockImplementation(() => {
-    return {workPromise: Promise.resolve(), uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()}
+    return {
+      workPromise: Promise.resolve(),
+      uploadResults: new Map(),
+      hasChanges: false,
+      renderThemeSyncProgress: () => Promise.resolve(),
+    }
   })
 })
 

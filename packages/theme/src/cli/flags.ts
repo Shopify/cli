@@ -2,7 +2,7 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath, cwd, dirname} from '@shopify/cli-kit/node/path'
 import {fileExistsSync, isDirectorySync} from '@shopify/cli-kit/node/fs'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * An object that contains the flags that
@@ -16,21 +16,17 @@ export const themeFlags = {
       const resolvedPath = resolvePath(input)
 
       if (!fileExistsSync(resolvedPath)) {
-        // We can't use AbortError because oclif catches it and adds its own
-        // messaging that breaks our UI
-        renderError({
-          headline: "A path was explicitly provided but doesn't exist.",
-          body: [`Please check the path and try again: ${resolvedPath}`],
-        })
-        return process.exit(1)
+        throw new AbortError(
+          "A path was explicitly provided but doesn't exist.",
+          `Please check the path and try again: ${resolvedPath}`,
+        )
       }
 
       if (!isDirectorySync(resolvedPath)) {
-        renderError({
-          headline: 'The path must be a directory, not a file.',
-          body: [`The provided path is not a directory: ${resolvedPath}`, `Did you mean: ${dirname(resolvedPath)}`],
-        })
-        return process.exit(1)
+        throw new AbortError(
+          'The path must be a directory, not a file.',
+          `The provided path is not a directory: ${resolvedPath}. Did you mean: ${dirname(resolvedPath)}`,
+        )
       }
 
       return resolvedPath

@@ -112,7 +112,7 @@ export class DevSessionLogger {
   // Helper function to print to terminal using output context with stripAnsi disabled.
   private async log(message: string, prefix?: string) {
     await useConcurrentOutputContext({outputPrefix: prefix ?? 'app-preview', stripAnsi: false}, () => {
-      this.stdout.write(message)
+      this.stdout.write(`${message}\n`)
     })
   }
 }

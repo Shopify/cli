@@ -29,27 +29,30 @@ All commands support the `--path` argument, so you can run any command pointing 
 
 ### Create a new app from scratch
 
-If you want to quickly test creating an app from scratch, you can run `bin/create-test-app.js`. It will:
+Run these commands from the CLI repository root to build the local CLI and create an app in `../test-app`:
 
-- create a new app on your Desktop
-- create a UI extension (product subscription)
-- create a theme app extension
-- create a function (product discount in TypeScript)
+```bash
+pnpm nx build cli
+pnpm create-app --local --name test-app --path .. --template reactRouter --flavor javascript
+```
 
-You can also pass these optional flags:
-- `-e <extensions>` to choose which extensions you want (`ui`, `theme`, or `function`)
-- `--deploy` to deploy your app to Shopify
-- `--cleanup` to remove the app directory afterwards
+To add extensions, run this command once for each extension. Select a UI extension, theme app extension, or function from the prompts:
 
-If you want to interact with it, you can `cd` into the directory and run the CLI through the scripts in the `package.json`:
+```bash
+pnpm shopify app generate extension --path ../test-app
+```
 
-| Command | **PNPM** |
-| ---- | ---- |
-| shopify | `pnpm shopify` |
-| build | `pnpm build` |
-| dev | `pnpm dev` |
-| test | `pnpm test` |
-| generate | `pnpm generate` |
+Start the development server and follow the prompts to select a development store:
+
+```bash
+pnpm shopify app dev --path ../test-app
+```
+
+To deploy the app, run:
+
+```bash
+pnpm shopify app deploy --path ../test-app
+```
 
 ### Create a new theme from scratch
 

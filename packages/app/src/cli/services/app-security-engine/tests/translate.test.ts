@@ -125,6 +125,88 @@ describe('translateFindingsDocument', () => {
     ])
   })
 
+  test.each([
+    ['a zero finding line', 'deterministic', 'checks.0.findings.0.location.line', 0, 'Number must be greater than 0'],
+    [
+      'a fractional finding line',
+      'agent',
+      'checks.0.findings.0.location.line',
+      1.5,
+      'Expected integer, received float',
+    ],
+    [
+      'a zero finding column',
+      'deterministic',
+      'checks.0.findings.0.location.column',
+      0,
+      'Number must be greater than 0',
+    ],
+    [
+      'a negative evidence line',
+      'agent',
+      'checks.0.findings.0.evidence.0.location.line',
+      -3,
+      'Number must be greater than 0',
+    ],
+    [
+      'a fractional evidence column',
+      'deterministic',
+      'checks.0.findings.0.evidence.0.location.column',
+      2.5,
+      'Expected integer, received float',
+    ],
+    ['a docs_url that is not a URL', 'agent', 'checks.0.snapshot.docs_url', 'credential-log-leakage', 'Invalid url'],
+    ['a zero check version', 'agent', 'checks.0.version', 0, 'Number must be greater than 0'],
+    ['a fractional check version', 'deterministic', 'checks.0.version', 1.5, 'Expected integer, received float'],
+    [
+      'a negative scanned file count',
+      'deterministic',
+      'coverage.files_scanned',
+      -1,
+      'Number must be greater than or equal to 0',
+    ],
+    [
+      'a fractional scanned file count',
+      'deterministic',
+      'coverage.files_scanned',
+      2.5,
+      'Expected integer, received float',
+    ],
+    [
+      'a negative skipped file size',
+      'deterministic',
+      'coverage.files_skipped.0.size_bytes',
+      -1,
+      'Number must be greater than or equal to 0',
+    ],
+    [
+      'a fractional skipped file size',
+      'deterministic',
+      'coverage.files_skipped.0.size_bytes',
+      0.5,
+      'Expected integer, received float',
+    ],
+  ] as const)('rejects %s (%s document) with its path', (_description, source, path, value, message) => {
+    const document = asJson(source === 'deterministic' ? deterministicFindingsDocument : agentFindingsDocument)
+    const keys = path.split('.')
+    const parent = keys.slice(0, -1).reduce<any>((node, key) => node[key], document)
+    parent[keys.at(-1)!] = value
+
+    const errorPath = path.replace(/\.(\d+)/g, '[$1]')
+    expect(translateInvalid(document)).toEqual([`${errorPath}: ${message}`])
+  })
+
+  test('accepts the smallest line, column, version, count and size that the CLI writes', () => {
+    const document = asJson(deterministicFindingsDocument) as Record<string, any>
+    document.checks[0].version = 1
+    document.checks[0].findings[0].location = {file: 'app/routes/orders.tsx', line: 1, column: 1}
+    document.checks[0].findings[0].evidence[0].location = {file: 'app/routes/orders.tsx', line: 1, column: 1}
+    document.coverage.files_scanned = 0
+    document.coverage.files_skipped[0].size_bytes = 0
+
+    expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+  })
+
   test('rejects a document that records the same check id twice', () => {
     const document = asJson(deterministicFindingsDocument) as Record<string, any>
     const [first, second] = document.checks

@@ -11,10 +11,11 @@ import {
   renderAutocompletePrompt,
   renderTextPrompt,
   renderDangerousConfirmationPrompt,
+  renderTable,
   Task,
 } from './ui.js'
 import {AbortSignal} from './abort.js'
-import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
+import {BugError, FatalError, AbortError, AbortSilentError} from './error.js'
 import {renderCommandEventAsJson, runWithCommandEvents, runWithCommandEventsForCommand} from './command-events.js'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
 import {outputResult, TokenizedString, unstyled} from './output.js'
@@ -23,6 +24,8 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
 
 import {Writable} from 'stream'
+import {EventEmitter} from 'events'
+import {setImmediate} from 'timers/promises'
 import type {RenderOptions} from 'ink'
 
 vi.mock('supports-hyperlinks')
@@ -180,6 +183,67 @@ describe('renderInfo', async () => {
       [2] https://shopify.com
       "
     `)
+  })
+})
+
+describe('renderTable', async () => {
+  const rows = [
+    {
+      subdomain: 'parimi-photography-dev-test-store',
+      name: 'Parimi photography dev test store',
+      type: 'Dev',
+      plan: 'Plus',
+      created: 'Apr 01, 2026',
+    },
+  ]
+  const columns = {
+    subdomain: {header: 'Subdomain'},
+    name: {header: 'Name'},
+    type: {header: 'Type'},
+    plan: {header: 'Plan'},
+    created: {header: 'Created'},
+  }
+
+  test('gives a table wider than 80 columns the room it needs when the output is not a terminal', async () => {
+    // Given: piped output has no column count.
+    const mockOutput = mockAndCaptureOutput()
+    const stdoutColumns = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
+    Object.defineProperty(process.stdout, 'columns', {value: undefined, configurable: true})
+
+    try {
+      // When
+      renderTable({rows, columns})
+    } finally {
+      if (stdoutColumns) Object.defineProperty(process.stdout, 'columns', stdoutColumns)
+      else delete (process.stdout as {columns?: number}).columns
+    }
+
+    // Then: one line per row, with every header and cell whole.
+    expect(unstyled(mockOutput.info())).toMatchInlineSnapshot(`
+      "Subdomain                          Name                               Type  Plan  Created
+      ─────────────────────────────────  ─────────────────────────────────  ────  ────  ────────────
+      parimi-photography-dev-test-store  Parimi photography dev test store  Dev   Plus  Apr 01, 2026"
+    `)
+  })
+
+  test("keeps a terminal's own width", async () => {
+    // Given: a terminal 80 columns wide.
+    const mockOutput = mockAndCaptureOutput()
+    const stdoutColumns = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
+    Object.defineProperty(process.stdout, 'columns', {value: 80, configurable: true})
+
+    try {
+      // When
+      renderTable({rows, columns})
+    } finally {
+      if (stdoutColumns) Object.defineProperty(process.stdout, 'columns', stdoutColumns)
+      else delete (process.stdout as {columns?: number}).columns
+    }
+
+    // Then: Ink fits the table to the terminal, as before.
+    const lines = unstyled(mockOutput.info()).split('\n')
+    expect(Math.max(...lines.map((line) => line.length))).toBeLessThanOrEqual(80)
+    expect(lines.length).toBeGreaterThan(3)
   })
 })
 
@@ -744,54 +808,131 @@ describe('renderTasks', async () => {
   })
 })
 
-describe('keypress', async () => {
-  test('waits for a keypress, managing stdin', async () => {
-    let registeredListener: any
-    const mockStdin = {
-      setRawMode: vi.fn(),
-      once: (event: string, callback: any) => {
-        registeredListener = callback
-      },
-      ref: vi.fn(),
-      unref: vi.fn(),
-    } as any
-
-    const promise = keypress(mockStdin, {skipTTYCheck: true})
-    expect(mockStdin.ref).toBeCalled()
-    expect(mockStdin.setRawMode).toHaveBeenLastCalledWith(true)
-    // create a buffer representing pressing the enter key
-    registeredListener(Buffer.from([13]))
-
-    await promise
-    expect(mockStdin.unref).toBeCalled()
-    expect(mockStdin.setRawMode).toHaveBeenLastCalledWith(false)
+class FakeStdin extends EventEmitter {
+  isRaw: boolean
+  setRawMode = vi.fn((mode: boolean) => {
+    this.isRaw = mode
+    return this
   })
 
-  test('rejects if sent ctrl+c', async () => {
-    let registeredListener: any
-    const mockStdin = {
-      setRawMode: vi.fn(),
-      once: (event: string, callback: any) => {
-        registeredListener = callback
-      },
-      ref: vi.fn(),
-      unref: vi.fn(),
-    } as any
+  ref = vi.fn(() => this)
+  unref = vi.fn(() => this)
 
-    const promise = keypress(mockStdin, {skipTTYCheck: true})
+  constructor({isRaw}: {isRaw: boolean}) {
+    super()
+    this.isRaw = isRaw
+  }
 
-    // create a buffer representing pressing ctrl+c
-    registeredListener(Buffer.from([3]))
+  press(key: string): void {
+    this.emit('data', Buffer.from(key))
+  }
 
-    let rejected = false
-    try {
-      await promise
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (rejection: any) {
-      expect(rejection.type).toEqual(FatalErrorType.AbortSilent)
-      rejected = true
-    }
-    expect(rejected).toEqual(true)
+  // An active Ink renderer calls `setEncoding('utf8')`, and then stdin emits strings.
+  pressEncoded(key: string): void {
+    this.emit('data', key)
+  }
+
+  asStdin(): typeof process.stdin {
+    return this as unknown as typeof process.stdin
+  }
+}
+
+describe('keypress', async () => {
+  const enterKeys = {keys: ['\r', '\n', ' ']}
+
+  test('resolves on any key when no keys are given', async () => {
+    const stdin = new FakeStdin({isRaw: false})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true})
+
+    stdin.press('x')
+
+    await expect(promise).resolves.toBeUndefined()
+  })
+
+  test.each([
+    ['a carriage return', '\r'],
+    ['a line feed', '\n'],
+    ['a space', ' '],
+    ['a multi-character chunk that contains an accepted key', 'ab\r'],
+  ])('resolves on %s when it is an accepted key', async (_name, key) => {
+    const stdin = new FakeStdin({isRaw: false})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true}, enterKeys)
+
+    stdin.press(key)
+
+    await expect(promise).resolves.toBeUndefined()
+  })
+
+  test('ignores keys that are not accepted', async () => {
+    const stdin = new FakeStdin({isRaw: false})
+    const settled = vi.fn()
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true}, enterKeys).then(settled)
+
+    stdin.press('t')
+    stdin.pressEncoded('p')
+    await setImmediate()
+    expect(settled).not.toHaveBeenCalled()
+
+    stdin.press('\r')
+
+    await expect(promise).resolves.toBeUndefined()
+  })
+
+  test('resolves when an accepted key arrives as a string chunk', async () => {
+    const stdin = new FakeStdin({isRaw: true})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true}, enterKeys)
+
+    stdin.pressEncoded('\r')
+
+    await expect(promise).resolves.toBeUndefined()
+  })
+
+  test.each([
+    ['a Buffer', (stdin: FakeStdin) => stdin.press('\u0003')],
+    ['a string chunk', (stdin: FakeStdin) => stdin.pressEncoded('\u0003')],
+  ])('rejects with AbortSilentError when Ctrl+C arrives as %s', async (_name, pressCtrlC) => {
+    const stdin = new FakeStdin({isRaw: false})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true}, enterKeys)
+
+    pressCtrlC(stdin)
+
+    await expect(promise).rejects.toBeInstanceOf(AbortSilentError)
+    expect(stdin.listenerCount('data')).toBe(0)
+  })
+
+  test('turns raw mode on while it waits and off afterwards when stdin was not raw', async () => {
+    const stdin = new FakeStdin({isRaw: false})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true})
+
+    expect(stdin.setRawMode).toHaveBeenLastCalledWith(true)
+    stdin.press('\r')
+    await promise
+
+    expect(stdin.setRawMode).toHaveBeenLastCalledWith(false)
+  })
+
+  test('leaves raw mode on when stdin was already raw', async () => {
+    const stdin = new FakeStdin({isRaw: true})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true})
+
+    stdin.press('\r')
+    await promise
+
+    expect(stdin.setRawMode).not.toHaveBeenCalled()
+    expect(stdin.isRaw).toBe(true)
+  })
+
+  test('stops listening to stdin and unrefs it once settled', async () => {
+    const stdin = new FakeStdin({isRaw: false})
+    const promise = keypress(stdin.asStdin(), {skipTTYCheck: true})
+
+    expect(stdin.ref).toHaveBeenCalledTimes(1)
+    expect(stdin.listenerCount('data')).toBe(1)
+    stdin.press('\r')
+    await promise
+
+    expect(stdin.listenerCount('data')).toBe(0)
+    expect(stdin.unref).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -935,7 +1076,8 @@ describe('renderSingleTask', async () => {
         onAbort,
         task: async () => {
           expect(process.listenerCount('SIGINT')).toBe(listeners.length + 1)
-          process.emit('SIGINT')
+          // Invoke the task's once listener without triggering unrelated Ink signal handlers.
+          process.rawListeners('SIGINT').at(-1)?.()
           expect(onAbort).toHaveBeenCalledOnce()
           expect(process.listeners('SIGINT')).toEqual(listeners)
         },
@@ -952,7 +1094,7 @@ describe('renderSingleTask', async () => {
     const onAbort = vi.fn()
     const error = new Error('Cancelled')
     const task = vi.fn(async () => {
-      process.emit('SIGINT')
+      process.rawListeners('SIGINT').at(-1)?.()
       throw error
     })
 

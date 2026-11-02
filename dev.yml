@@ -2,7 +2,7 @@ name: cli
 
 up:
   - node:
-      version: 26.1.0
+      version: 26.12.1
       package_manager: pnpm@10.11.1
   - packages:
     - jq

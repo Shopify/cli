@@ -3,7 +3,7 @@ import {environmentVariables, systemEnvironmentVariables} from '../../private/no
 import {describe, expect, test, beforeEach} from 'vitest'
 
 beforeEach(() => {
-  delete process.env[environmentVariables.organizationAutomationToken]
+  delete process.env[environmentVariables.serviceAccountToken]
   delete process.env[environmentVariables.appAutomationToken]
   delete process.env[environmentVariables.partnersToken]
   delete process.env[systemEnvironmentVariables.backendPort]
@@ -34,14 +34,14 @@ describe('getAppAutomationToken', () => {
     expect(getAppAutomationToken()).toBeUndefined()
   })
 
-  test('returns SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN when set', () => {
-    process.env[environmentVariables.organizationAutomationToken] = 'org-token'
+  test('returns SHOPIFY_SERVICE_ACCOUNT_TOKEN when set', () => {
+    process.env[environmentVariables.serviceAccountToken] = 'service-account-token'
 
-    expect(getAppAutomationToken()).toBe('org-token')
+    expect(getAppAutomationToken()).toBe('service-account-token')
   })
 
-  test('returns undefined when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set together with another variable', () => {
-    process.env[environmentVariables.organizationAutomationToken] = 'org-token'
+  test('returns undefined when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set together with another variable', () => {
+    process.env[environmentVariables.serviceAccountToken] = 'service-account-token'
     process.env[environmentVariables.appAutomationToken] = 'new-token'
 
     expect(getAppAutomationToken()).toBeUndefined()

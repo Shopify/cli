@@ -1,9 +1,12 @@
 import * as system from './system.js'
+import {cwd, joinPath} from './path.js'
+import {chmod, inTemporaryDirectory, writeFileSync} from './fs.js'
 import {execa} from 'execa'
 import open from 'open'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
-import {Readable} from 'stream'
+import {Readable, Writable} from 'stream'
+import {EventEmitter} from 'events'
 
 import * as fs from 'fs'
 
@@ -41,10 +44,59 @@ test('openURL does not launch a browser when input is disabled', async () => {
   }
 })
 
+describe('openURL', () => {
+  function fakeChildProcess() {
+    return new EventEmitter() as unknown as Awaited<ReturnType<typeof open>>
+  }
+
+  test('returns true when the browser launcher starts', async () => {
+    // Given
+    const subprocess = fakeChildProcess()
+    vi.mocked(open).mockImplementation(async () => {
+      setImmediate(() => subprocess.emit('spawn'))
+      return subprocess
+    })
+
+    // When
+    const got = await system.openURL('https://shopify.dev')
+
+    // Then
+    expect(got).toBe(true)
+    expect(open).toHaveBeenCalledWith('https://shopify.dev')
+  })
+
+  test('returns false instead of crashing when the browser launcher is missing', async () => {
+    // Given
+    const subprocess = fakeChildProcess()
+    vi.mocked(open).mockImplementation(async () => {
+      setImmediate(() => subprocess.emit('error', new Error('spawn xdg-open ENOENT')))
+      return subprocess
+    })
+
+    // When
+    const got = await system.openURL('https://shopify.dev')
+
+    // Then
+    expect(got).toBe(false)
+    // A later error must not be thrown as an unhandled 'error' event
+    expect(() => subprocess.emit('error', new Error('late failure'))).not.toThrow()
+  })
+
+  test('returns false when open rejects', async () => {
+    // Given
+    vi.mocked(open).mockRejectedValue(new Error('unsupported platform'))
+
+    // When
+    const got = await system.openURL('https://shopify.dev')
+
+    // Then
+    expect(got).toBe(false)
+  })
+})
+
 describe('captureOutput', () => {
   test('runs the command when it is not found in the current directory', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/command')
     vi.mocked(execa).mockResolvedValueOnce({stdout: undefined} as any)
 
     // When
@@ -64,12 +116,129 @@ describe('captureOutput', () => {
     // Then
     await expect(got).rejects.toThrowError('Skipped run of unsecure binary command found in the current directory.')
   })
+
+  test('looks for the command as a file in the current directory', async () => {
+    // Given
+    vi.mocked(execa).mockResolvedValueOnce({stdout: ''} as any)
+
+    // When
+    await system.captureOutput('command', [], {cwd: '/currentDirectory'})
+
+    // Then
+    expect(which.sync).toHaveBeenCalledWith('/currentDirectory/command', {nothrow: true})
+  })
+
+  test('runs a command from PATH when a relative current directory has no matching executable', async () => {
+    await inTemporaryDirectory(async (pathDirectory) => {
+      // Given
+      const executable = joinPath(pathDirectory, process.platform === 'win32' ? 'path-command.cmd' : 'path-command')
+      writeFileSync(executable, '#!/bin/sh\n')
+      await chmod(executable, 0o755)
+      const actualWhich = (await vi.importActual<{default: typeof which}>('which')).default
+      vi.mocked(which.sync).mockImplementation(actualWhich.sync)
+      vi.stubEnv('PATH', pathDirectory)
+      vi.mocked(execa).mockResolvedValueOnce({stdout: ''} as any)
+
+      try {
+        // When
+        await system.captureOutput('path-command', [], {cwd: '.'})
+
+        // Then
+        expect(execa).toHaveBeenCalledWith('path-command', [], expect.objectContaining({cwd: '.'}))
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test.each(['./build.sh', '.\\build.cmd', '/usr/bin/command'])(
+    'runs a command given as a path without checking the current directory: %s',
+    async (command) => {
+      // Given
+      vi.mocked(execa).mockResolvedValueOnce({stdout: ''} as any)
+
+      // When
+      await system.captureOutput(command, [], {cwd: '/currentDirectory'})
+
+      // Then
+      expect(which.sync).not.toHaveBeenCalled()
+      expect(execa).toHaveBeenCalledWith(command, [], expect.objectContaining({cwd: '/currentDirectory'}))
+    },
+  )
 })
 
 describe('captureOutputWithExitCode', () => {
+  test.each([0, 1])('preserves final newlines when requested with exit code %s', async (exitCode) => {
+    const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+    vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+    const stdout: Buffer[] = []
+    const stderr: Buffer[] = []
+    const collect = (chunks: Buffer[]) =>
+      new Writable({
+        write(chunk: Buffer, _encoding, callback) {
+          chunks.push(chunk)
+          callback()
+        },
+      })
+    const result = await system.captureOutputWithExitCode(
+      process.execPath,
+      [
+        '-e',
+        `process.stdout.write('Output\\n\\n'); process.stderr.write('Diagnostic\\r\\n'); process.exitCode = ${exitCode}`,
+      ],
+      {stripFinalNewline: false, stdout: collect(stdout), stderr: collect(stderr)},
+    )
+
+    expect(result).toEqual({stdout: 'Output\n\n', stderr: 'Diagnostic\r\n', exitCode})
+    expect(Buffer.concat(stdout).toString()).toBe('Output\n\n')
+    expect(Buffer.concat(stderr).toString()).toBe('Diagnostic\r\n')
+  })
+
+  test.each(['captureOutput', 'captureOutputWithExitCode', 'captureCommandWithExitCode'] as const)(
+    'strips the final newline by default with %s',
+    async (capture) => {
+      const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+      vi.mocked(execa).mockImplementationOnce(actualExeca)
+      const script = "process.stdout.write('Output\\n'); process.stderr.write('Diagnostic\\r\\n')"
+
+      if (capture === 'captureOutput') {
+        await expect(system.captureOutput(process.execPath, ['-e', script])).resolves.toBe('Output')
+      } else {
+        const result =
+          capture === 'captureCommandWithExitCode'
+            ? await system.captureCommandWithExitCode(`"${process.execPath}" -e "${script}"`)
+            : await system.captureOutputWithExitCode(process.execPath, ['-e', script])
+        expect(result).toEqual({stdout: 'Output', stderr: 'Diagnostic', exitCode: 0})
+      }
+    },
+  )
+
+  test('rejects a missing working directory instead of returning exit code zero', async () => {
+    const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+    vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+    await inTemporaryDirectory(async (directory) => {
+      await expect(
+        system.captureOutputWithExitCode(process.execPath, [], {cwd: joinPath(directory, 'missing')}),
+      ).rejects.toThrow('ENOENT')
+    })
+  })
+
+  test.runIf(process.platform !== 'win32')(
+    'rejects signal termination instead of returning exit code zero',
+    async () => {
+      const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+      vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+      await expect(
+        system.captureOutputWithExitCode(process.execPath, ['-e', "process.kill(process.pid, 'SIGTERM')"]),
+      ).rejects.toThrow('SIGTERM')
+    },
+  )
+
   test('returns stdout, stderr, and exitCode on success', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/command')
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'output', stderr: '', exitCode: 0} as any)
 
     // When
@@ -81,7 +250,6 @@ describe('captureOutputWithExitCode', () => {
 
   test('returns non-zero exit code without throwing', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/command')
     vi.mocked(execa).mockResolvedValueOnce({stdout: '', stderr: 'error message', exitCode: 1} as any)
 
     // When
@@ -106,7 +274,6 @@ describe('captureOutputWithExitCode', () => {
 describe('captureCommandWithExitCode', () => {
   test('returns stdout, stderr, and exitCode on success', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/echo')
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'hello', stderr: '', exitCode: 0} as any)
 
     // When
@@ -119,7 +286,6 @@ describe('captureCommandWithExitCode', () => {
 
   test('returns non-zero exit code without throwing', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/exit')
     vi.mocked(execa).mockResolvedValueOnce({stdout: '', stderr: 'command failed', exitCode: 1} as any)
 
     // When
@@ -131,7 +297,6 @@ describe('captureCommandWithExitCode', () => {
 
   test('handles command with spaces in arguments (quoted strings)', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/ls')
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'found', stderr: '', exitCode: 0} as any)
 
     // When
@@ -145,7 +310,6 @@ describe('captureCommandWithExitCode', () => {
 
   test('handles shopify theme push with quoted theme name', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/shopify')
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'success', stderr: '', exitCode: 0} as any)
 
     // When
@@ -163,7 +327,6 @@ describe('captureCommandWithExitCode', () => {
 
   test('handles single-quoted strings', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/echo')
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'hello world', stderr: '', exitCode: 0} as any)
 
     // When
@@ -176,7 +339,6 @@ describe('captureCommandWithExitCode', () => {
 
   test('uses provided cwd option', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/ls')
     vi.mocked(execa).mockResolvedValueOnce({stdout: '', stderr: '', exitCode: 0} as any)
 
     // When
@@ -188,7 +350,6 @@ describe('captureCommandWithExitCode', () => {
 
   test('merges custom env with process.env', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/env')
     vi.mocked(execa).mockResolvedValueOnce({stdout: '', stderr: '', exitCode: 0} as any)
 
     // When
@@ -204,16 +365,10 @@ describe('captureCommandWithExitCode', () => {
     )
   })
 
-  test('defaults exitCode to 0 when undefined', async () => {
-    // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/cmd')
+  test('rejects when the command terminates without an exit code', async () => {
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'out', stderr: '', exitCode: undefined} as any)
 
-    // When
-    const got = await system.captureCommandWithExitCode('cmd')
-
-    // Then
-    expect(got.exitCode).toBe(0)
+    await expect(system.captureCommandWithExitCode('cmd')).rejects.toThrow('Command terminated without an exit code.')
   })
 
   test('raises an error if the command to run is found in the current directory', async () => {
@@ -231,7 +386,6 @@ describe('captureCommandWithExitCode', () => {
 describe('execCommand', () => {
   test('runs command successfully without throwing', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/echo')
     vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When/Then
@@ -242,7 +396,6 @@ describe('execCommand', () => {
   test('throws ExternalError on command failure', async () => {
     // Given
     const error = new Error('command not found')
-    vi.mocked(which.sync).mockReturnValueOnce('/system/nonexistent')
     vi.mocked(execa).mockRejectedValueOnce(error)
 
     // When/Then
@@ -252,7 +405,6 @@ describe('execCommand', () => {
   test('calls custom error handler when provided', async () => {
     // Given
     const error = new Error('custom error')
-    vi.mocked(which.sync).mockReturnValueOnce('/system/failing')
     vi.mocked(execa).mockRejectedValueOnce(error)
     const customHandler = vi.fn()
 
@@ -265,7 +417,6 @@ describe('execCommand', () => {
 
   test('handles command with spaces in arguments (quoted strings)', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/touch')
     vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
@@ -279,7 +430,6 @@ describe('execCommand', () => {
 
   test('uses provided cwd option', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/pwd')
     vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
@@ -291,7 +441,6 @@ describe('execCommand', () => {
 
   test('passes stdin option to execa', async () => {
     // Given
-    vi.mocked(which.sync).mockReturnValueOnce('/system/cat')
     vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
@@ -305,7 +454,6 @@ describe('execCommand', () => {
     'pipes input to a background process while ignoring its output',
     async () => {
       // Given
-      vi.mocked(which.sync).mockReturnValueOnce('/system/cat')
       const unref = vi.fn()
       const childProcess = Object.assign(Promise.resolve({}), {unref})
       vi.mocked(execa).mockReturnValueOnce(childProcess as any)
@@ -339,7 +487,6 @@ describe('execCommand', () => {
     // Whatever token the safety check approves must be exactly what execa launches.
     // Previously, parseCommand() could approve one token while execaCommand() launched
     // a different one (e.g. via backslash-escaped spaces), bypassing checkCommandSafety.
-    vi.mocked(which.sync).mockReturnValueOnce('/system/some-binary')
     vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
@@ -348,7 +495,7 @@ describe('execCommand', () => {
     // Then
     const checkedCommand = vi.mocked(which.sync).mock.calls[0]?.[0]
     const launchedCommand = vi.mocked(execa).mock.calls[0]?.[0]
-    expect(launchedCommand).toBe(checkedCommand)
+    expect(checkedCommand).toBe(joinPath(cwd(), launchedCommand ?? ''))
   })
 })
 

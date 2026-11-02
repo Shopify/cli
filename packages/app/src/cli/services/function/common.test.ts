@@ -16,7 +16,7 @@ import {describe, vi, expect, beforeEach, test} from 'vitest'
 import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import type {Project} from '../../models/project/project.js'
 import type {ActiveConfig} from '../../models/project/active-config.js'
 
@@ -81,8 +81,10 @@ describe('getOrGenerateSchemaPath', () => {
       } as ExtensionInstance<FunctionConfigType>
       const expectedPath = joinPath(extension.directory, 'schema.graphql')
 
-      vi.mocked(generateSchemaService).mockImplementation(async ({extension}) => {
-        await writeFile(joinPath(extension.directory, 'schema.graphql'), '')
+      vi.mocked(generateSchemaService).mockResolvedValue({
+        definition: 'schema definition',
+        path: expectedPath,
+        localIdentifier: 'my-function',
       })
 
       // When
@@ -91,6 +93,7 @@ describe('getOrGenerateSchemaPath', () => {
 
       // Then
       expect(result).toBe(expectedPath)
+      await expect(readFile(expectedPath)).resolves.toBe('schema definition')
     })
   })
 })

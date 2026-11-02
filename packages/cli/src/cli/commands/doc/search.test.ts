@@ -1,5 +1,6 @@
 import DocSearch from './search.js'
 import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
+import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -35,8 +36,8 @@ describeJsonCommand({
   expectedSchema: {
     type: 'object',
     properties: {
-      results: {type: 'array', items: {properties: {domain: {type: ['string', 'null']}}}},
-      pageInfo: {properties: {hasNextPage: {type: ['boolean', 'null']}}},
+      results: {type: 'array', items: {$ref: '#/definitions/DocumentationSearchEntry'}},
+      pageInfo: {$ref: '#/definitions/PageInfo'},
     },
     required: ['results', 'pageInfo'],
     additionalProperties: false,
@@ -163,6 +164,19 @@ describe('doc search command', () => {
         },
       })
       expect(stderr()).toBe('')
+    })
+  })
+
+  test('names the nested search schemas in the launcher schema', async () => {
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await launchCLI({
+        moduleURL: import.meta.url,
+        argv: ['doc', 'search', '--json-schema'],
+        lazyCommandLoader: async () => DocSearch,
+      })
+      const schema = JSON.parse(stdout())
+      expect(schema.definitions.DocumentationSearchEntry.properties.domain.type).toEqual(['string', 'null'])
+      expect(schema.definitions.PageInfo.properties.hasNextPage.type).toEqual(['boolean', 'null'])
     })
   })
 })

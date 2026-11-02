@@ -1,15 +1,6 @@
-import {
-  BackgroundExecutionReason,
-  FunctionRunLog,
-  NetworkAccessRequestExecutedLog,
-  NetworkAccessRequestExecutionInBackgroundLog,
-  NetworkAccessResponseFromCacheLog,
-  ErrorResponse,
-  AppLogData,
-} from './types.js'
+import {FunctionRunLog, ErrorResponse, AppLogData} from './types.js'
 import camelcaseKeys from './camelcase-keys.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppInterface} from '../../models/app/app.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -19,7 +10,7 @@ import {Writable} from 'stream'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
-export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
+const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
 export const MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES = 5
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
@@ -29,68 +20,6 @@ export const LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND = 'function_network_access
 export const LOG_TYPE_REQUEST_EXECUTION = 'function_network_access.request_execution'
 export const REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON = 'no_cached_response'
 export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cached_response_about_to_expire'
-
-export function parseFunctionRunPayload(payload: string): FunctionRunLog {
-  const parsedPayload = JSON.parse(payload)
-
-  const parsedIqvValue =
-    parsedPayload.input_query_variables_metafield_value &&
-    parseJson(parsedPayload.input_query_variables_metafield_value)
-
-  return new FunctionRunLog({
-    export: parsedPayload.export,
-    input: parsedPayload.input,
-    inputBytes: parsedPayload.input_bytes,
-    output: parsedPayload.output,
-    outputBytes: parsedPayload.output_bytes,
-    logs: parsedPayload.logs,
-    functionId: parsedPayload.function_id,
-    fuelConsumed: parsedPayload.fuel_consumed,
-    target: parsedPayload.target,
-    errorMessage: parsedPayload.error_message,
-    errorType: parsedPayload.error_type,
-    inputQueryVariablesMetafieldValue: parsedIqvValue,
-    inputQueryVariablesMetafieldNamespace: parsedPayload.input_query_variables_metafield_namespace,
-    inputQueryVariablesMetafieldKey: parsedPayload.input_query_variables_metafield_key,
-  })
-}
-
-export function parseNetworkAccessResponseFromCachePayload(payload: string): NetworkAccessResponseFromCacheLog {
-  const parsedPayload = JSON.parse(payload)
-  return new NetworkAccessResponseFromCacheLog({
-    cacheEntryEpochMs: parsedPayload.cache_entry_epoch_ms,
-    cacheTtlMs: parsedPayload.cache_ttl_ms,
-    httpRequest: parsedPayload.http_request,
-    httpResponse: parsedPayload.http_response,
-  })
-}
-
-const reasonStringToEnum: {[key: string]: BackgroundExecutionReason} = {
-  no_cached_response: BackgroundExecutionReason.NoCachedResponse,
-  cached_response_about_to_expire: BackgroundExecutionReason.CacheAboutToExpire,
-}
-
-export function parseNetworkAccessRequestExecutionInBackgroundPayload(
-  payload: string,
-): NetworkAccessRequestExecutionInBackgroundLog {
-  const parsedPayload = JSON.parse(payload)
-  return new NetworkAccessRequestExecutionInBackgroundLog({
-    reason: reasonStringToEnum[parsedPayload.reason] ?? BackgroundExecutionReason.Unknown,
-    httpRequest: parsedPayload.http_request,
-  })
-}
-
-export function parseNetworkAccessRequestExecutedPayload(payload: string): NetworkAccessRequestExecutedLog {
-  const parsedPayload = JSON.parse(payload)
-  return new NetworkAccessRequestExecutedLog({
-    attempt: parsedPayload.attempt,
-    connectTimeMs: parsedPayload.connect_time_ms ?? null,
-    writeReadTimeMs: parsedPayload.write_read_time_ms ?? null,
-    httpRequest: parsedPayload.http_request,
-    httpResponse: parsedPayload.http_response ?? null,
-    error: parsedPayload.error ?? null,
-  })
-}
 
 interface FetchAppLogsErrorOptions {
   response: ErrorResponse
@@ -145,12 +74,6 @@ export const handleFetchAppLogsError = async (
   return {retryIntervalMs, nextJwtToken, resubscribeResult}
 }
 
-export function sourcesForApp(app: AppInterface): string[] {
-  return app.allExtensions.flatMap((extension) => {
-    return extension.isFunctionExtension ? [`extensions.${extension.configuration.handle}`] : []
-  })
-}
-
 export const toFormattedAppLogJson = ({
   appLog,
   appLogPayload,
@@ -185,23 +108,6 @@ export const toFormattedAppLogJson = ({
     return JSON.stringify(toSaveData, null, 2)
   } else {
     return JSON.stringify(toSaveData)
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const parseAppLogPayload = (payload: string, logType: string): any => {
-  const parsedPayload = camelcaseKeys(JSON.parse(payload))
-
-  if (logType === LOG_TYPE_FUNCTION_RUN) {
-    return new FunctionRunLog(parsedPayload)
-  } else if (logType === LOG_TYPE_RESPONSE_FROM_CACHE) {
-    return new NetworkAccessResponseFromCacheLog(parsedPayload)
-  } else if (logType === LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND) {
-    return new NetworkAccessRequestExecutionInBackgroundLog(parsedPayload)
-  } else if (logType === LOG_TYPE_REQUEST_EXECUTION) {
-    return new NetworkAccessRequestExecutedLog(parsedPayload)
-  } else {
-    return parsedPayload
   }
 }
 

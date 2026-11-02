@@ -2,9 +2,9 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import pull from '../../../services/app/config/pull.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {basename} from '@shopify/cli-kit/node/path'
+import {appConfigPullJsonOutputSchema} from '../../../services/app/config/pull/types.js'
+import {renderAppConfigPullResult} from '../../../services/app/config/pull/result.js'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigPull extends AppLinkedCommand {
   static summary = 'Refresh an already-linked app configuration without prompts.'
@@ -13,10 +13,15 @@ export default class ConfigPull extends AppLinkedCommand {
 
 This command reuses the existing linked app and organization and skips all interactive prompts. Use \`--config\` to target a specific configuration file, or omit it to use the default one.`
 
+  static get jsonOutputSchema() {
+    return appConfigPullJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
   }
 
@@ -30,7 +35,7 @@ This command reuses the existing linked app and organization and skips all inter
       userProvidedConfigName: flags.config,
     })
 
-    const {configuration, configPath} = await pull({
+    const result = await pull({
       directory: flags.path,
       configName: flags.config,
       configPath: app.configPath,
@@ -38,10 +43,7 @@ This command reuses the existing linked app and organization and skips all inter
       remoteApp,
     })
 
-    renderSuccess({
-      headline: `Pulled latest configuration for "${configuration.name}"`,
-      body: `Updated ${basename(configPath)} with the remote data.`,
-    })
+    renderAppConfigPullResult(result, flags.json ? 'json' : 'text')
 
     return {app}
   }

@@ -2,6 +2,7 @@ import DocFetch from './fetch.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {inTemporaryDirectory, readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath, cwd} from '@shopify/cli-kit/node/path'
+import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -36,8 +37,8 @@ describeJsonCommand({
   expectedResult: {document: {url, content}},
   expectedSchema: {
     anyOf: [
-      {type: 'object', properties: {document: {properties: {url: {type: 'string'}, content: {type: 'string'}}}}},
-      {type: 'object', properties: {format: {const: 'markdown'}, path: {type: 'string'}}},
+      {type: 'object', properties: {document: {$ref: '#/definitions/Document'}}},
+      {$ref: '#/definitions/DocumentFile'},
     ],
   },
   setup: () => {
@@ -144,4 +145,17 @@ describe('doc fetch command', () => {
       })
     },
   )
+
+  test('names the nested document schemas in the launcher schema', async () => {
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await launchCLI({
+        moduleURL: import.meta.url,
+        argv: ['doc', 'fetch', '--json-schema'],
+        lazyCommandLoader: async () => DocFetch,
+      })
+      const schema = JSON.parse(stdout())
+      expect(schema.definitions.Document.properties.content.type).toBe('string')
+      expect(schema.definitions.DocumentFile.properties.format.const).toBe('markdown')
+    })
+  })
 })

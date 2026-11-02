@@ -9,6 +9,7 @@ import {
 import {jsonOutputEnabled} from '../environment.js'
 import {renderFatalError} from '../ui.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
+import {runWithCommandEvents} from '../command-events.js'
 import {ClientError} from 'graphql-request'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -87,6 +88,15 @@ describe('handler', () => {
     expect(JSON.parse(output.info())).toStrictEqual({
       error: {type: 'bug', message: 'Failed to serialize the error as JSON.'},
     })
+    expect(renderFatalError).not.toHaveBeenCalled()
+  })
+
+  test('renders JSON when the command selects JSON output without a global flag', async () => {
+    const output = mockAndCaptureOutput()
+
+    await runWithCommandEvents({outputMode: 'json', sink: () => {}}, () => handler(new AbortError('Expected failure')))
+
+    expect(JSON.parse(output.info())).toStrictEqual({error: {type: 'abort', message: 'Expected failure'}})
     expect(renderFatalError).not.toHaveBeenCalled()
   })
 

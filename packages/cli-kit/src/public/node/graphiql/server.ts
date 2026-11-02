@@ -56,6 +56,23 @@ export function resolveGraphiQLKey(providedKey: string | undefined, apiSecret: s
 
 const require = createRequire(import.meta.url)
 
+/**
+ * Serializes a value as JSON that is safe to place inside an inline `<script>` element.
+ * `JSON.stringify` alone leaves `<`, `>` and `&` as-is, so a value could close the script element early. Escaping
+ * them (and the U+2028/U+2029 line separators) as `\uXXXX` sequences keeps the JavaScript value identical.
+ *
+ * @param value - The value to serialize.
+ * @returns A JSON string that can be interpolated into an inline script.
+ */
+function serializeForInlineScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
 class TokenRefreshError extends AbortError {
   constructor() {
     super('Failed to refresh credentials. Check that your app is installed, and try again.')
@@ -259,8 +276,8 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         {
           url,
           defaultQueries: [{query: defaultQuery}],
-          query: queryParam ? JSON.stringify(queryParam) : undefined,
-          variables: variables ? JSON.stringify(variables) : undefined,
+          query: queryParam ? serializeForInlineScript(queryParam) : undefined,
+          variables: variables ? serializeForInlineScript(variables) : undefined,
         },
       )
     }),

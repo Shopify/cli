@@ -1,7 +1,7 @@
 import StoreCreateDev from './dev.js'
 import {createDevStore} from '../../../services/store/create/dev.js'
 import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from '../../../prompts/store.js'
-import {selectOrg} from '@shopify/organizations'
+import {OrganizationStoreAccessError, selectOrg} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -251,13 +251,42 @@ describe('store create dev command', () => {
     mockExit.mockRestore()
   })
 
-  test('does not output JSON for non-AbortError even when --json is active', async () => {
+  test('includes how to grant a service account dev store access in the --json error', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'service-account-token')
+    vi.mocked(createDevStore).mockRejectedValueOnce(new OrganizationStoreAccessError(defaultOrg))
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('process.exit')
+    }) as never)
+
+    await expect(
+      StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),
+    ).rejects.toThrow('process.exit')
+
+    const parsed = JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)
+    expect(parsed).toEqual({
+      error: true,
+      message: "This service account can't manage dev stores in Test Org.",
+      nextSteps: [
+        "Give the service account Dev store management access in your organization's settings in the Shopify admin.",
+        'Or use a token from a service account that has that access.',
+      ],
+      exitCode: 1,
+    })
+
+    mockExit.mockRestore()
+    vi.unstubAllEnvs()
+  })
+
+  test('outputs one standard bug error for unexpected failures when --json is active', async () => {
     vi.mocked(createDevStore).mockRejectedValueOnce(new Error('unexpected'))
 
     await expect(
       StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),
     ).rejects.toThrow()
-    expect(vi.mocked(outputResult)).not.toHaveBeenCalled()
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
+      error: {type: 'bug', message: 'unexpected', stack: expect.stringContaining('Error: unexpected')},
+    })
   })
 
   test('does not output JSON for AbortError when --json is not active', async () => {

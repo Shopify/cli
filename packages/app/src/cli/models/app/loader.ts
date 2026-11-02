@@ -73,6 +73,15 @@ export interface ConfigurationError {
   code?: string
 }
 
+export class AppConfigurationValidationError extends AbortError {
+  constructor(
+    public readonly configurationPath: string,
+    public readonly errors: ConfigurationError[],
+  ) {
+    super(`Validation errors in ${configurationPath}:\n\n${errors.map(formatConfigurationError).join('\n')}`)
+  }
+}
+
 function tomlObjectArrayHint(error: ConfigurationError): string | undefined {
   if (!error.file.endsWith('.toml')) return undefined
   if (error.message !== 'Expected object, received array') return undefined
@@ -309,8 +318,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
 
   const configResult = await parseConfigurationFile(configSchema, configurationPath, rawConfig)
   if (configResult.errors) {
-    const formatted = configResult.errors.map(formatConfigurationError).join('\n')
-    throw new AbortError(`Validation errors in ${configurationPath}:\n\n${formatted}`)
+    throw new AppConfigurationValidationError(configurationPath, configResult.errors)
   }
   const configuration = configResult.data
 

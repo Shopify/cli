@@ -273,13 +273,13 @@ describe('ensureDeployContext', () => {
 
     const activeAppVersion = {
       appModuleVersions: [
-        {registrationId: 'id-1', registrationUuid: 'uuid-1', type: 'app_access', registrationTitle: 'module-1'},
-        {registrationId: '', registrationUuid: 'uuid-2', type: 'pos_ui_extension', registrationTitle: 'module-2'},
+        {registrationId: 'id-1', registrationUuid: 'uuid-1', type: 'app_access', handle: 'module-1'},
+        {registrationId: '', registrationUuid: 'uuid-2', type: 'pos_ui_extension', handle: 'module-2'},
         {
           registrationId: 'id-3',
           registrationUuid: 'uuid-3',
           type: 'checkout_ui_extension',
-          registrationTitle: 'module-3',
+          handle: 'module-3',
         },
       ],
     }
@@ -312,13 +312,13 @@ describe('ensureDeployContext', () => {
 
     const activeAppVersion = {
       appModuleVersions: [
-        {registrationId: 'id-1', registrationUuid: 'uuid-1', type: 'app_access', registrationTitle: 'module-1'},
-        {registrationId: 'id-2', registrationUuid: 'uuid-2', type: 'pos_ui_extension', registrationTitle: 'module-2'},
+        {registrationId: 'id-1', registrationUuid: 'uuid-1', type: 'app_access', handle: 'module-1'},
+        {registrationId: 'id-2', registrationUuid: 'uuid-2', type: 'pos_ui_extension', handle: 'module-2'},
         {
           registrationId: 'id-3',
           registrationUuid: 'uuid-3',
           type: 'checkout_ui_extension',
-          registrationTitle: 'module-3',
+          handle: 'module-3',
         },
       ],
     }

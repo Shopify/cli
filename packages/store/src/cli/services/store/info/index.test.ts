@@ -1,7 +1,10 @@
 import {getStoreInfo} from './index.js'
 import {storeInfoJsonOutputSchema} from './types.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
-import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
+import {
+  fetchOptionalOrganizationShop,
+  fetchOrganizationShop,
+} from '../../../utilities/store-lookup/organization-shop.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
@@ -10,7 +13,8 @@ import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shop
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
-import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {setLastSeenUserId, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
+import {fetchOrganizations, type OrganizationWithDetails} from '@shopify/organizations'
 import {beforeEach, describe, test, expect, vi} from 'vitest'
 import type {OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
 import type {Store} from '../../../api/graphql/business-platform-organizations/generated/types.js'
@@ -37,6 +41,13 @@ vi.mock('../create/preview/client.js', async () => {
 })
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/organizations', async () => {
+  const actual = await vi.importActual<typeof import('@shopify/organizations')>('@shopify/organizations')
+  return {
+    ...actual,
+    fetchOrganizations: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>(
     '@shopify/cli-kit/node/api/admin',
@@ -94,6 +105,17 @@ function makeClientErrorLike(status: number, message = 'GraphQL Error'): Error {
   return error
 }
 
+function organizationWithDetails(overrides: Partial<OrganizationWithDetails> = {}): OrganizationWithDetails {
+  return {
+    id: '149572536',
+    businessName: 'Acme Holdings',
+    status: 'ACTIVE',
+    shopCount: 2,
+    url: 'https://admin.shopify.com/org/149572536',
+    ...overrides,
+  }
+}
+
 function mockStoredStoreAuth(): void {
   vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(STORED_SESSION)
 }
@@ -116,6 +138,9 @@ describe('getStoreInfo', () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
     vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: {name: 'Acme Holdings', id: '149572536'}})
     vi.mocked(fetchOrganizationShop).mockResolvedValue(orgShop())
+    vi.mocked(fetchOptionalOrganizationShop).mockResolvedValue(undefined)
+    // Two organizations by default, so the not-found fallback below has nothing to pick.
+    vi.mocked(fetchOrganizations).mockResolvedValue([organizationWithDetails(), organizationWithDetails({id: '1'})])
     vi.mocked(loadStoredStoreSession).mockResolvedValue(STORED_SESSION)
     vi.mocked(adminUrl).mockReturnValue(`https://${SHOP}/admin/api/unstable/graphql.json`)
     vi.mocked(graphqlRequest).mockResolvedValue({shop: adminShop()})
@@ -134,7 +159,12 @@ describe('getStoreInfo', () => {
 
     expect(getCurrentStoredStoreAppSession).toHaveBeenCalledWith(SHOP)
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: false})
-    expect(fetchOrganizationShop).toHaveBeenCalledWith({store: SHOP, organizationId: '149572536', noPrompt: false})
+    expect(fetchOrganizationShop).toHaveBeenCalledWith({
+      store: SHOP,
+      organizationId: '149572536',
+      organizationName: 'Acme Holdings',
+      noPrompt: false,
+    })
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
     expect(getPreviewStore).not.toHaveBeenCalled()
@@ -337,7 +367,12 @@ describe('getStoreInfo', () => {
     const result = await getStoreInfo({store: SHOP})
 
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: true})
-    expect(fetchOrganizationShop).toHaveBeenCalledWith({store: SHOP, organizationId: '149572536', noPrompt: true})
+    expect(fetchOrganizationShop).toHaveBeenCalledWith({
+      store: SHOP,
+      organizationId: '149572536',
+      organizationName: 'Acme Holdings',
+      noPrompt: true,
+    })
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
     expect(result).toEqual({
@@ -409,12 +444,91 @@ The CLI is currently unable to prompt for reauthentication.`)
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
   })
 
+  test('finds the store through the only organization when the destinations lookup misses it', async () => {
+    // A service account can open only the stores it created, so another store in its organization is
+    // not among its destinations. The Organizations API still lists it.
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    mockBusinessPlatformUnavailable()
+    vi.mocked(fetchOrganizations).mockResolvedValue([organizationWithDetails()])
+    vi.mocked(fetchOptionalOrganizationShop).mockResolvedValue(orgShop())
+
+    const result = await getStoreInfo({store: SHOP})
+
+    expect(fetchOptionalOrganizationShop).toHaveBeenCalledWith({
+      store: SHOP,
+      organizationId: '149572536',
+      noPrompt: false,
+    })
+    expect(result).toMatchObject({
+      id: 'gid://shopify/Shop/72193245184',
+      displayName: 'My Shop (Org)',
+      organizationId: '149572536',
+      organizationName: 'Acme Holdings',
+      type: 'production',
+    })
+    expect(storeInfoJsonOutputSchema.validate(result)).toEqual(result)
+  })
+
+  test('still reports the store as not found when the only organization does not list it either', async () => {
+    mockBusinessPlatformUnavailable()
+    vi.mocked(fetchOrganizations).mockResolvedValue([organizationWithDetails()])
+
+    await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
+      message: `Couldn't find a store with domain ${SHOP} for the current account.`,
+    })
+  })
+
+  test('still reports the store as not found when the organization lookup itself fails', async () => {
+    mockBusinessPlatformUnavailable()
+    vi.mocked(fetchOrganizations).mockResolvedValue([organizationWithDetails()])
+    vi.mocked(fetchOptionalOrganizationShop).mockRejectedValue(new Error('401'))
+
+    await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
+      message: `Couldn't find a store with domain ${SHOP} for the current account.`,
+    })
+  })
+
   test('rethrows unexpected BP errors instead of falling back to stored store auth', async () => {
     mockStoredStoreAuth()
     vi.mocked(fetchDestinationsContext).mockRejectedValue(new Error('upstream exploded'))
 
     await expect(getStoreInfo({store: SHOP})).rejects.toThrow('upstream exploded')
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
+  })
+
+  test('ignores a stored preview session while the service account token is set', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+      ...STORED_SESSION,
+      kind: 'preview',
+      preview: {
+        placeholderAccountUuid: 'placeholder-uuid',
+        shopId: '123',
+        name: 'Lavender Candles',
+        country: 'US',
+        createdAt: '2026-06-08T12:00:00.000Z',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+      },
+    })
+
+    const result = await getStoreInfo({store: SHOP})
+
+    expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(getPreviewStore).not.toHaveBeenCalled()
+    expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: false})
+    expect(result.displayName).toBe('My Shop (Org)')
+  })
+
+  test('throws the BP error instead of falling back to stored store auth while the service account token is set', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    mockStoreAuthFallback()
+
+    await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
+      message: `Couldn't find a store with domain ${SHOP} for the current account.`,
+    })
+    expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(loadStoredStoreSession).not.toHaveBeenCalled()
+    expect(graphqlRequest).not.toHaveBeenCalled()
   })
 
   test('uses the refreshed session store returned by the stored-auth loader', async () => {

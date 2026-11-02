@@ -1,23 +1,32 @@
-import {resolveAssetPath} from '../utilities/asset-path.js'
-import {render} from '../utilities/theme-environment/storefront-renderer.js'
+import {themeProfileResultSchema} from './profile/types.js'
+import {render, STOREFRONT_RENDERER_QUERY_PARAMS} from '../utilities/theme-environment/storefront-renderer.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
-import {openURL} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
-import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+
+/** Origin used to parse store-relative URLs. It's never requested. */
+const PLACEHOLDER_ORIGIN = 'https://storefront.invalid'
+
+/** Longest non-JSON response body included in an error message, so full HTML pages are never shown. */
+const MAX_ERROR_BODY_LENGTH = 200
 
 export async function profile(
   adminSession: AdminSession,
   themeId: string,
   url: string,
-  asJson: boolean,
   themeAccessPassword?: string,
   storefrontPassword?: string,
 ) {
+  // A leading `//` would be parsed as a host, so the rest of the path would be profiled instead.
+  if (url.startsWith('//') || !URL.canParse(url, PLACEHOLDER_ORIGIN)) {
+    throw new AbortError(
+      `${url} isn't a valid storefront URL.`,
+      'Pass the path of a storefront page to --url, for example /products/classic-leather-jacket.',
+    )
+  }
+
   const storePassword = (await isStorefrontPasswordProtected(adminSession))
     ? await ensureValidPassword(storefrontPassword, adminSession.storeFqdn)
     : undefined
@@ -30,69 +39,77 @@ export async function profile(
   }
 
   const session = await fetchDevServerSession(themeId, adminSession, themeAccessPassword, storePassword)
+  const target = storefrontTarget(url)
   const response = await render(session, {
     method: 'GET',
-    path: url,
-    query: [],
+    path: target.pathname,
+    query: [...target.searchParams],
     themeId,
     headers: {
       Accept: 'application/vnd.speedscope+json',
     },
   })
 
+  if (response.status >= 300 && response.status < 400) {
+    throw new AbortError(
+      `The page ${url} redirects (${response.status}) instead of rendering, so it can't be profiled.`,
+      redirectTryMessage(target, response.headers.get('Location')),
+    )
+  }
+
   if (response.status !== 200) {
-    const body = await response.text()
-    throw new Error(`Bad response: ${response.status}: ${body}`)
+    const details = await responseErrorDetails(response)
+    throw new AbortError(`Can't profile ${url}. The storefront responded with ${response.status}.${details}`)
   }
 
   const profileJson = await response.text()
 
-  if (asJson) {
-    // Print the JSON
-    outputResult(profileJson)
-  } else {
-    await openProfile(profileJson)
-  }
+  return {result: themeProfileResultSchema.parse(JSON.parse(profileJson)), source: profileJson}
 }
 
-async function openProfile(profileJson: string) {
-  // Adapted from https://github.com/jlfwong/speedscope/blob/146477a8508a6d2da697cb0ea0a426ba81b3e8dc/bin/cli.js#L63
+/**
+ * Parses a `--url` or `Location` value into a URL without the renderer's own query params.
+ * The renderer adds its own query, so the query has to be passed separately from the path.
+ */
+function storefrontTarget(url: string) {
+  const target = new URL(url, PLACEHOLDER_ORIGIN)
+  Object.keys(STOREFRONT_RENDERER_QUERY_PARAMS).forEach((param) => target.searchParams.delete(param))
+  return target
+}
 
-  // on Windows Subsystem for Linux, we need to prefix file paths with the
-  // WSL distro name to get them to open in the browser.
-  const distroName = process.env.WSL_DISTRO_NAME
-  const wslPrefix = distroName ? `//wsl$/${distroName}` : ''
+function pathWithQuery(target: URL) {
+  return `${target.pathname}${target.search}`
+}
 
-  let urlToOpen = await resolveAssetPath('speedscope', 'index.html')
-  outputDebug(`[Theme Profile] Resolved URL to open: ${urlToOpen}`)
+function redirectTryMessage(requestedTarget: URL, location: string | null) {
+  if (!location || !URL.canParse(location, PLACEHOLDER_ORIGIN)) return null
 
-  const filename = 'liquid-profile'
-  const sourceBase64 = Buffer.from(profileJson).toString('base64')
-  const jsSource = `speedscope.loadFileFromBase64(${JSON.stringify(filename)}, ${JSON.stringify(sourceBase64)})`
+  const redirectTarget = storefrontTarget(location)
+  if (redirectTarget.pathname === '/password') {
+    return 'It redirects to the storefront password page. Check the storefront password, and pass it with --store-password.'
+  }
 
-  const filePrefix = `speedscope-${Number(new Date())}-${process.pid}`
-  let jsPath = joinPath(tempDirectory(), `${filePrefix}.js`)
-  outputDebug(`[Theme Profile] writing JS file to: ${jsPath}`)
-  await writeFile(jsPath, jsSource)
-  outputDebug(`[Theme Profile] JS file created successfully: ${jsPath}`)
+  const suggestedUrl = pathWithQuery(redirectTarget)
+  const isStoreRelative = redirectTarget.origin === PLACEHOLDER_ORIGIN
+  const destination = isStoreRelative ? suggestedUrl : redirectTarget.href
 
-  urlToOpen = `${wslPrefix}${urlToOpen}`
-  jsPath = `${wslPrefix}${jsPath}`
+  // Suggesting the same --url again would make scripts and agents retry the same redirect.
+  if (suggestedUrl === pathWithQuery(requestedTarget)) return `It redirects to ${destination}.`
 
-  // For some silly reason, the OS X open command ignores any query parameters or hash parameters
-  // passed as part of the URL. To get around this weird issue, we'll create a local HTML file
-  // that just redirects.
-  urlToOpen += `#localProfilePath=${jsPath}`
+  // An absolute destination can be another host, such as customer accounts, where the path doesn't exist on the store.
+  return isStoreRelative
+    ? `It redirects to ${destination}. Run the command again with --url "${suggestedUrl}".`
+    : `It redirects to ${destination}. If that page is on your storefront, run the command again with --url "${suggestedUrl}".`
+}
 
-  let htmlPath = joinPath(tempDirectory(), `${filePrefix}.html`)
-  outputDebug(`[Theme Profile] writing HTML file to: ${htmlPath}`)
-  await writeFile(htmlPath, `<script>window.location=${JSON.stringify(urlToOpen)}</script>`)
-  outputDebug(`[Theme Profile] HTML file created successfully: ${htmlPath}`)
+async function responseErrorDetails(response: Response) {
+  const requestId = response.headers.get('x-request-id')
+  const requestIdDetail = requestId ? `\nRequest ID: ${requestId}` : ''
 
-  htmlPath = `${wslPrefix}${htmlPath}`
+  const body = (await response.text()).trim()
+  const isJsonBody = response.headers.get('Content-Type')?.includes('application/json') ?? false
+  const showBody = body.length > 0 && (isJsonBody || body.length <= MAX_ERROR_BODY_LENGTH)
+  const bodyDetail = showBody ? `\n${body}` : ''
 
-  urlToOpen = `file://${htmlPath}`
-  outputDebug(`[Theme Profile] Opening URL: ${urlToOpen}`)
-  const opened = await openURL(urlToOpen)
-  outputDebug(`[Theme Profile] URL opened successfully: ${opened}`)
+  return `${requestIdDetail}${bodyDetail}`
 }

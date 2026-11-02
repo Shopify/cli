@@ -27,11 +27,7 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   }
 }
 
-export const resetHelpMessage = [
-  'You can pass',
-  {command: '--reset'},
-  'to your command to reset your app configuration.',
-]
+const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
 const appNotFoundHelpMessage = (accountIdentifier: string, isOrg: boolean, offerReset: boolean) => [
   {

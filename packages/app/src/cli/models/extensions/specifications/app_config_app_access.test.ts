@@ -73,6 +73,51 @@ describe('app_config_app_access', () => {
         },
       })
     })
+    test('merges shop_scopes back into scopes', () => {
+      // Given
+      const object = {
+        scopes: 'write_products,read_products',
+        shop_scopes: 'shop_app:oauth,shop_app:read_profile',
+        redirect_url_allowlist: ['https://example.com/auth/callback'],
+      }
+
+      // When
+      const result = spec.transformRemoteToLocal!(object)
+
+      // Then
+      expect(result).toEqual({
+        access_scopes: {
+          scopes: 'read_products,shop_app:oauth,shop_app:read_profile,write_products',
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      })
+    })
+
+    test('uses shop_scopes as scopes when the platform scopes are empty or missing', () => {
+      expect(spec.transformRemoteToLocal!({scopes: '', shop_scopes: 'shop_app:oauth'})).toEqual({
+        access_scopes: {scopes: 'shop_app:oauth'},
+      })
+      expect(spec.transformRemoteToLocal!({shop_scopes: 'shop_app:oauth'})).toEqual({
+        access_scopes: {scopes: 'shop_app:oauth'},
+      })
+    })
+
+    test('leaves scopes untouched when shop_scopes is absent or blank', () => {
+      expect(spec.transformRemoteToLocal!({scopes: 'read_products', shop_scopes: ''})).toEqual({
+        access_scopes: {scopes: 'read_products'},
+      })
+      expect(spec.transformRemoteToLocal!({scopes: 'read_products'})).toEqual({
+        access_scopes: {scopes: 'read_products'},
+      })
+    })
+
+    test('round-trips: forward after reverse sends shop scopes in scopes', () => {
+      const local = spec.transformRemoteToLocal!({scopes: 'read_products', shop_scopes: 'shop_app:oauth'})
+      const remote = spec.transformLocalToRemote!(local, placeholderAppConfiguration)
+      expect(remote).toEqual({scopes: 'read_products,shop_app:oauth'})
+    })
   })
 
   describe('getDevSessionUpdateMessages', () => {

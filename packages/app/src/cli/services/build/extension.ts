@@ -3,6 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {validateSchemaApiVersion} from '../function/schema-version.js'
+import {type FunctionBuildResult} from '../function/build-command/types.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -13,6 +14,8 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 export interface ExtensionBuildOptions {
   /**
@@ -150,7 +153,7 @@ type BuildFunctionExtensionOptions = ExtensionBuildOptions
 export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
-): Promise<void> {
+): Promise<FunctionBuildResult> {
   const lockfilePath = joinPath(extension.directory, '.build-lock')
   let releaseLock
   try {
@@ -204,6 +207,16 @@ export async function buildFunctionExtension(
     ) {
       // Bundle build for deploy: base64-encode into the bundle directory
       await bundleFunctionExtension(extension.outputPath, bundlePath)
+    }
+
+    return {
+      status: 'success',
+      function: {
+        handle: functionConfiguration.handle ?? null,
+        name: extension.name,
+        directory: resolve(extension.directory),
+        wasmPath: fileExistsSync(extension.outputPath) ? resolve(extension.outputPath) : null,
+      },
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

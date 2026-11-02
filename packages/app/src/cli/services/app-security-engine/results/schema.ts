@@ -5,9 +5,10 @@ import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocum
 /**
  * The Zod schema for schema_version 1 of the stored findings documents (§3).
  *
- * Required fields are strict and every enum is closed, so an unknown value makes the file unprocessable.
- * Unknown keys are stripped, which is `zod.object()`'s default. The hand-written interfaces in types.ts
- * stay the internal representation; the assertions at the bottom fail to compile the day the two diverge,
+ * Required fields are strict and every enum is closed, so an unknown value makes the file unprocessable. So does a
+ * line, column, version, count, size or URL outside what the CLI writes, such as line 0, which `review --json`
+ * couldn't show. Unknown keys are stripped, which is `zod.object()`'s default. The hand-written interfaces in
+ * types.ts stay the internal representation; the assertions at the bottom fail to compile the day the two diverge,
  * which is the signal that a new schema version needs an explicit mapping.
  *
  * The component schemas are exported so other schemas compose them and every closed enum is declared once.
@@ -17,10 +18,11 @@ export const severitySchema = zod.enum(['high', 'medium', 'low'])
 export const checkStatusSchema = zod.enum(['executed', 'not_applicable', 'unresolved'])
 export const checkPrecedenceSchema = zod.enum(['union', 'prefer-agent'])
 
+/** Lines and columns count from 1. */
 const locationSchema = zod.object({
   file: zod.string(),
-  line: zod.number().optional(),
-  column: zod.number().optional(),
+  line: zod.number().int().positive().optional(),
+  column: zod.number().int().positive().optional(),
 })
 
 const fixSchema = zod.object({
@@ -34,7 +36,7 @@ const checkSnapshotSchema = zod.object({
   severity: severitySchema,
   description: zod.string(),
   guide: zod.string().optional(),
-  docs_url: zod.string().optional(),
+  docs_url: zod.string().url().optional(),
   current_version: zod.number(),
   precedence: checkPrecedenceSchema.optional(),
 })
@@ -57,7 +59,7 @@ export const storedFindingSchema = zod.object({
 
 export const storedCheckSchema = zod.object({
   id: zod.string(),
-  version: zod.number(),
+  version: zod.number().int().positive(),
   status: checkStatusSchema,
   reason: zod.object({code: zod.string(), message: zod.string()}).optional(),
   analysis_mode: zod.enum(['regex', 'structured_config', 'ast']).optional(),
@@ -104,12 +106,12 @@ const createScopeSchema = () =>
   })
 
 export const coverageSchema = zod.object({
-  files_scanned: zod.number(),
+  files_scanned: zod.number().int().nonnegative(),
   files_skipped: zod.array(
     zod.object({
       path: zod.string(),
       reason: zod.enum(['too_large', 'unreadable']),
-      size_bytes: zod.number().optional(),
+      size_bytes: zod.number().int().nonnegative().optional(),
       detail: zod.string().optional(),
     }),
   ),

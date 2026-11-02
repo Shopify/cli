@@ -1,5 +1,9 @@
-query metafieldDefinitionsByOwnerType($ownerType: MetafieldOwnerType!) {
-  metafieldDefinitions(ownerType: $ownerType, first: 250) {
+query metafieldDefinitionsByOwnerType($ownerType: MetafieldOwnerType!, $after: String) {
+  metafieldDefinitions(ownerType: $ownerType, first: 250, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
     nodes {
       key
       name

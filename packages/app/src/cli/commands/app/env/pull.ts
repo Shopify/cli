@@ -3,9 +3,10 @@ import {getDotEnvFileName} from '../../../models/app/loader.js'
 import {pullEnv} from '../../../services/app/env/pull.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
+import {appEnvPullJsonOutputSchema} from '../../../services/app/env/pull/types.js'
+import {renderAppEnvPullResult} from '../../../services/app/env/pull/result.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends AppLinkedCommand {
@@ -15,10 +16,15 @@ export default class EnvPull extends AppLinkedCommand {
 
   When an existing \`.env\` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.`
 
+  static get jsonOutputSchema() {
+    return appEnvPullJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
     'env-file': Flags.string({
       hidden: false,
@@ -37,7 +43,8 @@ export default class EnvPull extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
     const envFile = resolvePath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configPath))
-    outputResult(await pullEnv({app, remoteApp, organization, envFile}))
+    const result = await pullEnv({app, remoteApp, organization, envFile})
+    renderAppEnvPullResult(result, flags.json ? 'json' : 'text')
     return {app}
   }
 }

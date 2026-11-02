@@ -1,1 +1,1 @@
-export {businessPlatformTokenRefreshHandler} from '@shopify/organizations'
+export {businessPlatformTokenRefreshHandler, organizationStoresRequestDoc} from '@shopify/organizations'

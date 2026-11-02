@@ -1,11 +1,17 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {packageTheme} from '../../services/package.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {themePackageJsonOutputSchema} from '../../services/package/types.js'
+import {renderThemePackageResult} from '../../services/package/result.js'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {InferredFlags} from '@oclif/core/interfaces'
 
 type PackageFlags = InferredFlags<typeof Package.flags>
 export default class Package extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themePackageJsonOutputSchema
+  }
+
   static summary = 'Package your theme into a .zip file, ready to upload to the Online Store.'
 
   static descriptionWithMarkdown = `Packages your local theme files into a ZIP file that can be uploaded to Shopify.
@@ -20,12 +26,14 @@ export default class Package extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     path: themeFlags.path,
   }
 
   static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: PackageFlags) {
-    await packageTheme(flags.path)
+    const result = await packageTheme(flags.path)
+    renderThemePackageResult(result, flags.json ? 'json' : 'text')
   }
 }

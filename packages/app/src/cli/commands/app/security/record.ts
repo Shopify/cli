@@ -1,9 +1,11 @@
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import {requireResultsDirectory} from '../../../services/app-security-results.js'
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
-import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
+import securityRecord from '../../../services/security-record.js'
+import {renderSecurityRecordResult} from '../../../services/security-record/result.js'
+import {appSecurityRecordJsonOutputSchema} from '../../../services/security-record/types.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityRecord extends BaseCommand {
   static summary = 'Record agent findings from an app security check.'
@@ -12,13 +14,20 @@ export default class SecurityRecord extends BaseCommand {
 
 The document must include a \`scope\` with the \`include_dirs\`, \`excludes\` and \`no_git_ignore\` values of the \`check\` run it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
 
-The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. It needs the results directory that \`shopify app security check\` creates.`
+The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. It needs the results directory that \`shopify app security check\` creates.
+
+Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
+
+  static get jsonOutputSchema() {
+    return appSecurityRecordJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appSecuritySelectionFlags,
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
@@ -33,7 +42,8 @@ The document is recorded all or nothing: if anything is invalid, the command fai
       validateClientIdFlag: true,
     })
     await requireResultsDirectory(selection, flags.path)
-    const result = await securityRecord({selection, path: flags.path})
-    renderSecurityRecordResult(result, selection, flags.path)
+    const options = {selection, path: flags.path}
+    const result = await securityRecord(options)
+    renderSecurityRecordResult(result, options, flags.json ? 'json' : 'text')
   }
 }

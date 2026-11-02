@@ -1,6 +1,6 @@
 import {environmentVariables} from '../constants.js'
 
-const ORGANIZATION_TOKEN = environmentVariables.organizationAutomationToken
+const SERVICE_ACCOUNT_TOKEN = environmentVariables.serviceAccountToken
 const APP_TOKEN = environmentVariables.appAutomationToken
 const PARTNERS_TOKEN = environmentVariables.partnersToken
 
@@ -11,7 +11,7 @@ interface AutomationTokenVariablesProblem {
 
 /**
  * Returns the name of the automation token variable the CLI authenticates with: the first one that is set, in
- * the order SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN, SHOPIFY_APP_AUTOMATION_TOKEN, SHOPIFY_CLI_PARTNERS_TOKEN.
+ * the order SHOPIFY_SERVICE_ACCOUNT_TOKEN, SHOPIFY_APP_AUTOMATION_TOKEN, SHOPIFY_CLI_PARTNERS_TOKEN.
  *
  * A variable set to an empty string still counts as set, so `automationTokenVariablesProblem` can report it.
  *
@@ -19,14 +19,47 @@ interface AutomationTokenVariablesProblem {
  * @returns The variable name, or undefined when none of them is set.
  */
 export function automationTokenVariable(env: NodeJS.ProcessEnv = process.env): string | undefined {
-  return [ORGANIZATION_TOKEN, APP_TOKEN, PARTNERS_TOKEN].find((name) => env[name] !== undefined)
+  return [SERVICE_ACCOUNT_TOKEN, APP_TOKEN, PARTNERS_TOKEN].find((name) => env[name] !== undefined)
+}
+
+/**
+ * Returns the `env_auth_method` analytics value for the automation token variable the CLI authenticates with:
+ * `service_account_token` for SHOPIFY_SERVICE_ACCOUNT_TOKEN, and `partners_token` for SHOPIFY_APP_AUTOMATION_TOKEN and
+ * SHOPIFY_CLI_PARTNERS_TOKEN, which existing dashboards already expect.
+ *
+ * The value tells which variable held the token, not which kind of token it is: the CLI can't tell tokens apart, and
+ * any of them works in any of the variables. It shows how much usage has moved to SHOPIFY_SERVICE_ACCOUNT_TOKEN.
+ *
+ * @param env - Environment variables to read.
+ * @returns The auth method to report.
+ */
+export function automationTokenAuthMethod(
+  env: NodeJS.ProcessEnv = process.env,
+): 'service_account_token' | 'partners_token' {
+  return automationTokenVariable(env) === SERVICE_ACCOUNT_TOKEN ? 'service_account_token' : 'partners_token'
+}
+
+/**
+ * Returns the deprecated automation token variable the CLI authenticates with: SHOPIFY_APP_AUTOMATION_TOKEN or
+ * SHOPIFY_CLI_PARTNERS_TOKEN. Both are deprecated in favor of SHOPIFY_SERVICE_ACCOUNT_TOKEN, which takes the same
+ * tokens.
+ *
+ * Returns undefined when the variables can't be used, since the CLI reports that problem instead.
+ *
+ * @param env - Environment variables to read.
+ * @returns The deprecated variable in use, or undefined.
+ */
+export function deprecatedAutomationTokenVariable(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  if (automationTokenVariablesProblem(env)) return undefined
+  const variable = automationTokenVariable(env)
+  return variable === APP_TOKEN || variable === PARTNERS_TOKEN ? variable : undefined
 }
 
 /**
  * Explains why the automation token variables can't be used, so a misconfigured environment fails instead of
  * falling back to the logged-in user.
  *
- * - SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN can't be set together with SHOPIFY_APP_AUTOMATION_TOKEN or
+ * - SHOPIFY_SERVICE_ACCOUNT_TOKEN can't be set together with SHOPIFY_APP_AUTOMATION_TOKEN or
  *   SHOPIFY_CLI_PARTNERS_TOKEN.
  * - The selected variable can't be empty.
  *
@@ -36,12 +69,12 @@ export function automationTokenVariable(env: NodeJS.ProcessEnv = process.env): s
 export function automationTokenVariablesProblem(
   env: NodeJS.ProcessEnv = process.env,
 ): AutomationTokenVariablesProblem | undefined {
-  if (env[ORGANIZATION_TOKEN] !== undefined) {
+  if (env[SERVICE_ACCOUNT_TOKEN] !== undefined) {
     const conflictingVariables = [APP_TOKEN, PARTNERS_TOKEN].filter((name) => env[name] !== undefined)
     if (conflictingVariables.length > 0) {
       return {
-        message: `${ORGANIZATION_TOKEN} can't be set together with ${conflictingVariables.join(' or ')}.`,
-        tryMessage: `Unset ${conflictingVariables.join(' and ')}, or unset ${ORGANIZATION_TOKEN}.`,
+        message: `${SERVICE_ACCOUNT_TOKEN} can't be set together with ${conflictingVariables.join(' or ')}.`,
+        tryMessage: `Unset ${conflictingVariables.join(' and ')}, or unset ${SERVICE_ACCOUNT_TOKEN}.`,
       }
     }
   }

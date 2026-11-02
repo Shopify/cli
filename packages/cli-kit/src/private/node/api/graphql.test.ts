@@ -1,4 +1,4 @@
-import {debugLogRequestInfo, extractGraphQLErrorMessages, errorHandler} from './graphql.js'
+import {debugLogRequestInfo, extractGraphQLErrorMessages, errorHandler, extractGraphQLErrors} from './graphql.js'
 import {GraphQLClientError} from './headers.js'
 import {AbortError} from '../../../public/node/error.js'
 import {runWithCommandEventsForCommand} from '../../../public/node/command-events.js'
@@ -216,5 +216,25 @@ describe('errorHandler', () => {
     const handler = errorHandler('App Management')
     const error = new Error('something else')
     expect(handler(error)).toBe(error)
+  })
+})
+
+describe('extractGraphQLErrors', () => {
+  const graphQLErrors = [{message: 'Challenge Required', extensions: {code: 'CHALLENGE_REQUIRED'}}]
+  const clientError = new ClientError(
+    {status: 200, headers: new Map(), errors: graphQLErrors} as unknown as ClientError['response'],
+    {query: 'query {}'},
+  )
+
+  test('returns the same GraphQL errors before and after errorHandler maps the error', () => {
+    const mappedError = errorHandler('Admin')(clientError, 'req-123')
+
+    expect(mappedError).toBeInstanceOf(GraphQLClientError)
+    expect(extractGraphQLErrors(clientError)).toEqual(graphQLErrors)
+    expect(extractGraphQLErrors(mappedError)).toEqual(graphQLErrors)
+  })
+
+  test('returns no GraphQL errors for an error that is not a GraphQL error', () => {
+    expect(extractGraphQLErrors(new AbortError('Network error'))).toEqual([])
   })
 })

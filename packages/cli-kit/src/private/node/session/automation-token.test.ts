@@ -1,29 +1,76 @@
-import {automationTokenVariable, automationTokenVariablesProblem} from './automation-token.js'
+import {
+  automationTokenAuthMethod,
+  automationTokenVariable,
+  automationTokenVariablesProblem,
+  deprecatedAutomationTokenVariable,
+} from './automation-token.js'
 import {environmentVariables} from '../constants.js'
 import {describe, expect, test} from 'vitest'
 
-const ORGANIZATION = environmentVariables.organizationAutomationToken
+const SERVICE_ACCOUNT = environmentVariables.serviceAccountToken
 const APP = environmentVariables.appAutomationToken
 const PARTNERS = environmentVariables.partnersToken
 
 describe('automationTokenVariable', () => {
   test.each([
     {name: 'no automation token variable', env: {}, expected: undefined},
-    {name: 'the organization variable', env: {[ORGANIZATION]: 'org-token'}, expected: ORGANIZATION},
+    {
+      name: 'the service account variable',
+      env: {[SERVICE_ACCOUNT]: 'service-account-token'},
+      expected: SERVICE_ACCOUNT,
+    },
     {name: 'the app variable', env: {[APP]: 'app-token'}, expected: APP},
     {name: 'the Partners variable', env: {[PARTNERS]: 'partners-token'}, expected: PARTNERS},
     {name: 'the app variable over the Partners variable', env: {[APP]: 'a', [PARTNERS]: 'p'}, expected: APP},
     {name: 'an empty app variable over the Partners variable', env: {[APP]: '', [PARTNERS]: 'p'}, expected: APP},
-    {name: 'the organization variable over the others', env: {[ORGANIZATION]: 'o', [APP]: 'a'}, expected: ORGANIZATION},
+    {
+      name: 'the service account variable over the others',
+      env: {[SERVICE_ACCOUNT]: 'o', [APP]: 'a'},
+      expected: SERVICE_ACCOUNT,
+    },
   ])('selects $name', ({env, expected}) => {
     expect(automationTokenVariable(env)).toBe(expected)
+  })
+})
+
+describe('automationTokenAuthMethod', () => {
+  test.each([
+    {name: 'the service account variable', env: {[SERVICE_ACCOUNT]: 's'}, expected: 'service_account_token'},
+    {name: 'the app variable', env: {[APP]: 'a'}, expected: 'partners_token'},
+    {name: 'the Partners variable', env: {[PARTNERS]: 'p'}, expected: 'partners_token'},
+    {
+      name: 'the service account variable over another one',
+      env: {[SERVICE_ACCOUNT]: 's', [APP]: 'a'},
+      expected: 'service_account_token',
+    },
+  ])('reports $expected for $name', ({env, expected}) => {
+    expect(automationTokenAuthMethod(env)).toBe(expected)
+  })
+})
+
+describe('deprecatedAutomationTokenVariable', () => {
+  test.each([
+    {name: 'the app variable', env: {[APP]: 'a'}, expected: APP},
+    {name: 'the app variable over the Partners variable', env: {[APP]: 'a', [PARTNERS]: 'p'}, expected: APP},
+    {name: 'the Partners variable', env: {[PARTNERS]: 'p'}, expected: PARTNERS},
+    {name: 'no automation token variable', env: {}, expected: undefined},
+    {name: 'the service account variable', env: {[SERVICE_ACCOUNT]: 's'}, expected: undefined},
+    {name: 'an empty app variable', env: {[APP]: ''}, expected: undefined},
+    {name: 'an empty Partners variable', env: {[PARTNERS]: ''}, expected: undefined},
+    {
+      name: 'the app variable set together with the service account variable',
+      env: {[SERVICE_ACCOUNT]: 's', [APP]: 'a'},
+      expected: undefined,
+    },
+  ])('returns $expected for $name', ({env, expected}) => {
+    expect(deprecatedAutomationTokenVariable(env)).toBe(expected)
   })
 })
 
 describe('automationTokenVariablesProblem', () => {
   test.each([
     {name: 'no automation token variable', env: {}},
-    {name: 'only the organization variable', env: {[ORGANIZATION]: 'org-token'}},
+    {name: 'only the service account variable', env: {[SERVICE_ACCOUNT]: 'service-account-token'}},
     {name: 'only the app variable', env: {[APP]: 'app-token'}},
     {name: 'only the Partners variable', env: {[PARTNERS]: 'partners-token'}},
     {name: 'both legacy variables', env: {[APP]: 'app-token', [PARTNERS]: 'partners-token'}},
@@ -34,26 +81,30 @@ describe('automationTokenVariablesProblem', () => {
 
   test.each([
     {
-      name: 'the organization variable with the app variable',
-      env: {[ORGANIZATION]: 'org-token', [APP]: 'app-token'},
-      message: `${ORGANIZATION} can't be set together with ${APP}.`,
+      name: 'the service account variable with the app variable',
+      env: {[SERVICE_ACCOUNT]: 'service-account-token', [APP]: 'app-token'},
+      message: `${SERVICE_ACCOUNT} can't be set together with ${APP}.`,
     },
     {
-      name: 'the organization variable with the Partners variable',
-      env: {[ORGANIZATION]: 'org-token', [PARTNERS]: 'partners-token'},
-      message: `${ORGANIZATION} can't be set together with ${PARTNERS}.`,
+      name: 'the service account variable with the Partners variable',
+      env: {[SERVICE_ACCOUNT]: 'service-account-token', [PARTNERS]: 'partners-token'},
+      message: `${SERVICE_ACCOUNT} can't be set together with ${PARTNERS}.`,
     },
     {
-      name: 'the organization variable with both legacy variables',
-      env: {[ORGANIZATION]: 'org-token', [APP]: 'app-token', [PARTNERS]: 'partners-token'},
-      message: `${ORGANIZATION} can't be set together with ${APP} or ${PARTNERS}.`,
+      name: 'the service account variable with both legacy variables',
+      env: {[SERVICE_ACCOUNT]: 'service-account-token', [APP]: 'app-token', [PARTNERS]: 'partners-token'},
+      message: `${SERVICE_ACCOUNT} can't be set together with ${APP} or ${PARTNERS}.`,
     },
     {
-      name: 'the organization variable with an empty app variable',
-      env: {[ORGANIZATION]: 'org-token', [APP]: ''},
-      message: `${ORGANIZATION} can't be set together with ${APP}.`,
+      name: 'the service account variable with an empty app variable',
+      env: {[SERVICE_ACCOUNT]: 'service-account-token', [APP]: ''},
+      message: `${SERVICE_ACCOUNT} can't be set together with ${APP}.`,
     },
-    {name: 'an empty organization variable', env: {[ORGANIZATION]: ''}, message: `${ORGANIZATION} is set but empty.`},
+    {
+      name: 'an empty service account variable',
+      env: {[SERVICE_ACCOUNT]: ''},
+      message: `${SERVICE_ACCOUNT} is set but empty.`,
+    },
     {name: 'an empty app variable', env: {[APP]: ''}, message: `${APP} is set but empty.`},
     {
       name: 'an empty app variable, even when the Partners variable has a value',

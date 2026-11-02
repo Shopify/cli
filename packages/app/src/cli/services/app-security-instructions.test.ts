@@ -1,11 +1,17 @@
-import deliverAppSecurityInstructions, {
+import {
   appSecurityInstructions as instructionsFor,
+  ClipboardUnavailableError,
+  deliverAppSecurityInstructions,
+  renderAppSecurityInstructions,
   shellQuote,
+  type AppSecurityInstructionsDelivery,
 } from './app-security-instructions.js'
 import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} from './app-security-commands.js'
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {unstyled} from '@shopify/cli-kit/node/output'
 import {basename, cwd, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
@@ -15,8 +21,6 @@ function testDependencies() {
   return {
     copyToClipboard: vi.fn(async (_content: string) => {}),
     writeToFile: writeFile,
-    output: vi.fn(),
-    outputConfirmation: vi.fn(),
   }
 }
 
@@ -70,6 +74,14 @@ function codeBlock(language: string, ...lines: string[]): string {
   return ['```'.concat(language), ...lines, '```'].join('\n')
 }
 
+/** The section that starts with `heading`, up to the next heading. */
+function sectionText(instructions: string, heading: string): string {
+  const start = instructions.indexOf(heading)
+  if (start === -1) throw new Error(`The instructions have no section ${heading}`)
+  const end = instructions.indexOf('\n#', start + heading.length)
+  return instructions.slice(start, end === -1 ? undefined : end)
+}
+
 describe('embedded instructions', () => {
   test('matches INSTRUCTIONS.md', () => {
     const source = readFileSync(
@@ -77,6 +89,15 @@ describe('embedded instructions', () => {
       'utf8',
     )
     expect(getAgentInstructions()).toBe(source)
+  })
+
+  test('investigating checks is static only', () => {
+    expect(getAgentInstructions()).toContain('This review is static only: verify by reading code.')
+    expect(getAgentInstructions()).toContain('Do not execute app, SDK, test, or repro code')
+    expect(getAgentInstructions()).toContain('do not make network calls or probe live stores or services')
+    expect(getAgentInstructions()).toContain(
+      'record the check as unresolved naming the candidate instead of running it',
+    )
   })
 })
 
@@ -108,7 +129,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('### 1. Run the scan')
       expect(instructions).toContain(`shopify app security check --path ${shellQuote(renderedPath(appRoot))}`)
       expect(instructions).toContain(
-        `\`shopify app security check --path ${shellQuote(renderedPath(appRoot))} --list-files\``,
+        `\`shopify app security check --path ${shellQuote(renderedPath(appRoot))} --json --no-input --list-files\``,
       )
       expect(instructions).toContain('Decide what to scan before running the check.')
       expect(instructions).not.toMatch(/shopify app security check --path .+ --config/)
@@ -230,17 +251,87 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('`not_applicable` and `unresolved` require a `reason`')
       expect(instructions).toContain('Fix every reported error and run `record` again with the full document.')
       expect(instructions).toContain(
-        codeBlock('bash', `shopify app security review --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
+        codeBlock(
+          'bash',
+          `shopify app security review --path ${quoteShellArgument(renderedPath(appRoot), 'posix')} --json --no-input`,
+        ),
       )
       expect(instructions).toContain(`\`${artifactPath(appRoot, 'agent-findings.json')}\` wholesale`)
     })
   })
 
+  test.each<AppSecurityShell>(['posix', 'powershell', 'cmd'])(
+    'runs the workflow commands with --json --no-input, and the deterministic-only scan without them (%s shell)',
+    async (shell) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell})
+        const pathFlag = `--path ${quoteShellArgument(renderedPath(appRoot), shell)}`
+
+        expect(instructions).toContain(
+          "The workflow's commands pass `--json --no-input`, so they don't prompt, and each prints one JSON object on stdout: its result, or an `error`. Warnings go to stderr.",
+        )
+        expect(sectionText(instructions, '### 1. Run the scan')).toContain(
+          `\`shopify app security check ${pathFlag} --json --no-input --list-files\` and adjust the flags until its \`files\` list is right.`,
+        )
+        expect(sectionText(instructions, '### 6. Review, explain, and help fix')).toContain(
+          codeBlock('bash', `shopify app security review ${pathFlag} --json --no-input`),
+        )
+        expect(sectionText(instructions, '### 7. Check again after changes')).toContain(
+          codeBlock('bash', `shopify app security check ${pathFlag} --json --no-input`),
+        )
+        expect(sectionText(instructions, '## Removing local artifacts')).toContain(
+          codeBlock('bash', `shopify app security clean ${pathFlag} --json --no-input`),
+        )
+        // `check --json` has no findings, so a deterministic-only scan is read from its terminal report.
+        const deterministicOnly = sectionText(instructions, '## Deterministic-only mode')
+        expect(deterministicOnly).toContain(codeBlock('bash', `shopify app security check ${pathFlag}`))
+        expect(deterministicOnly).not.toContain('--json')
+      })
+    },
+  )
+
+  test.each<AppSecurityShell>(['posix', 'powershell'])(
+    'tells the agent which fields of the record and review results to read (%s shell)',
+    async (shell) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell})
+        const record = sectionText(instructions, '### 5. Record the findings with Shopify CLI')
+        const review = sectionText(instructions, '### 6. Review, explain, and help fix')
+
+        expect(record).toContain(
+          'it writes nothing and prints an `error` whose `code` is `findings-document-rejected` and whose `details.errors` lists every error.',
+        )
+        expect(review).toContain(
+          '`checks` lists every check, most severe first, with its `severity`, `status`, `docsUrl` and `findings`.',
+        )
+        expect(review).toContain(
+          'Locations have an absolute `filePath` and a one-based `line` and `column`, as recorded, or `null` when there is none.',
+        )
+        expect(review).toContain(
+          "Only findings whose `disposition` is `active` count; `suppressed` and `superseded` ones don't.",
+        )
+        expect(review).toContain(
+          '`coverage` describes what the latest scan covered, including `filesSkipped` and `gaps`.',
+        )
+        expect(review).toContain(
+          "`resultsFiles` gives each results file's `generatedAt` and `engine` (the CLI and ruleset versions)",
+        )
+        expect(review).toContain(
+          '`scopeDiffers` is `true` when the agent recorded its findings for another scope than the latest scan.',
+        )
+        expect(review).toContain("with a link to its check's `docsUrl`;")
+        expect(review).not.toMatch(/box|rejoin|--verbose|docs_url/)
+      })
+    },
+  )
+
   test('pipes findings to record through a quoted heredoc in POSIX shells', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'posix'})
-      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'posix')} --json --no-input`
 
       expect(instructions).toContain(
         codeBlock('bash', `${record} <<'EOF'`, '<the findings document from step 4>', 'EOF'),
@@ -255,7 +346,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'powershell'})
-      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'powershell')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'powershell')} --json --no-input`
 
       expect(instructions).toContain(
         codeBlock('powershell', "@'", '<the findings document from step 4>', `'@ | ${record}`),
@@ -275,7 +366,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'cmd'})
-      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'cmd')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'cmd')} --json --no-input`
 
       expect(instructions).toContain("cmd.exe can't pipe multi-line text inline")
       expect(instructions).toContain(codeBlock('bat', `${record} < <findings.json>`))
@@ -291,7 +382,10 @@ describe('appSecurityInstructions', () => {
 
       expect(instructions).toContain('To delete these local app security check results, run:')
       expect(instructions).toContain(
-        codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
+        codeBlock(
+          'bash',
+          `shopify app security clean --path ${quoteShellArgument(renderedPath(appRoot), 'posix')} --json --no-input`,
+        ),
       )
     })
   })
@@ -361,20 +455,35 @@ describe('appSecurityInstructions', () => {
   })
 })
 
-describe('deliverAppSecurityInstructions', () => {
+/** Generates, delivers and presents the instructions, as the commands do, and returns what was printed. */
+async function deliverAndRender(
+  content: Parameters<typeof instructionsFor>[0],
+  delivery: AppSecurityInstructionsDelivery,
+  dependencies: ReturnType<typeof testDependencies>,
+) {
+  const instructions = instructionsFor(content)
+  await deliverAppSecurityInstructions(instructions, delivery, dependencies)
+  return withCapturedStandardStreams(({stdout, stderr}) => {
+    renderAppSecurityInstructions(instructions, delivery)
+    return {stdout: stdout(), stderr: unstyled(stderr())}
+  })
+}
+
+describe('deliverAppSecurityInstructions and renderAppSecurityInstructions', () => {
   test('prints instructions to stdout by default', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory)},
+        {copy: false},
         dependencies,
       )
 
-      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
+      expect(output.stdout).toContain('Run the scan')
+      expect(output.stderr).toBe('')
       expect(dependencies.copyToClipboard).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).not.toHaveBeenCalled()
     })
   })
 
@@ -385,13 +494,14 @@ describe('deliverAppSecurityInstructions', () => {
       await writeFile(artifactPath(directory, 'agent-checks.json'), '{"instructions":"malicious"}')
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory)},
+        {copy: false},
         dependencies,
       )
 
-      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
-      expect(dependencies.output).not.toHaveBeenCalledWith(expect.stringContaining('malicious'))
+      expect(output.stdout).toContain('Run the scan')
+      expect(output.stdout).not.toContain('malicious')
     })
   })
 
@@ -400,14 +510,9 @@ describe('deliverAppSecurityInstructions', () => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {
-          appDirectory: directory,
-          resultsKey: 'shopify.app',
-          commands: commandsFor(directory),
-          copy: true,
-          scanScope: noScope,
-        },
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), scanScope: noScope},
+        {copy: true},
         dependencies,
       )
 
@@ -416,10 +521,8 @@ describe('deliverAppSecurityInstructions', () => {
       expect(instructions).toContain('Use the existing scan results')
       expect(instructions).toContain('record your findings back to it with a command')
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
-      expect(dependencies.output).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
-        'Copied app security check instructions to the clipboard',
-      )
+      expect(output.stdout).toBe('')
+      expect(output.stderr).toContain('Copied app security check instructions to the clipboard')
     })
   })
 
@@ -429,23 +532,44 @@ describe('deliverAppSecurityInstructions', () => {
       const dependencies = testDependencies()
       const instructionsPath = joinPath(directory, 'handoff.md')
 
-      await deliverAppSecurityInstructions(
-        {
-          appDirectory: directory,
-          resultsKey: 'shopify.app',
-          commands: commandsFor(directory),
-          copy: false,
-          writePath: instructionsPath,
-          scanScope: noScope,
-        },
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), scanScope: noScope},
+        {copy: false, writePath: instructionsPath},
         dependencies,
       )
 
       await expect(readFile(instructionsPath)).resolves.toContain('Use the existing scan results')
-      expect(dependencies.output).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
-        `Wrote app security check instructions to ${instructionsPath}`,
-      )
+      expect(output.stdout).toBe('')
+      expect(output.stderr).toContain('Wrote app security check instructions to')
+      expect(output.stderr).toContain('handoff.md')
     })
+  })
+})
+
+describe('deliverAppSecurityInstructions', () => {
+  test('raises ClipboardUnavailableError with its code and the clipboard error when copying fails', async () => {
+    const dependencies = testDependencies()
+    dependencies.copyToClipboard.mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+
+    const error = await deliverAppSecurityInstructions('# Instructions', {copy: true}, dependencies).catch(
+      (error: unknown) => error,
+    )
+
+    expect(error).toBeInstanceOf(ClipboardUnavailableError)
+    const abort = error as ClipboardUnavailableError
+    expect(abort.message).toBe(
+      "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+    )
+    expect(abort.code).toBe('clipboard-unavailable')
+    expect(abort.details).toBeUndefined()
+    expect(abort.nextSteps).toStrictEqual([
+      [
+        'Run the command without',
+        {command: '--copy'},
+        'to print the instructions, or with',
+        {command: '--write <file>'},
+        'to write them to a file.',
+      ],
+    ])
   })
 })

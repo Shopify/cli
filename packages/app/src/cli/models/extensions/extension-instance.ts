@@ -1,4 +1,4 @@
-import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
+import {BaseConfigType, BaseExtensionConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {
   DevSessionUpdateContext,
@@ -44,7 +44,7 @@ const DEFAULT_WATCH_IGNORE = [
   '**/.gitignore',
 ]
 
-export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
+export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Extension initialized'
 
 /**
  * Class that represents an instance of a local extension
@@ -58,7 +58,7 @@ export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
+export class ExtensionInstance<TConfiguration extends BaseExtensionConfigType = BaseConfigType> {
   entrySourceFilePath: string
   devUUID: string
   localIdentifier: string

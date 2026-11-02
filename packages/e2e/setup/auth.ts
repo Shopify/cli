@@ -1,4 +1,4 @@
-import {browserFixture} from './browser.js'
+import {cliFixture} from './cli.js'
 import {authStatePaths} from './auth-state.js'
 import {AuthSetupError} from './auth-diagnostics.js'
 import {globalLog} from './env.js'
@@ -13,9 +13,9 @@ const log = {log: (_ctx: any, msg: string) => globalLog('auth', msg)}
  * Copies the pre-authenticated session from the remote auth setup into this
  * worker's isolated XDG directories.
  *
- * Fixture chain: envFixture → cliFixture → browserFixture → authFixture
+ * Fixture chain: envFixture → cliFixture → authFixture
  */
-export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
+export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
   authLogin: [
     async ({env}, use) => {
       const {xdgEnv: authXdgEnv} = authStatePaths()

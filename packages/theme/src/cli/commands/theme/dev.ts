@@ -72,11 +72,6 @@ You can run this command only in a directory that matches the [default Shopify t
       default: 'default',
       env: 'SHOPIFY_FLAG_ERROR_OVERLAY',
     }),
-    poll: Flags.boolean({
-      hidden: true,
-      description: 'Force polling to detect file changes.',
-      env: 'SHOPIFY_FLAG_POLL',
-    }),
     'theme-editor-sync': Flags.boolean({
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',

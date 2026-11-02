@@ -1,0 +1,17 @@
+import {type FunctionExecution} from '../runner.js'
+import {ExternalError} from '@shopify/cli-kit/node/error'
+import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+
+export function presentFunctionExecution(execution: FunctionExecution): void {
+  if (execution.state === 'completed-text' || execution.state === 'failed') {
+    // Native text chunks retain their observed stream order, whitespace, and terminal formatting.
+    for (const {stream, data} of execution.outputChunks ?? []) process[stream].write(data)
+    if (execution.state === 'completed-text') return
+    const error = new ExternalError(execution.message, execution.command, execution.args)
+    error.details = {exitCode: execution.exitCode, stderr: execution.stderr}
+    throw error
+  }
+  for (const diagnostic of execution.diagnostics) outputWarn(diagnostic)
+  outputResult(execution.resultJson)
+  if (execution.exitCode !== 0) process.exitCode = execution.exitCode
+}

@@ -12,6 +12,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON error details.
+import {resolve} from 'node:path'
 import type {DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 type FileState = 'present' | 'missing' | 'invalid'
@@ -68,7 +70,7 @@ describe('requireResultsDirectory', () => {
     })
   })
 
-  test('throws "No results found" with the check command as the next step', async () => {
+  test('throws "No results found" with a stable code and the check command as the next step', async () => {
     await inTemporaryDirectory(async (directory) => {
       const selection = await createApp(directory)
 
@@ -78,6 +80,8 @@ describe('requireResultsDirectory', () => {
       expect((error as AbortError).message).toBe(
         `No app security check results for shopify.app in ${selection.appDirectory}.`,
       )
+      expect((error as AbortError).code).toBe('results-directory-not-found')
+      expect((error as AbortError).details).toBeUndefined()
       expect((error as AbortError).tryMessage).toBe(`Run \`${command(selection, 'scan')}\`.`)
     })
   })
@@ -245,6 +249,10 @@ describe('loadAppSecurityResults', () => {
             {title: invalidPath, body: {list: {items: [expect.stringContaining('Could not parse JSON')]}}},
           ])
           expect(JSON.stringify(error.customSections)).not.toContain(validPath)
+          expect(error.code).toBe('results-file-invalid')
+          expect(error.details).toStrictEqual({
+            files: [{path: resolve(invalidPath), errors: [expect.stringContaining('Could not parse JSON')]}],
+          })
         })
       },
     )
@@ -277,6 +285,45 @@ describe('loadAppSecurityResults', () => {
           },
           {title: paths.agentFindingsPath, body: {list: {items: [expect.stringContaining('Could not parse JSON')]}}},
         ])
+        expect(error.code).toBe('results-file-invalid')
+        expect(error.details).toStrictEqual({
+          files: [
+            {
+              path: resolve(paths.deterministicFindingsPath),
+              errors: ['source is "agent", but this file must hold "deterministic" findings.'],
+            },
+            {path: resolve(paths.agentFindingsPath), errors: [expect.stringContaining('Could not parse JSON')]},
+          ],
+        })
+      })
+    })
+
+    test('rejects a hand-edited value that the CLI never writes, such as line 0', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const selection = await createApp(directory)
+        const paths = artifactPathsFor(selection)
+        const [first, ...rest] = agentFindingsDocument.checks
+        const [finding, ...otherFindings] = first!.findings
+        const document = {
+          ...agentFindingsDocument,
+          checks: [
+            {...first!, findings: [{...finding!, location: {...finding!.location, line: 0}}, ...otherFindings]},
+            ...rest,
+          ],
+        }
+        await writeInvalidFile(paths.agentFindingsPath, JSON.stringify(document))
+
+        const error = await loadError(selection)
+
+        expect(error.code).toBe('results-file-invalid')
+        expect(error.details).toStrictEqual({
+          files: [
+            {
+              path: resolve(paths.agentFindingsPath),
+              errors: ['checks[0].findings[0].location.line: Number must be greater than 0'],
+            },
+          ],
+        })
       })
     })
 

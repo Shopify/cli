@@ -50,7 +50,7 @@
     "type-check": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm tsc --noEmit",
+        "command": "pnpm tsc --noEmit --tsBuildInfoFile node_modules/.cache/tsc/type-check.tsbuildinfo",
         "cwd": "packages/cli"
       }
     },
