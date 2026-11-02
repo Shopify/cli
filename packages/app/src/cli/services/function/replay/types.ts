@@ -1,9 +1,5 @@
 import {functionRunJsonOutputSchema} from '../runner/types.js'
-import {
-  defineJsonOutputSchema,
-  jsonOutputTimestampSchema,
-  type InferJsonOutputSchema,
-} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema, jsonOutputTimestampSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const lifecycleSchema = zod
@@ -35,8 +31,6 @@ export const functionReplayEventSchema = defineJsonOutputSchema({
   name: 'FunctionReplayEvent',
   schema: zod.discriminatedUnion('type', [lifecycleSchema, buildSchema, executionSchema]),
 })
-
-export type FunctionReplayEvent = InferJsonOutputSchema<typeof functionReplayEventSchema>
 
 export const functionReplayJsonOutputSchema = defineJsonOutputSchema({
   name: 'FunctionReplayOutput',
