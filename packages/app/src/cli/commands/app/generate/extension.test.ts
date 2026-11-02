@@ -1,9 +1,6 @@
 import AppGenerateExtension from './extension.js'
 import generate from '../../../services/generate.js'
-import {
-  appGenerateExtensionJsonOutputSchema,
-  GenerateExtensionResult,
-} from '../../../services/generate/extension/types.js'
+import {GenerateExtensionResult} from '../../../services/generate/extension/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {appFlags} from '../../../flags.js'
 import {
@@ -17,12 +14,12 @@ import {
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
-import {AbortError, handler} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, rmdir, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 // eslint-disable-next-line n/prefer-global/console
 import {Console} from 'node:console'
@@ -36,33 +33,37 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+async function configureApp(directory: string): Promise<GenerateExtensionResult> {
+  const configPath = joinPath(directory, 'shopify.app.toml')
+  await writeFile(configPath, 'name = "Test app"\nclient_id = "test-client-id"\n')
+  const app = testAppLinked({directory, configPath})
+  vi.mocked(linkedAppContext).mockResolvedValue({
+    app,
+    project: testProject({directory}),
+    remoteApp: testOrganizationApp(),
+    organization: testOrganization(),
+    activeConfig: {file: await TomlFile.read(configPath), source: 'default', isLinked: true, hiddenConfig: {}},
+    specifications: [],
+    developerPlatformClient: testDeveloperPlatformClient(),
+  })
+  const result: GenerateExtensionResult = {
+    status: 'success',
+    extension: {
+      directory: relativePath(cwd(), joinPath(directory, 'extensions', 'my-extension')),
+      extensionTemplate: checkoutUITemplate,
+      name: 'My extension',
+      flavor: 'typescript-react',
+    },
+    packageManager: 'pnpm',
+  }
+  vi.mocked(generate).mockResolvedValue(result)
+  return result
+}
+
 async function withApp(run: (directory: string, result: GenerateExtensionResult) => Promise<void>) {
   vi.stubGlobal('console', {...globalThis.console, Console})
   await inTemporaryDirectory(async (directory) => {
-    const configPath = joinPath(directory, 'shopify.app.toml')
-    await writeFile(configPath, 'name = "Test app"\nclient_id = "test-client-id"\n')
-    const app = testAppLinked({directory, configPath})
-    vi.mocked(linkedAppContext).mockResolvedValue({
-      app,
-      project: testProject({directory}),
-      remoteApp: testOrganizationApp(),
-      organization: testOrganization(),
-      activeConfig: {file: await TomlFile.read(configPath), source: 'default', isLinked: true, hiddenConfig: {}},
-      specifications: [],
-      developerPlatformClient: testDeveloperPlatformClient(),
-    })
-    const result: GenerateExtensionResult = {
-      status: 'success',
-      extension: {
-        directory: relativePath(cwd(), joinPath(directory, 'extensions', 'my-extension')),
-        extensionTemplate: checkoutUITemplate,
-        name: 'My extension',
-        flavor: 'typescript-react',
-      },
-      packageManager: 'pnpm',
-    }
-    vi.mocked(generate).mockResolvedValue(result)
-    await run(directory, result)
+    await run(directory, await configureApp(directory))
   })
 }
 
@@ -72,13 +73,9 @@ async function runCommand(directory: string, flags: string[]) {
   return runWithCommandEventsForCommand(argv, () => command.run())
 }
 
-test('declares the domain schema and keeps app and inherited flags', () => {
-  expect(AppGenerateExtension.flags.json).toBeDefined()
+test('keeps app and inherited flags', () => {
   expect(AppGenerateExtension.flags.path).toBe(appFlags.path)
-  expect(AppGenerateExtension.baseFlags).toHaveProperty('json-schema')
   expect(AppGenerateExtension.baseFlags['auth-alias']).toBeDefined()
-  expect(AppGenerateExtension.jsonOutputSchema).toBe(appGenerateExtensionJsonOutputSchema)
-  expect(AppGenerateExtension.descriptionForHelp()).toContain('AppGenerateExtensionResult')
 })
 
 test.each([{flags: ['--flavor', 'preact']}, {flags: ['--flavor=preact']}])(
@@ -142,36 +139,6 @@ test.each(['future-flavor', 'precat'])(
   },
 )
 
-test.each([
-  {flags: ['--json'], environment: false},
-  {flags: ['-j'], environment: false},
-  {flags: ['--no-input'], environment: true},
-])('writes one public JSON result for $flags with diagnostics on stderr', async ({flags, environment}) => {
-  if (environment) vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  await withApp(async (directory, result) => {
-    vi.mocked(generate).mockImplementation(async () => {
-      outputInfo('Generating extension.')
-      return result
-    })
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      const commandResult = await runCommand(directory, flags)
-      expect(commandResult.app.directory).toBe(directory)
-      expect(JSON.parse(stdout())).toEqual({
-        status: 'success',
-        extension: {
-          name: 'My extension',
-          type: 'ui_extension',
-          template: 'checkout_ui',
-          flavor: 'typescript-react',
-          directory: joinPath(directory, 'extensions', 'my-extension'),
-        },
-      })
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'info', message: 'Generating extension.'})
-    })
-    expect(generate).toHaveBeenCalledWith(expect.objectContaining({name: 'My extension', template: 'checkout_ui'}))
-  })
-})
-
 test.each(['preact', 'liquid', 'config-only', undefined] as const)(
   'encodes the selected flavor without template internals: %s',
   async (flavor) => {
@@ -192,21 +159,6 @@ test.each(['preact', 'liquid', 'config-only', undefined] as const)(
   },
 )
 
-test('keeps the relative directory, success guidance, and documentation in text mode with no-input', async () => {
-  await withApp(async (directory, result) => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runCommand(directory, ['--no-input'])
-      expect(stdout()).toBe('')
-      const text = unstyled(stderr())
-      expect(text.replace(/[│\s]/g, '')).toContain(
-        `Your extension was created in ${result.extension.directory}`.replace(/\s/g, ''),
-      )
-      expect(text).toContain('pnpm shopify app dev')
-      expect(text).toContain(checkoutUITemplate.supportLinks[0])
-    })
-  })
-})
-
 test('resolves the generated directory relative to the original package-manager working directory', async () => {
   await withApp(async (directory, result) => {
     vi.stubEnv('INIT_CWD', directory)
@@ -218,28 +170,74 @@ test('resolves the generated directory relative to the original package-manager 
   })
 })
 
-test('preserves a generation failure and emits one fatal document without a success result', async () => {
-  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  await withApp(async (directory) => {
-    vi.mocked(generate).mockRejectedValueOnce(new AbortError('Template download failed.'))
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runCommand(directory, ['--json']).catch(handler)
-      expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: 'Template download failed.'}})
-      expect(stderr()).toBe('')
-    })
-  })
-})
+let extensionDirectory: string
+let extensionFixture: GenerateExtensionResult
 
-test('prints the JSON schema before loading the app or generating an extension', async () => {
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await launchCLI({
-      moduleURL: new URL('../../../../../../cli/package.json', import.meta.url).href,
-      argv: ['app', 'generate', 'extension', '--json-schema'],
-      lazyCommandLoader: async (id) => (id === 'app:generate:extension' ? AppGenerateExtension : undefined),
+describeJsonCommand({
+  command: AppGenerateExtension,
+  commandId: 'app:generate:extension',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: () => ['--path', extensionDirectory, '--template', 'checkout_ui', '--name', 'My extension'],
+  expectedResult: () => ({
+    status: 'success',
+    extension: {
+      name: 'My extension',
+      type: 'ui_extension',
+      template: 'checkout_ui',
+      flavor: 'typescript-react',
+      directory: joinPath(extensionDirectory, 'extensions', 'my-extension'),
+    },
+  }),
+  expectedSchema: {
+    type: 'object',
+    properties: {extension: {$ref: '#/definitions/GeneratedExtension'}},
+    required: ['status', 'extension'],
+    additionalProperties: false,
+  },
+  setup: async () => {
+    extensionDirectory = tempDirectory()
+    extensionFixture = await configureApp(extensionDirectory)
+    const fixtureDirectory = extensionDirectory
+    return () => rmdir(fixtureDirectory)
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledExactlyOnceWith({
+      directory: extensionDirectory,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
-    expect(JSON.parse(stdout()).definitions.Result).toMatchObject({type: 'object', additionalProperties: false})
-    expect(stderr()).toBe('')
+    expect(generate).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({name: 'My extension', template: 'checkout_ui'}),
+    )
+  },
+  assertNotExecuted: () => {
     expect(linkedAppContext).not.toHaveBeenCalled()
     expect(generate).not.toHaveBeenCalled()
-  })
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr.replace(/[│\s]/g, '')).toContain(
+      `Your extension was created in ${extensionFixture.extension.directory}`.replace(/\s/g, ''),
+    )
+    expect(stderr).toContain('pnpm shopify app dev')
+    expect(stderr).toContain(checkoutUITemplate.supportLinks[0])
+  },
+  diagnostics: {
+    setup: () => {
+      const result = extensionFixture
+      vi.mocked(generate).mockImplementation(async () => {
+        outputInfo('Generating extension.')
+        return result
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'info', message: 'Generating extension.'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(generate).mockRejectedValue(new AbortError('Template download failed.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Template download failed.'}},
+    exitCode: 1,
+  },
 })

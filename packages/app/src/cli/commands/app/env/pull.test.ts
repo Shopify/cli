@@ -7,11 +7,21 @@ import {OrganizationSource} from '../../../models/organization.js'
 import {appEnvPullJsonOutputSchema} from '../../../services/app/env/pull/types.js'
 import {Config} from '@oclif/core'
 import {expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFile, readFile} from '@shopify/cli-kit/node/fs'
+import {
+  inTemporaryDirectory,
+  writeFile,
+  readFile,
+  readFileSync,
+  fileExistsSync,
+  tempDirectory,
+  rmdir,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import * as context from '@shopify/cli-kit/node/context/local'
 import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
 import {resolve} from 'node:path'
 
@@ -86,13 +96,6 @@ test('does not emit a result when the environment file cannot be read', async ()
   })
 })
 
-test('exposes the schema, JSON flag and existing file selection flag', () => {
-  expect(EnvPull.jsonOutputSchema).toBe(appEnvPullJsonOutputSchema)
-  expect(EnvPull.description).toContain('AppEnvPullResult')
-  expect(EnvPull.flags.json).toBeDefined()
-  expect(EnvPull.flags['env-file']).toBeDefined()
-})
-
 test.each([
   {path: 1, status: 'success', changed: true, variables, content},
   {path: '/app/.env', status: 'failed', changed: true, variables, content},
@@ -129,25 +132,54 @@ test('resolves nested relative --env-file paths from the app directory', async (
   })
 })
 
-test.each([[], ['--no-input'], ['--json'], ['--json', '--no-input']].map((argv) => ({argv})))(
-  'keeps JSON formatting independent from non-interactivity for %j',
-  async ({argv}) => {
-    await inTemporaryDirectory(async (directory) => {
-      setup(directory)
-      const command = new EnvPull(['--path', directory, ...argv], await Config.load())
-      vi.spyOn(context, 'isUnitTest').mockReturnValue(false)
-      const streams = mockAndCaptureStandardStreams()
-      try {
-        await runWithCommandEventsForCommand(argv, () => command.run())
-        if (argv.includes('--json')) {
-          expect(JSON.parse(streams.stdout())).toMatchObject({status: 'success', changed: true, variables})
-        } else {
-          expect(streams.stdout()).toContain('Created')
-        }
-      } finally {
-        streams.restore()
-      }
-      await expect(readFile(joinPath(directory, '.env'))).resolves.toBe(content)
+let fixtureDirectory: string
+
+describeJsonCommand({
+  command: EnvPull,
+  commandId: 'app:env:pull',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: () => ['--path', fixtureDirectory],
+  expectedResult: () => ({
+    path: resolve(joinPath(fixtureDirectory, '.env')),
+    status: 'success',
+    changed: true,
+    variables,
+    content,
+  }),
+  expectedSchema: {
+    type: 'object',
+    required: ['path', 'status', 'changed', 'variables', 'content'],
+    additionalProperties: false,
+  },
+  setup: () => {
+    fixtureDirectory = tempDirectory()
+    setup(fixtureDirectory)
+    const directory = fixtureDirectory
+    return () => rmdir(directory)
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledExactlyOnceWith({
+      directory: fixtureDirectory,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
   },
-)
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(fileExistsSync(joinPath(fixtureDirectory, '.env'))).toBe(false)
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toContain('Created ')
+    expect(stdout).toContain(content)
+    expect(stderr).toBe('')
+    expect(readFileSync(joinPath(fixtureDirectory, '.env')).toString()).toBe(content)
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(linkedAppContext).mockRejectedValue(new AbortError('Authentication failed'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Authentication failed'}},
+    exitCode: 1,
+  },
+})

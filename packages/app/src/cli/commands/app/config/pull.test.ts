@@ -6,9 +6,9 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {Config} from '@oclif/core'
 import {expect, test, vi} from 'vitest'
-import * as context from '@shopify/cli-kit/node/context/local'
 import * as ui from '@shopify/cli-kit/node/ui'
-import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../../../services/app/config/pull.js')
 vi.mock('../../../services/app-context.js')
@@ -26,27 +26,6 @@ function setup() {
   return {app, remoteApp, result}
 }
 
-test('exposes the schema in help and retains app flags', () => {
-  expect(ConfigPull.jsonOutputSchema).toBe(appConfigPullJsonOutputSchema)
-  expect(ConfigPull.description).toContain('AppConfigPullResult')
-  expect(ConfigPull.flags.json).toBeDefined()
-  expect(ConfigPull.flags.config).toBeDefined()
-})
-
-test('writes the real encoded result to stdout', async () => {
-  const {app, result} = setup()
-  const command = new ConfigPull(['--json'], await Config.load())
-  vi.spyOn(context, 'isUnitTest').mockReturnValue(false)
-  const streams = mockAndCaptureStandardStreams()
-  try {
-    await expect(command.run()).resolves.toEqual({app})
-    expect(streams.stdout()).toBe(`${appConfigPullJsonOutputSchema.encode(result)}\n`)
-    expect(streams.stderr()).toBe('')
-  } finally {
-    streams.restore()
-  }
-})
-
 test('preserves text presentation and passes the selected configuration to the service', async () => {
   const {app, remoteApp} = setup()
   const render = vi.spyOn(ui, 'renderSuccess').mockReturnValue(undefined)
@@ -62,20 +41,6 @@ test('preserves text presentation and passes the selected configuration to the s
     headline: `Pulled latest configuration for "${app.configuration.name}"`,
     body: 'Updated shopify.app.toml with the remote data.',
   })
-})
-
-test('propagates failures without writing a success document', async () => {
-  setup()
-  vi.mocked(pull).mockRejectedValue(new Error('Remote configuration unavailable'))
-  const command = new ConfigPull(['--json'], await Config.load())
-  vi.spyOn(context, 'isUnitTest').mockReturnValue(false)
-  const streams = mockAndCaptureStandardStreams()
-  try {
-    await expect(command.run()).rejects.toThrow('Remote configuration unavailable')
-    expect(streams.stdout()).toBe('')
-  } finally {
-    streams.restore()
-  }
 })
 
 test('rejects an invalid file path while all other fields are valid', () => {
@@ -104,4 +69,66 @@ test('returns app identity without duplicated configuration fields', () => {
     organizationId: remoteApp.organizationId,
     organizationGid: null,
   })
+})
+
+let pullApp: ReturnType<typeof testAppLinked>
+let pullRemoteApp: ReturnType<typeof testOrganizationApp>
+
+describeJsonCommand({
+  command: ConfigPull,
+  commandId: 'app:config:pull',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: [],
+  expectedResult: {
+    path: '/tmp/project/shopify.app.toml',
+    app: {id: '1', gid: null, name: 'my app', clientId: 'api-key', organizationId: '1', organizationGid: null},
+  },
+  expectedSchema: {
+    type: 'object',
+    required: ['path', 'app'],
+    additionalProperties: false,
+    properties: {app: {$ref: '#/definitions/LinkedApp'}},
+  },
+  setup: () => {
+    pullApp = testAppLinked()
+    pullRemoteApp = testOrganizationApp()
+    vi.mocked(linkedAppContext).mockResolvedValue({app: pullApp, remoteApp: pullRemoteApp} as Awaited<
+      ReturnType<typeof linkedAppContext>
+    >)
+    vi.mocked(pull).mockResolvedValue({
+      path: '/tmp/project/shopify.app.toml',
+      app: {id: '1', gid: null, name: 'my app', clientId: 'api-key', organizationId: '1', organizationGid: null},
+    })
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledExactlyOnceWith({
+      directory: expect.any(String),
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
+    })
+    expect(pull).toHaveBeenCalledExactlyOnceWith({
+      directory: expect.any(String),
+      configName: undefined,
+      configPath: pullApp.configPath,
+      configuration: pullApp.configuration,
+      remoteApp: pullRemoteApp,
+    })
+  },
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(pull).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain(`Pulled latest configuration for "${pullApp.configuration.name}"`)
+    expect(stderr).toContain('Updated shopify.app.toml with the remote data.')
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(pull).mockRejectedValue(new AbortError('Remote configuration unavailable'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Remote configuration unavailable'}},
+    exitCode: 1,
+  },
 })

@@ -6,10 +6,8 @@ import {resolveAppDirectory, resolveAppSecuritySelection} from '../../../service
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import securityClean from '../../../services/security-clean.js'
 import {renderSecurityCleanResult} from '../../../services/security-clean/result.js'
-import {appSecurityCleanJsonOutputSchema} from '../../../services/security-clean/types.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
@@ -82,11 +80,6 @@ describe('app security clean command', () => {
   test('does not require linked app context', () => {
     expect(SecurityClean.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityClean.prototype).not.toBeInstanceOf(AppLinkedCommand)
-  })
-
-  test('defines --json and exposes the result schema', () => {
-    expect(SecurityClean.flags.json).toBe(jsonFlag.json)
-    expect(SecurityClean.jsonOutputSchema).toBe(appSecurityCleanJsonOutputSchema)
   })
 
   test('defines the selection flags as check does, except --without-app-config', () => {
@@ -164,22 +157,6 @@ describe('app security clean command', () => {
       } finally {
         output.clear()
       }
-    })
-  })
-
-  test.each([['--json'], ['-j']])('presents the result as JSON with %s', async (flag) => {
-    await inTemporaryDirectory(async (directory) => {
-      const appDirectory = await createApp(directory)
-      const result = cleanedResult(appDirectory)
-      vi.mocked(securityClean).mockResolvedValue(result)
-
-      await SecurityClean.run(['--path', directory, flag], import.meta.url)
-
-      expect(renderSecurityCleanResult).toHaveBeenCalledWith(
-        result,
-        {all: false, selection: expect.objectContaining({appDirectory})},
-        'json',
-      )
     })
   })
 

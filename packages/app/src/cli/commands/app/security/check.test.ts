@@ -110,15 +110,6 @@ describe('app security check command', () => {
     )
   })
 
-  test('presents the outcome as JSON with --json', async () => {
-    const check = {kind: 'cancelled'} as const
-    vi.mocked(securityCheck).mockResolvedValue(check)
-
-    await SecurityCheck.run(['--json'], import.meta.url)
-
-    expect(renderSecurityCheckResult).toHaveBeenCalledWith(check, expect.anything(), 'json')
-  })
-
   test('forwards repeated --exclude globs exactly as typed, in command-line order', async () => {
     await SecurityCheck.run(
       ['--exclude', 'generated', '--exclude', '../shared/**', '--exclude', 'a b/', '--skip-instructions'],

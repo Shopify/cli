@@ -8,6 +8,8 @@ import {expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/context.js')
@@ -71,21 +73,6 @@ test('keeps the environment text on stdout, with an empty missing secret', async
   })
 })
 
-test('exposes the schema and JSON flag', () => {
-  expect(EnvShow.jsonOutputSchema).toBe(appEnvShowJsonOutputSchema)
-  expect(EnvShow.description).toContain('AppEnvShowResult')
-  expect(EnvShow.flags.json).toBeDefined()
-})
-
-test('propagates failures before writing any result', async () => {
-  vi.mocked(linkedAppContext).mockRejectedValue(new Error('Authentication failed'))
-  const command = new EnvShow(['--json'], await Config.load())
-  await withCapturedStandardStreams(async ({stdout}) => {
-    await expect(command.run()).rejects.toThrow('Authentication failed')
-    expect(stdout()).toBe('')
-  })
-})
-
 test.each([
   {variables: [{name: 'KEY', value: 1}]},
   {variables: [{name: 'KEY', value: null}]},
@@ -95,18 +82,45 @@ test.each([
   expect(() => appEnvShowJsonOutputSchema.validate(value)).toThrow()
 })
 
-test.each([[], ['--no-input'], ['--json'], ['--json', '--no-input']].map((argv) => ({argv})))(
-  'keeps JSON formatting independent from non-interactivity for %j',
-  async ({argv}) => {
-    mockLinkedAppContext({secret: undefined, scopes: 'read_products'})
-    const command = new EnvShow(argv, await Config.load())
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await runWithCommandEventsForCommand(argv, () => command.run())
-      if (argv.includes('--json')) {
-        expect(JSON.parse(stdout())).toHaveProperty('variables')
-      } else {
-        expect(unstyled(stdout())).toContain('SHOPIFY_API_KEY=api-key')
-      }
+describeJsonCommand({
+  command: EnvShow,
+  commandId: 'app:env:show',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: [],
+  expectedResult: {
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: 'api-key', isSecret: false},
+      {name: 'SHOPIFY_API_SECRET', value: 'api-secret', isSecret: true},
+      {name: 'SCOPES', value: 'read_products', isSecret: false},
+    ],
+  },
+  expectedSchema: {type: 'object', required: ['variables'], additionalProperties: false},
+  setup: () => {
+    mockLinkedAppContext({secret: 'api-secret', scopes: 'read_products'})
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledExactlyOnceWith({
+      directory: expect.any(String),
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
   },
-)
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(unstyled(stdout)).toBe(
+      '\n    SHOPIFY_API_KEY=api-key\n    SHOPIFY_API_SECRET=api-secret\n    SCOPES=read_products\n  \n',
+    )
+    expect(stderr).toBe('Loaded app\n')
+  },
+  expectedEvents: [{type: 'diagnostic', level: 'info', message: 'Loaded app'}],
+  failure: {
+    setup: () => {
+      vi.mocked(linkedAppContext).mockRejectedValue(new AbortError('Authentication failed'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Authentication failed'}},
+    exitCode: 1,
+  },
+})

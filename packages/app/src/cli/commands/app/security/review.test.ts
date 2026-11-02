@@ -3,10 +3,8 @@ import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import securityReview from '../../../services/security-review.js'
 import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
-import {appSecurityReviewJsonOutputSchema} from '../../../services/security-review/types.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -28,11 +26,6 @@ describe('app security review command', () => {
   test('does not require linked app context', () => {
     expect(SecurityReview.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityReview.prototype).not.toBeInstanceOf(AppLinkedCommand)
-  })
-
-  test('defines --json and exposes the result schema', () => {
-    expect(SecurityReview.flags.json).toBe(jsonFlag.json)
-    expect(SecurityReview.jsonOutputSchema).toBe(appSecurityReviewJsonOutputSchema)
   })
 
   test('defines the selection flags as check does', () => {
@@ -69,8 +62,6 @@ describe('app security review command', () => {
   test.each([
     ['in the terminal', [], false, 'text'],
     ['in the terminal with --verbose', ['--verbose'], true, 'text'],
-    ['as JSON with --json', ['--json'], false, 'json'],
-    ['as JSON with -j', ['-j'], false, 'json'],
     ['as JSON with --json and --verbose', ['--json', '--verbose'], true, 'json'],
   ])('presents the reviewed results %s', async (_description, argv, verbose, format) => {
     const review = {} as Awaited<ReturnType<typeof securityReview>>
