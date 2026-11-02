@@ -28,7 +28,7 @@ describeJsonCommand({
     {type: 'progress', status: 'completed', message: 'Dev store deletion requested. Waiting for deletion confirmation'},
   ],
   expectedSchema: {
-    anyOf: [{required: ['store', 'organization']}, {required: ['error', 'message', 'nextSteps', 'exitCode']}],
+    anyOf: [{required: ['store', 'organization']}, {$ref: '#/definitions/StoreCommandError'}],
   },
   setup: () => {
     vi.mocked(resolveOrganizationForStore).mockResolvedValue({id: '12345', businessName: 'Test Org'})
@@ -44,6 +44,7 @@ describeJsonCommand({
     expect(fetchOptionalOrganizationShop).toHaveBeenCalledExactlyOnceWith({
       store: 'my-store.myshopify.com',
       organizationId: '12345',
+      organizationName: 'Test Org',
       token: 'test-token',
     })
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(2)

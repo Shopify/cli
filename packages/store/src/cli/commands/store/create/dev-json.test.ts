@@ -37,7 +37,7 @@ describeJsonCommand({
     {type: 'progress', status: 'completed', message: 'Waiting for store to be ready'},
   ],
   expectedSchema: {
-    anyOf: [{required: ['store', 'organization']}, {required: ['error', 'message', 'nextSteps', 'exitCode']}],
+    anyOf: [{required: ['store', 'organization']}, {$ref: '#/definitions/StoreCommandError'}],
   },
   setup: () => {
     vi.mocked(selectOrg).mockResolvedValue(organization)

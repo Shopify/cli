@@ -120,7 +120,12 @@ describeJsonCommand({
   moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
   args: ['--store', store, '--query', 'query { shop { name } }'],
   expectedResult: executeResult,
-  expectedSchema: {anyOf: [{type: 'object', additionalProperties: {}}, {type: 'null'}]},
+  expectedSchema: {
+    type: 'object',
+    properties: {data: {anyOf: [{type: 'object', additionalProperties: {}}, {type: 'null'}]}},
+    required: ['data'],
+    additionalProperties: false,
+  },
   setup: () => {
     vi.mocked(executeStoreOperation).mockResolvedValue(executeResult)
   },
@@ -137,7 +142,7 @@ describeJsonCommand({
   },
   assertNotExecuted: () => expect(executeStoreOperation).not.toHaveBeenCalled(),
   textOutput: ({stdout, stderr}) => {
-    expect(stdout).toBe(`${JSON.stringify(executeResult, null, 2)}\n`)
+    expect(stdout).toBe(`${JSON.stringify(executeResult.data, null, 2)}\n`)
     expect(stderr).toContain('Operation succeeded.')
   },
   failure: {
@@ -308,10 +313,7 @@ describeJsonCommand({
   expectedResult: {storeDomain: store, apiVersion: '2026-01', status: 'success', operation: expectedOperation},
   expectedEvents: [{type: 'diagnostic', level: 'info', message: expect.stringContaining('Starting bulk operation.')}],
   expectedSchema: {
-    anyOf: [
-      {properties: {status: {enum: ['success', 'partial', 'cancelled']}}},
-      {properties: {format: {const: 'jsonl'}}},
-    ],
+    anyOf: [{$ref: '#/definitions/ExecuteBulkOperationResult'}, {$ref: '#/definitions/BulkOperationFile'}],
   },
   setup: () => {
     vi.mocked(prepareBulkOperation).mockResolvedValue({
@@ -375,8 +377,8 @@ describeJsonCommand({
   expectedEvents: [{type: 'diagnostic', level: 'info', message: expect.stringContaining('Listing bulk operations.')}],
   expectedSchema: {
     anyOf: [
-      {required: ['storeDomain', 'apiVersion', 'operationGid', 'operation']},
-      {required: ['storeDomain', 'apiVersion', 'operations', 'pageInfo']},
+      {$ref: '#/definitions/GetBulkOperationStatusResult'},
+      {$ref: '#/definitions/ListBulkOperationsResult'},
     ],
   },
   setup: () => {
