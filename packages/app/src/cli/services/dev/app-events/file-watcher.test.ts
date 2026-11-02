@@ -283,7 +283,7 @@ describe('file-watcher events', () => {
         expect(settled).not.toHaveBeenCalled()
         expect(watchers[0]!.listenerCount('ready')).toBe(0)
         expect(watchers[0]!.listenerCount('error')).toBe(0)
-        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(2)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
 
         const error = new Error('Refreshed scan failed')
         if (outcome === 'error') watchers[1]!.emit('error', error)
@@ -349,10 +349,15 @@ describe('file-watcher events', () => {
 
       try {
         await fileWatcher.start()
-        expect(watcher!.close).toHaveBeenCalledOnce()
-        expect(watcher!.listenerCount('ready')).toBe(0)
-        expect(watcher!.listenerCount('error')).toBe(0)
-        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
+        if (alreadyAborted) {
+          expect(watcher).toBeUndefined()
+        } else {
+          expect(watcher!.close).toHaveBeenCalledOnce()
+          expect(watcher!.listenerCount('ready')).toBe(0)
+          expect(watcher!.listenerCount('error')).toBe(0)
+        }
+        await fileWatcher.stop()
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0)
       } finally {
         controller.abort()
         await watcher?.close()

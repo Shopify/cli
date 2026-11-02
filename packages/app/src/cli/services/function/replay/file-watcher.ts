@@ -11,6 +11,8 @@ export class ReplayFileWatcher extends FileWatcher {
   private pendingChanges = 0
   private changesSettled?: () => void
   private observeScan?: (watcher: FSWatcher) => void
+  private replayStopped = false
+  private finishReplayScan?: () => void
 
   constructor(
     app: AppLinkedInterface,
@@ -21,7 +23,7 @@ export class ReplayFileWatcher extends FileWatcher {
 
   override onChange(listener: (events: WatcherEvent[]) => void) {
     super.onChange((events: WatcherEvent[]) => {
-      if (this.replayContext.signal.aborted) return
+      if (this.replayStopped || this.replayContext.signal.aborted) return
       // Each non-empty batch emits one AppEvent or fails through the watcher's error channel.
       if (!this.startupComplete && events.length > 0) this.pendingChanges++
       listener(events)
@@ -50,10 +52,19 @@ export class ReplayFileWatcher extends FileWatcher {
   }
 
   override start(): Promise<void> {
-    if (this.replayContext.signal.aborted) return Promise.resolve()
+    if (this.replayStopped || this.replayContext.signal.aborted) return Promise.resolve()
     this.rescanRequested = true
     this.startupTask ??= this.scan()
     return this.startupTask
+  }
+
+  override async stop(): Promise<void> {
+    this.replayStopped = true
+    this.rescanRequested = false
+    this.finishReplayScan?.()
+    this.changesSettled?.()
+    await super.stop()
+    await this.startupTask
   }
 
   protected override onWatcherCreated(watcher: FSWatcher, listener: (event: string, path: string) => void) {
@@ -69,6 +80,7 @@ export class ReplayFileWatcher extends FileWatcher {
         const ready = new Promise<void>((resolve, reject) => {
           let nativeWatcher: FSWatcher | undefined
           const cleanup = () => {
+            this.finishReplayScan = undefined
             nativeWatcher?.removeListener('ready', onReady)
             nativeWatcher?.removeListener('error', onError)
             signal.removeEventListener('abort', onReady)
@@ -81,10 +93,11 @@ export class ReplayFileWatcher extends FileWatcher {
             cleanup()
             reject(error)
           }
+          this.finishReplayScan = onReady
           signal.addEventListener('abort', onReady, {once: true})
           this.observeScan = (watcher) => {
             nativeWatcher = watcher
-            if (signal.aborted) {
+            if (this.replayStopped || signal.aborted) {
               watcher.close().then(onReady).catch(onError)
             } else {
               watcher.once('ready', onReady)

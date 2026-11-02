@@ -118,6 +118,7 @@ test('writes native JSONL, reports build failure once, and recovers without sett
       input: '{"value":1}',
       export: 'run',
       json: true,
+      signal: options.abortController.signal,
     })
   })
 })
