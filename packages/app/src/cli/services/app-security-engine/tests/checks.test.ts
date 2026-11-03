@@ -37,7 +37,7 @@ const EXPECTED_CHECK_IDS = [
   'SQL_INJECTION',
   'SSRF_REQUEST_FORGERY',
   'STATIC_FRAME_ANCESTORS',
-  'STOREFRONT_UNSAFE_EVAL',
+  'STOREFRONT_CSP_COMPATIBILITY',
   'TEXT_SETTING_HTML_SMUGGLING',
   'THEME_EXTENSION_XSS',
   'UNAUTHENTICATED_ENDPOINT',
@@ -209,10 +209,10 @@ describe('agent checks', () => {
   test('XSS prompts treat shared-namespace metafields as writable by other installed apps', () => {
     const checks = loadChecks()
     const expectedVersions = {
-      CROSS_SITE_SCRIPTING: 2,
+      CROSS_SITE_SCRIPTING: 3,
       TEXT_SETTING_HTML_SMUGGLING: 3,
       THEME_EXTENSION_XSS: 3,
-      UNSAFE_INNERHTML: 4,
+      UNSAFE_INNERHTML: 5,
     }
     for (const [id, version] of Object.entries(expectedVersions)) {
       const check = checks.get(id)!
@@ -259,6 +259,19 @@ describe('agent checks', () => {
     expect(checks.get('OPEN_REDIRECT')!.prompt).toContain('sensitive trust transition')
     expect(checks.get('CSRF_MISSING_PROTECTION')!.prompt).toContain('concrete sensitive action')
     expect(checks.get('MISSING_EMBEDDED_CSP')!.prompt).toContain('concrete clickjacking impact')
+  })
+
+  test('storefront CSP and XSS prompts cross-reference each other', () => {
+    const checks = loadChecks()
+    const storefrontCsp = checks.get('STOREFRONT_CSP_COMPATIBILITY')!.prompt
+
+    expect(storefrontCsp).toContain('## Coordinate with existing checks')
+    expect(storefrontCsp).toContain('`UNSAFE_INNERHTML` owns attacker-controlled input')
+    expect(storefrontCsp).toContain('`CROSS_SITE_SCRIPTING`')
+    expect(storefrontCsp).toMatch(/never\s+recommend\s+weakening\s+the\s+policy/i)
+    for (const id of ['UNSAFE_INNERHTML', 'CROSS_SITE_SCRIPTING']) {
+      expect(checks.get(id)!.prompt, id).toContain('`STOREFRONT_CSP_COMPATIBILITY`')
+    }
   })
 
   test('loads new lifecycle, dependency, and active-upload prompts with bounded reporting thresholds', () => {

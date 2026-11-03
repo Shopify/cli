@@ -99,16 +99,16 @@ describe('app security CLI integration', () => {
 
       const result = await runSecurity({directory, blocking: 'high'})
 
-      expect(result.execution.scan.issues.filter((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toMatchObject([
-        {confidence: 'needs_review'},
-      ])
+      expect(result.execution.scan.issues.filter((issue) => issue.id === 'STOREFRONT_CSP_COMPATIBILITY')).toMatchObject(
+        [{confidence: 'needs_review'}],
+      )
       const loaded = await loadAppSecurityResults(
         {kind: 'config', appDirectory: directory, appConfigFilePath: joinPath(directory, 'shopify.app.toml')},
         directory,
       )
       const review = reviewAppSecurityResults(loaded, {
         resultsDirectory: appSecurityArtifactPaths(directory, 'shopify.app').resultsDirectory,
-        checkIds: ['STOREFRONT_UNSAFE_EVAL'],
+        checkIds: ['STOREFRONT_CSP_COMPATIBILITY'],
         blocking: 'high',
       })
       expect(review.checks[0]!.findings).toMatchObject([
@@ -116,7 +116,7 @@ describe('app security CLI integration', () => {
       ])
       expect(review.blocking.blockedChecks).toBe(0)
       expect(
-        result.execution.scan.scan.checks_executed.find((check) => check.id === 'STOREFRONT_UNSAFE_EVAL')?.status,
+        result.execution.scan.scan.checks_executed.find((check) => check.id === 'STOREFRONT_CSP_COMPATIBILITY')?.status,
       ).toBe('unresolved')
       expect(result.blockedChecks).toBe(0)
     })

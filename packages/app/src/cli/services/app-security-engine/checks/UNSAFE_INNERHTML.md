@@ -1,6 +1,6 @@
 ---
 id: UNSAFE_INNERHTML
-version: 4
+version: 5
 severity: high
 precedence: union
 ---
@@ -128,6 +128,15 @@ Do not report:
 - Inputs adequately escaped or sanitized for the final context, whether the
   defense is custom or library-provided
 - `eval()` or `new Function()` with literal strings (no user input)
+
+## Coordinate with existing checks
+
+`STOREFRONT_CSP_COMPATIBILITY` owns storefront code that needs `unsafe-eval`
+regardless of input, because the storefront Content Security Policy does not
+allow it. Keep attacker-controlled input reaching `eval`, `Function`, or string
+timers here. When a storefront path is both, report the injection here and note
+that `STOREFRONT_CSP_COMPATIBILITY` covers the CSP requirement; do not report
+the CSP requirement itself.
 
 If missing producer, sanitizer, or execution-context evidence prevents a
 conclusion, record the check as unresolved with a reason code and message. Do

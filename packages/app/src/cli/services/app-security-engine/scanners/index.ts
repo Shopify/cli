@@ -28,7 +28,7 @@ import {
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
-import {scanStorefrontUnsafeEval} from '../rules/storefront-unsafe-eval.js'
+import {scanStorefrontCspCompatibility, type StorefrontCspInput} from '../rules/storefront-csp-compatibility.js'
 import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
 import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
@@ -170,12 +170,16 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
   },
   {
-    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 4),
+    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 5),
     analysisMode: 'regex',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
   {
-    ...jsCheck('STOREFRONT_UNSAFE_EVAL', (context) => scanStorefrontUnsafeEval(themeFiles(context)), 'theme'),
+    ...jsCheck(
+      'STOREFRONT_CSP_COMPATIBILITY',
+      (context) => scanStorefrontCspCompatibility(storefrontCspInput(context)),
+      'theme',
+    ),
     analysisMode: 'ast',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
@@ -335,6 +339,22 @@ function assertRunnableDefinitions(definitions: ReadonlyArray<DeterministicCheck
 
 function themeFiles(context: ScanContext): SourceFile[] {
   return context.extensions.filter((extension) => extension.type === 'theme').flatMap((extension) => extension.files)
+}
+
+function storefrontCspInput(context: ScanContext): StorefrontCspInput {
+  const themeExtensions = context.extensions.filter((extension) => extension.type === 'theme')
+  const appToml = context.appToml
+  return {
+    files: themeExtensions.flatMap((extension) => extension.files),
+    appConfig: appToml
+      ? {
+          path: relativePath(context.appRoot, appToml.path).replace(/\\/g, '/'),
+          content: appToml.content,
+          raw: appToml.raw,
+        }
+      : null,
+    extensionConfigs: themeExtensions.map((extension) => ({path: extension.path, content: extension.content})),
+  }
 }
 
 function appSourceFiles(context: ScanContext): SourceFile[] {
