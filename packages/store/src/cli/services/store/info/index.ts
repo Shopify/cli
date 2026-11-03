@@ -6,7 +6,10 @@ import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/clien
 import {planHandle} from '../plan.js'
 import {storeTypeHandle} from '../store-type.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
-import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
+import {
+  fetchOptionalOrganizationShop,
+  fetchOrganizationShop,
+} from '../../../utilities/store-lookup/organization-shop.js'
 import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
@@ -15,6 +18,7 @@ import {compact} from '@shopify/cli-kit/common/object'
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import {setLastSeenUserId, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {fetchOrganizations, type Organization} from '@shopify/organizations'
 import type {DestinationsContext, OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
 import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
@@ -104,10 +108,56 @@ async function getBusinessPlatformStoreInfo(
   store: string,
   options: {noPrompt?: boolean} = {},
 ): Promise<StoreInfoResult> {
-  const destinationsCtx = await fetchDestinationsContext({store, noPrompt: options.noPrompt})
+  let destinationsCtx: DestinationsContext
+  try {
+    destinationsCtx = await fetchDestinationsContext({store, noPrompt: options.noPrompt})
+  } catch (error) {
+    if (!(error instanceof StoreLookupStoreNotFoundError)) throw error
+    const fallback = await getOnlyOrganizationStoreInfo(store, options)
+    if (!fallback) throw error
+    return fallback
+  }
+
   const orgShop = await safeFetchOrganizationShop(destinationsCtx, store, {noPrompt: options.noPrompt})
 
   return buildBusinessPlatformResult({store, destinationsCtx, orgShop})
+}
+
+// The destinations lookup only sees stores the account itself can open. A service account can open
+// only the stores it created, so a store elsewhere in its organization is missing there even though
+// the Organizations API, which lists every store the account may manage, knows it. When the account
+// belongs to one organization, look the store up there before giving up.
+async function getOnlyOrganizationStoreInfo(
+  store: string,
+  options: {noPrompt?: boolean},
+): Promise<StoreInfoResult | undefined> {
+  let organization: Organization
+  try {
+    const organizations = await fetchOrganizations()
+    if (organizations.length !== 1) return undefined
+    organization = organizations[0]!
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(`Could not list the account's organizations: ${errorMessage(error)}`)
+    return undefined
+  }
+
+  let orgShop: OrganizationShopFields | undefined
+  try {
+    orgShop = await fetchOptionalOrganizationShop({store, organizationId: organization.id, noPrompt: options.noPrompt})
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(`BP Organizations shop lookup in ${organization.businessName} failed: ${errorMessage(error)}`)
+    return undefined
+  }
+  if (!orgShop) return undefined
+
+  outputDebug(`Found ${store} in ${organization.businessName}, the only organization the account belongs to.`)
+  return buildBusinessPlatformResult({
+    store,
+    destinationsCtx: {owningOrg: {id: organization.id, name: organization.businessName}},
+    orgShop,
+  })
 }
 
 async function fetchAdminShopInfo(

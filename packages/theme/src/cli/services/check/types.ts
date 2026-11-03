@@ -46,6 +46,11 @@ export type ThemeCheckResult = {
   infoCount: number
 }[]
 
+// Theme Check reports line and character -1 for an offense it cannot place, such as one in an empty file.
+function oneBasedPosition(zeroBasedPosition: number): number {
+  return Math.max(zeroBasedPosition + 1, 1)
+}
+
 export const themeCheckJsonOutputSchema = defineThemeJsonOutputSchema({
   name: 'ThemeCheckResult',
   schema: ThemeCheckResultSchema,
@@ -61,10 +66,10 @@ export const themeCheckJsonOutputSchema = defineThemeJsonOutputSchema({
           filePath: resolvePath(file.path),
           check: offense.check,
           severity: offense.severity,
-          startRow: offense.start_row + 1,
-          startColumn: offense.start_column + 1,
-          endRow: offense.end_row + 1,
-          endColumn: offense.end_column + 1,
+          startRow: oneBasedPosition(offense.start_row),
+          startColumn: oneBasedPosition(offense.start_column),
+          endRow: oneBasedPosition(offense.end_row),
+          endColumn: oneBasedPosition(offense.end_column),
           message: offense.message,
         })),
       ),

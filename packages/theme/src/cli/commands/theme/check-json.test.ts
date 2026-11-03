@@ -84,6 +84,21 @@ test('converts multiline ranges to one-based positions', () => {
   })
 })
 
+test('reports an issue without a known position at the start of the file', () => {
+  // Theme Check reports line and character -1 when it cannot place an offense, such as in an empty file.
+  const unplacedOffense = {
+    ...offense,
+    start: {index: 0, line: -1, character: -1},
+    end: {index: 0, line: -1, character: -1},
+  }
+  const result = formatOffensesJson(sortOffenses([unplacedOffense]))
+
+  expect(JSON.parse(encodeThemeCheckResult(result))).toEqual({
+    ...invalidResult,
+    issues: [{...invalidResult.issues[0], startRow: 1, startColumn: 1, endRow: 1, endColumn: 1}],
+  })
+})
+
 test.each(['startRow', 'startColumn', 'endRow', 'endColumn'])('requires a positive integer for %s', (position) => {
   for (const value of [0, -1, 1.5]) {
     expect(() =>

@@ -154,7 +154,5 @@ export const UnifiedSchema = zod.object({
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
-export type BaseConfigType = zod.infer<typeof BaseSchema>
-
 // Base config type that all config schemas must extend.
-export type BaseExtensionConfigType = Omit<BaseConfigType, 'capabilities'>
+export type BaseConfigType = zod.infer<typeof BaseSchema>

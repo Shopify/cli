@@ -1,12 +1,14 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
 import {tokenExchangeScopes} from './scopes.js'
-import {automationTokenAuthMethod} from './automation-token.js'
+import {automationTokenAuthMethod, automationTokenVariable} from './automation-token.js'
+import {environmentVariables} from '../constants.js'
 import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
+import {type TokenItem} from '../../../public/node/ui.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
 import {outputDebug} from '../../../public/node/output.js'
@@ -14,8 +16,113 @@ import {outputDebug} from '../../../public/node/output.js'
 import * as jose from 'jose'
 
 export class InvalidGrantError extends Error {}
-export class InvalidRequestError extends Error {}
+export class InvalidRequestError extends Error {
+  /** Identity's `error_description`, when it sent one. Says what about the request was invalid. */
+  readonly description: string
+
+  constructor(description = '') {
+    super()
+    this.description = description
+  }
+}
 class InvalidTargetError extends AbortError {}
+
+/**
+ * Why Identity refused to exchange an automation token, read from its `error_description`.
+ *
+ * - `missing_access`: the token doesn't hold a scope the exchange asked for, so the account lacks that capability.
+ * - `rejected_token`: the token itself was refused: revoked, expired, malformed, or not a token Identity knows.
+ * - `unknown`: anything else, including a network failure.
+ */
+type AutomationTokenExchangeFailure = 'missing_access' | 'rejected_token' | 'unknown'
+
+function automationTokenExchangeFailure(error: unknown): AutomationTokenExchangeFailure {
+  if (!(error instanceof InvalidRequestError)) return 'unknown'
+  // Identity's two ways of saying the token holds no scope the exchange asked for. Its third 'scope' message,
+  // "specified scopes cannot be granted to this audience", is about the CLI's own request, so it stays generic.
+  if (
+    error.description.includes("Invalid 'scope' value: new scopes must not be specified") ||
+    error.description.includes("Invalid 'scope' value: no useable scope")
+  ) {
+    return 'missing_access'
+  }
+  if (error.description.includes("Invalid 'subject_token' value")) return 'rejected_token'
+  return 'unknown'
+}
+
+/**
+ * The capability a service account needs for the scopes an exchange asks for, named as the Shopify admin names it.
+ */
+function capabilityForScopes(scopes: string[]): string | undefined {
+  if (scopes.includes('https://api.shopify.com/auth/organization.apps.manage')) return 'App development'
+  if (scopes.includes('https://api.shopify.com/auth/organization.store-management')) return 'Dev store management'
+  return undefined
+}
+
+/**
+ * The error shown when an automation token can't be exchanged for an API's access token.
+ *
+ * Says what Identity refused, so a token that merely lacks a capability isn't reported as wrong or expired.
+ */
+class AutomationTokenExchangeError extends AbortError {
+  constructor(apiName: API, scopes: string[], cause: unknown) {
+    const {message, tryMessage} = automationTokenExchangeMessages(apiName, scopes, cause)
+    super(message, tryMessage)
+  }
+}
+
+function automationTokenExchangeMessages(
+  apiName: API,
+  scopes: string[],
+  cause: unknown,
+): {message: string; tryMessage: TokenItem} {
+  const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+  const variable = automationTokenVariable() ?? environmentVariables.serviceAccountToken
+  const admin: TokenItem = ['in the Shopify admin under', {subdued: 'Settings > Users > Security'}]
+
+  switch (automationTokenExchangeFailure(cause)) {
+    case 'missing_access': {
+      const capability = capabilityForScopes(scopes)
+      const access = capability ? `${capability} access` : `the access the ${prettyName} API needs`
+      if (variable === environmentVariables.serviceAccountToken) {
+        return {
+          message: `The service account behind ${variable} doesn't have ${access}.`,
+          tryMessage: [
+            'Give it',
+            ...(capability ? [{bold: capability}, 'access'] : ['that access']),
+            ...admin,
+            {char: ','},
+            'or use a token from a service account that has it.',
+          ],
+        }
+      }
+      // Setting the new variable beside the old one is refused as a conflict, so say to unset it too.
+      return {
+        message: `The token in ${variable} doesn't have ${access}.`,
+        tryMessage: [
+          'Use a service account token that has it: create one',
+          ...admin,
+          {char: ','},
+          'set it in',
+          {command: environmentVariables.serviceAccountToken},
+          'and unset',
+          {command: variable},
+          {char: '.'},
+        ],
+      }
+    }
+    case 'rejected_token':
+      return {
+        message: `The token in ${variable} was rejected: it has been revoked, has expired, or isn't a valid token.`,
+        tryMessage: ['Check the value, or generate a new token', ...admin, {char: '.'}],
+      }
+    case 'unknown':
+      return {
+        message: `The custom token provided can't be used for the ${prettyName} API.`,
+        tryMessage: 'Ensure the token is correct and not expired.',
+      }
+  }
+}
 
 export interface ExchangeScopes {
   admin: string[]
@@ -96,10 +203,7 @@ async function exchangeAppAutomationTokenForAccessToken(
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
     const reason = error instanceof Error ? error.message.slice(0, 200) : 'unknown error'
     outputDebug(`Token exchange for the ${prettyName} API failed: ${reason}`)
-    throw new AbortError(
-      `The custom token provided can't be used for the ${prettyName} API.`,
-      'Ensure the token is correct and not expired.',
-    )
+    throw new AutomationTokenExchangeError(apiName, scopes, error)
   }
 }
 
@@ -211,7 +315,7 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler({error, store}: TokenRequestError) {
+function tokenRequestErrorHandler({error, description, store}: TokenRequestError) {
   const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
     store ? `: ${store}` : '.'
   }`
@@ -224,7 +328,7 @@ function tokenRequestErrorHandler({error, store}: TokenRequestError) {
   if (error === 'invalid_request') {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
-    return new InvalidRequestError()
+    return new InvalidRequestError(description)
   }
   if (error === 'invalid_target') {
     return new InvalidTargetError(invalidTargetErrorMessage, '', [
@@ -239,6 +343,8 @@ function tokenRequestErrorHandler({error, store}: TokenRequestError) {
 
 interface TokenRequestError {
   error: string
+  /** Identity's `error_description`, truncated. Empty when it sent none. */
+  description: string
   store?: string
 }
 
@@ -274,7 +380,7 @@ async function tokenRequest(params: Record<string, string>): Promise<Result<Toke
       }`,
     )
 
-    return err({error: oauthError, store: params.store})
+    return err({error: oauthError, description: oauthDescription, store: params.store})
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(
