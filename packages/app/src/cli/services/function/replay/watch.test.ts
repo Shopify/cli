@@ -5,9 +5,14 @@ import {type FunctionRunData} from '../replay.js'
 import {testAppLinked, testFunctionExtension} from '../../../models/app/app.test-data.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {runWithCommandEvents, renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
+import {
+  runWithCommandEvents,
+  renderCommandEventAsJson,
+  commandEventOutputMode,
+} from '@shopify/cli-kit/node/command-events'
 import {ExternalError, handler} from '@shopify/cli-kit/node/error'
 import {expect, test, vi, onTestFinished} from 'vitest'
+import {AsyncResource} from 'node:async_hooks'
 
 vi.mock('./watch.js')
 
@@ -40,19 +45,27 @@ function records(stream: string) {
 
 test('formats watch events as JSONL and keeps diagnostics on stderr', async () => {
   const {options, start} = await fixture()
+  const watcherCallback = new AsyncResource('function-replay-watcher')
+  onTestFinished(() => {
+    watcherCallback.emitDestroy()
+  })
   const resultJson = `{
     "name": "function.wasm", "size": 1, "memory_usage": 64,
     "instructions": 9007199254740993, "logs": "first\\nsecond",
     "input": {}, "output": null, "success": false
   }`
   vi.mocked(watchReplay).mockImplementation(async ({onEvent}) => {
-    onEvent({type: 'status', status: 'watching'})
-    onEvent({type: 'status', status: 'running'})
-    onEvent({type: 'diagnostic', message: 'Runner diagnostic'})
-    onEvent({type: 'execution', resultJson, exitCode: 1})
-    onEvent({type: 'build', status: 'failed', error: 'Compilation failed'})
-    onEvent({type: 'build', status: 'success'})
-    onEvent({type: 'status', status: 'cancelled'})
+    watcherCallback.runInAsyncScope(() => {
+      expect(commandEventOutputMode()).toBeUndefined()
+      onEvent({type: 'status', status: 'watching'})
+      onEvent({type: 'status', status: 'running'})
+      onEvent({type: 'diagnostic', message: ' \n\t '})
+      onEvent({type: 'diagnostic', message: '\u001b[31mRunner diagnostic\u001b[0m'})
+      onEvent({type: 'execution', resultJson, exitCode: 1})
+      onEvent({type: 'build', status: 'failed', error: 'Compilation failed'})
+      onEvent({type: 'build', status: 'success'})
+      onEvent({type: 'status', status: 'cancelled'})
+    })
   })
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await start()
@@ -69,7 +82,7 @@ test('formats watch events as JSONL and keeps diagnostics on stderr', async () =
     expect(stdout()).toContain('"instructions":9007199254740993')
     expect(events[1].result.logs).toBe('first\nsecond')
     expect(records(stderr())).toEqual([
-      expect.objectContaining({type: 'diagnostic', message: 'Runner diagnostic'}),
+      expect.objectContaining({type: 'diagnostic', level: 'warning', message: 'Runner diagnostic'}),
       expect.objectContaining({type: 'diagnostic', level: 'error', message: 'Compilation failed'}),
     ])
   })
