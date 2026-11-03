@@ -50,15 +50,15 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     docsUrl: `${CHECK_DOCS_BASE_URL}/unsafe-innerhtml`,
   },
   {
-    id: 'STOREFRONT_UNSAFE_EVAL',
-    title: 'Storefront code requires unsafe-eval',
+    id: 'STOREFRONT_CSP_COMPATIBILITY',
+    title: 'Storefront code conflicts with the storefront Content Security Policy',
     severity: 'high',
     points: -15,
     description:
-      'Detects theme app extension JavaScript that executes strings or dynamically constructs functions, requiring unsafe-eval in the storefront Content Security Policy.',
-    fix: 'Replace eval-style execution with statically defined functions or data-driven dispatch so the storefront works without unsafe-eval.',
+      "Detects theme app extension code that the storefront Content Security Policy reports: runtime string evaluation that needs unsafe-eval, remote origins missing from the app's network_access allowed_sources, and allowed_sources entries the storefront ignores.",
+    fix: 'Replace eval-style execution with static code, and declare every non-Shopify origin your storefront code loads in [network_access] allowed_sources in shopify.app.toml.',
     requires: 'theme_app_extension',
-    docsUrl: `${CHECK_DOCS_BASE_URL}/storefront-unsafe-eval`,
+    docsUrl: `${CHECK_DOCS_BASE_URL}/storefront-csp-compatibility`,
   },
   {
     id: 'LIQUID_UNSAFE_RENDER',

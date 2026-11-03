@@ -234,7 +234,9 @@ describe('framework and surface detection', () => {
       (execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
     )!
     const themeUnsafe = theme.scan.checks_executed.find((execution) => execution.id === 'UNSAFE_INNERHTML')!
-    const themeUnsafeEval = theme.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_UNSAFE_EVAL')!
+    const themeStorefrontCsp = theme.scan.checks_executed.find(
+      (execution) => execution.id === 'STOREFRONT_CSP_COMPATIBILITY',
+    )!
     expect(themeRequestCheck.status).toBe('not_applicable')
     expect(themeRequestCheck.inspected_files).toEqual([])
     expect(themeUnsafe.status).toBe('executed')
@@ -242,7 +244,7 @@ describe('framework and surface detection', () => {
       'extensions/theme/assets/widget.mjs',
       'extensions/theme/blocks/app.liquid',
     ])
-    expect(themeUnsafeEval).toMatchObject({status: 'unresolved', findings: 0})
+    expect(themeStorefrontCsp).toMatchObject({status: 'unresolved', findings: 0})
 
     const mixed = await scan(
       await app({
@@ -279,12 +281,29 @@ describe('framework and surface detection', () => {
     })
     const result = await scan(directory)
 
-    expect(result.issues.filter((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toHaveLength(2)
-    expect(result.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_UNSAFE_EVAL')).toMatchObject({
+    expect(result.issues.filter((issue) => issue.id === 'STOREFRONT_CSP_COMPATIBILITY')).toHaveLength(2)
+    expect(
+      result.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_CSP_COMPATIBILITY'),
+    ).toMatchObject({
       status: 'unresolved',
       findings: 2,
       inspected_files: ['extensions/theme/assets/widget.js', 'extensions/theme/blocks/app.liquid'],
     })
+  })
+
+  test('compares storefront origins with the app configuration allowed_sources', async () => {
+    const directory = await app({
+      'shopify.app.toml': `${appConfig()}[network_access]\nallowed_sources = ["https://api.example.com", "https://cdn.shopify.com"]\n`,
+      'extensions/theme/shopify.extension.toml': 'type = "theme"\n',
+      'extensions/theme/assets/widget.js': 'fetch("https://api.example.com/a"); fetch("https://jplhomer.org/b")',
+    })
+    const issues = (await scan(directory)).issues.filter((issue) => issue.id === 'STOREFRONT_CSP_COMPATIBILITY')
+
+    expect(issues).toMatchObject([
+      {pattern_id: 'invalid_allowed_source', location: {file: 'shopify.app.toml', line: 5}},
+      {pattern_id: 'undeclared_origin', location: {file: 'extensions/theme/assets/widget.js', line: 1}},
+    ])
+    expect(issues[1]!.message).toContain('https://jplhomer.org')
   })
 
   test('requires a recorded storefront review to resolve deterministic candidates', async () => {
@@ -294,7 +313,7 @@ describe('framework and surface detection', () => {
       'extensions/theme/assets/widget.js': 'if (false) eval("render()")',
     })
     const {deterministicFindings, agentChecks} = await scanAppDirectory(directory)
-    const id = 'STOREFRONT_UNSAFE_EVAL'
+    const id = 'STOREFRONT_CSP_COMPATIBILITY'
     expect(agentChecks.checks.find((check) => check.id === id)).toBeDefined()
     const before = combineFindings({deterministic: deterministicFindings, agent: null}).find(
       (check) => check.id === id,

@@ -1,6 +1,6 @@
 ---
 id: CROSS_SITE_SCRIPTING
-version: 2
+version: 3
 severity: high
 ---
 
@@ -102,6 +102,10 @@ source-to-sink vulnerability only once, under the most specific owning check:
 - `SCRIPT_TAG_URL_INJECTION`: Shopify ScriptTag source URLs.
 - `ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS`: uploaded/imported active files and
   their privileged previews.
+- `STOREFRONT_CSP_COMPATIBILITY`: storefront code that the storefront Content
+  Security Policy reports regardless of input, such as `unsafe-eval` or an
+  undeclared remote origin. That is not XSS by itself; report only the
+  injection path here and cross-reference it.
 
 `SHARED_NAMESPACE_METAFIELD_RENDER` separately reports that a rendered value
 lives in a shared metafield namespace. It doesn't own the XSS: still report an

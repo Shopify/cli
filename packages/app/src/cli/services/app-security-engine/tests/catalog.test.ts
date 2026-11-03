@@ -37,7 +37,7 @@ const DOCS_PAGE_SLUGS = [
   'sql-injection',
   'ssrf-request-forgery',
   'static-frame-ancestors',
-  'storefront-unsafe-eval',
+  'storefront-csp-compatibility',
   'text-setting-html-smuggling',
   'theme-extension-xss',
   'unauthenticated-endpoint',
