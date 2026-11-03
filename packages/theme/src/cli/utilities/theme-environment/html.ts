@@ -1,5 +1,5 @@
 import {getErrorPage} from './hot-reload/error-page.js'
-import {render} from './storefront-renderer.js'
+import {isExitPageRequest, render} from './storefront-renderer.js'
 import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
 import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
 import {injectStandardEventsInspector} from './standard-events.js'
@@ -72,11 +72,16 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
 
         logRequestLine(event, response, ctx)
 
-        return patchRenderingResponse(ctx, response, (body) => {
-          assertThemeId(response, body, String(theme.id))
-          themeIdMismatchRedirects = 0
-          return handleHotReloadScriptInjection(body, ctx)
-        })
+        return patchRenderingResponse(
+          ctx,
+          response,
+          (body) => {
+            assertThemeId(response, body, String(theme.id))
+            themeIdMismatchRedirects = 0
+            return handleHotReloadScriptInjection(body, ctx)
+          },
+          {keepExternalRedirects: isExitPageRequest({method: event.method, path: browserPathname})},
+        )
       })
       .catch(async (error) => {
         /**

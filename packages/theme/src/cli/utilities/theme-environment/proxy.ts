@@ -213,8 +213,9 @@ export async function patchRenderingResponse(
   ctx: DevServerContext,
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
+  options?: PatchResponseOptions,
 ): Promise<Response> {
-  const response = patchProxiedResponseHeaders(ctx, rawResponse)
+  const response = patchProxiedResponseHeaders(ctx, rawResponse, options)
 
   // 3xx responses should be returned
   if (response.status >= 300 && response.status < 400) {
@@ -256,7 +257,15 @@ const HOP_BY_HOP_HEADERS = [
   'host',
 ]
 
-function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response) {
+interface PatchResponseOptions {
+  /**
+   * Keep redirects to other sites absolute instead of turning them into local paths.
+   * Only the storefront exit page needs this: it redirects shoppers to another site.
+   */
+  keepExternalRedirects?: boolean
+}
+
+function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response, options?: PatchResponseOptions) {
   const response = new Response(rawResponse.body, rawResponse)
 
   // Node's `fetch` always decompresses the body, so we must remove these headers
@@ -283,12 +292,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
   if (locationHeader) {
-    const url = new URL(locationHeader, 'https://shopify.dev')
-    if (!CHECKOUT_PATTERN.test(url.pathname)) {
-      url.searchParams.delete('_fd')
-      url.searchParams.delete('pb')
-      response.headers.set('Location', url.href.replace(url.origin, ''))
-    }
+    response.headers.set('Location', patchLocationHeader(ctx, locationHeader, options))
   }
 
   // Cookies are set for the vanity domain, fix it for localhost:
@@ -303,6 +307,33 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   }
 
   return response
+}
+
+function patchLocationHeader(ctx: DevServerContext, locationHeader: string, options?: PatchResponseOptions) {
+  if (!options?.keepExternalRedirects) {
+    const url = new URL(locationHeader, 'https://shopify.dev')
+    if (CHECKOUT_PATTERN.test(url.pathname)) return locationHeader
+
+    return toLocalPath(url)
+  }
+
+  // Redirects to other hosts (the exit page sending a shopper to another site) stay absolute:
+  const storeOrigin = `https://${ctx.session.storeFqdn}`
+  const url = new URL(locationHeader, storeOrigin)
+  const isStoreHost = url.host === new URL(storeOrigin).host
+
+  if (isStoreHost && !CHECKOUT_PATTERN.test(url.pathname)) return toLocalPath(url)
+
+  // Browsers resolve protocol-relative URLs against the local HTTP server, so make them absolute HTTPS URLs:
+  if (!isStoreHost && locationHeader.startsWith('//')) return url.href
+
+  return locationHeader
+}
+
+function toLocalPath(url: URL) {
+  url.searchParams.delete('_fd')
+  url.searchParams.delete('pb')
+  return url.href.replace(url.origin, '')
 }
 
 /**
