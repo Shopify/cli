@@ -195,9 +195,15 @@ describe('file-watcher events', () => {
   test('start waits for readiness and detects a change made immediately after it resolves', async () => {
     await inTemporaryDirectory(async (directory) => {
       const configPath = joinPath(directory, 'shopify.app.toml')
-      await writeFile(configPath, 'name = "before"')
+      await writeFile(configPath, 'name = "fixture"')
+      const extensionDirectory = joinPath(directory, 'extensions', 'ui-extension')
+      await mkdir(extensionDirectory)
+      const sourcePath = joinPath(extensionDirectory, 'index.js')
+      await writeFile(sourcePath, 'initial')
+      const extension = await testUIExtension({directory: extensionDirectory})
+      mockExtensionWatchedFiles(extension, [sourcePath])
       const controller = new AbortController()
-      const fileWatcher = new FileWatcher(testAppLinked({directory, configPath}), {
+      const fileWatcher = new FileWatcher(testAppLinked({directory, configPath, allExtensions: [extension]}), {
         ...outputOptions,
         signal: controller.signal,
       })
@@ -210,7 +216,7 @@ describe('file-watcher events', () => {
         })
         return watcher
       })
-      const onChange = vi.fn()
+      const onChange = vi.fn<(events: WatcherEvent[]) => void>()
       fileWatcher.onChange(onChange)
 
       try {
@@ -220,12 +226,16 @@ describe('file-watcher events', () => {
         expect(watcher!.listenerCount('error')).toBe(0)
         expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
 
-        await writeFile(configPath, 'name = "after"')
-        await vi.waitFor(() => {
-          expect(onChange).toHaveBeenCalledWith([
-            expect.objectContaining({type: 'extensions_config_updated', path: configPath}),
-          ])
-        })
+        await writeFile(sourcePath, 'edited source')
+        await vi.waitFor(
+          () => {
+            const events = onChange.mock.calls.flatMap(([events]) => events)
+            expect(events.map((event) => ({...event, path: normalizePath(event.path)}))).toContainEqual(
+              expect.objectContaining({type: 'file_updated', extensionHandle: extension.handle, path: sourcePath}),
+            )
+          },
+          {timeout: 3000},
+        )
       } finally {
         controller.abort()
         await watcher?.close()
@@ -233,6 +243,63 @@ describe('file-watcher events', () => {
     })
   })
 
+  test.each(['ready', 'error', 'abort'] as const)('reentrant starts share readiness (%s)', async (outcome) => {
+    await inTemporaryDirectory(async (directory) => {
+      const controller = new AbortController()
+      const fileWatcher = new FileWatcher(testAppLinked({directory}), {
+        ...outputOptions,
+        signal: controller.signal,
+      })
+      const watchers: FSWatcher[] = []
+      const releaseReadiness: (() => void)[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+        const watcher = realChokidarWatch(paths, options)
+        const emit = watcher.emit.bind(watcher)
+        vi.spyOn(watcher, 'emit').mockImplementation((event, ...args) => {
+          if (event === 'ready') {
+            releaseReadiness.push(() => emit('ready'))
+            return true
+          }
+          return emit(event, ...args)
+        })
+        watchers.push(watcher)
+        return watcher
+      })
+      const settled = vi.fn()
+      const first = fileWatcher.start()
+      const firstSettled = first.then(settled, settled)
+      let results: Promise<PromiseSettledResult<void>[]> | undefined
+
+      try {
+        await vi.waitFor(() => expect(releaseReadiness).toHaveLength(1))
+        const second = fileWatcher.start()
+        results = Promise.allSettled([first, second])
+        releaseReadiness[0]!()
+        await vi.waitFor(() => expect(releaseReadiness).toHaveLength(2))
+        expect(settled).not.toHaveBeenCalled()
+        expect(watchers[0]!.listenerCount('ready')).toBe(0)
+        expect(watchers[0]!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(2)
+
+        const error = new Error('Refreshed scan failed')
+        if (outcome === 'error') watchers[1]!.emit('error', error)
+        else if (outcome === 'abort') controller.abort()
+        else releaseReadiness[1]!()
+
+        const expected =
+          outcome === 'error' ? {status: 'rejected', reason: error} : {status: 'fulfilled', value: undefined}
+        await expect(results).resolves.toEqual([expected, expected])
+        expect(watchers[1]!.listenerCount('ready')).toBe(0)
+        expect(watchers[1]!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
+      } finally {
+        controller.abort()
+        await firstSettled
+        await results
+        await Promise.all(watchers.map((watcher) => watcher.close()))
+      }
+    })
+  })
   test('start rejects startup errors and removes its temporary listeners', async () => {
     await inTemporaryDirectory(async (directory) => {
       const controller = new AbortController()

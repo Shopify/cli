@@ -3,11 +3,14 @@ import {FunctionRunData} from '../../../../replay.js'
 import {watchReplay, ReplayWatchEvent} from '../../../../replay/watch.js'
 import {testAppLinked, testFunctionExtension} from '../../../../../../models/app/app.test-data.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import * as localContext from '@shopify/cli-kit/node/context/local'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import {test, vi, expect, onTestFinished} from 'vitest'
 import React from 'react'
 
 vi.mock('../../../../replay/watch.js')
+vi.mock('@shopify/cli-kit/node/tree-kill')
 
 test('maps replay events to text logs, status, and the two most recent runs', async () => {
   const {renderHook, emit, nativeResult, options} = await fixture()
@@ -62,12 +65,54 @@ test('keeps build errors until the next successful build, even when an older exe
   await vi.waitFor(() => expect(hook.lastResult?.error).toBeUndefined())
 })
 
-test.each([new Error('Watch failed'), 'Watch failed'])('displays a shared-loop rejection: %s', async (error) => {
-  const {renderHook} = await fixture()
+test.each([new Error('Watch failed'), 'Watch failed'])('exits the UI on fatal rejection: %s', async (error) => {
+  const {renderHook, options} = await fixture()
   vi.mocked(watchReplay).mockRejectedValue(error)
   const hook = renderHook()
-  await vi.waitFor(() => expect(hook.lastResult?.error).toBe('Watch failed'))
+  await expect(hook.waitUntilExit()).rejects.toThrow('Watch failed')
+  expect(options.abortController.signal.reason).toBeInstanceOf(Error)
+  if (error instanceof Error) expect(options.abortController.signal.reason).toBe(error)
   expect(hook.lastResult?.logs).toEqual([])
+})
+
+test.each(['cancelled', 'unmounted'])('ignores a shared-loop rejection after the effect is %s', async (state) => {
+  const {renderHook, options} = await fixture()
+  let rejectWatch!: (error: Error) => void
+  vi.mocked(watchReplay).mockImplementation(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectWatch = reject
+      }),
+  )
+  const hook = renderHook()
+  await vi.waitFor(() => expect(watchReplay).toHaveBeenCalledOnce())
+  if (state === 'cancelled') options.abortController.abort()
+  else hook.unmount()
+  rejectWatch(new Error('Late watch failure'))
+  await expect(hook.waitUntilExit()).resolves.toBeUndefined()
+  expect(options.abortController.signal.aborted).toBe(state === 'cancelled')
+  expect(options.abortController.signal.reason?.message).not.toBe('Late watch failure')
+})
+
+test.each([false, true])('keeps the delayed shutdown exit code when fatal is %s', async (fatal) => {
+  const {renderHook, options} = await fixture()
+  const isUnitTest = vi.spyOn(localContext, 'isUnitTest').mockReturnValue(false)
+  const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+  onTestFinished(() => {
+    isUnitTest.mockRestore()
+    exit.mockRestore()
+  })
+  const hook = renderHook()
+  await vi.waitFor(() => expect(watchReplay).toHaveBeenCalledOnce())
+  options.abortController.abort(fatal ? new Error('Watch failed') : undefined)
+  if (fatal) await expect(hook.waitUntilExit()).rejects.toThrow('Watch failed')
+  else await expect(hook.waitUntilExit()).resolves.toBeUndefined()
+  await vi.advanceTimersByTimeAsync(1999)
+  expect(treeKill).not.toHaveBeenCalled()
+  await vi.advanceTimersByTimeAsync(1)
+  expect(treeKill).toHaveBeenCalledWith(process.pid, 'SIGINT', false, expect.any(Function))
+  vi.mocked(treeKill).mock.calls[0]![3]!()
+  expect(exit).toHaveBeenCalledWith(fatal ? 1 : 0)
 })
 
 test.each([false, true])('forwards parent cancellation when already aborted is %s', async (alreadyAborted) => {
@@ -139,6 +184,7 @@ async function fixture() {
           return result.lastResult
         },
         unmount: instance.unmount,
+        waitUntilExit: instance.waitUntilExit,
         rerender: () => instance.rerender(<MockComponent />),
       }
     },

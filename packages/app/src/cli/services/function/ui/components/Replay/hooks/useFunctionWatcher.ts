@@ -79,7 +79,9 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
 
     watchReplay({selectedRun, app, extension, abortController: watchAbortController, onEvent}).catch(
       (error: unknown) => {
-        if (mounted) setError(error instanceof Error ? error.message : String(error))
+        if (mounted && !abortController.signal.aborted) {
+          abortController.abort(error instanceof Error ? error : new Error(String(error)))
+        }
       },
     )
 
@@ -90,11 +92,11 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
     }
   }, [selectedRun, app, extension, abortController])
 
-  useAbortSignal(abortController.signal, async () => {
+  useAbortSignal(abortController.signal, async (error) => {
     setTimeout(() => {
       if (isUnitTest()) return
       treeKill(process.pid, 'SIGINT', false, () => {
-        process.exit(0)
+        process.exit(error ? 1 : 0)
       })
     }, 2000)
   })
