@@ -255,9 +255,13 @@ describe('file-watcher events', () => {
       vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
         const watcher = realChokidarWatch(paths, options)
         const emit = watcher.emit.bind(watcher)
+        let readinessCaptured = false
         vi.spyOn(watcher, 'emit').mockImplementation((event, ...args) => {
           if (event === 'ready') {
-            releaseReadiness.push(() => emit('ready'))
+            if (!readinessCaptured) {
+              readinessCaptured = true
+              releaseReadiness.push(() => emit('ready'))
+            }
             return true
           }
           return emit(event, ...args)
