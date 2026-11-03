@@ -15,7 +15,7 @@ const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
 // Cached notifications younger than this are reused, so back-to-back commands don't each start a
 // background process to fetch them again.
-const NOTIFICATIONS_CACHE_MAX_AGE_MS = 60 * 60 * 1000
+const NOTIFICATIONS_CACHE_MAX_AGE_MS = 5 * 60 * 1000
 const COMMANDS_TO_SKIP = [
   'notifications:list',
   'notifications:generate',

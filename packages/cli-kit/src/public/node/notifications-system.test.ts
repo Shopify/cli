@@ -459,9 +459,9 @@ describe('fetchNotificationsInBackground', () => {
     )
   })
 
-  test('does nothing when the cached notifications are less than an hour old', async () => {
+  test('does nothing when the cached notifications are less than five minutes old', async () => {
     // Given
-    vi.mocked(cacheRetrieve).mockReturnValue({value: '{"notifications":[]}', timestamp: Date.now() - 5 * 60 * 1000})
+    vi.mocked(cacheRetrieve).mockReturnValue({value: '{"notifications":[]}', timestamp: Date.now() - 60 * 1000})
 
     // When
     fetchNotificationsInBackground('theme:list', ['/path/to/node', '/path/to/shopify', 'theme', 'list'], {
@@ -472,11 +472,11 @@ describe('fetchNotificationsInBackground', () => {
     expect(exec).not.toHaveBeenCalled()
   })
 
-  test('fetches again when the cached notifications are more than an hour old', async () => {
+  test('fetches again when the cached notifications are more than five minutes old', async () => {
     // Given
     vi.mocked(cacheRetrieve).mockReturnValue({
       value: '{"notifications":[]}',
-      timestamp: Date.now() - 2 * 60 * 60 * 1000,
+      timestamp: Date.now() - 10 * 60 * 1000,
     })
 
     // When
