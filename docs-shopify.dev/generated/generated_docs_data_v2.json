@@ -2705,6 +2705,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-graphiql.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-graphiql.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "The myshopify.com domain of the store to open GraphiQL against. The app must be installed on the store. If not specified, you will be prompted to select a store.",
@@ -2721,7 +2730,7 @@
           "environmentValue": "SHOPIFY_FLAG_VARIABLES"
         }
       ],
-      "value": "export interface appgraphiql {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Local port for the GraphiQL server. Must be between 1 and 65535.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The myshopify.com domain of the store to open GraphiQL against. The app must be installed on the store. If not specified, you will be prompted to select a store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your query or mutation, in JSON format.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use in GraphiQL. Defaults to the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+      "value": "export interface appgraphiql {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Local port for the GraphiQL server. Must be between 1 and 65535.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The myshopify.com domain of the store to open GraphiQL against. The app must be installed on the store. If not specified, you will be prompted to select a store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your query or mutation, in JSON format.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use in GraphiQL. Defaults to the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
     }
   },
   "appimportcustomdatadefinitions": {
@@ -8925,6 +8934,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/store-graphiql.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-graphiql.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "The myshopify.com domain of the store.",
@@ -8940,7 +8958,7 @@
           "environmentValue": "SHOPIFY_FLAG_VARIABLES"
         }
       ],
-      "value": "export interface storegraphiql {\n  /**\n   * Allow GraphQL mutations to run against the target store.\n   * @environment SHOPIFY_FLAG_ALLOW_MUTATIONS\n   */\n  '--allow-mutations'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Local port for the GraphiQL server. Must be between 1 and 65535.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * The values for any GraphQL variables in your query or mutation, in JSON format.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use in GraphiQL. Defaults to the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+      "value": "export interface storegraphiql {\n  /**\n   * Allow GraphQL mutations to run against the target store.\n   * @environment SHOPIFY_FLAG_ALLOW_MUTATIONS\n   */\n  '--allow-mutations'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Local port for the GraphiQL server. Must be between 1 and 65535.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * The values for any GraphQL variables in your query or mutation, in JSON format.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use in GraphiQL. Defaults to the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
     }
   },
   "storeinfo": {
