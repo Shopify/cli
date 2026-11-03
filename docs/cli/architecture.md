@@ -7,6 +7,26 @@ It's designed following a **modular** architecture where the bottom-most layer r
 and the top-most layer represents an horizontally-distributed set of features that users can opt into based on their needs.
 Modularization also encourages clearly defined boundaries that leads to a better structure that's easier to maintain long-term.
 
+## Extension configuration boundaries
+
+`CommonExtensionSchema` defines shared extension fields. Each specification adds its own capabilities and derives
+its configuration type from its schema. `BaseSchema` retains the existing boolean capabilities for UI and legacy
+specifications; it is not the constraint for every configuration.
+
+`BaseSchema` preserves the legacy field order because serialized configurations can contribute to generated identities.
+
+`ExtensionInstance<TConfiguration>` keeps its configuration paired with `ExtensionSpecification<TConfiguration>`.
+Custom configuration types require an explicit schema.
+
+Mixed collections use `ExtensionSpecificationRuntime` and `ExtensionInstanceRuntime`. These views expose metadata,
+parsed construction, and operations bound to the owning configuration, not configuration-specific callbacks. The
+runtime view treats capabilities as `unknown` until a consumer narrows them. The loader uses `createInstance` and
+`expandConfiguration` to preserve that boundary. Construction uses the final merged
+parser and metadata and resolves entry paths only after validation succeeds.
+
+UI payload consumers use a configuration-specific view. `isUIExtensionInstance` checks preview support and UI
+capabilities before a mixed instance enters that path. Helpers that only need a directory should accept that directory.
+
 ## Modules (packages)
 
 It's important to understand the responsibility of each of the packages to ensure new code is placed in the right package,

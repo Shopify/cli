@@ -1,5 +1,5 @@
 import {getDotEnvFileName} from './loader.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../extensions/extension-instance.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -82,7 +82,7 @@ export function getAppIdentifiers(
     ...(systemEnvironment as {[variable: string]: string}),
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
-  const processExtension = (extension: ExtensionInstance) => {
+  const processExtension = (extension: ExtensionInstanceRuntime) => {
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }

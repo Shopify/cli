@@ -2,7 +2,8 @@ import {UIExtensionPayload, ExtensionsEndpointPayload, DevNewExtensionPointSchem
 import {ExtensionDevOptions} from '../../extension.js'
 import {AssetResolver, getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime, isUIExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {BaseConfigType} from '../../../../models/extensions/schemas.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 import {EventEmitter} from 'events'
@@ -41,7 +42,7 @@ export async function getExtensionsPayloadStoreRawPayload(
     store: options.storeFqdn,
     extensions: await Promise.all(
       options.extensions
-        .filter((ext) => ext.isPreviewable)
+        .filter(isUIExtensionInstance)
         .map((ext) =>
           getUIExtensionPayload(ext, bundlePath, options, resolvers && getOrCreateResolver(resolvers, ext.devUUID)),
         ),
@@ -162,7 +163,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
   }
 
   async updateExtension(
-    extension: ExtensionInstance,
+    extension: ExtensionInstanceRuntime<BaseConfigType>,
     options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
     bundlePath: string,
     development?: Partial<UIExtensionPayload['development']>,
@@ -194,7 +195,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     this.emitUpdate([extension.devUUID])
   }
 
-  deleteExtension(extension: ExtensionInstance) {
+  deleteExtension(extension: ExtensionInstanceRuntime) {
     const index = this.rawPayload.extensions.findIndex((ext) => ext.uuid === extension.devUUID)
     if (index !== -1) {
       this.rawPayload.extensions.splice(index, 1)
@@ -203,7 +204,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     }
   }
 
-  async addExtension(extension: ExtensionInstance, bundlePath: string) {
+  async addExtension(extension: ExtensionInstanceRuntime<BaseConfigType>, bundlePath: string) {
     this.rawPayload.extensions.push(
       await getUIExtensionPayload(
         extension,

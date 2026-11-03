@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import {AppLinkedInterface} from '../../../models/app/app.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {configurationFileNames} from '../../../constants.js'
 import {dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
@@ -349,7 +349,7 @@ export class FileWatcher {
    * Tests a path against an extension's watch patterns (paths included, ignore
    * excluded). Patterns are matched relative to the extension directory.
    */
-  private pathMatchesWatchPatterns(normalizedPath: string, extension: ExtensionInstance): boolean {
+  private pathMatchesWatchPatterns(normalizedPath: string, extension: ExtensionInstanceRuntime): boolean {
     const {paths, ignore: ignorePatterns} = extension.watchPatterns()
     const relative = relativePath(normalizePath(extension.directory), normalizedPath)
     if (ignorePatterns.some((pattern) => matchGlob(relative, pattern))) return false

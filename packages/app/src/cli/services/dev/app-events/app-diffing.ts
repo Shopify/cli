@@ -1,10 +1,10 @@
 import {AppInterface} from '../../../models/app/app.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 
 interface AppExtensionsDiff {
-  created: ExtensionInstance[]
-  updated: ExtensionInstance[]
-  deleted: ExtensionInstance[]
+  created: ExtensionInstanceRuntime[]
+  updated: ExtensionInstanceRuntime[]
+  deleted: ExtensionInstanceRuntime[]
 }
 
 /**

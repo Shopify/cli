@@ -20,9 +20,9 @@ import {
 } from './config-file-naming.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
+import {ExtensionSpecificationRuntime, isAppConfigSpecification} from '../extensions/specification.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
@@ -39,7 +39,7 @@ import {
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -147,14 +147,12 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
 }
 
 /**
- * Parses a configuration object using a specification's schema, and returns a result.
+ * Maps a specification parse result to app configuration errors.
  */
-function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
-  spec: ExtensionSpecification,
+function parseSpecificationResult<TConfiguration>(
+  parsed: ParseConfigurationResult<TConfiguration>,
   filepath: string,
-  configurationObject: object,
-): ConfigurationResult<zod.TypeOf<TSchema>> {
-  const parsed = spec.parseConfigurationObject(configurationObject)
+): ConfigurationResult<TConfiguration> {
   switch (parsed.state) {
     case 'ok': {
       return {data: parsed.data}
@@ -194,7 +192,7 @@ export class AppErrors {
 
 interface AppLoaderConstructorArgs<
   TConfig extends CurrentAppConfiguration,
-  TModuleSpec extends ExtensionSpecification,
+  TModuleSpec extends ExtensionSpecificationRuntime,
 > {
   ignoreUnknownExtensions?: boolean
   loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
@@ -259,7 +257,9 @@ async function loadSingleWeb(
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * The loader always collects errors. Callers decide whether to throw based on app.errors.
  */
-export async function loadApp<TModuleSpec extends ExtensionSpecification = ExtensionSpecification>(options: {
+export async function loadApp<
+  TModuleSpec extends ExtensionSpecificationRuntime = ExtensionSpecificationRuntime,
+>(options: {
   directory: string
   userProvidedConfigName: string | undefined
   specifications: TModuleSpec[]
@@ -287,7 +287,9 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
  * Use this when you already have a Project (e.g. from getAppConfigurationContext)
  * instead of re-discovering from directory + configName.
  */
-export async function loadAppFromContext<TModuleSpec extends ExtensionSpecification = ExtensionSpecification>(options: {
+export async function loadAppFromContext<
+  TModuleSpec extends ExtensionSpecificationRuntime = ExtensionSpecificationRuntime,
+>(options: {
   project: Project
   activeConfig: ActiveConfig
   specifications: TModuleSpec[]
@@ -410,7 +412,7 @@ function extractScopesFromRawConfig(rawConfig: JsonMapType): string {
 export async function loadOpaqueApp(options: {
   directory: string
   configName?: string
-  specifications: ExtensionSpecification[]
+  specifications: ExtensionSpecificationRuntime[]
   remoteFlags?: Flag[]
   skipPrompts?: boolean
 }): Promise<OpaqueAppLoadResult> {
@@ -481,7 +483,7 @@ export function getDotEnvFileName(configurationPath: string) {
   return configurationShorthand ? `${dotEnvFileNames.production}.${configurationShorthand}` : dotEnvFileNames.production
 }
 
-class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends ExtensionSpecification> {
+class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends ExtensionSpecificationRuntime> {
   private readonly ignoreUnknownExtensions: boolean
   private readonly errors: AppErrors = new AppErrors()
   private readonly specifications: TModuleSpec[]
@@ -617,9 +619,8 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     configurationObject: object,
     configurationPath: string,
     directory: string,
-  ): Promise<ExtensionInstance | undefined> {
+  ): Promise<ExtensionInstanceRuntime | undefined> {
     const specification = this.findSpecificationForType(type)
-    let entryPath
     let usedKnownSpecification = false
 
     if (specification) {
@@ -634,28 +635,21 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       return undefined
     }
 
-    const specResult = parseConfigurationObjectAgainstSpecification(
-      specification,
+    const specResult = parseSpecificationResult(
+      await specification.createInstance({
+        configurationObject,
+        configurationPath,
+        directory,
+        resolveEntryPath: usedKnownSpecification ? () => this.findEntryPath(directory, specification) : undefined,
+      }),
       configurationPath,
-      configurationObject,
     )
     if (specResult.errors) {
       this.errors.addErrors(specResult.errors)
       return undefined
     }
-    const configuration = specResult.data
-
-    if (usedKnownSpecification) {
-      entryPath = await this.findEntryPath(directory, specification)
-    }
-
-    const extensionInstance = new ExtensionInstance({
-      configuration,
-      configurationPath,
-      entryPath,
-      directory,
-      specification,
-    })
+    const extensionInstance = specResult.data
+    const configuration = extensionInstance.configuration
 
     if (this.reloadState && configuration.handle) {
       const previousDevUUID = this.reloadState.extensionDevUUIDs.get(configuration.handle)
@@ -673,7 +667,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     return extensionInstance
   }
 
-  private async loadExtensions(appDirectory: string, appConfiguration: TConfig): Promise<ExtensionInstance[]> {
+  private async loadExtensions(appDirectory: string, appConfiguration: TConfig): Promise<ExtensionInstanceRuntime[]> {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory)
@@ -795,18 +789,17 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         .filter((specification) => isAppConfigSpecification(specification))
         .filter((specification) => specification.identifier !== WebhookSubscriptionSpecIdentifier)
         .map(async (specification) => {
-          const specResult = parseConfigurationObjectAgainstSpecification(specification, configPath, appConfiguration)
+          const specResult = parseSpecificationResult(
+            specification.expandConfiguration(appConfiguration, {flags: this.remoteFlags}),
+            configPath,
+          )
           if (specResult.errors) {
             this.errors.addErrors(specResult.errors)
             return [[], [] as string[]] as const
           }
-          const specConfiguration = specResult.data
+          const {configurations, consumedKeys} = specResult.data
 
-          if (Object.keys(specConfiguration).length === 0) return [[], Object.keys(specConfiguration)] as const
-
-          const configurations = specification.expandConfig?.(specConfiguration, {flags: this.remoteFlags}) ?? [
-            specConfiguration,
-          ]
+          if (consumedKeys.length === 0) return [[], consumedKeys] as const
           const instances = await Promise.all(
             configurations.map(async (configuration) => {
               const instance = await this.createExtensionInstance(
@@ -818,7 +811,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
               return this.validateConfigurationExtensionInstance(appConfiguration.client_id, appConfiguration, instance)
             }),
           )
-          return [instances, Object.keys(specConfiguration)] as const
+          return [instances, consumedKeys] as const
         }),
     )
 
@@ -843,7 +836,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private async validateConfigurationExtensionInstance(
     apiKey: string,
     appConfiguration: TConfig,
-    extensionInstance?: ExtensionInstance,
+    extensionInstance?: ExtensionInstanceRuntime,
   ) {
     if (!extensionInstance) return
 
@@ -851,7 +844,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     return configContent ? extensionInstance : undefined
   }
 
-  private async findEntryPath(directory: string, specification: ExtensionSpecification) {
+  private async findEntryPath(directory: string, specification: ExtensionSpecificationRuntime) {
     let entryPath
     if (specification.appModuleFeatures().includes('single_js_entry_path')) {
       entryPath = (
@@ -918,7 +911,7 @@ type ConfigurationLoadResultMetadata = {
 
 type ConfigurationLoaderResult<
   TConfig extends CurrentAppConfiguration,
-  TModuleSpec extends ExtensionSpecification,
+  TModuleSpec extends ExtensionSpecificationRuntime,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
 }
@@ -1053,7 +1046,7 @@ async function logMetadataForLoadedApp(
 
 async function logMetadataForLoadedAppUsingRawValues(
   webs: Web[],
-  extensionsToAddToMetrics: ExtensionInstance[],
+  extensionsToAddToMetrics: ExtensionInstanceRuntime[],
   loadingStrategy: {usedCustomLayoutForWeb: boolean; usedCustomLayoutForExtensions: boolean},
   appName: string,
   appDirectory: string,

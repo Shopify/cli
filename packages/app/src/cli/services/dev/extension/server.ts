@@ -9,14 +9,15 @@ import {
   redirectToExtensionsMiddleware,
 } from './server/middlewares.js'
 import {ExtensionsPayloadStore, ExtensionsPayloadStoreOptions} from './payload/store.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
+import {BaseConfigType} from '../../../models/extensions/schemas.js'
 import {createApp, createRouter, toNodeListener} from 'h3'
 import {createServer} from 'http'
 
 interface SetupHTTPServerOptions {
   devOptions: ExtensionsPayloadStoreOptions
   payloadStore: ExtensionsPayloadStore
-  getExtensions: () => ExtensionInstance[]
+  getExtensions: () => ExtensionInstanceRuntime<BaseConfigType>[]
 }
 
 export function setupHTTPServer(options: SetupHTTPServerOptions) {

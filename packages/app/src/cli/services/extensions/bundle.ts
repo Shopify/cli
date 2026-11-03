@@ -1,5 +1,5 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
 import {context as esContext, formatMessagesSync} from 'esbuild'
@@ -74,7 +74,7 @@ export async function bundleExtension(options: BundleOptions, processEnv = proce
 }
 
 export async function bundleThemeExtension(
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
@@ -91,7 +91,7 @@ export async function bundleThemeExtension(
 }
 
 export async function copyFilesForExtension(
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   options: ExtensionBuildOptions,
   includePatterns: string[],
   ignoredPatterns: string[] = [],

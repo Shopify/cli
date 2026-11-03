@@ -20,12 +20,18 @@ import {
   OrganizationWithDetails,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {
+  ExtensionInstance,
+  ExtensionInstanceOptions,
+  ExtensionInstanceRuntime,
+} from '../extensions/extension-instance.js'
+import {BaseExtensionConfigType, BaseConfigType} from '../extensions/schemas.js'
+import {ExtensionSpecification, ExtensionSpecificationRuntime} from '../extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {BaseConfigType} from '../extensions/schemas.js'
+import functionSpec, {FunctionConfigType} from '../extensions/specifications/function.js'
+import themeSpec from '../extensions/specifications/theme.js'
+import paymentsSpec, {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
   AppLogsResponse,
   ChannelSpecExportResponse,
@@ -65,13 +71,13 @@ import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/function
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Project} from '../project/project.js'
+import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -210,13 +216,32 @@ export const placeholderAppConfiguration: AppConfiguration = {
   client_id: '',
 }
 
+export function unwrapExtensionInstance<TInstance extends ExtensionInstanceRuntime>(
+  result: ParseConfigurationResult<TInstance>,
+): TInstance {
+  if (result.state === 'error') throw new Error(JSON.stringify(result.errors))
+  return result.data
+}
+
+export function unvalidatedTestExtension<TConfiguration extends BaseExtensionConfigType>(
+  options: ExtensionInstanceOptions & {
+    configuration: TConfiguration
+    specification: ExtensionSpecificationRuntime
+  },
+): ExtensionInstanceRuntime<TConfiguration> {
+  return new ExtensionInstance({
+    ...options,
+    specification: options.specification as unknown as ExtensionSpecification<TConfiguration>,
+  })
+}
+
 export async function testUIExtension(
-  uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {
+  uiExtension: Omit<Partial<ExtensionInstanceRuntime>, 'configuration'> & {
     configuration?: Partial<BaseConfigType> & {path?: string} & {
       metafields?: {namespace: string; key: string; owner_type?: string}[]
     }
   } = {},
-): Promise<ExtensionInstance> {
+): Promise<ExtensionInstanceRuntime<BaseConfigType>> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   const configuration = uiExtension?.configuration ?? {
@@ -273,7 +298,7 @@ export async function testUIExtension(
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration: configuration as BaseConfigType,
     configurationPath,
     entryPath,
@@ -287,7 +312,7 @@ export async function testUIExtension(
   return extension
 }
 
-export async function testThemeExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testThemeExtensions(directory = './my-extension') {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
@@ -295,7 +320,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   }
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
+  const specification = themeSpec
 
   const extension = new ExtensionInstance({
     configuration,
@@ -307,7 +332,10 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
-export async function testAppConfigExtensions(emptyConfig = false, directory?: string): Promise<ExtensionInstance> {
+export async function testAppConfigExtensions(
+  emptyConfig = false,
+  directory?: string,
+): Promise<ExtensionInstanceRuntime> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -319,7 +347,7 @@ export async function testAppConfigExtensions(emptyConfig = false, directory?: s
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: directory ?? './',
@@ -332,11 +360,11 @@ export async function testAppConfigExtensions(emptyConfig = false, directory?: s
 export async function testChannelConfigExtension(
   directory: string,
   handle = 'channel-config',
-): Promise<ExtensionInstance> {
+): Promise<ExtensionInstanceRuntime> {
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'channel_config')!
 
-  return new ExtensionInstance({
+  return unvalidatedTestExtension({
     configuration: {
       name: 'Channel config',
       type: 'channel_config',
@@ -353,7 +381,7 @@ export async function testAppAccessConfigExtension(
   emptyConfig = false,
   directory?: string,
   useLegacyInstallFlow = true,
-): Promise<ExtensionInstance> {
+): Promise<ExtensionInstanceRuntime> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -369,7 +397,7 @@ export async function testAppAccessConfigExtension(
         },
       } as unknown as BaseConfigType)
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: directory ?? './',
@@ -379,7 +407,7 @@ export async function testAppAccessConfigExtension(
   return extension
 }
 
-export async function testAppHomeConfigExtension(): Promise<ExtensionInstance> {
+export async function testAppHomeConfigExtension(): Promise<ExtensionInstanceRuntime> {
   const configuration = {
     name: 'App Home',
     type: 'app_home',
@@ -392,7 +420,7 @@ export async function testAppHomeConfigExtension(): Promise<ExtensionInstance> {
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === AppHomeSpecIdentifier)!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory: './',
@@ -402,7 +430,7 @@ export async function testAppHomeConfigExtension(): Promise<ExtensionInstance> {
   return extension
 }
 
-export async function testAppProxyConfigExtension(): Promise<ExtensionInstance> {
+export async function testAppProxyConfigExtension(): Promise<ExtensionInstanceRuntime> {
   const configuration = {
     name: 'App Proxy',
     type: 'app_proxy',
@@ -418,7 +446,7 @@ export async function testAppProxyConfigExtension(): Promise<ExtensionInstance> 
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === AppProxySpecIdentifier)!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory: './',
@@ -428,7 +456,7 @@ export async function testAppProxyConfigExtension(): Promise<ExtensionInstance> 
   return extension
 }
 
-export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstanceRuntime> {
   const configuration = {
     name: 'Payment Extension Name',
     type: 'payments_extension' as const,
@@ -439,7 +467,7 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -452,13 +480,13 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
 export function testWebhookExtensions(params?: {
   emptyConfig?: boolean
   complianceTopics: false
-}): Promise<ExtensionInstance>
+}): Promise<ExtensionInstanceRuntime>
 export function testWebhookExtensions(params?: {
   emptyConfig?: boolean
   complianceTopics: true
-}): Promise<ExtensionInstance[]>
+}): Promise<ExtensionInstanceRuntime[]>
 export async function testWebhookExtensions({emptyConfig = false, complianceTopics = false} = {}): Promise<
-  ExtensionInstance | ExtensionInstance[]
+  ExtensionInstanceRuntime | ExtensionInstanceRuntime[]
 > {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
@@ -493,14 +521,14 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   const webhooksSpecification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
   const privacySpecification = allSpecs.find((spec) => spec.identifier === 'privacy_compliance_webhooks')!
 
-  const webhooksExtension = new ExtensionInstance({
+  const webhooksExtension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory: './',
     specification: webhooksSpecification,
   })
 
-  const privacyExtension = new ExtensionInstance({
+  const privacyExtension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory: './',
@@ -522,12 +550,12 @@ export async function testSingleWebhookSubscriptionExtension({
   emptyConfig?: boolean
   topic?: string
   config?: object
-} = {}): Promise<ExtensionInstance> {
+} = {}): Promise<ExtensionInstanceRuntime> {
   // configuration should be a single webhook subscription because of how
   // we create the extension instances in loader
   const configuration = emptyConfig ? ({} as unknown as BaseConfigType) : (config as unknown as BaseConfigType)
 
-  const webhooksExtension = new ExtensionInstance({
+  const webhooksExtension = unvalidatedTestExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: './',
@@ -537,7 +565,7 @@ export async function testSingleWebhookSubscriptionExtension({
   return webhooksExtension
 }
 
-export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstanceRuntime> {
   const configuration = {
     name: 'tax',
     type: 'tax_calculation' as const,
@@ -554,7 +582,7 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -564,7 +592,7 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
   return extension
 }
 
-export async function testFlowActionExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testFlowActionExtension(directory = './my-extension'): Promise<ExtensionInstanceRuntime> {
   const configuration = {
     name: 'flow action',
     type: 'flow_action' as const,
@@ -575,7 +603,7 @@ export async function testFlowActionExtension(directory = './my-extension'): Pro
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'flow_action')!
 
-  const extension = new ExtensionInstance({
+  const extension = unvalidatedTestExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -613,7 +641,7 @@ export async function testFunctionExtension(
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'function')!
+  const specification = functionSpec
 
   const extension = new ExtensionInstance({
     configuration,
@@ -656,13 +684,14 @@ export async function testEditorExtensionCollection({
   }
   const configuration = parsed.data
 
-  return new ExtensionInstance({
-    configuration,
-    directory: resolvedDir,
-    specification,
-    configurationPath,
-    entryPath: '',
-  })
+  return unwrapExtensionInstance(
+    await specification.createInstance({
+      configurationObject: configuration,
+      directory: resolvedDir,
+      configurationPath,
+      entryPath: '',
+    }),
+  )
 }
 
 interface TestPaymentsAppExtensionOptions {
@@ -677,7 +706,7 @@ export async function testPaymentsAppExtension(
   const configuration = opts.config
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+  const specification = paymentsSpec
 
   const extension = new ExtensionInstance({
     configuration,

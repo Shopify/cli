@@ -1,7 +1,7 @@
 import {bundleExtension, bundleThemeExtension, copyFilesForExtension} from './bundle.js'
-import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
+import {unwrapExtensionInstance, testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
 import {
@@ -351,16 +351,17 @@ describe('bundleExtension()', () => {
         // Given
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
-        const themeExtension = new ExtensionInstance({
-          configuration: {
-            name: 'theme extension name',
-            type: 'theme' as const,
-            metafields: [],
-          },
-          configurationPath: '',
-          directory: tmpDir,
-          specification,
-        })
+        const themeExtension = unwrapExtensionInstance(
+          await specification.createInstance({
+            configurationObject: {
+              name: 'theme extension name',
+              type: 'theme' as const,
+              metafields: [],
+            },
+            configurationPath: '',
+            directory: tmpDir,
+          }),
+        )
 
         const outputPath = joinPath(tmpDir, 'dist')
         await mkdir(outputPath)
@@ -437,7 +438,7 @@ describe('copyFilesForExtension()', () => {
         directory: extensionDir,
         outputPath: outputDir,
         localIdentifier: 'test-extension',
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const stdout = {write: vi.fn()}
       const stderr = {write: vi.fn()}
@@ -479,7 +480,7 @@ describe('copyFilesForExtension()', () => {
         directory: extensionDir,
         outputPath: outputDir,
         localIdentifier: 'test-extension',
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const stdout = {write: vi.fn()}
       const stderr = {write: vi.fn()}
@@ -513,7 +514,7 @@ describe('copyFilesForExtension()', () => {
         directory: extensionDir,
         outputPath: outputDir,
         localIdentifier: 'test-extension',
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const stdout = {write: vi.fn()}
       const stderr = {write: vi.fn()}

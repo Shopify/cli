@@ -19,6 +19,18 @@ function errorMessages(result: ReturnType<typeof parse>) {
 }
 
 describe('theme', () => {
+  test('preserves legacy capability field order when configurations are serialized', () => {
+    const result = themeSpec.parseConfigurationObject({
+      settings: {fields: []},
+      supported_features: {runs_offline: false},
+      capabilities: {network_access: {allowed_sources: []}},
+      type: 'theme',
+      name: 'theme extension',
+    })
+    expect(result.state).toBe('ok')
+    expect(Object.keys(result.data!)).toEqual(['name', 'type', 'capabilities', 'supported_features', 'settings'])
+  })
+
   describe('capabilities.network_access.allowed_sources', () => {
     test('accepts HTTPS origins and normalizes them', () => {
       const result = parseSources([

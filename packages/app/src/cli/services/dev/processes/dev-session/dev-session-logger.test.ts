@@ -4,14 +4,15 @@ import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
 import {
   DEFAULT_DEV_SESSION_UPDATE_MESSAGE,
   ExtensionInstance,
+  ExtensionInstanceRuntime,
 } from '../../../../models/extensions/extension-instance.js'
 import {createExtensionSpecification} from '../../../../models/extensions/specification.js'
-import {BaseConfigType, BaseSchema} from '../../../../models/extensions/schemas.js'
+import {BaseSchema} from '../../../../models/extensions/schemas.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {Writable} from 'stream'
 
-function extensionWithNoLocalDevOutput(handle: string): ExtensionInstance {
+function extensionWithNoLocalDevOutput(handle: string): ExtensionInstanceRuntime {
   const specification = createExtensionSpecification({
     identifier: handle.replace(/-/g, '_'),
     schema: BaseSchema,
@@ -19,14 +20,14 @@ function extensionWithNoLocalDevOutput(handle: string): ExtensionInstance {
     uidStrategy: 'single',
   })
   return new ExtensionInstance({
-    configuration: {name: handle, type: specification.identifier, handle} as BaseConfigType,
+    configuration: {name: handle, type: specification.identifier, handle},
     configurationPath: '',
     directory: '/tmp/test-extension',
     specification,
   })
 }
 
-function eventForExtensions(extensions: ExtensionInstance[], type = EventType.Updated): AppEvent {
+function eventForExtensions(extensions: ExtensionInstanceRuntime[], type = EventType.Updated): AppEvent {
   return {
     app: {configuration: {}} as AppEvent['app'],
     extensionEvents: extensions.map((extension) => ({type, extension})),
@@ -114,7 +115,7 @@ describe('DevSessionLogger', () => {
     })
 
     test('handles UserError array with extension mapping', async () => {
-      const extensions = [{uid: 'test-id', handle: 'test-extension'}] as ExtensionInstance[]
+      const extensions = [{uid: 'test-id', handle: 'test-extension'}] as ExtensionInstanceRuntime[]
       const errors = [
         {
           message: 'test error',
@@ -141,7 +142,7 @@ describe('DevSessionLogger', () => {
         devUUID: '',
         localIdentifier: '',
         idEnvironmentVariableName: '',
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const event: AppEvent = {
         app: {} as any,
@@ -171,7 +172,7 @@ describe('DevSessionLogger', () => {
         devUUID: '',
         localIdentifier: '',
         idEnvironmentVariableName: '',
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const event: AppEvent = {
         app: {} as any,
@@ -208,7 +209,7 @@ describe('DevSessionLogger', () => {
         localIdentifier: '',
         idEnvironmentVariableName: '',
         handle: 'test-extension',
-      } as unknown as ExtensionInstance
+      } as unknown as ExtensionInstanceRuntime
 
       const event: AppEvent = {
         app: {configuration: {}} as any,
@@ -236,7 +237,7 @@ describe('DevSessionLogger', () => {
         localIdentifier: '',
         idEnvironmentVariableName: '',
         handle: 'test-extension',
-      } as unknown as ExtensionInstance
+      } as unknown as ExtensionInstanceRuntime
 
       const event: AppEvent = {
         app: {configuration: {}} as any,
@@ -266,7 +267,7 @@ describe('DevSessionLogger', () => {
         localIdentifier: '',
         idEnvironmentVariableName: '',
         handle: 'test-extension',
-      } as unknown as ExtensionInstance
+      } as unknown as ExtensionInstanceRuntime
 
       const event: AppEvent = {
         app: {configuration: {}} as any,

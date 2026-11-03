@@ -124,7 +124,7 @@ const UIDSchema = zod
   .regex(/^[a-zA-Z0-9-${}.()_`]*$/, 'UID can only contain alphanumeric characters and hyphens')
   .refine((uid) => !uid.startsWith('-') && !uid.endsWith('-'), "UID can't start or end with a hyphen")
 
-export const BaseSchema = zod.object({
+export const CommonExtensionSchema = zod.object({
   name: zod.string().optional(),
   type: zod.string().optional(),
   handle: HandleSchema.optional(),
@@ -132,9 +132,17 @@ export const BaseSchema = zod.object({
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),
-  capabilities: CapabilitiesSchema.optional(),
   supported_features: SupportedFeaturesSchema.optional(),
   settings: SettingsSchema.optional(),
+})
+
+const {supported_features: supportedFeatures, settings, ...commonFields} = CommonExtensionSchema.shape
+
+export const BaseSchema = zod.object({
+  ...commonFields,
+  capabilities: CapabilitiesSchema.optional(),
+  supported_features: supportedFeatures,
+  settings,
 })
 
 export const BaseSchemaWithHandle = BaseSchema.extend({
@@ -157,4 +165,4 @@ export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSche
 export type BaseConfigType = zod.infer<typeof BaseSchema>
 
 // Base config type that all config schemas must extend.
-export type BaseExtensionConfigType = Omit<BaseConfigType, 'capabilities'>
+export type BaseExtensionConfigType = zod.infer<typeof CommonExtensionSchema>

@@ -1,4 +1,4 @@
-import {ExtensionSpecification} from './specification.js'
+import {ExtensionSpecificationRuntime} from './specification.js'
 import appHomeSpec, {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
 import appProxySpec, {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
 import appPOSSpec, {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
@@ -46,8 +46,8 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
-  const sortConfigModules = (specA: ExtensionSpecification, specB: ExtensionSpecification) =>
+export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecificationRuntime[]> {
+  const sortConfigModules = (specA: ExtensionSpecificationRuntime, specB: ExtensionSpecificationRuntime) =>
     SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specA.identifier) -
     SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specB.identifier)
   return loadSpecifications().sort(sortConfigModules)
@@ -86,5 +86,5 @@ function loadSpecifications() {
     adminLinkSpec,
   ]
 
-  return [...configModuleSpecs, ...moduleSpecs] as ExtensionSpecification[]
+  return [...configModuleSpecs, ...moduleSpecs]
 }

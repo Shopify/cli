@@ -1,5 +1,5 @@
 import {addUidToTomlsIfNecessary} from './add-uid-to-extension-toml.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {describe, test, expect} from 'vitest'
 import {writeFile, readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -21,7 +21,7 @@ describe('addUidToTomlsIfNecessary', () => {
         isUUIDStrategyExtension: true,
         uid: '123',
         configuration: {},
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       // When
       await addUidToTomlsIfNecessary([extension])
@@ -60,7 +60,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         isUUIDStrategyExtension: true,
         uid: 'abc-123',
         configuration: {},
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       // When
       await addUidToTomlsIfNecessary([extension])
@@ -108,7 +108,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         isUUIDStrategyExtension: true,
         uid: '456',
         configuration: {},
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const extension1 = {
         configurationPath: tomlPath,
@@ -116,7 +116,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         isUUIDStrategyExtension: true,
         uid: '123',
         configuration: {},
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       // When
       await addUidToTomlsIfNecessary([extension, extension1])
@@ -156,7 +156,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {
           uid: 'existing-uid',
         },
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       // When
       await addUidToTomlsIfNecessary([extension])
@@ -183,7 +183,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         isUUIDStrategyExtension: false,
         uid: '123',
         configuration: {},
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       // When
       await addUidToTomlsIfNecessary([extension])

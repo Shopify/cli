@@ -8,6 +8,7 @@ import {
   validateFunctionExtensionsWithUiHandle,
 } from './app.js'
 import {
+  unwrapExtensionInstance,
   DEFAULT_CONFIG,
   testApp,
   testUIExtension,
@@ -20,7 +21,7 @@ import {
   testDeveloperPlatformClient,
   testOrganizationApp,
 } from './app.test-data.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstance, ExtensionInstanceRuntime} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
@@ -436,7 +437,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
       const validFunctionWithUiExtension = await testFunctionExtension({
         config: generateFunctionConfig({uiHandle: 'test-ui-extension'}),
       })
-      const allExtensions: ExtensionInstance[] = [validFunctionWithUiExtension]
+      const allExtensions: ExtensionInstanceRuntime[] = [validFunctionWithUiExtension]
       const app = await testApp({
         allExtensions,
       })
@@ -466,7 +467,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
         },
       })
 
-      const allExtensions: ExtensionInstance[] = [functionWithUiHandle, functionWithMatchingHandle]
+      const allExtensions: ExtensionInstanceRuntime[] = [functionWithUiHandle, functionWithMatchingHandle]
       const app = await testApp({
         allExtensions,
       })
@@ -527,7 +528,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
         },
       })
 
-      const allExtensions: ExtensionInstance[] = [
+      const allExtensions: ExtensionInstanceRuntime[] = [
         editorExtensionCollection,
         orderDiscountFunction,
         adminUiExtension,
@@ -556,7 +557,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
       const validFunctionWithUiExtension = await testFunctionExtension({
         config: generateFunctionConfig({uiHandle: 'test-ui-extension'}),
       })
-      const allExtensions: ExtensionInstance[] = [validUiExtension, validFunctionWithUiExtension]
+      const allExtensions: ExtensionInstanceRuntime[] = [validUiExtension, validFunctionWithUiExtension]
       const app = await testApp({
         allExtensions,
       })
@@ -889,13 +890,14 @@ describe('manifest', () => {
 
           const directory = joinPath(tmpDir, configuration.type)
           await mkdir(directory)
-          return new ExtensionInstance({
-            configuration: parsed.data,
-            directory,
-            specification,
-            configurationPath: joinPath(directory, 'shopify.extension.toml'),
-            entryPath: '',
-          })
+          return unwrapExtensionInstance(
+            await specification.createInstance({
+              configurationObject: parsed.data,
+              directory,
+              configurationPath: joinPath(directory, 'shopify.extension.toml'),
+              entryPath: '',
+            }),
+          )
         }),
       )
       const app = testApp({

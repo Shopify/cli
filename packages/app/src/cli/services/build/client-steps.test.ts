@@ -1,6 +1,6 @@
 import {executeStep, BuildContext, LifecycleStep} from './client-steps.js'
 import * as stepsIndex from './steps/index.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./steps/index.js')
@@ -13,7 +13,7 @@ describe('executeStep', () => {
       extension: {
         directory: '/test/dir',
         outputPath: '/test/output/index.js',
-      } as ExtensionInstance,
+      } as ExtensionInstanceRuntime,
       options: {
         stdout: {write: vi.fn()} as any,
         stderr: {write: vi.fn()} as any,

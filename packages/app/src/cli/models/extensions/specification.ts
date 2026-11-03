@@ -1,5 +1,4 @@
 import {ZodSchemaType, BaseConfigType, BaseExtensionConfigType, BaseSchema} from './schemas.js'
-import {ExtensionInstance} from './extension-instance.js'
 import {patchAppRelativeUrls} from './specifications/validation/app_relative_urls.js'
 import {blocks} from '../../constants.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
@@ -13,6 +12,7 @@ import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import type {ExtensionInstance, ExtensionInstanceOptions, ExtensionInstanceRuntime} from './extension-instance.js'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -81,7 +81,7 @@ export interface DevSessionUpdateContext {
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType> {
+export interface ExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType> {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -156,6 +156,18 @@ export interface ExtensionSpecification<TConfiguration extends BaseExtensionConf
    */
   parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
 
+  createInstance: (
+    options: ExtensionInstanceOptions & {
+      configurationObject: object
+      resolveEntryPath?: () => Promise<string | undefined>
+    },
+  ) => Promise<ParseConfigurationResult<ExtensionInstance<TConfiguration>>>
+
+  expandConfiguration: (
+    configurationObject: object,
+    options: {flags: Flag[]},
+  ) => ParseConfigurationResult<{configurations: object[]; consumedKeys: string[]}>
+
   contributeToSharedTypeFile?: (
     extension: ExtensionInstance<TConfiguration>,
     typeDefinitionsByFile: Map<string, Set<string>>,
@@ -179,10 +191,46 @@ export interface DevSessionWatchConfig {
 /**
  * Extension specification, explicitly marked as having taken remote configuration values into account.
  */
-export type RemoteAwareExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType> =
-  ExtensionSpecification<TConfiguration> & {
-    loadedRemoteSpecs: true
-  }
+export type RemoteAwareExtensionSpecification = ExtensionSpecificationRuntime & {
+  loadedRemoteSpecs: true
+}
+
+type ConfigurationCallbacks =
+  | 'getOutputRelativePath'
+  | 'getBundleExtensionStdinContent'
+  | 'deployConfig'
+  | 'validate'
+  | 'preDeployValidation'
+  | 'buildValidation'
+  | 'hasExtensionPointTarget'
+  | 'appModuleFeatures'
+  | 'getDevSessionUpdateMessages'
+  | 'appRelativeUrlFields'
+  | 'patchWithAppDevURLs'
+  | 'expandConfig'
+  | 'getIdentity'
+  | 'getTarget'
+  | 'contributeToSharedTypeFile'
+  | 'devSessionWatchConfig'
+  | 'createInstance'
+  | 'parseConfigurationObject'
+
+export type ExtensionSpecificationRuntime = Omit<
+  ExtensionSpecification<BaseExtensionConfigType>,
+  ConfigurationCallbacks
+> & {
+  appModuleFeatures: () => ExtensionFeature[]
+  appRelativeUrlFields?: ReadonlyArray<string>
+  parseConfigurationObject: (
+    configurationObject: object,
+  ) => ParseConfigurationResult<BaseExtensionConfigType & {capabilities?: unknown}>
+  createInstance: (
+    options: ExtensionInstanceOptions & {
+      configurationObject: object
+      resolveEntryPath?: () => Promise<string | undefined>
+    },
+  ) => Promise<ParseConfigurationResult<ExtensionInstanceRuntime>>
+}
 
 /**
  * These fields are forbidden when creating a new ExtensionSpec
@@ -198,13 +246,15 @@ type ForbiddenFields =
   | 'surface'
   | 'contributeToAppConfigurationSchema'
   | 'parseConfigurationObject'
+  | 'createInstance'
+  | 'expandConfiguration'
 
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
-interface CreateExtensionSpecType<TConfiguration extends BaseExtensionConfigType = BaseConfigType> extends Partial<
-  Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>
-> {
+interface CreateExtensionSpecType<
+  TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType,
+> extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   schema?: ZodSchemaType<TConfiguration>
@@ -229,7 +279,13 @@ interface CreateExtensionSpecType<TConfiguration extends BaseExtensionConfigType
  * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
  * ```
  */
-export function createExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType>(
+export function createExtensionSpecification<TConfiguration extends BaseExtensionConfigType>(
+  spec: CreateExtensionSpecType<TConfiguration> & {schema: ZodSchemaType<TConfiguration>},
+): ExtensionSpecification<TConfiguration>
+export function createExtensionSpecification(
+  spec: CreateExtensionSpecType<BaseConfigType> & {schema?: undefined},
+): ExtensionSpecification<BaseConfigType>
+export function createExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): ExtensionSpecification<TConfiguration> {
   const baseSchema: ZodSchemaType<BaseExtensionConfigType> = BaseSchema
@@ -283,6 +339,36 @@ export function createExtensionSpecification<TConfiguration extends BaseExtensio
         errors: undefined,
       }
     },
+    async createInstance(options) {
+      const parsed = this.parseConfigurationObject(options.configurationObject)
+      if (parsed.state === 'error') return parsed
+      const entryPath = options.resolveEntryPath ? await options.resolveEntryPath() : options.entryPath
+      const {ExtensionInstance} = await import('./extension-instance.js')
+      return {
+        state: 'ok',
+        data: new ExtensionInstance({
+          configuration: parsed.data,
+          configurationPath: options.configurationPath,
+          entryPath,
+          directory: options.directory,
+          specification: this,
+        }),
+        errors: undefined,
+      }
+    },
+    expandConfiguration(configurationObject, options) {
+      const parsed = this.parseConfigurationObject(configurationObject)
+      if (parsed.state === 'error') return parsed
+      return {
+        state: 'ok',
+        data: {
+          configurations:
+            Object.keys(parsed.data).length === 0 ? [] : (this.expandConfig?.(parsed.data, options) ?? [parsed.data]),
+          consumedKeys: Object.keys(parsed.data),
+        },
+        errors: undefined,
+      }
+    },
   }
 }
 
@@ -294,7 +380,7 @@ export function createExtensionSpecification<TConfiguration extends BaseExtensio
 
  */
 export function createConfigExtensionSpecification<
-  TConfiguration extends BaseExtensionConfigType = BaseConfigType,
+  TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType,
 >(spec: {
   identifier: string
   schema: ZodSchemaType<TConfiguration>
@@ -328,7 +414,9 @@ export function createConfigExtensionSpecification<
   })
 }
 
-export function createContractBasedModuleSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType>(
+export function createContractBasedModuleSpecification<
+  TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType,
+>(
   spec: Pick<
     CreateExtensionSpecType<TConfiguration>,
     | 'identifier'

@@ -1,9 +1,15 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
-import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {
+  unwrapExtensionInstance,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {DEFAULT_DEV_SESSION_UPDATE_MESSAGE, ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {BaseConfigType} from '../../models/extensions/schemas.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {
+  DEFAULT_DEV_SESSION_UPDATE_MESSAGE,
+  ExtensionInstanceRuntime,
+} from '../../models/extensions/extension-instance.js'
+import {ExtensionSpecificationRuntime} from '../../models/extensions/specification.js'
 import {describe, expect, test} from 'vitest'
 
 describe('fetchExtensionSpecifications', () => {
@@ -129,16 +135,17 @@ describe('getDevSessionUpdateMessages for remotely-sourced specifications', () =
     },
   }
 
-  function instanceFor(specification: ExtensionSpecification): ExtensionInstance {
-    return new ExtensionInstance({
-      configuration: {name: 'analytics app events', type: specification.identifier} as BaseConfigType,
-      configurationPath: '',
-      directory: '/tmp/test-extension',
-      specification,
-    })
+  async function instanceFor(specification: ExtensionSpecificationRuntime): Promise<ExtensionInstanceRuntime> {
+    return unwrapExtensionInstance(
+      await specification.createInstance({
+        configurationObject: {type: specification.identifier},
+        configurationPath: '',
+        directory: '/tmp/test-extension',
+      }),
+    )
   }
 
-  async function specificationsFor(remoteSpecs: RemoteSpecification[]): Promise<ExtensionSpecification[]> {
+  async function specificationsFor(remoteSpecs: RemoteSpecification[]): Promise<ExtensionSpecificationRuntime[]> {
     return fetchSpecifications({
       developerPlatformClient: testDeveloperPlatformClient({specifications: () => Promise.resolve(remoteSpecs)}),
       app: testOrganizationApp(),
@@ -154,7 +161,7 @@ describe('getDevSessionUpdateMessages for remotely-sourced specifications', () =
     expect(specification.experience).toBe('extension')
     expect(specification.uidStrategy).toBe('single')
     expect(specification.appModuleFeatures()).toEqual([])
-    await expect(instanceFor(specification).getDevSessionUpdateMessages({status: 'created'})).resolves.toEqual([
+    await expect((await instanceFor(specification)).getDevSessionUpdateMessages({status: 'created'})).resolves.toEqual([
       DEFAULT_DEV_SESSION_UPDATE_MESSAGE,
     ])
   })
@@ -174,7 +181,9 @@ describe('getDevSessionUpdateMessages for remotely-sourced specifications', () =
     const specification = specifications.find((spec) => spec.identifier === 'remote_only_with_localization')!
 
     expect(specification.appModuleFeatures()).toEqual(['localization'])
-    await expect(instanceFor(specification).getDevSessionUpdateMessages({status: 'created'})).resolves.toBeUndefined()
+    await expect(
+      (await instanceFor(specification)).getDevSessionUpdateMessages({status: 'created'}),
+    ).resolves.toBeUndefined()
   })
 
   test('merging a local specification with its remote counterpart preserves a per-specification override', async () => {
@@ -185,15 +194,23 @@ describe('getDevSessionUpdateMessages for remotely-sourced specifications', () =
         identifier: 'app_home',
         externalIdentifier: 'app_home_external',
         experience: 'configuration',
+        validationSchema: {
+          jsonSchema:
+            '{"type":"object","properties":{"application_url":{"type":"string"},"embedded":{"type":"boolean"}}}',
+        },
       },
     ])
     const specification = specifications.find((spec) => spec.identifier === 'app_home')!
 
-    expect(specification.getDevSessionUpdateMessages).toBeDefined()
-    await expect(
-      specification.getDevSessionUpdateMessages!({application_url: 'https://example.com'} as BaseConfigType, {
-        status: 'created',
+    const extension = unwrapExtensionInstance(
+      await specification.createInstance({
+        configurationObject: {application_url: 'https://example.com', embedded: true},
+        configurationPath: '',
+        directory: '/tmp/test-extension',
       }),
-    ).resolves.toEqual(['Using URL: https://example.com'])
+    )
+    await expect(extension.getDevSessionUpdateMessages({status: 'created'})).resolves.toEqual([
+      'Using URL: https://example.com',
+    ])
   })
 })

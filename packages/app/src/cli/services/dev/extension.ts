@@ -8,7 +8,7 @@ import {
 } from './extension/payload/store.js'
 import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {buildCartURLIfNeeded} from './extension/utilities.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime, isUIExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -38,7 +38,7 @@ export interface ExtensionDevOptions {
    * All real extensions in the app, including non-previewable ones (e.g., admin config).
    * Previewable extensions are filtered internally for the UI payload.
    */
-  extensions: ExtensionInstance[]
+  extensions: ExtensionInstanceRuntime[]
 
   /**
    * The ID of the app that contains the extension.
@@ -128,7 +128,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const assetResolvers = new Map()
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath, assetResolvers)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions, assetResolvers)
-  let extensions = payloadOptions.extensions.filter((ext) => ext.isPreviewable)
+  let extensions = payloadOptions.extensions.filter(isUIExtensionInstance)
 
   const getExtensions = () => {
     return extensions
@@ -147,11 +147,11 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
     if (appWasReloaded) {
-      extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
+      extensions = app.allExtensions.filter(isUIExtensionInstance)
     }
 
     for (const event of extensionEvents) {
-      if (!event.extension.isPreviewable) continue
+      if (!isUIExtensionInstance(event.extension)) continue
       const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
 
       const error =

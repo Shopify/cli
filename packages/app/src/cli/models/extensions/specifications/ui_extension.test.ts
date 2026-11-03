@@ -1,8 +1,6 @@
-import {getShouldRenderTarget} from './ui_extension.js'
+import uiExtensionSpec, {getShouldRenderTarget} from './ui_extension.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance} from '../extension-instance.js'
-import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {placeholderAppConfiguration} from '../../app/app.test-data.js'
+import {unvalidatedTestExtension, placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {AssetIdentifier} from '../specification.js'
 import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -47,8 +45,7 @@ describe('ui_extension', async () => {
 
   async function getTestUIExtension({directory, extensionPoints, apiVersion}: GetUIExtensionProps) {
     const configurationPath = joinPath(directory, 'shopify.extension.toml')
-    const allSpecs = await loadLocalExtensionsSpecifications()
-    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+    const specification = uiExtensionSpec
     const configuration = {
       extension_points: extensionPoints,
       api_version: apiVersion ?? '2023-01',
@@ -72,12 +69,12 @@ describe('ui_extension', async () => {
       urls: {},
     }
 
-    return new ExtensionInstance({
+    return unvalidatedTestExtension({
       configuration,
       directory,
-      specification,
       configurationPath,
       entryPath: '',
+      specification,
     })
   }
 
@@ -107,8 +104,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object is transformed into extension_points. metafields are inherited', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -179,8 +175,7 @@ describe('ui_extension', async () => {
     })
 
     test('target-level metafields override extension-level metafields', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -207,8 +202,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object accepts a default_placement', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -272,8 +266,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object accepts intercepts target capabilities', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const intercepts = [
         {event: 'cartvalidations'},
         {event: 'paymentvalidations', blocking: true, applies_to: ['cash']},
@@ -347,8 +340,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object accepts preloads', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -412,8 +404,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object accepts urls', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -482,8 +473,7 @@ describe('ui_extension', async () => {
     })
 
     test('build_manifest includes should_render asset when should_render.module is present', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -554,8 +544,7 @@ describe('ui_extension', async () => {
     })
 
     test('build_manifest includes tools asset when tools is present', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -619,8 +608,7 @@ describe('ui_extension', async () => {
     })
 
     test('build_manifest includes instructions asset when instructions is present', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -684,8 +672,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object passes through assets when configured', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -750,8 +737,7 @@ describe('ui_extension', async () => {
 
     test('returns error if there is no targeting or extension_points', async () => {
       // Given
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         api_version: '2023-01',
         name: 'UI Extension',
@@ -847,8 +833,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     })
 
     test('build_manifest includes both tools and instructions when both are present', async () => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const specification = uiExtensionSpec
       const configuration = {
         targeting: [
           {
@@ -967,10 +952,10 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           capabilities: {
             ...uiExtension.configuration.capabilities,
             collect_buyer_consent: {
-              ...uiExtension.configuration.capabilities.collect_buyer_consent,
+              ...uiExtension.configuration.capabilities?.collect_buyer_consent,
             },
             iframe: {
-              ...uiExtension.configuration.capabilities.iframe,
+              ...uiExtension.configuration.capabilities?.iframe,
             },
           },
           supported_features: undefined,
@@ -987,8 +972,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Given
         vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const specification = uiExtensionSpec
         const parsed = specification.parseConfigurationObject({
           targeting: [
             {
@@ -1008,12 +992,12 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         if (parsed.state !== 'ok') {
           throw new Error("Couldn't parse configuration")
         }
-        const uiExtension = new ExtensionInstance({
+        const uiExtension = unvalidatedTestExtension({
           configuration: parsed.data,
           directory: tmpDir,
-          specification,
           configurationPath,
           entryPath: '',
+          specification,
         })
 
         // When
@@ -1034,9 +1018,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Given
         vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-        const uiExtension = new ExtensionInstance({
+        const specification = uiExtensionSpec
+        const uiExtension = unvalidatedTestExtension({
           configuration: {
             extension_points: [],
             api_version: '2023-01',
@@ -1050,9 +1033,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             settings: {},
           },
           directory: tmpDir,
-          specification,
           configurationPath,
           entryPath: '',
+          specification,
         })
 
         // When
@@ -1073,9 +1056,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Given
         vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-        const uiExtension = new ExtensionInstance({
+        const specification = uiExtensionSpec
+        const uiExtension = unvalidatedTestExtension({
           configuration: {
             extension_points: [],
             api_version: '2023-01',
@@ -1089,9 +1071,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             settings: {},
           },
           directory: tmpDir,
-          specification,
           configurationPath,
           entryPath: '',
+          specification,
         })
 
         // When
@@ -1112,9 +1094,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Given
         vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-        const uiExtension = new ExtensionInstance({
+        const specification = uiExtensionSpec
+        const uiExtension = unvalidatedTestExtension({
           configuration: {
             extension_points: [],
             api_version: '2023-01',
@@ -1125,9 +1106,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             settings: {},
           },
           directory: tmpDir,
-          specification,
           configurationPath,
           entryPath: '',
+          specification,
         })
 
         // When
@@ -1610,8 +1591,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     }
 
     // Get UI extension spec and create instance
-    const allSpecs = await loadLocalExtensionsSpecifications()
-    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+    const specification = uiExtensionSpec
 
     const extensionPoints: TestUIExtensionPoint[] = [
       {
@@ -1632,7 +1612,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       },
     ]
 
-    const extension = new ExtensionInstance({
+    const extension = unvalidatedTestExtension({
       configuration: {
         api_version: apiVersion,
         extension_points: extensionPoints,
@@ -1642,8 +1622,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       },
       configurationPath: joinPath(tmpDir, 'shopify.extension.toml'),
       directory: tmpDir,
-      specification,
       entryPath: filePath,
+      specification,
     })
 
     return {
@@ -2208,10 +2188,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         await writeFile(joinPath(extensionDir, 'tsconfig.json'), '{}')
 
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const specification = uiExtensionSpec
 
-        const extension = new ExtensionInstance({
+        const extension = unvalidatedTestExtension({
           configuration: {
             api_version: '2025-10',
             extension_points: [
@@ -2233,8 +2212,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           },
           configurationPath: joinPath(extensionDir, 'shopify.extension.toml'),
           directory: extensionDir,
-          specification,
           entryPath: joinPath(srcDir, 'index.jsx'),
+          specification,
         })
 
         await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
@@ -2283,10 +2262,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         await writeFile(joinPath(extensionDir, 'tsconfig.json'), '{}')
 
         // Create extension instance
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const specification = uiExtensionSpec
 
-        const extension = new ExtensionInstance({
+        const extension = unvalidatedTestExtension({
           configuration: {
             // Remote DOM supported version
             api_version: '2025-10',
@@ -2309,8 +2287,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           },
           configurationPath: joinPath(extensionDir, 'shopify.extension.toml'),
           directory: extensionDir,
-          specification,
           entryPath: joinPath(srcDir, 'extension.ts'),
+          specification,
         })
 
         // When
@@ -2378,10 +2356,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         await writeFile(joinPath(extensionDir, 'tsconfig.json'), '{}')
 
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const specification = uiExtensionSpec
 
-        const extension = new ExtensionInstance({
+        const extension = unvalidatedTestExtension({
           configuration: {
             // Remote DOM supported version
             api_version: '2025-10',
@@ -2404,8 +2381,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           },
           configurationPath: joinPath(extensionDir, 'shopify.extension.toml'),
           directory: extensionDir,
-          specification,
           entryPath: joinPath(srcDir, 'extension.ts'),
+          specification,
         })
 
         // When
@@ -2482,10 +2459,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         await writeFile(joinPath(extensionDir, 'tsconfig.json'), '{}')
 
-        const allSpecs = await loadLocalExtensionsSpecifications()
-        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const specification = uiExtensionSpec
 
-        const extension = new ExtensionInstance({
+        const extension = unvalidatedTestExtension({
           configuration: {
             // Remote DOM supported version
             api_version: '2025-10',
@@ -2508,8 +2484,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           },
           configurationPath: joinPath(extensionDir, 'shopify.extension.toml'),
           directory: extensionDir,
-          specification,
           entryPath: joinPath(srcDir, 'extension.ts'),
+          specification,
         })
 
         // When

@@ -1,5 +1,5 @@
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {DEFAULT_DEV_SESSION_UPDATE_MESSAGE, ExtensionInstance} from './extension-instance.js'
+import {DEFAULT_DEV_SESSION_UPDATE_MESSAGE, ExtensionInstance, ExtensionInstanceRuntime} from './extension-instance.js'
 import {
   ExtensionSpecification,
   createConfigExtensionSpecification,
@@ -811,7 +811,7 @@ describe('getDevSessionUpdateMessages', () => {
     {lifecycle: 'deploy', steps: [{id: 'build-theme', name: 'Build Theme', type: 'build_theme'}]},
   ]
 
-  function instanceFor(specification: ExtensionSpecification): ExtensionInstance {
+  function instanceFor(specification: ExtensionSpecification<BaseConfigType>): ExtensionInstanceRuntime {
     return new ExtensionInstance({
       configuration: {name: 'test extension', type: specification.identifier} as BaseConfigType,
       configurationPath: '',
@@ -986,10 +986,12 @@ describe('getDevSessionUpdateMessages', () => {
       const specifications = await loadLocalExtensionsSpecifications()
 
       const matching = specifications
-        .filter((specification) => {
-          const extensionInstance = instanceFor(specification)
-          return !extensionInstance.isAppConfigExtension && extensionInstance.hasNoLocalDevOutput
-        })
+        .filter((specification) => specification.experience === 'extension')
+        .filter((specification) => specification.appModuleFeatures().length === 0)
+        .filter(
+          (specification) =>
+            !specification.clientSteps?.some((group) => group.lifecycle === 'deploy' && group.steps.length > 0),
+        )
         .map((specification) => specification.identifier)
         .sort()
 

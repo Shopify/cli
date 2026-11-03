@@ -1,6 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {devUIExtensions} from '../extension.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -22,7 +22,7 @@ interface PreviewableExtensionOptions {
   appDirectory: string
   appId?: string
   grantedScopes: string[]
-  allExtensions: ExtensionInstance[]
+  allExtensions: ExtensionInstanceRuntime[]
   appWatcher: AppEventWatcher
 }
 
@@ -77,7 +77,7 @@ export async function setupPreviewableExtensionsProcess({
   checkoutCartUrl,
   ...options
 }: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'allExtensions' | 'port' | 'cartUrl'> & {
-  allExtensions: ExtensionInstance[]
+  allExtensions: ExtensionInstanceRuntime[]
   checkoutCartUrl?: string
 }): Promise<PreviewableExtensionProcess | undefined> {
   const previewableExtensions = allExtensions.filter((ext) => ext.isPreviewable)

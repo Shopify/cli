@@ -2,7 +2,7 @@
 import {FileWatcher, OutputContextOptions} from './file-watcher.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -65,7 +65,7 @@ export enum EventType {
 
 export interface ExtensionEvent {
   type: EventType
-  extension: ExtensionInstance
+  extension: ExtensionInstanceRuntime
   buildResult?: ExtensionBuildResult
 }
 
@@ -219,7 +219,7 @@ export class AppEventWatcher extends EventEmitter {
   private async buildExtensions(extensionEvents: ExtensionEvent[]) {
     // Group events by extension to handle multiple events for the same extension
     const groupedByUid = groupBy(extensionEvents, (event) => event.extension.uid)
-    const groupedExtensionEvents: {extension: ExtensionInstance; events: ExtensionEvent[]}[] = []
+    const groupedExtensionEvents: {extension: ExtensionInstanceRuntime; events: ExtensionEvent[]}[] = []
 
     for (const events of Object.values(groupedByUid)) {
       if (events.length > 0 && events[0]) {
@@ -281,7 +281,7 @@ export class AppEventWatcher extends EventEmitter {
    * Build a single extension using the default buildForBundle method.
    * @param extension - The extension to build
    */
-  private async buildExtension(extension: ExtensionInstance): Promise<void> {
+  private async buildExtension(extension: ExtensionInstanceRuntime): Promise<void> {
     const buildOptions: ExtensionBuildOptions = {
       app: this.app,
       stdout: this.options.stdout,

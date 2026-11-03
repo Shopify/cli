@@ -1,10 +1,10 @@
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {Flag, AppModuleVersion, DeveloperPlatformClient, AppVersion} from '../../utilities/developer-platform-client.js'
-import {ExtensionSpecification, isAppConfigSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecificationRuntime, isAppConfigSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
-function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
+function extensionTypeStrategy(specs: ExtensionSpecificationRuntime[], type?: string) {
   if (!type) return
   const spec = specs.find(
     (spec) =>
@@ -23,7 +23,7 @@ function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
 export async function fetchAppRemoteConfiguration(
   remoteApp: MinimalOrganizationApp,
   developerPlatformClient: DeveloperPlatformClient,
-  specifications: ExtensionSpecification[],
+  specifications: ExtensionSpecificationRuntime[],
   flags: Flag[],
   activeAppVersion?: AppVersion,
 ) {
@@ -55,7 +55,7 @@ export async function fetchAppRemoteConfiguration(
  */
 export function remoteAppConfigurationExtensionContent(
   configRegistrations: AppModuleVersion[],
-  specifications: ExtensionSpecification[],
+  specifications: ExtensionSpecificationRuntime[],
   flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}

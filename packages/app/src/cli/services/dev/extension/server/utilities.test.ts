@@ -1,6 +1,6 @@
 import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../../models/extensions/extension-instance.js'
 import {ExtensionsPayloadStoreOptions} from '../payload/store.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -55,7 +55,7 @@ describe('getExtensionPointRedirectUrl()', () => {
     (extensionPoint: string) => {
       const extension = {
         devUUID: '123abc',
-      } as ExtensionInstance
+      } as ExtensionInstanceRuntime
 
       const options = {
         storeFqdn: 'example.myshopify.com',
@@ -75,7 +75,7 @@ describe('getExtensionPointRedirectUrl()', () => {
   test('returns Checkout dev server URL if the extension point targets Checkout', () => {
     const extension = {
       devUUID: '123abc',
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -93,7 +93,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       devUUID: '123abc',
       localIdentifier: 'post-purchase-extension',
       configuration: {},
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -115,7 +115,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       devUUID: '123abc',
       localIdentifier: 'post-purchase-extension',
       configuration: {metafields: [{namespace: 'test', key: 'test'}]},
-    } as unknown as ExtensionInstance
+    } as unknown as ExtensionInstanceRuntime
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -135,7 +135,7 @@ describe('getExtensionPointRedirectUrl()', () => {
   test('returns customer account URL on shopify.com if the target is a customer account target', () => {
     const extension = {
       devUUID: '123abc',
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -154,7 +154,7 @@ describe('getExtensionPointRedirectUrl()', () => {
   test('returns customer account URL on shopify.com if the extension point uses legacy customer account target', () => {
     const extension = {
       devUUID: '123abc',
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -173,7 +173,7 @@ describe('getExtensionPointRedirectUrl()', () => {
   test('returns undefined if the extension point surface is not supported', () => {
     const extension = {
       devUUID: '123abc',
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
 
     const options = {
       storeFqdn: 'example.myshopify.com',

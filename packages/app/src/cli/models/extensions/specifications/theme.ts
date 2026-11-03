@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {CommonExtensionSchema} from '../schemas.js'
 import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 import {dirname, relativePath} from '@shopify/cli-kit/node/path'
@@ -76,8 +76,13 @@ const ThemeCapabilitiesSchema = zod.object({
   network_access: ThemeNetworkAccessSchema.optional(),
 })
 
-const ThemeSchema = BaseSchema.extend({
+const {supported_features: supportedFeatures, settings, ...commonFields} = CommonExtensionSchema.shape
+
+const ThemeSchema = zod.object({
+  ...commonFields,
   capabilities: ThemeCapabilitiesSchema.optional(),
+  supported_features: supportedFeatures,
+  settings,
 })
 
 const themeSpec = createExtensionSpecification({

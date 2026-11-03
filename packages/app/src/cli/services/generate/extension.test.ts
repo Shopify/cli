@@ -14,7 +14,7 @@ import {
   testRemoteExtensionTemplates,
 } from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecificationRuntime} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {Project} from '../../models/project/project.js'
@@ -648,7 +648,7 @@ interface CreateFromTemplateOptions {
   extensionTemplate: ExtensionTemplate
   appDirectory: string
   extensionFlavor: ExtensionFlavorValue
-  specifications: ExtensionSpecification[]
+  specifications: ExtensionSpecificationRuntime[]
   onGetTemplateRepository?: (url: string, destination: string) => Promise<void>
   developerPlatformClient?: DeveloperPlatformClient
 }

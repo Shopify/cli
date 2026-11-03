@@ -1,8 +1,8 @@
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
-import {testUIExtension} from '../../../models/app/app.test-data.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {unwrapExtensionInstance, testUIExtension} from '../../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {isUIExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import * as appModel from '../../../models/app/app.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -70,14 +70,16 @@ describe('getUIExtensionPayload', () => {
     if (parsed.state !== 'ok') {
       throw new Error("Couldn't parse admin_link configuration")
     }
-    const extension = new ExtensionInstance({
-      configuration: parsed.data,
-      directory,
-      specification,
-      configurationPath: joinPath(directory, 'shopify.extension.toml'),
-      entryPath: '',
-    })
+    const extension = unwrapExtensionInstance(
+      await specification.createInstance({
+        configurationObject: parsed.data,
+        directory,
+        configurationPath: joinPath(directory, 'shopify.extension.toml'),
+        entryPath: '',
+      }),
+    )
     if (overrides.devUUID) extension.devUUID = overrides.devUUID
+    if (!isUIExtensionInstance(extension)) throw new Error('Expected a UI extension')
     return extension
   }
 

@@ -10,7 +10,7 @@ import {remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeployIdentifiers, ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppModuleVersion, AppVersion} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -22,7 +22,7 @@ type DeployExtensionChangeStatus = 'created' | 'updated' | 'deleted' | 'unchange
 interface DeployExtensionChange {
   status: DeployExtensionChangeStatus
   experience: 'configuration' | 'extension' | 'deprecated'
-  local?: ExtensionInstance
+  local?: ExtensionInstanceRuntime
   remote?: AppModuleVersion
 }
 
@@ -108,11 +108,11 @@ export async function classifyDeployExtensionChanges({
  * un-migrated remote shares that handle and type — so an ambiguous relink is never guessed.
  */
 function uniqueHandleAndTypeMatch(
-  allExtensions: ExtensionInstance[],
+  allExtensions: ExtensionInstanceRuntime[],
   pendingRemotes: AppModuleVersion[],
   remote: AppModuleVersion,
-): ExtensionInstance | undefined {
-  const sameHandleAndType = (local: ExtensionInstance, candidate: AppModuleVersion) =>
+): ExtensionInstanceRuntime | undefined {
+  const sameHandleAndType = (local: ExtensionInstanceRuntime, candidate: AppModuleVersion) =>
     slugify(local.handle) === slugify(candidate.handle) &&
     (local.specification.identifier === candidate.specification?.identifier ||
       local.specification.externalIdentifier === candidate.specification?.identifier)

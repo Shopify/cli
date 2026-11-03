@@ -15,7 +15,7 @@ import {AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecificat
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {ExtensionInstance} from '../extension-instance.js'
+import {ExtensionInstance, ExtensionInstanceRuntime} from '../extension-instance.js'
 import {formatContent} from '../../../utilities/file-formatter.js'
 import {uniq} from '@shopify/cli-kit/common/array'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
@@ -542,7 +542,7 @@ async function validateUIExtensionPointConfig(
 }
 
 function isRemoteDomExtension(
-  config: ExtensionInstance['configuration'],
+  config: ExtensionInstanceRuntime['configuration'],
 ): config is ExtensionInstance<{api_version: string}>['configuration'] {
   const apiVersion = config.api_version
   if (!apiVersion) {
