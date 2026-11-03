@@ -1,8 +1,8 @@
 import {watchReplay, type WatchReplayOptions, type ReplayWatchEvent} from './watch.js'
 import {functionReplayEventSchema} from './types.js'
-import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
+import {renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
 import {formatJsonOutputTimestamp} from '@shopify/cli-kit/node/json-output-schema'
-import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputResult, unstyled} from '@shopify/cli-kit/node/output'
 
 export async function watchReplayJson(options: Omit<WatchReplayOptions, 'onEvent'>): Promise<void> {
   const onSignal = (receivedSignal: 'SIGINT' | 'SIGTERM' | 'SIGQUIT') => {
@@ -18,12 +18,15 @@ export async function watchReplayJson(options: Omit<WatchReplayOptions, 'onEvent
 }
 
 function writeEvent(event: ReplayWatchEvent): void {
-  if (event.type === 'diagnostic') {
-    outputWarn(event.message)
-    return
-  }
   if (event.type === 'status' && event.status === 'running') return
   const timestamp = formatJsonOutputTimestamp(new Date())
+  if (event.type === 'diagnostic') {
+    const message = unstyled(event.message)
+    if (message.trim().length > 0) {
+      renderCommandEventAsJson({type: 'diagnostic', timestamp, level: 'warning', message})
+    }
+    return
+  }
   if (event.type === 'execution') {
     functionReplayEventSchema.validate({
       type: 'execution',
@@ -43,7 +46,7 @@ function writeEvent(event: ReplayWatchEvent): void {
       JSON.stringify(functionReplayEventSchema.validate({type: event.type, timestamp, status: event.status})),
     )
     if (event.type === 'build' && event.status === 'failed') {
-      emitCommandEvent({type: 'diagnostic', level: 'error', message: event.error})
+      renderCommandEventAsJson({type: 'diagnostic', timestamp, level: 'error', message: event.error})
     }
   }
 }
