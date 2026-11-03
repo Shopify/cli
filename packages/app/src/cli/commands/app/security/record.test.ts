@@ -4,9 +4,12 @@ import {appFlags} from '../../../flags.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
-import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
+import securityRecord from '../../../services/security-record.js'
+import {renderSecurityRecordResult} from '../../../services/security-record/result.js'
+import {appSecurityRecordJsonOutputSchema} from '../../../services/security-record/types.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
@@ -14,6 +17,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-record.js')
+vi.mock('../../../services/security-record/result.js')
 vi.mock('../../../services/app-security-selection.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/app-security-selection.js')>()),
   resolveAppSecuritySelection: vi.fn(),
@@ -80,8 +84,11 @@ describe('app security record command', () => {
   test('does not require linked app context', () => {
     expect(SecurityRecord.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityRecord.prototype).not.toBeInstanceOf(AppLinkedCommand)
-    expect(SecurityRecord.flags).not.toHaveProperty('json')
-    expect(SecurityRecord.jsonOutputSchema).toBeUndefined()
+  })
+
+  test('defines --json and exposes the result schema', () => {
+    expect(SecurityRecord.flags.json).toBe(jsonFlag.json)
+    expect(SecurityRecord.jsonOutputSchema).toBe(appSecurityRecordJsonOutputSchema)
   })
 
   test('defines the selection flags as check does', () => {
@@ -111,14 +118,30 @@ describe('app security record command', () => {
           allowPrompts: false,
           validateClientIdFlag: true,
         })
-        const selection = await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value
-        expect(securityRecord).toHaveBeenCalledWith({selection, path: cwd()})
-        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, selection, cwd())
+        const options = {selection: await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value, path: cwd()}
+        expect(securityRecord).toHaveBeenCalledWith(options)
+        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, options, 'text')
         expect(output.info()).toBe('')
       } finally {
         vi.unstubAllEnvs()
         output.clear()
       }
+    })
+  })
+
+  test.each([['--json'], ['-j']])('presents the result as JSON with %s', async (flag) => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const result = recordedResult(appRoot)
+      vi.mocked(securityRecord).mockResolvedValue(result)
+
+      await SecurityRecord.run(['--path', directory, flag], import.meta.url)
+
+      expect(renderSecurityRecordResult).toHaveBeenCalledWith(
+        result,
+        {selection: expect.objectContaining({appDirectory: appRoot}), path: directory},
+        'json',
+      )
     })
   })
 

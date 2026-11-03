@@ -27,6 +27,8 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, readFile, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
@@ -478,6 +480,43 @@ describe('bundleExtension', () => {
 })
 
 describe('runJavy', () => {
+  test('captures compiler diagnostics in the dev session log in text mode', async () => {
+    const {exec: execute} =
+      await vi.importActual<typeof import('@shopify/cli-kit/node/system')>('@shopify/cli-kit/node/system')
+    vi.mocked(exec).mockImplementation(async (_command, _args, options) =>
+      execute(
+        process.execPath,
+        ['-e', "process.stderr.write('Javy: missing function export\\n'); process.exitCode = 1"],
+        options,
+      ),
+    )
+    await inTemporaryDirectory(async (directory) => {
+      const fun = await testFunctionExtension({dir: directory})
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      let terminal = ''
+      const target = new Writable({
+        write: (chunk, _encoding, done) => {
+          terminal += chunk.toString()
+          done()
+        },
+      })
+      const output = instance.tee(target, {source: 'discount', stringWritesAreMessages: true})
+      try {
+        await expect(runJavy(fun, {stdout: output, stderr: output, app}, derivedDeps)).rejects.toThrow()
+        await instance.release()
+        expect(terminal).toContain('Javy: missing function export')
+        expect(
+          (await readFile(instance.paths.logFile))
+            .trim()
+            .split('\n')
+            .map((line) => JSON.parse(line)),
+        ).toContainEqual(expect.objectContaining({source: 'discount', message: 'Javy: missing function export'}))
+      } finally {
+        await instance.release()
+      }
+    })
+  })
+
   test('JSON context honors the supplied compiler sinks and signal', async () => {
     await inTemporaryDirectory(async (directory) => {
       const fun = await testFunctionExtension({dir: directory})
@@ -516,8 +555,8 @@ describe('runJavy', () => {
         ],
         {
           cwd: ourFunction.directory,
-          stderr: 'inherit',
-          stdout: 'inherit',
+          stderr,
+          stdout,
           signal,
         },
       )
@@ -723,8 +762,8 @@ describe('ExportJavyBuilder', () => {
           ],
           {
             cwd: ourFunction.directory,
-            stderr: 'inherit',
-            stdout: 'inherit',
+            stderr,
+            stdout,
             signal,
           },
         )

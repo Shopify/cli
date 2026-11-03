@@ -11,9 +11,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Rename extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeRenameJsonOutputSchema
-  }
+  static jsonOutputSchema = themeRenameJsonOutputSchema
 
   static summary = 'Renames an existing theme.'
 

@@ -1,5 +1,5 @@
 import {
-  securityExitCode,
+  blockedCheckCount,
   executeAppSecurity,
   type AppSecurityBlockingLevel,
   type AppSecurityExecution,
@@ -32,7 +32,7 @@ afterEach(() => {
 async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
   const execution = await executeAppSecurity(scanInputFor(options.directory))
   const artifacts = await writeCheckArtifacts(options.directory, 'shopify.app', execution)
-  return {execution, artifacts, exitCode: securityExitCode(execution, options.blocking)}
+  return {execution, artifacts, blockedChecks: blockedCheckCount(execution, options.blocking)}
 }
 
 async function createApp(directory: string, source = 'export const loader = () => ({ok: true})'): Promise<string> {
@@ -49,19 +49,31 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
-function executionWithIssues(severities: Issue['severity'][]): AppSecurityExecution {
-  return {
-    scan: {issues: severities.map((severity) => ({severity}))},
-  } as unknown as AppSecurityExecution
+function executionWithIssues(issues: Pick<Issue, 'id' | 'severity'>[]): AppSecurityExecution {
+  return {scan: {issues}} as unknown as AppSecurityExecution
 }
 
-describe('securityExitCode', () => {
-  test('returns 1 only when an issue meets the blocking severity', () => {
-    expect(securityExitCode(executionWithIssues(['medium']), 'high')).toBe(0)
-    expect(securityExitCode(executionWithIssues(['medium']), 'medium')).toBe(1)
-    expect(securityExitCode(executionWithIssues(['medium']), 'low')).toBe(1)
-    expect(securityExitCode(executionWithIssues(['high']), 'none')).toBe(0)
-    expect(securityExitCode(executionWithIssues([]), 'low')).toBe(0)
+describe('blockedCheckCount', () => {
+  test('counts the checks with an issue that meets the blocking severity', () => {
+    const medium = {id: 'OPEN_REDIRECT', severity: 'medium'} as const
+    expect(blockedCheckCount(executionWithIssues([medium]), 'high')).toBe(0)
+    expect(blockedCheckCount(executionWithIssues([medium]), 'medium')).toBe(1)
+    expect(blockedCheckCount(executionWithIssues([medium]), 'low')).toBe(1)
+    expect(blockedCheckCount(executionWithIssues([{id: 'COMMITTED_SECRET', severity: 'high'}]), 'none')).toBe(0)
+    expect(blockedCheckCount(executionWithIssues([]), 'low')).toBe(0)
+  })
+
+  test('counts a check once, however many of its issues meet the blocking severity', () => {
+    const execution = executionWithIssues([
+      {id: 'COMMITTED_SECRET', severity: 'high'},
+      {id: 'COMMITTED_SECRET', severity: 'high'},
+      {id: 'OPEN_REDIRECT', severity: 'medium'},
+      {id: 'EOL_API_VERSION', severity: 'low'},
+    ])
+
+    expect(blockedCheckCount(execution, 'high')).toBe(1)
+    expect(blockedCheckCount(execution, 'medium')).toBe(2)
+    expect(blockedCheckCount(execution, 'low')).toBe(3)
   })
 })
 
@@ -86,7 +98,7 @@ describe('app security CLI integration', () => {
         deterministicFindingsPath: artifactPath(directory, 'deterministic-findings.json'),
         agentChecksPath: artifactPath(directory, 'agent-checks.json'),
       })
-      expect(result.exitCode).toBe(0)
+      expect(result.blockedChecks).toBe(0)
     })
   })
 
@@ -116,7 +128,7 @@ describe('app security CLI integration', () => {
 
       expect(JSON.stringify(result.execution.deterministicFindings)).not.toContain(testToken)
       await expect(readFile(artifactPath(directory, 'deterministic-findings.json'))).resolves.not.toContain(testToken)
-      expect(result.exitCode).toBe(1)
+      expect(result.blockedChecks).toBe(1)
     })
   })
 

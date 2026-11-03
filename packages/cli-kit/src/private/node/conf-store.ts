@@ -148,7 +148,7 @@ export function cacheStore(key: ExportedKey, value: string, config = cliKitStore
 /**
  * Fetch from cache if already populated, otherwise return undefined.
  * @param key - The key to use for the cache.
- * @returns The chache element.
+ * @returns The cache element.
  */
 export function cacheRetrieve(key: ExportedKey, config = cliKitStore()): CacheValue<string> | undefined {
   const cache: Cache = config.get('cache') ?? {}

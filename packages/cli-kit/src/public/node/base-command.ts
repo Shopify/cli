@@ -51,9 +51,7 @@ abstract class BaseCommand extends Command {
 
   static descriptionWithMarkdown?: string
 
-  public static get jsonOutputSchema(): JsonOutputSchema | undefined {
-    return undefined
-  }
+  public static jsonOutputSchema?: JsonOutputSchema
 
   public static get requiresSyncAnalytics(): boolean {
     return false

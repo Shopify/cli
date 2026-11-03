@@ -9,6 +9,8 @@ export default class DocSearch extends Command {
   static descriptionWithMarkdown =
     'Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.'
 
+  static jsonOutputSchema = docSearchJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -38,10 +40,6 @@ shopify doc search --query "subscribe to webhooks" --json`,
       description: 'Limit results to a specific API version (for example: 2025-10, latest, current).',
       env: 'SHOPIFY_FLAG_API_VERSION',
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return docSearchJsonOutputSchema
   }
 
   async run(): Promise<void> {

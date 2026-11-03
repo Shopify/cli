@@ -1,6 +1,7 @@
 import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import securityCheck from '../../../services/security-check.js'
+import {renderSecurityCheckPromptsTip, renderSecurityCheckResult} from '../../../services/security-check/result.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -9,6 +10,12 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-check.js')
+vi.mock('../../../services/security-check/result.js')
+
+/** The presentation options that the command passed with the outcome. */
+function presentationOptions() {
+  return vi.mocked(renderSecurityCheckResult).mock.calls[0]?.[1]
+}
 
 async function expectInstructionFlagConflict(flags: string[]): Promise<void> {
   const outputMock = mockAndCaptureOutput()
@@ -59,6 +66,7 @@ describe('app security check command', () => {
       'config',
       'exclude',
       'include-dir',
+      'json',
       'list-files',
       'no-git-ignore',
       'path',
@@ -69,7 +77,10 @@ describe('app security check command', () => {
     ])
   })
 
-  test('forwards --path and flags to the service', async () => {
+  test('forwards --path and flags to the service and presents its outcome', async () => {
+    const check = {kind: 'cancelled'} as const
+    vi.mocked(securityCheck).mockResolvedValue(check)
+
     await SecurityCheck.run(
       ['--path', './fixtures/unlinked-app', '--verbose', '--blocking', 'high', '--skip-instructions'],
       import.meta.url,
@@ -80,15 +91,32 @@ describe('app security check command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      verbose: true,
       blocking: 'high',
-      printInstructions: false,
-      skipInstructions: true,
       includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
       listFiles: false,
+      onSelectionPrompted: renderSecurityCheckPromptsTip,
     })
+    expect(renderSecurityCheckResult).toHaveBeenCalledWith(
+      check,
+      {
+        directory: resolvePath('./fixtures/unlinked-app'),
+        verbose: true,
+        printInstructions: false,
+        skipInstructions: true,
+      },
+      'text',
+    )
+  })
+
+  test('presents the outcome as JSON with --json', async () => {
+    const check = {kind: 'cancelled'} as const
+    vi.mocked(securityCheck).mockResolvedValue(check)
+
+    await SecurityCheck.run(['--json'], import.meta.url)
+
+    expect(renderSecurityCheckResult).toHaveBeenCalledWith(check, expect.anything(), 'json')
   })
 
   test('forwards repeated --exclude globs exactly as typed, in command-line order', async () => {
@@ -98,7 +126,7 @@ describe('app security check command', () => {
     )
 
     expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({excludePatterns: ['generated', '../shared/**', 'a b/'], skipInstructions: true}),
+      expect.objectContaining({excludePatterns: ['generated', '../shared/**', 'a b/']}),
     )
   })
 
@@ -108,15 +136,13 @@ describe('app security check command', () => {
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({includeDirs: ['../backend', './lib/', 'a b'], skipInstructions: true}),
-    )
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({includeDirs: ['../backend', './lib/', 'a b']}))
   })
 
   test('forwards --no-git-ignore', async () => {
     await SecurityCheck.run(['--no-git-ignore', '--skip-instructions'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({noGitIgnore: true, skipInstructions: true}))
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({noGitIgnore: true}))
   })
 
   test('reads --include-dir and --exclude only from the command line', () => {
@@ -160,7 +186,7 @@ describe('app security check command', () => {
 
       await SecurityCheck.run([], import.meta.url)
 
-      expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions: false}))
+      expect(presentationOptions()).toMatchObject({printInstructions: false})
       expect(warningSpy).not.toHaveBeenCalled()
     } finally {
       warningSpy.mockRestore()
@@ -184,13 +210,9 @@ describe('app security check command', () => {
       await SecurityCheck.run(['--path', '/tmp/directory-without-shopify-toml', ...flags], import.meta.url)
 
       expect(securityCheck).toHaveBeenCalledWith(
-        expect.objectContaining({
-          directory: '/tmp/directory-without-shopify-toml',
-          printInstructions: true,
-          withoutAppConfig: false,
-          skipInstructions: false,
-        }),
+        expect.objectContaining({directory: '/tmp/directory-without-shopify-toml', withoutAppConfig: false}),
       )
+      expect(presentationOptions()).toMatchObject({printInstructions: true, skipInstructions: false})
       if (deprecated) {
         expect(warningSpy).toHaveBeenCalledOnce()
         expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
@@ -217,7 +239,7 @@ describe('app security check command', () => {
     try {
       await SecurityCheck.run([], import.meta.url)
 
-      expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions}))
+      expect(presentationOptions()).toMatchObject({printInstructions})
       if (deprecated) {
         expect(warningSpy).toHaveBeenCalledOnce()
         expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
@@ -245,7 +267,7 @@ describe('app security check command', () => {
       try {
         await SecurityCheck.run([], import.meta.url)
 
-        expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions}))
+        expect(presentationOptions()).toMatchObject({printInstructions})
         expect(warningSpy).toHaveBeenCalledOnce()
         expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
       } finally {
@@ -269,7 +291,7 @@ describe('app security check command', () => {
     try {
       await SecurityCheck.run([flag], import.meta.url)
 
-      expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions: true}))
+      expect(presentationOptions()).toMatchObject({printInstructions: true})
       expect(warningSpy).toHaveBeenCalledOnce()
       expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
     } finally {
@@ -322,9 +344,7 @@ describe('app security check command', () => {
   test('forwards --client-id and --without-app-config', async () => {
     await SecurityCheck.run(['--without-app-config', '--client-id', 'abc123', '--skip-instructions'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({clientId: 'abc123', withoutAppConfig: true, skipInstructions: true}),
-    )
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({clientId: 'abc123', withoutAppConfig: true}))
   })
 
   test.each([
@@ -353,7 +373,7 @@ describe('app security check command', () => {
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging'}))
   })
 
   test.each(['--findings', '--clean'])('rejects the removed %s flag', async (removedFlag) => {
@@ -379,7 +399,7 @@ describe('app security check command', () => {
 
   test('describes the artifacts it writes and how agent results are recorded', () => {
     expect(SecurityCheck.flags['print-instructions'].description).toBe(
-      'Print coding-agent instructions without prompting for how to deliver them.',
+      'Print coding-agent instructions without prompting for how to deliver them. With --json, the instructions are included in the result.',
     )
     expect(SecurityCheck.flags['skip-instructions'].description).toBe(
       "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",

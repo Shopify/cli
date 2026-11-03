@@ -32,7 +32,7 @@ Progress and diagnostics use JSON side events on stderr.
 | Shared meanings | Use `name`, `clientId`, `previousVersion`, and distinct `planHandle`/`planName`. Resource URL names and placement agree across commands. Different projections may expose different fields, but a shared field keeps its meaning. |
 | Numbers and enums | Bulk `objectCount` is a nonnegative decimal string; reject unsafe numeric inputs. Bounded counts and positions are nonnegative integers; money uses strings. CLI-owned enums are closed, with kebab-case multiword values. Upstream enums remain extensible strings with documented known values. |
 | Files | Use absolute native filesystem paths: `path` for the primary artifact, `directory` for a project directory, descriptive `...Path` fields for additional files. Relative route names stay route names. |
-| Diagnostics | Use `filePath` for filesystem paths and array-valued `fieldPath` for configuration fields. JSON line/column positions are zero-based; text presenters can convert them. |
+| Diagnostics | Use `filePath` for filesystem paths and array-valued `fieldPath` for configuration fields. JSON line/column positions are one-based, matching human-readable output. |
 | Pagination | Use `pageInfo` when results are capped, retain totals already fetched, and distinguish unknown values from `false` or zero. Do not invent a cursor. Document whether the list is complete or one page. |
 | Versioning | Version CLI result contracts with the CLI release. Independently versioned artifact formats keep their own versions; do not introduce a command-specific result version field. |
 
@@ -156,6 +156,7 @@ For CLI-owned instants, use `jsonOutputTimestampSchema` to validate public field
 ## Connect the command and encoder
 
 Expose the contract from the command and encode through it. Encoding validates the value before serialization.
+Declare `static jsonOutputSchema` before `static description` so the schema is available when help text is initialized.
 
 ```ts
 export default class WidgetList extends Command {
@@ -164,9 +165,7 @@ export default class WidgetList extends Command {
     ...jsonFlag,
   }
 
-  static get jsonOutputSchema() {
-    return widgetListJsonOutputSchema
-  }
+  static jsonOutputSchema = widgetListJsonOutputSchema
 
   static descriptionWithMarkdown = 'Lists widgets.'
   static description = this.descriptionForHelp()
@@ -239,6 +238,23 @@ interactive mode, stderr is not a pure JSONL stream. For automation, use `--json
 events from stderr; missing required input then produces a fatal error instead of a prompt.
 
 ## Exempt only streaming commands
+
+`shopify app dev --json` writes dev stream records as identical JSONL bytes to stdout and the session log. Each record
+has `timestamp`, `source`, and `message`, with `level` when available. The log contains process output, preview URLs,
+and session status messages. There is no final success result. Preview errors remain log records so that the
+developer can fix the app while dev keeps running.
+
+CLI setup messages and other diagnostics use stderr. Fatal CLI failures use the standard `{error: {...}}` envelope
+on stdout and exit nonzero. These failures are not added to the session log. A second invocation that cannot acquire
+the session never changes the running process's log.
+
+```jsonl
+{"timestamp":"2026-10-20T09:00:00Z","source":"web","message":"Server listening on 3000"}
+{"timestamp":"2026-10-20T09:00:01Z","source":"app dev","level":"info","message":"Ready, watching for changes in your app"}
+```
+
+Setup prompts still use stderr. Use `--json --no-input` for unattended runs. `app dev --json-schema` describes the
+stream's event and fatal error formats. This streaming contract does not change the single-document rule for finite commands.
 
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
 `packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's

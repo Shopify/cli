@@ -160,7 +160,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles), 'source', 3),
   {
     id: 'LIQUID_UNSAFE_RENDER',
-    version: 1,
+    version: 2,
     lifecycle: 'active',
     analysisMode: 'ast',
     target: 'theme',

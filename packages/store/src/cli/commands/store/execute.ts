@@ -16,6 +16,8 @@ Run \`shopify store auth\` first to create stored auth for the store.
 
 Mutations are disabled by default. Re-run with \`--allow-mutations\` if you intend to modify store data.`
 
+  static jsonOutputSchema = storeExecuteJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -68,10 +70,6 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       env: 'SHOPIFY_FLAG_ALLOW_MUTATIONS',
       default: false,
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return storeExecuteJsonOutputSchema
   }
 
   public async run(): Promise<void> {

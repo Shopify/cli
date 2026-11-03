@@ -134,6 +134,9 @@ export function errorHandler(api: string): (error: unknown, requestId?: string) 
         errorMessage = extractedMessages
       } else if (extractedMessages && status >= 500) {
         errorMessage = `The ${api} GraphQL API responded with HTTP status ${status}: ${extractedMessages}`
+      } else if (error.response.errors === undefined) {
+        // A 401 from an API gateway, for example, has no GraphQL body to quote.
+        errorMessage = `The ${api} GraphQL API responded unsuccessfully with the HTTP status ${status}.`
       } else {
         errorMessage = stringifyMessage(outputContent`
 The ${outputToken.raw(api)} GraphQL API responded unsuccessfully with${

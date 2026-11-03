@@ -1,6 +1,7 @@
 import {
   defineJsonOutputSchema,
   jsonOutputTimestampSchema,
+  jsonOutputStoreDomainSchema,
   type InferJsonOutputSchema,
 } from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -32,10 +33,7 @@ const BulkOperationSchema = zod
 const ListedBulkOperationSchema = BulkOperationSchema.omit({type: true})
 const BulkOperationContextSchema = zod
   .object({
-    storeDomain: zod
-      .string()
-      .regex(/^[^.]+\.myshopify\.com$/)
-      .nullable(),
+    storeDomain: jsonOutputStoreDomainSchema.nullable(),
     apiVersion: zod.string().nullable().describe('The API version selected for the request.'),
   })
   .strict()

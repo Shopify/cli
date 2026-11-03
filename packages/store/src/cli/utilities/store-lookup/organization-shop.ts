@@ -1,7 +1,9 @@
-import {businessPlatformTokenRefreshHandler} from '../../services/store/business-platform.js'
+import {
+  businessPlatformTokenRefreshHandler,
+  organizationStoresRequestDoc,
+} from '../../services/store/business-platform.js'
 import {StoreInfoShop} from '../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import type {
@@ -13,6 +15,8 @@ import type {OrganizationShopFields} from './types.js'
 interface FetchOrganizationShopOptions {
   store: string
   organizationId: string
+  // Names the organization if the token turns out to have no access to it.
+  organizationName?: string
   token?: string
   noPrompt?: boolean
 }
@@ -38,10 +42,10 @@ export async function fetchOptionalOrganizationShop(
     (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt, allowAutomationToken: true}))
   const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
-  const response = await businessPlatformOrganizationsRequestDoc<StoreInfoShopQuery, StoreInfoShopQueryVariables>({
+  const organization = {id: options.organizationId, businessName: options.organizationName}
+  const response = await organizationStoresRequestDoc<StoreInfoShopQuery, StoreInfoShopQueryVariables>(organization, {
     query: StoreInfoShop,
     token,
-    organizationId: options.organizationId,
     variables: {search: options.store},
     unauthorizedHandler,
   })

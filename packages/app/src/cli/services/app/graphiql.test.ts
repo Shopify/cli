@@ -71,12 +71,14 @@ describe('openAppGraphiQL', () => {
       store: 'shop.myshopify.com',
       variables: '{"id":1}',
       apiVersion: '2024-10',
+      outputFormat: 'json',
     })
 
     expect(mockedRunGraphiQLSession).toHaveBeenCalledWith(
       expect.objectContaining({
         variables: '{"id":1}',
         apiVersion: '2024-10',
+        outputFormat: 'json',
       }),
     )
   })

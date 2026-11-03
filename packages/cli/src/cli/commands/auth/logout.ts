@@ -13,13 +13,11 @@ const authLogoutJsonOutputSchema = defineJsonOutputSchema({
 export default class Logout extends Command {
   static descriptionWithMarkdown = 'Logs you out of the Shopify account or Partner account and store.'
 
+  static jsonOutputSchema = authLogoutJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {...globalFlags, ...jsonFlag}
-
-  static get jsonOutputSchema() {
-    return authLogoutJsonOutputSchema
-  }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Logout)

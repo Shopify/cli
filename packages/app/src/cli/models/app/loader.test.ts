@@ -488,6 +488,31 @@ describe('load', () => {
     expect(app.errors.isEmpty()).toBe(true)
   })
 
+  test('loads network_access allowed_sources for theme extensions', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      name = "my_extension"
+      type = "theme"
+
+      [capabilities.network_access]
+      allowed_sources = ["https://API.example.com/", "https://*.cdn.example.com"]
+      `
+    await writeBlockConfig({blockConfiguration, name: 'my-extension'})
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.errors.isEmpty()).toBe(true)
+    const extension = getRealExtensions(app)[0]!
+    await expect(extension.deployConfig({apiKey: 'api-key', appConfiguration: app.configuration})).resolves.toEqual({
+      theme_extension: {files: {}},
+      capabilities: {network_access: {allowed_sources: ['https://api.example.com', 'https://*.cdn.example.com']}},
+    })
+  })
+
   test('reports error for duplicated handles when ignoreUnknownExtensions is true', async () => {
     // Given
     await writeConfig(appConfiguration)

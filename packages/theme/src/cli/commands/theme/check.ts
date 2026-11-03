@@ -26,9 +26,7 @@ import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeCheckJsonOutputSchema
-  }
+  static jsonOutputSchema = themeCheckJsonOutputSchema
 
   static summary = 'Validate the theme.'
 
@@ -50,7 +48,8 @@ export default class Check extends ThemeCommand {
     config: Flags.string({
       char: 'C',
       required: false,
-      description: `Use the config provided, overriding .theme-check.yml if present
+      description: `Path to a config file to use, overriding .theme-check.yml if present
+      Use --path to set the theme directory
       Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
       theme-check:recommended, theme-check:all
       For backwards compatibility, :theme_app_extension is also supported `,

@@ -52,6 +52,19 @@ describe('authoritative registry', () => {
   })
 })
 
+describe('check versions', () => {
+  // `check` records the deterministic versions and agents echo the agent versions to `record`, and the results files'
+  // reader accepts only positive integers.
+  test('are positive integers for every deterministic and agent check', () => {
+    const versions = [
+      ...[...DETERMINISTIC_CHECKS.values()].map(({id, version}) => [id, version] as const),
+      ...[...loadChecks().values()].map(({id, version}) => [id, version] as const),
+    ]
+
+    for (const [id, version] of versions) expect(Number.isInteger(version) && version >= 1, id).toBe(true)
+  })
+})
+
 describe('check precedence', () => {
   test('sets the expected precedence on the 14 shared checks and defaults every other check to union', () => {
     const checks = loadChecks()

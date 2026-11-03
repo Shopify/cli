@@ -3,7 +3,12 @@ export {selectOrg} from './cli/services/select.js'
 export {selectOrganizationPrompt} from './cli/prompts/organization.js'
 export type {Organization, OrganizationWithDetails, OrganizationStatus} from './cli/models/organization.js'
 export {organizationStatusValues} from './cli/models/organization.js'
-export {businessPlatformTokenRefreshHandler} from './cli/services/business-platform.js'
+export {
+  businessPlatformTokenRefreshHandler,
+  OrganizationStoreAccessError,
+  organizationStoresRequestDoc,
+} from './cli/services/business-platform.js'
+export type {OrganizationReference} from './cli/services/business-platform.js'
 export {createDevStore, devStorePlanHandles} from './cli/services/dev/create-dev-store.js'
 export type {CreateDevStoreOptions, DevStorePlan} from './cli/services/dev/create-dev-store.js'
 export {devStoreNamePrompt, devStorePlanPrompt, devStoreDemoDataPrompt} from './cli/prompts/dev.js'

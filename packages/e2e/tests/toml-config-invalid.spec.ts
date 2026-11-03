@@ -10,15 +10,16 @@ import {fileURLToPath} from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const INVALID_TOMLS_DIR = path.join(__dirname, '../data/invalid-tomls')
 
-const invalidTomls = fs.readdirSync(INVALID_TOMLS_DIR).filter((file) => file.endsWith('.toml'))
+const invalidTomls = fs
+  .readdirSync(INVALID_TOMLS_DIR)
+  .filter((file) => file.endsWith('.toml') && file !== 'bad-syntax.toml')
 
 test.describe('TOML config invalid', () => {
   for (const tomlFile of invalidTomls) {
     const label = tomlFile.replace('.toml', '')
 
     test(`deploy rejects invalid toml: ${label}`, async ({cli, env}) => {
-      // Invalid TOMLs use a dummy client_id — the CLI rejects them at validation
-      // before any network request, so no real app is needed.
+      // Schema validation uses remote specifications; syntax-only coverage runs locally.
       const appDir = fs.mkdtempSync(path.join(env.tempDir, `invalid-toml-${label}-`))
       try {
         const toml = fs.readFileSync(path.join(INVALID_TOMLS_DIR, tomlFile), 'utf8')

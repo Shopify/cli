@@ -1,4 +1,4 @@
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema, jsonOutputStoreDomainSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {JsonErrorSchema} from '@shopify/cli-kit/node/error/schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -6,10 +6,7 @@ export const ThemeIdSchema = zod
   .string()
   .regex(/^\d+$/)
   .describe('The decimal Online Store theme ID, not a Shopify GID.')
-export const StoreDomainSchema = zod
-  .string()
-  .regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/)
-  .nullable()
+export const StoreDomainSchema = jsonOutputStoreDomainSchema.nullable()
 export const ThemeSchema = zod
   .object({
     id: ThemeIdSchema,

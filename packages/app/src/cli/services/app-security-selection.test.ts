@@ -67,7 +67,7 @@ function promptDependencies(overrides: Partial<AppSecuritySelectionDependencies>
   }
 }
 
-async function selectionError(promise: Promise<AppSecuritySelection>): Promise<AbortError> {
+async function selectionError(promise: Promise<unknown>): Promise<AbortError> {
   const error: unknown = await promise.catch((caught: unknown) => caught)
   expect(error).toBeInstanceOf(AbortError)
   return error as AbortError
@@ -566,15 +566,16 @@ describe('resolveAppSecuritySelection when no TOML is found', () => {
     })
   })
 
-  test('aborts with the same error when the prompt is answered no', async () => {
+  test('returns a declined selection when the prompt is answered no', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = promptDependencies({confirmScanWithoutAppConfig: vi.fn(async () => false)})
 
-      const error = await selectionError(
-        resolveAppSecuritySelection({path: directory, clientId: 'abc', allowPrompts: true}, dependencies),
+      const selection = await resolveAppSecuritySelection(
+        {path: directory, clientId: 'abc', allowPrompts: true},
+        dependencies,
       )
 
-      expect(error.message).toBe(`No app configuration found at or above ${directory}.`)
+      expect(selection).toEqual({kind: 'declined'})
       expect(dependencies.confirmScanWithoutAppConfig).toHaveBeenCalledWith(directory)
       expect(dependencies.pickClientId).not.toHaveBeenCalled()
     })

@@ -9,6 +9,8 @@ export default class DocFetch extends Command {
   static descriptionWithMarkdown =
     'Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.'
 
+  static jsonOutputSchema = docFetchJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -41,10 +43,6 @@ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --json`,
         'Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.',
       env: 'SHOPIFY_FLAG_OUTPUT',
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return docFetchJsonOutputSchema
   }
 
   async run(): Promise<void> {

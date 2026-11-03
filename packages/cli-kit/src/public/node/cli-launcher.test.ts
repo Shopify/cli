@@ -210,9 +210,7 @@ describe('JSON output schema flag', () => {
 })
 
 class CommandWithJsonOutput extends Command {
-  static get jsonOutputSchema() {
-    return defineJsonOutputSchema({name: 'CommandResult', schema: zod.object({value: zod.string()})})
-  }
+  static jsonOutputSchema = defineJsonOutputSchema({name: 'CommandResult', schema: zod.object({value: zod.string()})})
 
   public async run(): Promise<void> {
     throw new Error('Schema inspection must not run the command')
