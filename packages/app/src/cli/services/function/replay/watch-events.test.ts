@@ -4,10 +4,9 @@ import {type FunctionRunData} from '../replay.js'
 import {testAppLinked, testFunctionExtension} from '../../../models/app/app.test-data.js'
 import {AppEventWatcher, EventType, type ExtensionEvent} from '../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {expect, test, vi} from 'vitest'
+import {expect, test, vi, onTestFinished} from 'vitest'
 
 vi.mock('../runner.js')
 
@@ -15,199 +14,184 @@ function execution(resultJson = '{"success":true}', exitCode = 0): Extract<Funct
   return {state: 'completed', resultJson, exitCode, diagnostics: []}
 }
 
-async function fixture(directory: string) {
-  const app = testAppLinked({directory})
-  const extension = await testFunctionExtension({dir: directory})
-  const abortController = new AbortController()
+async function fixture() {
+  const extension = await testFunctionExtension()
   const events: ReplayWatchEvent[] = []
   const startWatcher = vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue(undefined)
   vi.mocked(captureFunctionRun).mockResolvedValue(execution())
   const options: WatchReplayOptions = {
-    app,
+    app: testAppLinked(),
     extension,
-    abortController,
+    abortController: new AbortController(),
     selectedRun: {payload: {input: {value: 1}, export: 'run'}} as FunctionRunData,
-    onEvent: (event: ReplayWatchEvent) => events.push(event),
+    onEvent: (event) => events.push(event),
   }
+  let running = Promise.resolve()
+  onTestFinished(async () => {
+    options.abortController.abort()
+    await running
+    startWatcher.mockRestore()
+  })
   const emit = (extensionEvents: ExtensionEvent[]) =>
     (startWatcher.mock.instances[0] as AppEventWatcher).emit('all', {extensionEvents})
-  const update = (error?: string) =>
-    emit([
-      {
-        extension,
-        type: EventType.Updated,
-        buildResult: error ? {status: 'error', error, uid: extension.uid} : {status: 'ok', uid: extension.uid},
-      },
-    ])
-  return {options, events, update, startWatcher, emit}
+  return {
+    options,
+    events,
+    startWatcher,
+    emit,
+    start: () => (running = watchReplay(options)),
+    update: (error?: string) =>
+      emit([
+        {
+          extension,
+          type: EventType.Updated,
+          buildResult: error ? {status: 'error', error, uid: extension.uid} : {status: 'ok', uid: extension.uid},
+        },
+      ]),
+  }
 }
 
-test('reports replay events without writing terminal or JSON output', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, startWatcher} = await fixture(directory)
-    vi.mocked(captureFunctionRun).mockResolvedValue({...execution(), diagnostics: ['Runner diagnostic']})
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      const running = watchReplay(options)
-      try {
-        await flushPromises()
-        expect(startWatcher).toHaveBeenCalledWith(
-          expect.objectContaining({signal: options.abortController.signal}),
-          false,
-        )
-        expect(captureFunctionRun).toHaveBeenCalledWith({
-          functionExtension: options.extension,
-          input: '{"value":1}',
-          export: 'run',
-          json: true,
-        })
-        options.abortController.abort()
-        await running
-        expect(events).toEqual([
-          {type: 'status', status: 'watching'},
-          {type: 'status', status: 'running'},
-          {type: 'diagnostic', message: 'Runner diagnostic'},
-          {type: 'execution', resultJson: '{"success":true}', exitCode: 0},
-          {type: 'status', status: 'cancelled'},
-        ])
-        expect(stdout()).toBe('')
-        expect(stderr()).toBe('')
-      } finally {
-        options.abortController.abort()
-        await running
-      }
+test('reports build output, runner diagnostics, and execution events without writing output', async () => {
+  const {options, events, startWatcher, start} = await fixture()
+  startWatcher.mockImplementation(async (context) => {
+    context?.stdout?.write('Build output')
+    context?.stderr?.write('Build warning')
+  })
+  vi.mocked(captureFunctionRun).mockResolvedValue({...execution(), diagnostics: ['Runner diagnostic']})
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    const running = start()
+    await flushPromises()
+    options.abortController.abort()
+    await running
+    expect(startWatcher).toHaveBeenCalledWith(expect.objectContaining({signal: options.abortController.signal}), false)
+    expect(captureFunctionRun).toHaveBeenCalledWith({
+      functionExtension: options.extension,
+      input: '{"value":1}',
+      export: 'run',
+      json: true,
     })
+    expect(events).toEqual([
+      {type: 'diagnostic', message: 'Build output'},
+      {type: 'diagnostic', message: 'Build warning'},
+      {type: 'status', status: 'watching'},
+      {type: 'status', status: 'running'},
+      {type: 'diagnostic', message: 'Runner diagnostic'},
+      {type: 'execution', resultJson: '{"success":true}', exitCode: 0},
+      {type: 'status', status: 'cancelled'},
+    ])
+    expect(stdout()).toBe('')
+    expect(stderr()).toBe('')
   })
 })
 
 test('queues rebuild executions until the active execution finishes', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, update} = await fixture(directory)
-    let finishExecution: (result: FunctionExecution) => void = () => {}
-    vi.mocked(captureFunctionRun)
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            finishExecution = resolve
-          }),
-      )
-      .mockResolvedValue(execution())
-    const running = watchReplay(options)
-    try {
-      await flushPromises()
-      update()
-      update()
-      await flushPromises()
-      expect(captureFunctionRun).toHaveBeenCalledOnce()
-      finishExecution(execution())
-      await flushPromises()
-      expect(captureFunctionRun).toHaveBeenCalledTimes(3)
-      expect(events.filter(({type}) => type === 'execution')).toHaveLength(3)
-    } finally {
-      finishExecution(execution())
-      options.abortController.abort()
-      await running
-    }
-  })
+  const {options, events, update, start} = await fixture()
+  let finishExecution!: (result: FunctionExecution) => void
+  vi.mocked(captureFunctionRun).mockReturnValueOnce(
+    new Promise((resolve) => {
+      finishExecution = resolve
+    }),
+  )
+  const running = start()
+  try {
+    await flushPromises()
+    update()
+    update()
+    await flushPromises()
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
+    finishExecution(execution())
+    await flushPromises()
+    expect(captureFunctionRun).toHaveBeenCalledTimes(3)
+    expect(events.filter(({type}) => type === 'execution')).toHaveLength(3)
+  } finally {
+    finishExecution(execution())
+    options.abortController.abort()
+    await running
+  }
 })
 
-test('recovers from build and completed Function failures for every output adapter', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, update} = await fixture(directory)
-    vi.mocked(captureFunctionRun)
-      .mockResolvedValueOnce(execution('{"success":false}', 1))
-      .mockResolvedValue(execution())
-    const running = watchReplay(options)
-    try {
-      await flushPromises()
-      update('Compilation failed')
-      await flushPromises()
-      expect(captureFunctionRun).toHaveBeenCalledOnce()
-      update()
-      await flushPromises()
-      expect(events.filter(({type}) => type === 'build')).toEqual([
-        {type: 'build', status: 'failed', error: 'Compilation failed'},
-        {type: 'build', status: 'success'},
-      ])
-      expect(events.filter(({type}) => type === 'execution')).toEqual([
-        {type: 'execution', resultJson: '{"success":false}', exitCode: 1},
-        {type: 'execution', resultJson: '{"success":true}', exitCode: 0},
-      ])
-      expect(options.abortController.signal.aborted).toBe(false)
-    } finally {
-      options.abortController.abort()
-      await running
-    }
-  })
+test('recovers from build and completed Function failures', async () => {
+  const {options, events, update, start} = await fixture()
+  vi.mocked(captureFunctionRun).mockResolvedValueOnce(execution('{"success":false}', 1))
+  const previousExitCode = process.exitCode
+  const running = start()
+  await flushPromises()
+  update('Compilation failed')
+  await flushPromises()
+  expect(captureFunctionRun).toHaveBeenCalledOnce()
+  update()
+  await flushPromises()
+  expect(events.filter(({type}) => type === 'build')).toEqual([
+    {type: 'build', status: 'failed', error: 'Compilation failed'},
+    {type: 'build', status: 'success'},
+  ])
+  expect(events.filter(({type}) => type === 'execution')).toEqual([
+    {type: 'execution', resultJson: '{"success":false}', exitCode: 1},
+    {type: 'execution', resultJson: '{"success":true}', exitCode: 0},
+  ])
+  expect(options.abortController.signal.aborted).toBe(false)
+  expect(process.exitCode).toBe(previousExitCode)
+  options.abortController.abort()
+  await running
 })
 
-test('skips queued executions and late results after cancellation', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, update} = await fixture(directory)
-    let finishExecution: (result: FunctionExecution) => void = () => {}
-    vi.mocked(captureFunctionRun).mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          finishExecution = resolve
-        }),
+test.each(['completed', 'rejected'])(
+  'waits for the %s execution and skips queued runs after cancellation',
+  async (state) => {
+    const {options, events, update, start} = await fixture()
+    let finishExecution!: () => void
+    vi.mocked(captureFunctionRun).mockReturnValueOnce(
+      new Promise((resolve, reject) => {
+        finishExecution = () => (state === 'completed' ? resolve(execution()) : reject(new Error('Runner aborted')))
+      }),
     )
-    const running = watchReplay(options)
+    let settled = false
+    const running = start().then(() => {
+      settled = true
+    })
     try {
       await flushPromises()
       update()
       options.abortController.abort()
-      finishExecution(execution())
+      await flushPromises()
+      expect(settled).toBe(false)
+      finishExecution()
       await running
       expect(captureFunctionRun).toHaveBeenCalledOnce()
       expect(events.filter(({type}) => type === 'execution')).toEqual([])
       expect(events.at(-1)).toEqual({type: 'status', status: 'cancelled'})
     } finally {
-      finishExecution(execution())
-      options.abortController.abort()
-      await running
+      finishExecution()
     }
-  })
-})
+  },
+)
 
-test('does not start watching or executing when already cancelled', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, startWatcher} = await fixture(directory)
-    options.abortController.abort()
-    await watchReplay(options)
-    expect(startWatcher).not.toHaveBeenCalled()
-    expect(captureFunctionRun).not.toHaveBeenCalled()
-    expect(events).toEqual([])
-  })
+test('does not start when already cancelled', async () => {
+  const {options, events, startWatcher, start} = await fixture()
+  options.abortController.abort()
+  await start()
+  expect(startWatcher).not.toHaveBeenCalled()
+  expect(captureFunctionRun).not.toHaveBeenCalled()
+  expect(events).toEqual([])
 })
 
 test('executes the updated extension instance after a rebuild', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, emit} = await fixture(directory)
-    const updatedExtension = await testFunctionExtension({
-      dir: directory,
-      config: {
-        ...options.extension.configuration,
-        build: {...options.extension.configuration.build, path: 'dist/updated.wasm', wasm_opt: true},
-      },
-    })
-    expect(updatedExtension.handle).toBe(options.extension.handle)
-    expect(updatedExtension).not.toBe(options.extension)
-    const running = watchReplay(options)
-    try {
-      await flushPromises()
-      emit([{type: EventType.Updated, extension: updatedExtension}])
-      await flushPromises()
-      expect(captureFunctionRun).toHaveBeenCalledTimes(2)
-      expect(vi.mocked(captureFunctionRun).mock.calls[0]![0].functionExtension).toBe(options.extension)
-      expect(vi.mocked(captureFunctionRun).mock.calls[1]![0].functionExtension).toBe(updatedExtension)
-      expect(captureFunctionRun).toHaveBeenLastCalledWith(
-        expect.objectContaining({input: '{"value":1}', export: 'run', json: true}),
-      )
-      expect(events.filter(({type}) => type === 'build')).toEqual([{type: 'build', status: 'success'}])
-    } finally {
-      options.abortController.abort()
-      await running
-    }
+  const {options, emit, start} = await fixture()
+  const updatedExtension = await testFunctionExtension({
+    config: {
+      ...options.extension.configuration,
+      build: {...options.extension.configuration.build, path: 'dist/updated.wasm', wasm_opt: true},
+    },
   })
+  const running = start()
+  await flushPromises()
+  emit([{type: EventType.Updated, extension: updatedExtension}])
+  await flushPromises()
+  expect(captureFunctionRun).toHaveBeenCalledTimes(2)
+  expect(vi.mocked(captureFunctionRun).mock.calls[0]![0].functionExtension).toBe(options.extension)
+  expect(vi.mocked(captureFunctionRun).mock.calls[1]![0].functionExtension).toBe(updatedExtension)
+  options.abortController.abort()
+  await running
 })
 
 test.each([
@@ -217,140 +201,106 @@ test.each([
   {eventType: EventType.Created, target: 'selected'},
   {eventType: EventType.Deleted, target: 'selected'},
 ])('ignores $eventType events for the $target extension', async ({eventType, target}) => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, emit} = await fixture(directory)
-    const eventExtension =
-      target === 'selected'
-        ? options.extension
-        : await testFunctionExtension({
-            dir: directory,
-            config: {...options.extension.configuration, handle: 'unrelated-function'},
-          })
-    if (target === 'unrelated') expect(eventExtension.handle).not.toBe(options.extension.handle)
-    const running = watchReplay(options)
-    try {
-      await flushPromises()
-      const eventsBeforeChange = [...events]
-      emit([{type: eventType, extension: eventExtension}])
-      await flushPromises()
-      expect(captureFunctionRun).toHaveBeenCalledOnce()
-      expect(events).toEqual(eventsBeforeChange)
-      expect(options.abortController.signal.aborted).toBe(false)
-    } finally {
-      options.abortController.abort()
-      await running
-    }
-  })
+  const {options, events, emit, start} = await fixture()
+  const eventExtension =
+    target === 'selected'
+      ? options.extension
+      : await testFunctionExtension({
+          config: {...options.extension.configuration, handle: 'unrelated-function'},
+        })
+  const running = start()
+  await flushPromises()
+  const eventsBeforeChange = [...events]
+  emit([{type: eventType, extension: eventExtension}])
+  await flushPromises()
+  expect(captureFunctionRun).toHaveBeenCalledOnce()
+  expect(events).toEqual(eventsBeforeChange)
+  options.abortController.abort()
+  await running
 })
 
-test('waits for watcher startup before reporting readiness or executing', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, startWatcher} = await fixture(directory)
+test.each([false, true])(
+  'waits for watcher readiness with cancellation during startup set to %s',
+  async (cancelled) => {
+    const {options, events, startWatcher, start} = await fixture()
     let finishStartup!: () => void
-    const startup = new Promise<void>((resolve) => {
-      finishStartup = resolve
-    })
-    startWatcher.mockReturnValue(startup)
-    const running = watchReplay(options)
+    startWatcher.mockReturnValue(
+      new Promise((resolve) => {
+        finishStartup = resolve
+      }),
+    )
+    const running = start()
     try {
       await flushPromises()
       expect(startWatcher).toHaveBeenCalledOnce()
       expect(events).toEqual([])
       expect(captureFunctionRun).not.toHaveBeenCalled()
+      if (cancelled) options.abortController.abort()
       finishStartup()
       await flushPromises()
-      expect(events.map((event) => (event.type === 'status' ? event.status : event.type))).toEqual([
-        'watching',
-        'running',
-        'execution',
-      ])
-      expect(captureFunctionRun).toHaveBeenCalledOnce()
+      if (cancelled) {
+        await running
+        expect(captureFunctionRun).not.toHaveBeenCalled()
+        expect(events).toEqual([{type: 'status', status: 'cancelled'}])
+      } else {
+        expect(events.map((event) => (event.type === 'status' ? event.status : event.type))).toEqual([
+          'watching',
+          'running',
+          'execution',
+        ])
+        expect(captureFunctionRun).toHaveBeenCalledOnce()
+      }
     } finally {
-      options.abortController.abort()
       finishStartup()
-      await running
     }
-  })
-})
+  },
+)
 
-test('does not report readiness or execute after cancellation during startup', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events, startWatcher} = await fixture(directory)
-    let finishStartup!: () => void
-    const startup = new Promise<void>((resolve) => {
-      finishStartup = resolve
-    })
-    startWatcher.mockReturnValue(startup)
-    const running = watchReplay(options)
-    try {
-      await flushPromises()
-      expect(startWatcher).toHaveBeenCalledOnce()
-      options.abortController.abort()
-      finishStartup()
-      await running
-      expect(captureFunctionRun).not.toHaveBeenCalled()
-      expect(events).toEqual([{type: 'status', status: 'cancelled'}])
-    } finally {
-      options.abortController.abort()
-      finishStartup()
-      await running
-    }
-  })
-})
-
-test('does not execute when the watching callback cancels replay', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events} = await fixture(directory)
+test.each(['watching', 'running', 'diagnostic'])(
+  'stops immediately when the %s callback cancels replay',
+  async (cancelOn) => {
+    const {options, events, start} = await fixture()
+    vi.mocked(captureFunctionRun).mockResolvedValue({...execution(), diagnostics: ['first', 'second']})
     options.onEvent = (event) => {
       events.push(event)
-      if (event.type === 'status' && event.status === 'watching') options.abortController.abort()
+      if ((event.type === 'status' ? event.status : event.type) === cancelOn) options.abortController.abort()
     }
-    await watchReplay(options)
-    expect(captureFunctionRun).not.toHaveBeenCalled()
-    expect(events).toEqual([
-      {type: 'status', status: 'watching'},
-      {type: 'status', status: 'cancelled'},
+    await start()
+    expect(captureFunctionRun).toHaveBeenCalledTimes(cancelOn === 'diagnostic' ? 1 : 0)
+    expect(events.map((event) => (event.type === 'status' ? event.status : event.type))).toEqual([
+      'watching',
+      ...(cancelOn === 'watching' ? [] : ['running']),
+      ...(cancelOn === 'diagnostic' ? ['diagnostic'] : []),
+      'cancelled',
     ])
-  })
-})
+  },
+)
 
-test('does not execute when the running callback cancels replay', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events} = await fixture(directory)
-    options.onEvent = (event) => {
-      events.push(event)
-      if (event.type === 'status' && event.status === 'running') options.abortController.abort()
-    }
-    await watchReplay(options)
-    expect(captureFunctionRun).not.toHaveBeenCalled()
-    expect(events).toEqual([
-      {type: 'status', status: 'watching'},
-      {type: 'status', status: 'running'},
-      {type: 'status', status: 'cancelled'},
-    ])
-  })
-})
-
-test('omits remaining diagnostics and the execution when a diagnostic callback cancels replay', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {options, events} = await fixture(directory)
+test.each(['startup', 'watcher', 'runner', 'invalid-result'])('propagates a fatal %s failure', async (source) => {
+  const {options, events, startWatcher} = await fixture()
+  const error = new Error('Watch failed')
+  if (source === 'startup') startWatcher.mockRejectedValue(error)
+  if (source === 'runner') vi.mocked(captureFunctionRun).mockRejectedValue(error)
+  if (source === 'invalid-result')
     vi.mocked(captureFunctionRun).mockResolvedValue({
-      state: 'completed',
-      resultJson: '{"success":true}',
-      exitCode: 0,
-      diagnostics: ['first', 'second'],
+      state: 'failed',
+      message: error.message,
+      command: '/runner',
+      args: [],
+      exitCode: 1,
+      stderr: '',
     })
-    options.onEvent = (event) => {
-      events.push(event)
-      if (event.type === 'diagnostic') options.abortController.abort()
-    }
-    await watchReplay(options)
-    expect(captureFunctionRun).toHaveBeenCalledOnce()
-    expect(events).toEqual([
-      {type: 'status', status: 'watching'},
-      {type: 'status', status: 'running'},
-      {type: 'diagnostic', message: 'first'},
-      {type: 'status', status: 'cancelled'},
-    ])
-  })
+  const running = watchReplay(options)
+  const rejected = expect(running).rejects.toThrow(error.message)
+  if (source === 'watcher') {
+    await flushPromises()
+    ;(startWatcher.mock.instances[0] as AppEventWatcher).emit('error', error)
+  }
+  await rejected
+  expect(options.abortController.signal.aborted).toBe(true)
+  expect(events).not.toContainEqual({type: 'status', status: 'cancelled'})
+  if (source === 'startup') {
+    expect(events).toEqual([])
+    expect(captureFunctionRun).not.toHaveBeenCalled()
+  }
 })
