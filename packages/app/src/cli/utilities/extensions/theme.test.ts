@@ -34,9 +34,7 @@ describe('themeExtensionConfig', () => {
       )
 
       // Then
-      await expect(themeExtensionFiles(themeExtension.directory)).resolves.toStrictEqual([
-        joinPath(tmpDir, 'blocks/test.liquid'),
-      ])
+      await expect(themeExtensionFiles(themeExtension)).resolves.toStrictEqual([joinPath(tmpDir, 'blocks/test.liquid')])
     })
   })
 })
