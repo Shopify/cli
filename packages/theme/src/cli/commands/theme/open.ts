@@ -14,9 +14,7 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type OpenFlags = InferredFlags<typeof Open.flags>
 export default class Open extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeOpenJsonOutputSchema
-  }
+  static jsonOutputSchema = themeOpenJsonOutputSchema
 
   static summary = 'Opens the preview of your remote theme.'
 

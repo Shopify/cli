@@ -9,9 +9,7 @@ import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/a
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
-  static get jsonOutputSchema() {
-    return functionInfoJsonOutputSchema
-  }
+  static jsonOutputSchema = functionInfoJsonOutputSchema
 
   static summary = 'Print basic information about your function.'
 

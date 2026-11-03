@@ -15,9 +15,7 @@ import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 type InfoFlags = OutputFlags<typeof Info.flags>
 
 export default class Info extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeInfoJsonOutputSchema
-  }
+  static jsonOutputSchema = themeInfoJsonOutputSchema
 
   static descriptionWithMarkdown =
     'Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.'

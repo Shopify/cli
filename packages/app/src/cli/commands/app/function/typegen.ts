@@ -11,9 +11,7 @@ import {renderCommandEventAsJson, runWithCommandEvents} from '@shopify/cli-kit/n
 import {Writable} from 'stream'
 
 export default class FunctionTypegen extends AppUnlinkedCommand {
-  static get jsonOutputSchema() {
-    return functionTypegenJsonOutputSchema
-  }
+  static jsonOutputSchema = functionTypegenJsonOutputSchema
 
   static summary = 'Generate GraphQL types for a function.'
 

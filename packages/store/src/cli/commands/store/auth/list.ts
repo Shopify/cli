@@ -12,6 +12,8 @@ export default class StoreAuthList extends Command {
 Use this command to find stores that can be used with store-authenticated commands such as \`shopify store execute\`.
 To list stores in a Shopify organization, run \`shopify store list\`.`
 
+  static jsonOutputSchema = storeAuthListJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = ['<%= config.bin %> <%= command.id %>', '<%= config.bin %> <%= command.id %> --json']
@@ -19,10 +21,6 @@ To list stores in a Shopify organization, run \`shopify store list\`.`
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return storeAuthListJsonOutputSchema
   }
 
   async run(): Promise<void> {

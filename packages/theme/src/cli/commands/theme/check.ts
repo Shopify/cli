@@ -26,9 +26,7 @@ import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeCheckJsonOutputSchema
-  }
+  static jsonOutputSchema = themeCheckJsonOutputSchema
 
   static summary = 'Validate the theme.'
 

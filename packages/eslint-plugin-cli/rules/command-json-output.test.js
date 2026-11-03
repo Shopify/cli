@@ -25,9 +25,7 @@ ruleTester.run('command-json-output', rule, {
       code: `
         export default class WidgetList extends Command {
           static flags = {...jsonFlag}
-          static get jsonOutputSchema() {
-            return widgetListJsonOutputSchema
-          }
+          static jsonOutputSchema = widgetListJsonOutputSchema
         }
       `,
     },
@@ -154,9 +152,7 @@ ruleTester.run('command-json-output', rule, {
       filename: '/repo/packages/app/src/cli/commands/app/widgets/update.ts',
       code: `
         export default class WidgetUpdate extends Command {
-          static get jsonOutputSchema() {
-            return widgetUpdateJsonOutputSchema
-          }
+          static jsonOutputSchema = widgetUpdateJsonOutputSchema
         }
       `,
       errors: [

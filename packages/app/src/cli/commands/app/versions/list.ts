@@ -11,9 +11,7 @@ export default class VersionsList extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
 
-  static get jsonOutputSchema() {
-    return appVersionsListJsonOutputSchema
-  }
+  static jsonOutputSchema = appVersionsListJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

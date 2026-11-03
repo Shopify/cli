@@ -9,9 +9,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class FetchSchema extends AppLinkedCommand {
-  static get jsonOutputSchema() {
-    return functionSchemaJsonOutputSchema
-  }
+  static jsonOutputSchema = functionSchemaJsonOutputSchema
 
   static summary = 'Fetch the latest GraphQL schema for a function.'
 

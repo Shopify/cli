@@ -194,9 +194,10 @@ describe('ShopifyHelp', () => {
     class ExampleCommand extends BaseCommand {
       static descriptionWithMarkdown = 'Return a value.\n\n```json\n{"example": true}\n```'
 
-      static get jsonOutputSchema() {
-        return defineJsonOutputSchema({name: 'ExampleResult', schema: zod.object({value: zod.string()})})
-      }
+      static jsonOutputSchema = defineJsonOutputSchema({
+        name: 'ExampleResult',
+        schema: zod.object({value: zod.string()}),
+      })
 
       async run(): Promise<void> {}
     }

@@ -27,9 +27,7 @@ With \`--json\`, the result describes the scan and the files it wrote, and wheth
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
-  static get jsonOutputSchema() {
-    return appSecurityCheckJsonOutputSchema
-  }
+  static jsonOutputSchema = appSecurityCheckJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

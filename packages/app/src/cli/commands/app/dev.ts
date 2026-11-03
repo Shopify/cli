@@ -20,9 +20,7 @@ export default class Dev extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
 
-  static get jsonOutputSchema() {
-    return appDevOutputSchema
-  }
+  static jsonOutputSchema = appDevOutputSchema
 
   static description = this.descriptionForHelp()
 
