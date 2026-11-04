@@ -84,3 +84,12 @@ The log includes theme dev messages, file synchronization results, request lines
 errors, and setup progress. Theme records omit the redundant `source` field.
 Authentication before the session and fatal CLI errors reported after it are
 outside this log.
+
+With `--json`, the session writes identical JSONL bytes to stdout and the log.
+Each record contains `timestamp` and `message`, without `type`, `stream`, or
+`source`. Request and file synchronization messages omit terminal timestamps,
+decoration, and alignment spaces. Request paths are not truncated in JSON mode.
+Setup diagnostics use stderr; fatal CLI errors use the standard JSON
+error envelope on stdout and are not added to the log. There is no final success
+result. Use `--json --no-input` for unattended runs and `--json-schema` to inspect
+the stream record and error schemas.
