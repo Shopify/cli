@@ -455,6 +455,40 @@ describe('combineFindings', () => {
       ])
     })
 
+    test('orders check ids by code point, so an underscore sorts before a letter', () => {
+      const severity = 'high'
+      const combined = combineFindings({
+        deterministic: deterministicDocument([
+          check({id: 'SESSION_TOKEN_EXPOSED', snapshot: {title: 'T', severity, description: 'T.', current_version: 1}}),
+          check({id: 'SESSIONS_UNBOUNDED', snapshot: {title: 'U', severity, description: 'U.', current_version: 1}}),
+          check({id: 'SESSION_FIXATION', snapshot: {title: 'F', severity, description: 'F.', current_version: 1}}),
+        ]),
+        agent: null,
+      })
+
+      expect(combined.map((item) => item.id)).toEqual([
+        'SESSIONS_UNBOUNDED',
+        'SESSION_FIXATION',
+        'SESSION_TOKEN_EXPOSED',
+      ])
+    })
+
+    test('orders finding files by code point, so an upper case name sorts before a lower case one', () => {
+      const combined = combineOne(
+        check({
+          findings: [
+            finding({location: {file: 'app/components/banner.tsx', line: 1}, message: 'banner'}),
+            finding({location: {file: 'app/components/Card.tsx', line: 1}, message: 'Card'}),
+            finding({location: {file: 'app/components/admin.tsx', line: 1}, message: 'admin'}),
+            finding({location: {file: 'app/components/Table.tsx', line: 1}, message: 'Table'}),
+          ],
+        }),
+        null,
+      )
+
+      expect(combined.findings.map((item) => item.message)).toEqual(['Card', 'Table', 'admin', 'banner'])
+    })
+
     test('orders a finding without a line before one at line 0', () => {
       const combined = combineOne(
         check({
