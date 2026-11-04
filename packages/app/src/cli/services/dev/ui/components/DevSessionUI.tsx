@@ -8,7 +8,7 @@ import {Alert, ConcurrentOutput, Link, LoadingIndicator, TabularData} from '@sho
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
+import {Box, MouseProvider, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL, terminalSupportsHyperlinks} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
@@ -242,7 +242,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
     },
   }
 
-  return (
+  const content = (
     <>
       <ConcurrentOutput
         processes={errorHandledProcesses}
@@ -293,6 +293,14 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </Box>
       ) : null}
     </>
+  )
+
+  return canUseShortcuts && !isAborted ? (
+    <MouseProvider allowTerminalScrolling trackMouseMovement={false}>
+      {content}
+    </MouseProvider>
+  ) : (
+    content
   )
 }
 

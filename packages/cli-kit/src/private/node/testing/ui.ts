@@ -18,6 +18,7 @@ class Stderr extends EventEmitter {
 
 export class Stdin extends EventEmitter {
   isTTY: boolean
+  isRaw = false
   data: string | null = null
 
   constructor(options: {isTTY?: boolean} = {}) {
@@ -28,10 +29,16 @@ export class Stdin extends EventEmitter {
   write = (data: string) => {
     this.data = data
     this.emit('readable')
+    this.emit('data', data)
   }
 
   setEncoding() {}
-  setRawMode() {}
+  setRawMode(isRaw: boolean) {
+    this.isRaw = isRaw
+  }
+
+  pause() {}
+  resume() {}
   ref() {}
   unref() {}
   read: () => string | null = () => {
@@ -59,10 +66,11 @@ interface RenderOptions {
   stdout?: EventEmitter
   stderr?: EventEmitter
   stdin?: EventEmitter
+  stdoutIsTTY?: boolean
 }
 
 export const render = (tree: ReactElement, options: RenderOptions = {}): Instance => {
-  const stdout = new Stdout({columns: 100})
+  const stdout = Object.assign(new Stdout({columns: 100}), {isTTY: options.stdoutIsTTY ?? false})
   const stderr = new Stderr()
   const stdin = new Stdin()
 

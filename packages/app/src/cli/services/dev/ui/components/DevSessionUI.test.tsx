@@ -14,6 +14,11 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
+vi.mock('../../../../../../../cli-kit/src/private/node/conf-store.js', async () => {
+  const actual = await vi.importActual('../../../../../../../cli-kit/src/private/node/conf-store.js')
+  return {...actual, getMouseEnabled: vi.fn(() => true)}
+})
+
 vi.mock('@shopify/cli-kit/node/system', async () => {
   const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
   return {
@@ -60,6 +65,10 @@ const initialStatus: DevSessionStatus = {
 }
 
 const onAbort = vi.fn()
+
+function mouseWheelUp(column: number, row: number): string {
+  return `\u001B[<64;${column};${row}M`
+}
 
 describe('DevSessionUI', () => {
   beforeEach(() => {
@@ -405,6 +414,7 @@ describe('DevSessionUI', () => {
         onAbort={onAbort}
       />,
     )
+    await waitForContent(renderInstance, 'third backend message')
 
     const promise = renderInstance.waitUntilExit()
 
@@ -579,6 +589,29 @@ describe('DevSessionUI', () => {
     expect(output).toContain('My Test App')
     expect(output).toContain('https://my-app.ngrok.io')
     expect(output).not.toContain('mystore.myshopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('temporarily releases mouse reporting when scrolling', async () => {
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+      {stdoutIsTTY: true},
+    )
+    const stdoutWrite = vi.spyOn(renderInstance.stdout, 'write')
+
+    await waitForInputsToBeReady()
+    // The row is intentionally outside the rendered UI to cover trackpad gestures
+    // over blank areas of the terminal viewport.
+    await sendInputAndWait(renderInstance, 10, mouseWheelUp(2, 200))
+
+    expect(stdoutWrite).toHaveBeenCalledWith('\u001B[?1003l\u001B[?1002l\u001B[?1000l')
 
     renderInstance.unmount()
   })

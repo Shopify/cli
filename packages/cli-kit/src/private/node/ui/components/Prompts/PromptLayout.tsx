@@ -1,5 +1,6 @@
 import {InfoTable, InfoTableProps} from './InfoTable.js'
 import {InfoMessage, InfoMessageProps} from './InfoMessage.js'
+import {MouseProvider} from '../Mouse.js'
 import {TokenizedText} from '../TokenizedText.js'
 import {messageWithPunctuation} from '../../utilities.js'
 import {AbortSignal} from '../../../../../public/node/abort.js'
@@ -92,7 +93,9 @@ const PromptLayout = ({
   // Object.keys on an array returns the indices as strings
   const showInfoTable = infoTable && Object.keys(infoTable).length > 0
 
-  return isAborted ? null : (
+  if (isAborted) return null
+
+  const prompt = (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
       <Box ref={promptAreaRef} flexDirection="column">
         <Box>
@@ -135,6 +138,8 @@ const PromptLayout = ({
       )}
     </Box>
   )
+
+  return state === PromptState.Submitted ? prompt : <MouseProvider>{prompt}</MouseProvider>
 }
 
 export {PromptLayout}
