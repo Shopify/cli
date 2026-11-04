@@ -64,4 +64,60 @@ test('preserves console output in text mode', async () => {
   expect(console.error).toBe(original)
   expect(original).toHaveBeenCalledWith('Text warning')
 })
+
+test('scopes deferred text notices separately from overlapping JSON diagnostics', async () => {
+  const message =
+    'Custom Theme Checks are disabled. Explicit authorization is required to execute custom check JavaScript.'
+  const original = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const textNotice = vi.fn()
+  const jsonNotice = vi.fn()
+  const jsonSink = vi.fn()
+  let finishText!: () => void
+  let finishJson!: () => void
+  const textWait = new Promise<void>((resolve) => {
+    finishText = resolve
+  })
+  const jsonWait = new Promise<void>((resolve) => {
+    finishJson = resolve
+  })
+  const failure = new Error('Check failed')
+  const text = runWithCommandEvents({outputMode: 'text'}, () =>
+    withThemeCheckDiagnostics(
+      async () => {
+        await textWait
+        console.error(message)
+        console.error('Unrelated config warning')
+        throw failure
+      },
+      {onCustomChecksDisabled: textNotice},
+    ),
+  )
+  const rejected = expect(text).rejects.toBe(failure)
+  const json = runWithCommandEvents({outputMode: 'json', sink: jsonSink}, () =>
+    withThemeCheckDiagnostics(
+      async () => {
+        await jsonWait
+        console.error(message)
+      },
+      {onCustomChecksDisabled: jsonNotice},
+    ),
+  )
+  try {
+    finishJson()
+    await json
+    expect(jsonNotice).toHaveBeenCalledOnce()
+    expect(textNotice).not.toHaveBeenCalled()
+    expect(jsonSink).toHaveBeenCalledWith(expect.objectContaining({type: 'diagnostic', level: 'warning', message}))
+    expect(console.error).not.toBe(original)
+    finishText()
+    await rejected
+    expect(textNotice).toHaveBeenCalledOnce()
+    expect(original).toHaveBeenCalledExactlyOnceWith('Unrelated config warning')
+    expect(console.error).toBe(original)
+  } finally {
+    finishText()
+    finishJson()
+    await Promise.allSettled([text, json])
+  }
+})
 /* eslint-enable no-console */
