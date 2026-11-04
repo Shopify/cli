@@ -22,6 +22,7 @@ Different filters combine with AND; each accepts one exact value. Type-specific 
 Defaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.
 
 --json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.`
+  static jsonOutputSchema = logsOutput
   static description = this.descriptionForHelp()
   static flags = {...globalFlags, ...jsonFlag, ...historicalLogFlags}
   static examples = [
@@ -29,10 +30,6 @@ Defaults: preceding hour, 20 records. Maximum: seven-day window within thirty da
     '<%= config.bin %> <%= command.id %> --type graphql --operation-name MyQuery --json --no-input',
     '<%= config.bin %> <%= command.id %> --since 1h --sort timestamp --order desc',
   ]
-
-  static get jsonOutputSchema() {
-    return logsOutput
-  }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Logs)

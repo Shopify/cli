@@ -401,6 +401,7 @@ test('escapes terminal control characters in human output without changing JSON'
 test('publishes a strict envelope and an extensible native record schema', () => {
   expect(Logs.jsonOutputSchema).toBe(logsOutput)
   expect(Logs.descriptionForHelp()).toContain('HistoricalAppLogs')
+  expect(Logs.description).toContain('HistoricalAppLogs')
   expect(() => logsOutput.validate({...result(), accidental: true})).toThrow()
   expect(() => logsOutput.validate({...result(), query: {clientId: 'test-app'}})).toThrow()
   expect(JSON.parse(logsOutput.encode(result())).logs[0].extra).toEqual({nested: true})
