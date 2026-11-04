@@ -1,5 +1,6 @@
 import {PaymentsAppExtensionConfigType} from './payments_app_extension.js'
 import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
+import {AcceleratedWalletPaymentsAppExtensionConfigType} from './payments_app_extension_schemas/accelerated_wallet_payments_app_extension_schema.js'
 import {placeholderAppConfiguration, testPaymentsAppExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
@@ -37,6 +38,16 @@ describe('PaymentsAppExtension', () => {
     },
     api_version: '2022-07',
     description: 'my payments app extension',
+  }
+
+  const acceleratedWalletConfig: AcceleratedWalletPaymentsAppExtensionConfigType = {
+    ...config,
+    targeting: [{target: 'payments.accelerated-wallet.render'}],
+    wallet_session_create_url: 'https://example.com/wallet-sessions',
+    wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
+    button_logo_url: 'https://example.com/logo.svg',
+    button_background_color: '#000000',
+    button_foreground_color: '#FFFFFF',
   }
 
   beforeEach(async () => {
@@ -79,6 +90,59 @@ describe('PaymentsAppExtension', () => {
         supports_installments: extensionConfiguration.supports_installments,
       })
     })
+  })
+
+  test('parses and handles the deploy configuration for an accelerated wallet extension', async () => {
+    // Given
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+
+    // When
+    const parsed = specification.parseConfigurationObject(acceleratedWalletConfig)
+    if (parsed.state !== 'ok') {
+      throw new Error("Couldn't parse configuration")
+    }
+    const acceleratedWalletExtension = new ExtensionInstance({
+      configuration: parsed.data,
+      configurationPath: '',
+      directory: '/payments_app_extensions',
+      specification,
+    })
+    const result = await acceleratedWalletExtension.deployConfig({
+      apiKey,
+      appConfiguration: placeholderAppConfiguration,
+    })
+
+    // Then
+    expect(result).toMatchObject({
+      start_payment_session_url: acceleratedWalletConfig.payment_session_url,
+      wallet_session_create_url: acceleratedWalletConfig.wallet_session_create_url,
+      wallet_session_verify_url: acceleratedWalletConfig.wallet_session_verify_url,
+      button_logo_url: acceleratedWalletConfig.button_logo_url,
+      button_background_color: acceleratedWalletConfig.button_background_color,
+      button_foreground_color: acceleratedWalletConfig.button_foreground_color,
+    })
+  })
+
+  test('returns the field error for an invalid accelerated wallet button color', async () => {
+    // Given
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+
+    // When
+    const parsed = specification.parseConfigurationObject({
+      ...acceleratedWalletConfig,
+      button_background_color: 'black',
+    })
+
+    // Then
+    expect(parsed.state).toBe('error')
+    expect(parsed.errors).toEqual([
+      expect.objectContaining({
+        path: ['button_background_color'],
+        message: 'Must be a 6-digit hex color, like #1A2B3C',
+      }),
+    ])
   })
 
   test('returns error if there is no target', async () => {

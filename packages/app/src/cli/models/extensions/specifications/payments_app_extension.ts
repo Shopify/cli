@@ -34,6 +34,12 @@ import {
   CardPresentPaymentsAppExtensionSchema,
   cardPresentPaymentsAppExtensionDeployConfig,
 } from './payments_app_extension_schemas/card_present_payments_app_extension_schema.js'
+import {
+  ACCELERATED_WALLET_TARGET,
+  AcceleratedWalletPaymentsAppExtensionConfigType,
+  AcceleratedWalletPaymentsAppExtensionSchema,
+  acceleratedWalletPaymentsAppExtensionDeployConfig,
+} from './payments_app_extension_schemas/accelerated_wallet_payments_app_extension_schema.js'
 import {createExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -44,6 +50,7 @@ const PaymentsAppExtensionSchema = zod.union([
   CustomCreditCardPaymentsAppExtensionSchema,
   CreditCardPaymentsAppExtensionSchema,
   CardPresentPaymentsAppExtensionSchema,
+  AcceleratedWalletPaymentsAppExtensionSchema,
 ])
 
 export type PaymentsAppExtensionConfigType = zod.infer<typeof PaymentsAppExtensionSchema>
@@ -69,6 +76,10 @@ const paymentExtensionSpec = createExtensionSpecification({
         )
       case CARD_PRESENT_TARGET:
         return cardPresentPaymentsAppExtensionDeployConfig(config as CardPresentPaymentsAppExtensionConfigType)
+      case ACCELERATED_WALLET_TARGET:
+        return acceleratedWalletPaymentsAppExtensionDeployConfig(
+          config as AcceleratedWalletPaymentsAppExtensionConfigType,
+        )
       case undefined:
       default:
         return {}
