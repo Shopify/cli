@@ -25,6 +25,7 @@ export type HistoricalLogsQuery = {
         | {json: JsonMapType}
         | {json: JsonMapType}
         | {json: JsonMapType}
+        | {json: JsonMapType}
       )[]
     } | null
   } | null

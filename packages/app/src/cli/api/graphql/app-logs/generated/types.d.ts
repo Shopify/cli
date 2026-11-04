@@ -53,6 +53,8 @@ export type Scalars = {
 export type LogFilterField =
   /** The event handle the app sent, such as onboarding_completed, as in eventHandle. */
   | 'EVENT_HANDLE'
+  /** The Function extension handle. */
+  | 'FUNCTION_HANDLE'
   /** The HTTP method. */
   | 'METHOD'
   /** The GraphQL operation name. */
@@ -70,14 +72,15 @@ export type LogFilterField =
   /** The HTTP response status code, such as 500. */
   | 'STATUS_CODE'
   /**
-   * The Sidekick event target, such as extensions/security_scan, or the UI
-   * extension target, such as purchase.checkout.block.render.
+   * The Sidekick event target, such as extensions/security_scan, the Function
+   * execution target, or the UI extension target, such as
+   * purchase.checkout.block.render.
    */
   | 'TARGET'
   /** The webhook topic, such as orders/create. */
   | 'TOPIC';
 
-/** The input fields for one scalar logs filter. Combined with filters and listFilters using AND. */
+/** The input fields for one logs filter. All filters are combined with AND. */
 export type LogFilterInput = {
   /** The field to filter on. */
   field: LogFilterField;
@@ -87,7 +90,7 @@ export type LogFilterInput = {
   value: Scalars['String']['input'];
 };
 
-/** How a scalar filter compares a field with its value. */
+/** How a filter compares a field with its value. */
 export type LogFilterOperator =
   /** Matches logs whose field equals the value. */
   | 'EQUALS'
@@ -105,6 +108,8 @@ export type LogType =
   | 'APP_BILLING_EVENT'
   /** An event the app sent with the App Events API. */
   | 'APP_EVENT'
+  /** A Shopify Function run. */
+  | 'FUNCTION_RUN'
   /** A GraphQL API request. */
   | 'GRAPHQL_REQUEST'
   /** A REST API request. */

@@ -79,7 +79,7 @@
           "pnpm eslint 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/app-management/generated/**/*.{ts,tsx}' --fix",
-          "pnpm prettier 'src/cli/api/graphql/app-logs/generated/*.ts' --write && pnpm eslint 'src/cli/api/graphql/app-logs/generated/**/*.{ts,tsx}' --fix",
+          "pnpm prettier 'src/cli/api/graphql/app-logs/generated/*.ts' '!src/cli/api/graphql/app-logs/generated/*.d.ts' --write && pnpm eslint 'src/cli/api/graphql/app-logs/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/webhooks/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/functions/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix"
