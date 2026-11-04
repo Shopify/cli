@@ -6,6 +6,6 @@ export async function loadConsoleInputs(inputs?: string[], scriptFile?: string):
 
   const contents = await readFile(scriptFile)
   const commands = contents.split(/\r?\n/).filter((line) => line.trim().length > 0)
-  if (commands.length === 0) throw new AbortError('The script file must contain at least one Liquid command.')
+  if (commands.length === 0) throw new AbortError('The script file must contain at least one Liquid snippet.')
   return commands
 }
