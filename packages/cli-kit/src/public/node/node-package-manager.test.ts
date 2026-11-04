@@ -87,6 +87,50 @@ describe('installNPMDependenciesRecursively', () => {
       expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(backendPackage)}))
     })
   })
+
+  test("stops in-progress installations and waits for them when the caller's signal aborts", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      await writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({}))
+      const controller = new AbortController()
+      let installationStopped = false
+      mockedExec.mockImplementation(async (_command, _args, options) => {
+        controller.abort()
+        await new Promise<void>((resolve) => {
+          if (options?.signal?.aborted) resolve()
+          options?.signal?.addEventListener('abort', () => resolve(), {once: true})
+        })
+        installationStopped = true
+      })
+
+      // When
+      await installNPMDependenciesRecursively({directory: tmpDir, packageManager: 'npm', signal: controller.signal})
+
+      // Then
+      expect(installationStopped).toBe(true)
+    })
+  })
+
+  test('does not start installations when the signal is already aborted', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      await writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({}))
+      const controller = new AbortController()
+      const reason = new Error('Cancelled')
+      controller.abort(reason)
+
+      // When
+      const installation = installNPMDependenciesRecursively({
+        directory: tmpDir,
+        packageManager: 'npm',
+        signal: controller.signal,
+      })
+
+      // Then
+      await expect(installation).rejects.toBe(reason)
+      expect(exec).not.toHaveBeenCalled()
+    })
+  })
 })
 
 describe('packageManagerFromUserAgent', () => {

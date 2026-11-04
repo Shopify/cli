@@ -190,6 +190,11 @@ interface InstallNPMDependenciesRecursivelyOptions {
    * Specifies the maximum depth of the glob search.
    */
   deep?: number
+
+  /**
+   * Stops in-progress installations when aborted. Installations still running are terminated and awaited.
+   */
+  signal?: AbortSignal
 }
 
 /**
@@ -201,13 +206,18 @@ interface InstallNPMDependenciesRecursivelyOptions {
 export async function installNPMDependenciesRecursively(
   options: InstallNPMDependenciesRecursivelyOptions,
 ): Promise<void> {
+  options.signal?.throwIfAborted()
   const packageJsons = await glob(joinPath(options.directory, '**/package.json'), {
     ignore: [joinPath(options.directory, 'node_modules/**/package.json')],
     cwd: options.directory,
     onlyFiles: true,
     deep: options.deep,
   })
+  // An installation started after an abort would miss the event and run to completion.
+  options.signal?.throwIfAborted()
   const abortController = new AbortController()
+  const abortInstallations = () => abortController.abort()
+  options.signal?.addEventListener('abort', abortInstallations, {once: true})
   try {
     await Promise.all(
       packageJsons.map(async (packageJsonPath) => {
@@ -225,6 +235,8 @@ export async function installNPMDependenciesRecursively(
   } catch (error) {
     abortController.abort()
     throw error
+  } finally {
+    options.signal?.removeEventListener('abort', abortInstallations)
   }
 }
 

@@ -1543,6 +1543,135 @@
       "strict": true,
       "summary": "Cleans up the dev preview from the selected store."
     },
+    "app:dev:push": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Builds and uploads a snapshot of your app configuration and extensions to a development store, then exits. It does not release an app version or start local servers, tunnels, or file watchers.\n\n  Deploy your web backend separately. Use `--url` to apply its public HTTPS origin to the preview using the same app URL, OAuth callback, and app proxy rewriting as `app dev`. The override does not rewrite your TOML files. Without `--url`, the preview uses your configured URLs.\n\n  Use `shopify app dev clean` to restore the app's released version.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppDevPushResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/AppDevPushApp\"\n    },\n    \"storeDomain\": {\n      \"type\": \"string\",\n      \"description\": \"The canonical *.myshopify.com hostname of the development store.\"\n    },\n    \"appUrl\": {\n      \"type\": \"string\",\n      \"description\": \"The application URL configured in the uploaded preview.\"\n    },\n    \"previewUrl\": {\n      \"type\": \"string\",\n      \"description\": \"The admin URL for opening the app on the development store.\"\n    },\n    \"warnings\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDevPushWarning\"\n      },\n      \"description\": \"Warnings returned by the preview API; codes are upstream values.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"app\",\n    \"storeDomain\",\n    \"appUrl\",\n    \"previewUrl\",\n    \"warnings\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDevPushResult\",\n  \"definitions\": {\n    \"AppDevPushApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDevPushWarning\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"code\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Builds and uploads a snapshot of your app configuration and extensions to a development store, then exits. It does not release an app version or start local servers, tunnels, or file watchers.\n\n  Deploy your web backend separately. Use `--url` to apply its public HTTPS origin to the preview using the same app URL, OAuth callback, and app proxy rewriting as `app dev`. The override does not rewrite your TOML files. Without `--url`, the preview uses your configured URLs.\n\n  Use `shopify app dev clean` to restore the app's released version.",
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app. Use with --config to push that configuration for a different app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "skip-dependencies-installation": {
+          "allowNo": false,
+          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
+          "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
+          "name": "skip-dependencies-installation",
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. Must be an existing development store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "url": {
+          "description": "Public HTTPS origin of your separately hosted backend. Overrides URLs in the dev preview only.",
+          "env": "SHOPIFY_FLAG_URL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "url",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:dev:push",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Pushes a dev preview without running local servers."
+    },
     "app:env:pull": {
       "aliases": [
       ],
