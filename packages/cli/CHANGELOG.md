@@ -1,5 +1,14 @@
 # @shopify/cli
 
+## 5.0.1
+
+### Patch Changes
+
+- fafefe3: Say which access a service account token lacks, or that it was revoked or expired, instead of "Ensure the token is correct and not expired" for both.
+- cbd26c3: `store create dev` no longer fails with "Unable to determine store creation status." when its first status check comes back empty. It keeps checking until the store is ready or the 5-minute timeout passes.
+- 0ef4c79: Let `store delete` and `store info` find a store in the account's only organization, so a service account no longer needs `--organization-id` for stores it didn't create.
+- d613da0: Keep tables on one line per row when the output isn't a terminal, and word the store-not-found advice for service account tokens.
+
 ## 5.0.0
 
 ### Major Changes

@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 5.0.1
+
+### Patch Changes
+
+- 3895769: Normalize and validate the store domain in `ensureAuthenticatedAdminAsApp` before sending the app's client secret.
+- fafefe3: Say which access a service account token lacks, or that it was revoked or expired, instead of "Ensure the token is correct and not expired" for both.
+- d613da0: Keep tables on one line per row when the output isn't a terminal, and word the store-not-found advice for service account tokens.
+
 ## 5.0.0
 
 ### Minor Changes
