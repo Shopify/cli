@@ -1,4 +1,5 @@
 import {SEVERITY_RANK, type Issue, type Severity, type SkippedFile} from '../types.js'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 
 export interface IssueGroup {
   severity: Severity
@@ -12,7 +13,6 @@ function groupKey(issue: Issue): string {
 
 /** A presentation view only: never replace scan issues or deterministic-findings.json findings with these groups. */
 export function groupIssues(issues: Issue[]): IssueGroup[] {
-  const groups = new Map<string, IssueGroup>()
   const sorted = [...issues].sort(
     (left, right) =>
       SEVERITY_RANK[right.severity] - SEVERITY_RANK[left.severity] ||
@@ -22,17 +22,11 @@ export function groupIssues(issues: Issue[]): IssueGroup[] {
       left.id.localeCompare(right.id) ||
       left.title.localeCompare(right.title),
   )
-  for (const issue of sorted) {
-    const key = groupKey(issue)
-    const group = groups.get(key)
-    if (group) {
-      group.issues.push(issue)
-      if (!group.files.includes(issue.location.file)) group.files.push(issue.location.file)
-    } else {
-      groups.set(key, {severity: issue.severity, issues: [issue], files: [issue.location.file]})
-    }
-  }
-  return [...groups.values()]
+  return Object.values(groupBy(sorted, groupKey)).map((groupedIssues) => ({
+    severity: groupedIssues[0]!.severity,
+    issues: groupedIssues,
+    files: [...new Set(groupedIssues.map((issue) => issue.location.file))],
+  }))
 }
 
 /** How many files the deterministic scan skipped, by reason. */
