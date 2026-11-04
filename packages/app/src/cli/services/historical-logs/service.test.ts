@@ -50,6 +50,7 @@ const record = {
 beforeEach(() => {
   vi.useFakeTimers({toFake: ['Date'], now: new Date('2026-10-06T14:00:00Z')})
   vi.stubEnv('SHOPIFY_SERVICE_ENV', 'local')
+  vi.stubEnv('SHOPIFY_CLI_MAX_REQUEST_TIME_FOR_NETWORK_CALLS', undefined)
   vi.mocked(appManagementFqdn).mockResolvedValue('app.shop.dev')
   vi.mocked(getAppAutomationToken).mockReturnValue(undefined)
   vi.mocked(ensureAuthenticatedAppManagementAndBusinessPlatform).mockResolvedValue({
@@ -545,7 +546,7 @@ test.each(['app.shopify.com', 'app.shopify.io', 'app.shop.dev'])(
     expect(shopifyFetch).toHaveBeenCalledExactlyOnceWith(
       `https://${host}/app_logs/unstable/organizations/42/graphql`,
       expect.objectContaining({headers: expect.objectContaining({authorization: 'Bearer test-identity-token'})}),
-      {useNetworkLevelRetry: false, useAbortSignal: true, timeoutMs: 45000},
+      {useNetworkLevelRetry: false, useAbortSignal: true, timeoutMs: 30000},
     )
   },
 )

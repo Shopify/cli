@@ -1,10 +1,11 @@
 import {logError} from './catalog.js'
 import {LogApp} from '../../api/graphql/app-management/generated/log-app.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {numericIdFromGid} from '@shopify/cli-kit/common/gid'
 import {appManagementHeaders, appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
-import {shopifyFetch, FetchError} from '@shopify/cli-kit/node/http'
+import {shopifyFetch, FetchError, requestMode} from '@shopify/cli-kit/node/http'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {resolveRequestDocument} from 'graphql-request'
@@ -63,7 +64,8 @@ export async function connectLogs(clientId: string, noInput: boolean): Promise<L
       organizationId: zod
         .string()
         .regex(/^gid:\/\/shopify\/Organization\/\d+$/)
-        .transform((gid) => gid.split('/').at(-1)!),
+        .transform(numericIdFromGid)
+        .pipe(zod.string()),
     })
     .safeParse(result.app)
   if (!app.success || app.data.key !== clientId) {
@@ -85,7 +87,7 @@ export async function logsRequest<TResult, TVariables extends Record<string, unk
       headers: appManagementHeaders(connection.token),
       body: JSON.stringify({query: resolveRequestDocument(query).query, variables}),
     },
-    {useNetworkLevelRetry: false, useAbortSignal: true, timeoutMs: 45000},
+    requestMode('non-blocking'),
   ).catch((error: unknown) => {
     throwIfRequestFailed(error)
     throw error

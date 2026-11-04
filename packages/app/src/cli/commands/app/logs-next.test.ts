@@ -40,6 +40,10 @@ function result(): LogsResult {
   }
 }
 
+test('remains hidden while historical logs are experimental', () => {
+  expect(Logs.hidden).toBe(true)
+})
+
 test('parses space/equals forms and forwards effective defaults', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
   await new Logs(
@@ -59,6 +63,50 @@ test('parses space/equals forms and forwards effective defaults', async () => {
   expect(mockAndCaptureOutput().output()).toContain('Used fast retrieval: returned records shown oldest first')
   expect(vi.mocked(retrieveLogs).mock.calls[0]![0].sort).toBeUndefined()
   expect(vi.mocked(retrieveLogs).mock.calls[0]![0].order).toBeUndefined()
+})
+
+test('connects all seven filter flags to their exact API filters together', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    [
+      '--store',
+      'example',
+      '--status',
+      'failure',
+      '--topic',
+      'orders/create',
+      '--status-code',
+      '500',
+      '--operation-type',
+      'QUERY',
+      '--operation-name',
+      'MyQuery',
+      '--request-id',
+      'request-123',
+    ],
+    await Config.load(),
+  ).run()
+
+  const flags = vi.mocked(retrieveLogs).mock.calls[0]![0]
+  expect(prepareLogInput(flags).filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
+    {field: 'STATUS_CODE', operator: 'EQUALS', value: '500'},
+    {field: 'OPERATION_TYPE', operator: 'EQUALS', value: 'QUERY'},
+    {field: 'OPERATION_NAME', operator: 'EQUALS', value: 'MyQuery'},
+    {field: 'REQUEST_ID', operator: 'EQUALS', value: 'request-123'},
+  ])
+})
+
+test('accepts the maximum limit through parsing and input validation', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(['--limit', '1000'], await Config.load()).run()
+
+  const flags = vi.mocked(retrieveLogs).mock.calls[0]![0]
+  expect(prepareLogInput(flags).limit).toBe(1000)
 })
 
 test('omitted type and repeated type flags are passed to the service without inventing filter OR', async () => {

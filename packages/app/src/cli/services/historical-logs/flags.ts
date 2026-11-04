@@ -2,12 +2,9 @@ import {appFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 
 export const historicalLogFlags = {
-  path: Flags.string({description: 'Path to your app directory.', env: 'SHOPIFY_FLAG_PATH'}),
+  path: appFlags.path,
   config: appFlags.config,
-  'client-id': Flags.string({
-    description: 'App client ID; takes precedence over local app configuration.',
-    env: 'SHOPIFY_FLAG_CLIENT_ID',
-  }),
+  'client-id': appFlags['client-id'],
   type: Flags.string({
     description: 'Log type; repeat to select multiple. Defaults to all supported types.',
     options: ['webhook', 'graphql'],

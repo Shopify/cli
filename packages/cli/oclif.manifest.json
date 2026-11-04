@@ -3890,9 +3890,13 @@
           "type": "option"
         },
         "client-id": {
-          "description": "App client ID; takes precedence over local app configuration.",
+          "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
           "hasDynamicHelp": false,
+          "hidden": false,
           "multiple": false,
           "name": "client-id",
           "type": "option"
@@ -3979,11 +3983,12 @@
           "type": "option"
         },
         "path": {
-          "description": "Path to your app directory.",
+          "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "request-id": {

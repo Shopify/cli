@@ -1,5 +1,5 @@
 import {logsOutput, type LogsResult} from './types.js'
-import {outputInfo, outputResult, unstyled} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult, outputWarn, unstyled} from '@shopify/cli-kit/node/output'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 
 export function renderHistoricalLogs(result: LogsResult, json: boolean, limit: number): void {
@@ -41,7 +41,7 @@ export function renderHistoricalLogs(result: LogsResult, json: boolean, limit: n
       `Returned all ${result.logs.length} matching ${result.logs.length === 1 ? 'record' : 'records'} available at query time.`,
     )
   }
-  for (const limitation of result.limitations) outputInfo(limitation)
+  for (const limitation of result.limitations) outputWarn(limitation)
   outputInfo('Use --json for full records.')
 }
 
