@@ -122,6 +122,7 @@ export interface DevSessionCreateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   websocketUrl?: string
   unsafeValidation?: boolean
+  signal?: AbortSignal
 }
 
 export interface DevSessionUpdateOptions extends DevSessionSharedOptions {

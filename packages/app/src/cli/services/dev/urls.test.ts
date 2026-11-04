@@ -3,6 +3,7 @@ import {
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generateApplicationURLs,
+  generateApplicationURLsForApp,
   FrontendURLOptions,
 } from './urls.js'
 import {
@@ -13,7 +14,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {AppLinkedInterface} from '../../models/app/app.js'
+import {AppLinkedInterface, WebType} from '../../models/app/app.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -586,6 +587,30 @@ describe('generatePartnersURLs', () => {
         proxySubPath: 'subpath',
         proxySubPathPrefix: 'prefix',
       },
+    })
+  })
+})
+
+describe('generateApplicationURLsForApp', () => {
+  test('uses the first web auth callback override and the app proxy configuration', () => {
+    const got = generateApplicationURLsForApp(
+      {
+        webs: [
+          {directory: '/frontend', configuration: {roles: [WebType.Frontend], commands: {dev: 'dev'}}},
+          {
+            directory: '/backend',
+            configuration: {roles: [WebType.Backend], commands: {dev: 'dev'}, auth_callback_path: '/oauth/callback'},
+          },
+        ],
+        configuration: {app_proxy: {url: 'https://production.example.com/proxy', subpath: 'test', prefix: 'apps'}},
+      },
+      'https://preview.example.com',
+    )
+
+    expect(got).toEqual({
+      applicationUrl: 'https://preview.example.com',
+      redirectUrlWhitelist: ['https://preview.example.com/oauth/callback'],
+      appProxy: {proxyUrl: 'https://preview.example.com/proxy', proxySubPath: 'test', proxySubPathPrefix: 'apps'},
     })
   })
 })

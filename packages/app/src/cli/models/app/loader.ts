@@ -27,7 +27,7 @@ import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
+import {ApplicationURLs, generateApplicationURLsForApp} from '../../services/dev/urls.js'
 import {Project} from '../project/project.js'
 import {selectActiveConfig} from '../project/active-config.js'
 import {
@@ -885,11 +885,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const previousDevUrls = this.reloadState?.previousDevURLs
     if (!previousDevUrls) return previousDevUrls
 
-    return generateApplicationURLs(
-      previousDevUrls.applicationUrl,
-      webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-      currentConfiguration.app_proxy,
-    )
+    return generateApplicationURLsForApp({webs, configuration: currentConfiguration}, previousDevUrls.applicationUrl)
   }
 }
 

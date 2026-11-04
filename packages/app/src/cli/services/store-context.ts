@@ -15,6 +15,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
  * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
  * @param storeTypes - Store types to filter by. Defaults to dev stores only.
  * @param storeCreationMode - When store creation is offered during store selection. Defaults to disabled.
+ * @param ensureUserAccess - Whether the command needs user access to the store. Defaults to true.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
@@ -22,6 +23,7 @@ interface StoreContextOptions {
   storeFqdn?: string
   storeTypes?: Store[]
   storeCreationMode?: StoreCreationMode
+  ensureUserAccess?: boolean
 }
 
 /**
@@ -37,6 +39,7 @@ export async function storeContext({
   forceReselectStore,
   storeTypes = ['APP_DEVELOPMENT'],
   storeCreationMode = 'disabled',
+  ensureUserAccess = true,
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
@@ -74,8 +77,8 @@ export async function storeContext({
     await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
   }
 
-  // Ensure that the user is able to login to the store and install apps
-  await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
+  // Remote-only operations don't need a user login or user-authenticated store APIs.
+  if (ensureUserAccess) await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
 
   return selectedStore
 }
