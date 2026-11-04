@@ -57,7 +57,7 @@ test.each(['/invalid', 'https://example.myshopify.com/products', 'https://user:p
   (store) => {
     expect(() => prepareLogInput({store})).toThrowError(
       expect.objectContaining({
-        code: 'INVALID_ARGUMENT',
+        code: 'invalid-argument',
         message: expect.stringContaining('Invalid store'),
         tryMessage: expect.stringContaining('Provide a store handle or Shopify store domain'),
       }),
@@ -68,7 +68,7 @@ test.each(['/invalid', 'https://example.myshopify.com/products', 'https://user:p
 test.each(['1hr', '1.5h', 'yesterday'])('invalid since %s explains both duration and timestamp forms', (since) => {
   expect(() => prepareLogInput({since})).toThrowError(
     expect.objectContaining({
-      code: 'INVALID_ARGUMENT',
+      code: 'invalid-argument',
       message: expect.stringMatching(/positive integer duration.*whole-second RFC 3339 timestamp/),
     }),
   )
@@ -169,7 +169,7 @@ test.each([
   {since: '2026-10-06T14:00:00Z', until: '2026-10-06T13:00:00Z'},
   {since: '2026-10-06T14:00:00Z'},
 ])('rejects invalid or empty windows %j', (input) => {
-  expect(() => window(input)).toThrow(expect.objectContaining({code: 'INVALID_ARGUMENT'}))
+  expect(() => window(input)).toThrow(expect.objectContaining({code: 'invalid-argument'}))
 })
 
 test('preserves explicit bounds independently of the current time', () => {

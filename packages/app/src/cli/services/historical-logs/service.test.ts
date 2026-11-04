@@ -236,10 +236,10 @@ test.each([
 })
 
 test.each([
-  ['INVALID_LOG_QUERY', 'LOG_QUERY_FAILED'],
-  ['THROTTLED', 'RATE_LIMITED'],
-  ['TIMEOUT', 'QUERY_TIMEOUT'],
-  ['SORTED_QUERY_TOO_LARGE', 'SORTED_QUERY_TOO_LARGE'],
+  ['INVALID_LOG_QUERY', 'log-query-failed'],
+  ['THROTTLED', 'rate-limited'],
+  ['TIMEOUT', 'query-timeout'],
+  ['SORTED_QUERY_TOO_LARGE', 'sorted-query-too-large'],
 ])('surfaces sorted-query %s as %s without retrying unordered', async (code, expectedCode) => {
   authorize()
   const errors = [{message: 'Sorted search refused', extensions: {code}}]
@@ -353,7 +353,7 @@ test.each([
   authorize()
   respond({data, errors, extensions})
   const failure = await retrieveLogs(scope).catch((error: unknown) => error)
-  expect(failure).toMatchObject({code: 'RATE_LIMITED', details: {errors, extensions}})
+  expect(failure).toMatchObject({code: 'rate-limited', details: {errors, extensions}})
   expect(failure).not.toHaveProperty('details.data')
   vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -362,7 +362,7 @@ test.each([
       error: {
         type: 'abort',
         message: 'Timed out',
-        code: 'RATE_LIMITED',
+        code: 'rate-limited',
         details: {errors, extensions},
       },
     })
@@ -375,7 +375,7 @@ test.each(['APP_NOT_ACCESSIBLE', 'INVALID_LOG_QUERY'])('does not turn %s into em
   authorize()
   respond({data: {app: null}, errors: [{message: code, extensions: {code}}]})
   await expect(retrieveLogs(scope)).rejects.toMatchObject({
-    code: 'LOG_QUERY_FAILED',
+    code: 'log-query-failed',
     details: {errors: [{extensions: {code}}]},
   })
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
@@ -387,7 +387,7 @@ test.each([null, {}, {app: null}, {app: {logs: null}}, {app: {logs: {records: nu
     authorize()
     respond({data}, 200, {'x-request-id': 'invalid-result-request'})
     await expect(retrieveLogs(scope)).rejects.toMatchObject({
-      code: 'INVALID_RESPONSE',
+      code: 'invalid-response',
       details: {requestId: 'invalid-result-request'},
     })
   },
@@ -404,7 +404,7 @@ test.each([
   authorize()
   logResponse([json], {'x-request-id': 'invalid-record-request'})
   await expect(retrieveLogs(scope)).rejects.toMatchObject({
-    code: 'INVALID_RESPONSE',
+    code: 'invalid-response',
     details: {requestId: 'invalid-record-request'},
   })
 })
@@ -413,7 +413,7 @@ test('rejects a response exceeding the requested cap rather than truncating it l
   authorize()
   logResponse([record, {...record, id: 'gid://shopify/AppLogRecord/second'}], {'x-request-id': 'over-limit-request'})
   await expect(retrieveLogs({...scope, limit: 1})).rejects.toMatchObject({
-    code: 'INVALID_RESPONSE',
+    code: 'invalid-response',
     details: {requestId: 'over-limit-request'},
   })
 })
@@ -433,7 +433,7 @@ test.each([
   authorize()
   respond({errors})
 
-  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'LOG_QUERY_FAILED', details: {errors}})
+  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'log-query-failed', details: {errors}})
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
 })
 
@@ -443,18 +443,18 @@ test('preserves the supplied retry header for HTTP-200 GraphQL throttling', asyn
   respond({errors}, 200, {'retry-after': '60'})
 
   await expect(retrieveLogs(scope)).rejects.toMatchObject({
-    code: 'RATE_LIMITED',
+    code: 'rate-limited',
     details: {errors, retryAfterSeconds: 60},
   })
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
 })
 
 test.each([
-  [401, 'AUTHENTICATION_REQUIRED'],
-  [403, 'FORBIDDEN'],
-  [429, 'RATE_LIMITED'],
-  [504, 'QUERY_TIMEOUT'],
-  [500, 'LOGS_API_UNAVAILABLE'],
+  [401, 'authentication-required'],
+  [403, 'forbidden'],
+  [429, 'rate-limited'],
+  [504, 'query-timeout'],
+  [500, 'logs-api-unavailable'],
 ] as const)('propagates HTTP %s as %s without retries', async (status, code) => {
   authorize()
   respond({}, status, {'retry-after': '60'})
@@ -463,8 +463,8 @@ test.each([
 })
 
 test.each([
-  {status: 200, code: 'LOG_QUERY_FAILED', message: 'Access denied'},
-  {status: 403, code: 'FORBIDDEN', message: 'App Logs request failed (HTTP 403). Access denied'},
+  {status: 200, code: 'log-query-failed', message: 'Access denied'},
+  {status: 403, code: 'forbidden', message: 'App Logs request failed (HTTP 403). Access denied'},
 ])(
   'preserves GraphQL diagnostics and request ID on HTTP $status without partial records',
   async ({status, code, message}) => {
@@ -514,7 +514,7 @@ test.each([
   const failure = await retrieveLogs(scope).catch((error: unknown) => error)
 
   expect(failure).toMatchObject({
-    code: 'LOGS_API_UNAVAILABLE',
+    code: 'logs-api-unavailable',
     message:
       'App Logs request failed (HTTP 503). Check API availability, access, and authentication.\n\nRequest ID: request-123',
     details: {requestId: 'request-123'},
@@ -530,7 +530,7 @@ test('includes the request ID when a successful HTTP response is not readable JS
   )
 
   await expect(retrieveLogs(scope)).rejects.toMatchObject({
-    code: 'INVALID_RESPONSE',
+    code: 'invalid-response',
     message: 'App Logs returned a response that could not be read as JSON.\n\nRequest ID: request-123',
     details: {requestId: 'request-123'},
   })
@@ -553,14 +553,14 @@ test.each(['app.shopify.com', 'app.shopify.io', 'app.shop.dev'])(
 
 test('rejects automation credentials instead of treating them as a user session', async () => {
   vi.mocked(getAppAutomationToken).mockReturnValue('test-automation-token')
-  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'AUTHENTICATION_REQUIRED'})
+  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'authentication-required'})
   expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()
 })
 
 test('does not turn unreadable JSON into an empty result', async () => {
   authorize()
   vi.mocked(shopifyFetch).mockResolvedValueOnce(new Response('<html>upstream unavailable</html>', {status: 200}))
-  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'INVALID_RESPONSE'})
+  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'invalid-response'})
 })
 
 test('does not attempt network access when no-input authentication fails', async () => {
@@ -579,7 +579,7 @@ test.each([
   {'client-id': ''},
   {'operation-name': 'x'.repeat(1025)},
 ])('rejects invalid local input before auth %j', async (input) => {
-  await expect(retrieveLogs({...scope, ...input})).rejects.toMatchObject({code: 'INVALID_ARGUMENT'})
+  await expect(retrieveLogs({...scope, ...input})).rejects.toMatchObject({code: 'invalid-argument'})
   expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()
   expect(shopifyFetch).not.toHaveBeenCalled()
 })
@@ -587,7 +587,7 @@ test.each([
 test('reports transport timeouts without returning an empty result', async () => {
   authorize()
   vi.mocked(shopifyFetch).mockRejectedValueOnce(Object.assign(new Error('request aborted'), {name: 'TimeoutError'}))
-  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'QUERY_TIMEOUT'})
+  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'query-timeout'})
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
 })
 
@@ -605,7 +605,7 @@ test.each([
   await withCapturedStandardStreams(async ({stdout}) => {
     await handler(failure)
     expect(JSON.parse(stdout())).toEqual({
-      error: {type: 'abort', code: 'LOGS_API_UNAVAILABLE', message: `App Logs request failed: ${message}`},
+      error: {type: 'abort', code: 'logs-api-unavailable', message: `App Logs request failed: ${message}`},
     })
   })
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
@@ -627,7 +627,7 @@ test('preserves request context for a connection failure while reading the respo
   vi.mocked(shopifyFetch).mockResolvedValueOnce(response)
 
   await expect(retrieveLogs(scope)).rejects.toMatchObject({
-    code: 'LOGS_API_UNAVAILABLE',
+    code: 'logs-api-unavailable',
     details: {requestId: 'body-request'},
   })
 })
@@ -638,7 +638,7 @@ test.each(['AbortError', 'TimeoutError'])('reports a body-read %s as a timeout w
   vi.spyOn(response, 'json').mockRejectedValueOnce(Object.assign(new Error('request aborted'), {name}))
   vi.mocked(shopifyFetch).mockResolvedValueOnce(response)
 
-  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'QUERY_TIMEOUT', details: {requestId: 'body-request'}})
+  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'query-timeout', details: {requestId: 'body-request'}})
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
 })
 
@@ -646,7 +646,7 @@ test.each(['42', 'gid://shopify/App/42', 'gid://shopify/Organization/42/extra'])
   'rejects invalid organization identifiers %s',
   async (organizationId) => {
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: {key: clientId, organizationId}})
-    await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'FORBIDDEN'})
+    await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'forbidden'})
     expect(shopifyFetch).not.toHaveBeenCalled()
   },
 )
@@ -655,7 +655,7 @@ test('rejects an app lookup for another client ID without querying logs', async 
   vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
     app: {key: 'other-app', organizationId: 'gid://shopify/Organization/42'},
   })
-  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'FORBIDDEN'})
+  await expect(retrieveLogs(scope)).rejects.toMatchObject({code: 'forbidden'})
   expect(shopifyFetch).not.toHaveBeenCalled()
 })
 
@@ -711,7 +711,7 @@ test.each([
   const errors = [{message, path: ['app', 'logs'], extensions: {code: 'INVALID_LOG_QUERY'}}]
   respond({errors})
   const failure = await retrieveLogs({...scope, ...input}).catch((error: unknown) => error)
-  expect(failure).toMatchObject({message, code: 'LOG_QUERY_FAILED', details: {errors}})
+  expect(failure).toMatchObject({message, code: 'log-query-failed', details: {errors}})
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await handler(failure)
     expect(stdout()).toBe('')
@@ -721,7 +721,7 @@ test.each([
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await handler(failure)
     expect(JSON.parse(stdout())).toEqual({
-      error: {type: 'abort', message, code: 'LOG_QUERY_FAILED', details: {errors}},
+      error: {type: 'abort', message, code: 'log-query-failed', details: {errors}},
     })
     expect(stderr()).toBe('')
   })
@@ -737,7 +737,7 @@ test('renders CLI-owned validation codes at error.code without upstream details'
       error: {
         type: 'abort',
         message: '--since requires a positive integer duration or a whole-second timestamp.',
-        code: 'INVALID_ARGUMENT',
+        code: 'invalid-argument',
       },
     })
     expect(stderr()).toBe('')

@@ -22,9 +22,9 @@ const responseSchema = zod.object({
 })
 
 const queryErrorCodes = new Map([
-  ['THROTTLED', 'RATE_LIMITED'],
-  ['TIMEOUT', 'QUERY_TIMEOUT'],
-  ['SORTED_QUERY_TOO_LARGE', 'SORTED_QUERY_TOO_LARGE'],
+  ['THROTTLED', 'rate-limited'],
+  ['TIMEOUT', 'query-timeout'],
+  ['SORTED_QUERY_TOO_LARGE', 'sorted-query-too-large'],
 ])
 
 interface LogsConnection {
@@ -36,7 +36,7 @@ interface LogsConnection {
 export async function connectLogs(clientId: string, noInput: boolean): Promise<LogsConnection> {
   if (getAppAutomationToken())
     throw logError(
-      'AUTHENTICATION_REQUIRED',
+      'authentication-required',
       'Sign in with a user account to retrieve app logs. Automation tokens are not supported.',
     )
   const host = await appManagementFqdn()
@@ -69,7 +69,7 @@ export async function connectLogs(clientId: string, noInput: boolean): Promise<L
     })
     .safeParse(result.app)
   if (!app.success || app.data.key !== clientId) {
-    throw logError('FORBIDDEN', 'The selected app was not resolved to an authorized organization.')
+    throw logError('forbidden', 'The selected app was not resolved to an authorized organization.')
   }
   return {origin, token, organizationId: app.data.organizationId}
 }
@@ -96,7 +96,7 @@ export async function logsRequest<TResult, TVariables extends Record<string, unk
   const body: unknown = await response.json().catch((error: unknown) => {
     throwIfRequestFailed(error, requestId)
     if (!response.ok) return undefined
-    throw logError('INVALID_RESPONSE', 'App Logs returned a response that could not be read as JSON.', requestId)
+    throw logError('invalid-response', 'App Logs returned a response that could not be read as JSON.', requestId)
   })
   const result = responseSchema.safeParse(body)
   const errors = result.success ? result.data.errors : undefined
@@ -107,13 +107,13 @@ export async function logsRequest<TResult, TVariables extends Record<string, unk
         ? queryErrorCodes.get(graphqlCode)
         : undefined
     const code = response.ok
-      ? (queryCode ?? 'LOG_QUERY_FAILED')
+      ? (queryCode ?? 'log-query-failed')
       : ((
-          {401: 'AUTHENTICATION_REQUIRED', 403: 'FORBIDDEN', 429: 'RATE_LIMITED', 504: 'QUERY_TIMEOUT'} as Record<
+          {401: 'authentication-required', 403: 'forbidden', 429: 'rate-limited', 504: 'query-timeout'} as Record<
             number,
             string
           >
-        )[response.status] ?? 'LOGS_API_UNAVAILABLE')
+        )[response.status] ?? 'logs-api-unavailable')
     const message = errors?.length
       ? errors.map(({message}) => message).join('\n')
       : 'Check API availability, access, and authentication.'
@@ -137,7 +137,7 @@ export async function logsRequest<TResult, TVariables extends Record<string, unk
     throw error
   }
   if (!result.success || (result.data.data === undefined && result.data.errors === undefined)) {
-    throw logError('INVALID_RESPONSE', 'App Logs returned an invalid GraphQL response.', requestId)
+    throw logError('invalid-response', 'App Logs returned an invalid GraphQL response.', requestId)
   }
   return {...result.data, requestId}
 }
@@ -145,12 +145,12 @@ export async function logsRequest<TResult, TVariables extends Record<string, unk
 function throwIfRequestFailed(error: unknown, requestId?: string | null): void {
   if (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)) {
     throw logError(
-      'QUERY_TIMEOUT',
+      'query-timeout',
       'App Logs request timed out. Check backend availability or use a narrower window or more selective filters.',
       requestId,
     )
   }
   if (error instanceof FetchError && error.type !== 'invalid-json') {
-    throw logError('LOGS_API_UNAVAILABLE', `App Logs request failed: ${error.message}`, requestId)
+    throw logError('logs-api-unavailable', `App Logs request failed: ${error.message}`, requestId)
   }
 }

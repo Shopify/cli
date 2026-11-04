@@ -22,17 +22,17 @@ export interface LogInput {
 
 export function prepareLogInput(input: LogInput) {
   const types = selectedLogTypes(input.type)
-  if (!types.length) throw logError('INVALID_ARGUMENT', 'Select at least one log type.')
+  if (!types.length) throw logError('invalid-argument', 'Select at least one log type.')
   const limit = input.limit ?? queryLimits.defaultLimit
   if (!Number.isInteger(limit) || limit < 1 || limit > queryLimits.maximumLimit) {
-    throw logError('INVALID_ARGUMENT', '--limit must be an integer between 1 and 1000.')
+    throw logError('invalid-argument', '--limit must be an integer between 1 and 1000.')
   }
   if (input.sort !== undefined && input.sort !== 'timestamp')
-    throw logError('INVALID_ARGUMENT', '--sort accepts timestamp.')
+    throw logError('invalid-argument', '--sort accepts timestamp.')
   if (input.order !== undefined && !['asc', 'desc'].includes(input.order))
-    throw logError('INVALID_ARGUMENT', '--order accepts asc or desc.')
+    throw logError('invalid-argument', '--order accepts asc or desc.')
   if (input.order !== undefined && input.sort === undefined)
-    throw logError('INVALID_ARGUMENT', '--order requires --sort.')
+    throw logError('invalid-argument', '--order requires --sort.')
   const timestampOrdering = input.order === 'desc' ? 'timestamp-desc' : 'timestamp-asc'
   const ordering = input.sort === undefined ? 'none' : timestampOrdering
   const values: Partial<Record<(typeof logFilters)[number]['flag'], string>> = {}
@@ -40,9 +40,9 @@ export function prepareLogInput(input: LogInput) {
     const value = input[definition.flag]
     if (value === undefined) continue
     if (typeof value !== 'string' || !value.trim())
-      throw logError('INVALID_ARGUMENT', `--${definition.flag} requires one nonempty value.`)
+      throw logError('invalid-argument', `--${definition.flag} requires one nonempty value.`)
     if (Buffer.byteLength(value, 'utf8') > 1024)
-      throw logError('INVALID_ARGUMENT', `--${definition.flag} accepts at most 1024 UTF-8 bytes.`)
+      throw logError('invalid-argument', `--${definition.flag} accepts at most 1024 UTF-8 bytes.`)
     values[definition.flag] = value
   }
   if (values.store) {
@@ -52,19 +52,19 @@ export function prepareLogInput(input: LogInput) {
         /^[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(values.store.trim()) ? `${values.store.trim()}.myshopify.com` : values.store,
       )
     } catch (error) {
-      if (error instanceof AbortError) error.code = 'INVALID_ARGUMENT'
+      if (error instanceof AbortError) error.code = 'invalid-argument'
       throw error
     }
     if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(domain))
-      throw logError('INVALID_ARGUMENT', 'Historical logs require a myshopify.com store domain.')
+      throw logError('invalid-argument', 'Historical logs require a myshopify.com store domain.')
     values.store = domain
   }
   if (values.status && !['success', 'failure'].includes(values.status))
-    throw logError('INVALID_ARGUMENT', '--status accepts success or failure.')
+    throw logError('invalid-argument', '--status accepts success or failure.')
   if (values.topic && !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_./-]+$/.test(values.topic))
-    throw logError('INVALID_ARGUMENT', '--topic requires an exact slash-form topic, such as orders/create.')
+    throw logError('invalid-argument', '--topic requires an exact slash-form topic, such as orders/create.')
   if (values['status-code'] && !/^[1-5]\d{2}$/.test(values['status-code']))
-    throw logError('INVALID_ARGUMENT', '--status-code accepts an exact code from 100 to 599, not a status class.')
+    throw logError('invalid-argument', '--status-code accepts an exact code from 100 to 599, not a status class.')
 
   const filters: LogFilterInput[] = logFilters.flatMap(({flag, field}) => {
     const value = values[flag]
@@ -93,11 +93,11 @@ function prepareLogWindow(input: Pick<LogInput, 'since' | 'until'>) {
   ])
   const durationSeconds = duration ? Number(duration[1]) * units.get(duration[2]!)! : undefined
   if (durationSeconds !== undefined && (!Number.isSafeInteger(durationSeconds) || durationSeconds <= 0))
-    throw logError('INVALID_ARGUMENT', '--since requires a positive integer duration or a whole-second timestamp.')
+    throw logError('invalid-argument', '--since requires a positive integer duration or a whole-second timestamp.')
   const start = durationSeconds === undefined ? parseTimestamp(since, '--since') : undefined
   const end = input.until === undefined ? undefined : parseTimestamp(input.until, '--until')
   if (start !== undefined && end !== undefined && start >= end)
-    throw logError('INVALID_ARGUMENT', '--since must be earlier than --until.')
+    throw logError('invalid-argument', '--since must be earlier than --until.')
   return {start, end, durationSeconds}
 }
 
@@ -106,9 +106,9 @@ export function resolveLogWindow(window: ReturnType<typeof prepareLogWindow>) {
   const end = window.end ?? anchor
   const start = window.start ?? end - window.durationSeconds! * 1000
   if (!Number.isFinite(new Date(start).valueOf()))
-    throw logError('INVALID_ARGUMENT', '--since produces a timestamp outside the supported date range.')
+    throw logError('invalid-argument', '--since produces a timestamp outside the supported date range.')
   if (start >= end)
-    throw logError('INVALID_ARGUMENT', '--since must be earlier than --until (the current time by default).')
+    throw logError('invalid-argument', '--since must be earlier than --until (the current time by default).')
   return {
     since: formatJsonOutputTimestamp(new Date(start)),
     until: formatJsonOutputTimestamp(new Date(end)),
@@ -119,7 +119,7 @@ function parseTimestamp(value: string, flag: string): number {
   const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(Z|[+-]\d{2}:\d{2})$/.exec(value)
   const invalid = () =>
     logError(
-      'INVALID_ARGUMENT',
+      'invalid-argument',
       `${flag} requires ${flag === '--since' ? 'a positive integer duration (s/m/h/d) or ' : ''}a whole-second RFC 3339 timestamp with a timezone; fractional input is not supported by the API.`,
     )
   if (!match) throw invalid()

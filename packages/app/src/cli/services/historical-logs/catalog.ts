@@ -30,7 +30,7 @@ export function logError(code: string, message: string, requestId?: string | nul
 
 function selectedLogType(value?: string) {
   const type = logTypes.find(({name}) => name === value)
-  if (!type) throw logError('INVALID_ARGUMENT', 'Supported log types are webhook and graphql.')
+  if (!type) throw logError('invalid-argument', 'Supported log types are webhook and graphql.')
   return type
 }
 
