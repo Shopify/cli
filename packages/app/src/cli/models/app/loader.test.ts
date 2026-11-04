@@ -2501,6 +2501,114 @@ describe('load', () => {
       expect(app.errors.getErrors().map(formatConfigurationError).join('\n')).toContain('handle')
     })
 
+    test.each([
+      {section: '[[events.subscription]]', topic: 'InventoryItem', scopes: 'read_inventory'},
+      {section: '[events.subscription]', topic: 'InventoryItem', scopes: 'read_inventory'},
+      {section: '[[events.subscription]]', topic: 'InventoryItem', scopes: ''},
+      {section: '[[events.subscription]]', topic: 'Shop', scopes: ''},
+    ])('rejects Events subscriptions with legacy install flow: %j', async ({section, topic, scopes}) => {
+      await writeConfig(
+        buildAppConfiguration({
+          handle: 'inventory-notifier',
+          extra: `
+            [access_scopes]
+            scopes = "${scopes}"
+            use_legacy_install_flow = true
+
+            [events]
+            api_version = "2026-10"
+
+            ${section}
+            ${section.startsWith('[[') ? 'handle = "inventory-notifier"' : ''}
+            topic = "${topic}"
+            actions = ["update"]
+            uri = "/events/inventory"
+          `,
+        }),
+      )
+
+      const app = await loadTestingApp()
+
+      expect(app.errors.getErrors()).toEqual([])
+      expect(app.extensionsForType({identifier: 'events', externalIdentifier: 'events'})).toHaveLength(1)
+      await expect(app.preDeployValidation()).rejects.toMatchObject({
+        message: 'Events subscriptions are not supported when use_legacy_install_flow is enabled.',
+        tryMessage: `Migrate to Shopify-managed installation before using Events subscriptions.
+Scopes in your TOML configuration are not managed by Shopify while 'use_legacy_install_flow = true'.
+
+Alternatively, continue using shop-specific webhooks with the legacy install flow.
+
+Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
+      })
+    })
+
+    test('rejects an unexpanded Events subscription list with legacy install flow', async () => {
+      await writeConfig(
+        buildAppConfiguration({extra: `[access_scopes]\nuse_legacy_install_flow = true\n${eventsConfiguration}`}),
+      )
+
+      const app = await loadApp({
+        directory: tmpDir,
+        userProvidedConfigName: undefined,
+        specifications: specifications.map((specification) =>
+          specification.identifier === 'events' ? {...specification, expandConfig: undefined} : specification,
+        ),
+      })
+
+      expect(app.errors.getErrors()).toEqual([])
+      expect(app.extensionsForType({identifier: 'events', externalIdentifier: 'events'})).toHaveLength(1)
+      await expect(app.preDeployValidation()).rejects.toMatchObject({
+        message: 'Events subscriptions are not supported when use_legacy_install_flow is enabled.',
+      })
+    })
+
+    test.each(['use_legacy_install_flow = false', ''])(
+      'allows Events subscriptions with managed installation: %j',
+      async (installFlow) => {
+        await writeConfig(
+          buildAppConfiguration({
+            extra: `[access_scopes]\nscopes = "read_products"\n${installFlow}\n${eventsConfiguration}`,
+          }),
+        )
+
+        const app = await loadTestingApp()
+
+        expect(app.errors.getErrors()).toEqual([])
+        expect(app.extensionsForType({identifier: 'events', externalIdentifier: 'events'})).toHaveLength(2)
+        await expect(app.preDeployValidation()).resolves.toBeUndefined()
+      },
+    )
+
+    test.each(['', '[events]\napi_version = "2026-10"', '[events]\nsubscription = []'])(
+      'allows legacy installation without Events subscriptions: %j',
+      async (eventsConfig) => {
+        await writeConfig(
+          buildAppConfiguration({extra: `[access_scopes]\nuse_legacy_install_flow = true\n${eventsConfig}`}),
+        )
+
+        const app = await loadTestingApp()
+
+        expect(app.errors.getErrors()).toEqual([])
+        await expect(app.preDeployValidation()).resolves.toBeUndefined()
+      },
+    )
+
+    test('does not validate Events subscriptions excluded from deployment', async () => {
+      await writeConfig(
+        buildAppConfiguration({
+          build: {include_config_on_deploy: false},
+          extra: `[access_scopes]\nuse_legacy_install_flow = true\n${eventsConfiguration}`,
+        }),
+      )
+
+      const app = await loadTestingApp()
+
+      expect(app.errors.getErrors()).toEqual([])
+      expect(app.realExtensions.filter((extension) => extension.type === 'events')).toHaveLength(2)
+      expect(app.allExtensions).toEqual([])
+      await expect(app.preDeployValidation()).resolves.toBeUndefined()
+    })
+
     test('creates no events modules for an empty subscription list', async () => {
       await writeConfig(buildAppConfiguration({extra: '[events]\napi_version = "2024-01"\nsubscription = []'}))
 

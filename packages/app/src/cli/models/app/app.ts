@@ -7,6 +7,7 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../exte
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
+import {EventsSpecIdentifier} from '../extensions/specifications/app_config_events.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
@@ -27,7 +28,7 @@ import {
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 
 // Schemas for loading app configuration
 
@@ -379,6 +380,7 @@ export class App<
 
   async preDeployValidation() {
     this.validateWebhookLegacyFlowCompatibility()
+    this.validateEventsLegacyFlowCompatibility()
 
     const functionExtensionsWithUiHandle = this.allExtensions.filter(
       (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
@@ -484,6 +486,32 @@ export class App<
     }
     if (this.configuration.auth?.redirect_urls) {
       this.configuration.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
+    }
+  }
+
+  private validateEventsLegacyFlowCompatibility(): void {
+    if (this.configuration.access_scopes?.use_legacy_install_flow !== true) return
+
+    const hasEventSubscriptions = this.extensionsForType({
+      identifier: EventsSpecIdentifier,
+      externalIdentifier: EventsSpecIdentifier,
+    }).some((extension) => {
+      const subscription = getPathValue(extension.configuration, 'events.subscription')
+      return Array.isArray(subscription)
+        ? subscription.length > 0
+        : typeof subscription === 'object' && subscription !== null
+    })
+
+    if (hasEventSubscriptions) {
+      throw new AbortError(
+        'Events subscriptions are not supported when use_legacy_install_flow is enabled.',
+        `Migrate to Shopify-managed installation before using Events subscriptions.
+Scopes in your TOML configuration are not managed by Shopify while 'use_legacy_install_flow = true'.
+
+Alternatively, continue using shop-specific webhooks with the legacy install flow.
+
+Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
+      )
     }
   }
 
