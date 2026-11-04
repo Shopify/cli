@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 5.0.1
+
+### Patch Changes
+
+- aee032c: Fix false Cloudflare tunnel crash errors when stopping `shopify app dev` on Windows
+- 563e7c3: Accept `--flavor preact` when generating app extensions.
+- 58ada0f: Prevent intermittent app deploy failures when UI extensions in the same folder build concurrently.
+- e854ced: Remove `[extensions.capabilities.network_access] allowed_sources` from theme app extensions; declare network origins with `[network_access] allowed_sources` in `shopify.app.toml` instead.
+- b9ef7ad: Accept all CLI-supported extension flavors and validate compatibility with the selected template.
+- d1a21ba: Fix links to other sites in `theme dev` and theme app extension previews, which always showed the storefront's "leaving this store" page and could redirect back to the local server.
+- afe53c6: Update function-runner to v9.2.3.
+- Updated dependencies [3895769]
+- Updated dependencies [fafefe3]
+- Updated dependencies [d613da0]
+- Updated dependencies [b474cb2]
+- Updated dependencies [d1a21ba]
+  - @shopify/cli-kit@5.0.1
+  - @shopify/theme@5.0.1
+  - @shopify/organizations@5.0.1
+  - @shopify/plugin-cloudflare@5.0.1
+
 ## 5.0.0
 
 ### Major Changes
