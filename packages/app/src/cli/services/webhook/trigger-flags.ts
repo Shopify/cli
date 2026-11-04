@@ -58,7 +58,13 @@ export function validateAddressMethod(address: string, deliveryMethod: string): 
   return [address.trim(), method]
 }
 
-function deliveryMethodInstructions(method: string): string[] {
+/**
+ * Hints describing the address format expected by a delivery method
+ *
+ * @param method - An existing delivery-method
+ * @returns A list of hints, empty if the method has no address format to describe
+ */
+export function deliveryMethodInstructions(method: string): string[] {
   if (method === DELIVERY_METHOD.HTTP) {
     return [
       `For remote HTTP testing, use a URL that starts with https://`,
