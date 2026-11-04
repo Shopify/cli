@@ -62,6 +62,6 @@ export async function handleInput(
   }
 }
 
-function hasDelimiter(input: string): boolean {
+export function hasDelimiter(input: string): boolean {
   return /^\s*(\{\{|{%)/.test(input)
 }

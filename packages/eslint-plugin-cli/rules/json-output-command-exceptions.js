@@ -5,7 +5,6 @@ const commandExceptions = [
 
   // Streaming commands without a single finite result.
   'packages/app/src/cli/commands/app/logs.ts',
-  'packages/theme/src/cli/commands/theme/console.ts',
 ]
 
 module.exports = {commandExceptions}
