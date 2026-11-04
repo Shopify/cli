@@ -1,6 +1,7 @@
 import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
+import * as devUrls from './dev/urls.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {DevSessionLogger} from './dev/processes/dev-session/dev-session-logger.js'
@@ -20,6 +21,7 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 vi.mock('./local-storage.js')
@@ -32,6 +34,75 @@ vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('../utilities/mkcert.js')
 
 describe('dev', () => {
+  test.each(['cancellation', 'completion', 'preparation failure', 'process setup failure', 'session failure'])(
+    'stops the managed tunnel on %s',
+    async (outcome) => {
+      const app = testAppLinked()
+      const failure = new Error('Dev failed')
+      const stopTunnel = vi.fn()
+      const tunnelClient: TunnelClient = {
+        provider: 'cloudflare',
+        port: 3456,
+        getTunnelStatus: () => ({status: 'connected', url: 'https://example.trycloudflare.com'}),
+        stopTunnel,
+      }
+
+      vi.spyOn(devUrls, 'startTunnelPlugin').mockResolvedValue(tunnelClient)
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({
+        name: 'Remote app',
+        application_url: '',
+        embedded: true,
+      })
+      vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+      vi.mocked(checkPortAvailability).mockResolvedValue(true)
+      vi.mocked(setupDevProcesses).mockResolvedValue({
+        processes: [],
+        previewUrl: 'https://dev-store.myshopify.com/admin/apps/api-key',
+        graphiqlUrl: undefined,
+        devSessionStatusManager: new DevSessionStatusManager({isReady: true}),
+      })
+      vi.mocked(renderDev).mockImplementation(async ({abortController}) => {
+        expect(stopTunnel).not.toHaveBeenCalled()
+        if (outcome === 'cancellation') {
+          abortController.abort()
+          expect(stopTunnel).toHaveBeenCalledOnce()
+          abortController.abort()
+        } else if (outcome === 'session failure') {
+          throw failure
+        }
+      })
+
+      if (outcome === 'preparation failure') {
+        vi.mocked(fetchAppRemoteConfiguration).mockRejectedValue(failure)
+      } else if (outcome === 'process setup failure') {
+        vi.mocked(setupDevProcesses).mockRejectedValue(failure)
+      }
+
+      const running = dev({
+        app,
+        project: testProject({usesWorkspaces: true}),
+        remoteApp: testOrganizationApp({apiKey: 'api-key'}),
+        organization: testOrganization(),
+        specifications: [],
+        developerPlatformClient: testDeveloperPlatformClient(),
+        store: testOrganizationStore({}),
+        directory: app.directory,
+        update: false,
+        commandConfig: {runHook: vi.fn().mockResolvedValue({successes: []})} as any,
+        skipDependenciesInstallation: true,
+        tunnel: {mode: 'auto'},
+      })
+
+      if (outcome.endsWith('failure')) {
+        await expect(running).rejects.toBe(failure)
+      } else {
+        await running
+      }
+
+      expect(stopTunnel).toHaveBeenCalledOnce()
+    },
+  )
+
   test('logs store domain metadata when launching dev', async () => {
     const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
     const app = testAppLinked()
