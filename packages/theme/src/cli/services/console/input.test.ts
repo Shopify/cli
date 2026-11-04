@@ -25,7 +25,7 @@ test('rejects an empty script file', async () => {
     const scriptFile = joinPath(directory, 'commands.txt')
     await writeFile(scriptFile, '\n \r\n')
 
-    await expect(loadConsoleInputs(undefined, scriptFile)).rejects.toThrow('at least one Liquid command')
+    await expect(loadConsoleInputs(undefined, scriptFile)).rejects.toThrow('at least one Liquid snippet')
   })
 })
 
