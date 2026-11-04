@@ -769,6 +769,33 @@ describe('theme-fs', () => {
         expect(Buffer.isBuffer(content)).toBe(true)
       })
     })
+
+    test(`returns undefined when a parent segment of the key isn't a directory`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const key = 'templates/404.json/nested.json'
+
+        // When
+        const content = await readThemeFile(root, key)
+
+        // Then
+        expect(content).toBeUndefined()
+      })
+    })
+
+    test('surfaces read failures that are not a missing file', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const key = 'templates'
+
+        // When/Then
+        await expect(readThemeFile(root, key)).rejects.toThrow()
+      })
+    })
   })
 
   describe('isThemeAsset', () => {
