@@ -95,7 +95,8 @@ export interface DevInstance {
   tee: (
     target: Writable,
     options: {
-      source: string
+      /** Omit the source field when the stream does not need to distinguish producers. */
+      source?: string
       /** Treat each string write as a complete message. Byte writes remain buffered into lines. */
       stringWritesAreMessages?: boolean
     },

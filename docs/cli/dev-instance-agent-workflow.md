@@ -68,3 +68,28 @@ With `--json`, dev stream records use identical JSONL bytes in stdout and the se
 log. The log contains process output, preview URLs, and session status messages.
 CLI setup messages and other diagnostics use stderr. Fatal CLI errors use the
 standard JSON error output on stdout and are not added to the session log.
+
+## Theme dev
+
+`shopify theme dev` owns one session per store and theme ID in a directory.
+Sessions for different listings of the same store and theme cannot run together.
+Different stores or theme IDs can run together.
+
+The instance details include `store`, `themeId`, `themeName`, `listing` when set,
+`host`, `port`, and `urls` with `local`, `preview`, `themeEditor`, and `giftCard`
+links. URLs are added during setup. The instance status becomes `running` after
+the server is listening and initial synchronization has completed.
+
+The log includes theme dev messages, file synchronization results, request lines,
+errors, and setup progress. Theme records omit the redundant `source` field.
+Authentication before the session and fatal CLI errors reported after it are
+outside this log.
+
+With `--json`, the session writes identical JSONL bytes to stdout and the log.
+Each record contains `timestamp` and `message`, without `type`, `stream`, or
+`source`. Request and file synchronization messages omit terminal timestamps,
+decoration, and alignment spaces. Request paths are not truncated in JSON mode.
+Setup diagnostics use stderr; fatal CLI errors use the standard JSON
+error envelope on stdout and are not added to the log. There is no final success
+result. Use `--json --no-input` for unattended runs and `--json-schema` to inspect
+the stream record and error schemas.

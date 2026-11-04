@@ -4,9 +4,7 @@ const commandExceptions = [
   // Do not add new finite commands to this section.
 
   // Streaming commands without a single finite result.
-  'packages/app/src/cli/commands/app/dev.ts',
   'packages/app/src/cli/commands/app/logs.ts',
-  'packages/theme/src/cli/commands/theme/dev.ts',
 ]
 
 module.exports = {commandExceptions}
