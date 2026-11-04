@@ -163,6 +163,26 @@ test('reports cancellation without fetching or writing definitions', async () =>
   })
 })
 
+test('reports the language server skip without fetching or writing definitions', async () => {
+  vi.stubEnv('SHOPIFY_LANGUAGE_SERVER', '1')
+  try {
+    await inTemporaryDirectory(async (directory) => {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await expect(run(directory)).resolves.toBe(0)
+        const result = JSON.parse(stdout())
+        expect(result).toEqual({status: 'skipped', reason: 'not-a-theme'})
+        expect(themeMetafieldsPullJsonOutputSchema.validate(result)).toEqual(result)
+        expect(stderr()).toBe('')
+        expect(ensureDirectoryConfirmed).not.toHaveBeenCalled()
+        expect(metafieldDefinitionsByOwnerType).not.toHaveBeenCalled()
+      })
+      await expect(fileExists(joinPath(directory, '.shopify/metafields.json'))).resolves.toBe(false)
+    })
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
+
 test('does not emit a result when writing the downloaded file fails', async () => {
   vi.mocked(metafieldDefinitionsByOwnerType).mockResolvedValue([])
   await inTemporaryDirectory(async (directory) => {
