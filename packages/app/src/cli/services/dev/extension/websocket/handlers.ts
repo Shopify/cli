@@ -9,8 +9,43 @@ import {
 import {RawData, WebSocket, WebSocketServer} from 'ws'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
+
+const incomingMessageSchema = zod.discriminatedUnion('event', [
+  zod.object({
+    event: zod.literal(EventType.Update),
+    data: zod.object({
+      app: zod.object({apiKey: zod.string()}).passthrough().optional(),
+      extensions: zod
+        .array(
+          zod.object({
+            uuid: zod.string(),
+            extensionPoints: zod
+              .union([zod.array(zod.string()), zod.array(zod.object({target: zod.string()})), zod.null()])
+              .optional(),
+          }),
+        )
+        .optional(),
+    }),
+  }),
+  zod.object({
+    event: zod.literal(EventType.Dispatch),
+    data: zod.object({
+      type: zod.enum(['focus', 'unfocus']),
+      payload: zod.array(zod.object({uuid: zod.string()})).optional(),
+    }),
+  }),
+  zod.object({
+    event: zod.literal(EventType.Log),
+    data: zod.object({
+      type: zod.string(),
+      message: zod.string(),
+      extensionName: zod.string(),
+    }),
+  }),
+])
 
 export function websocketUpgradeHandler(
   wss: WebSocketServer,
@@ -108,6 +143,10 @@ export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocke
         return
       }
       throw error
+    }
+    if (!incomingMessageSchema.safeParse(jsonData).success) {
+      outputDebug('Ignoring websocket message with an invalid shape', options.stdout)
+      return
     }
     const {event: eventType, data: eventData} = jsonData
 
