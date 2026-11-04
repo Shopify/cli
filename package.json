@@ -70,7 +70,7 @@
     "graphql-tag": "^2.12.7",
     "json-stringify-deterministic": "1.0.14",
     "knip": "5.88.1",
-    "liquidjs": "10.27.0",
+    "liquidjs": "10.27.2",
     "node-fetch": "^3.3.2",
     "nx": "22.7.7",
     "oclif": "4.23.27",
