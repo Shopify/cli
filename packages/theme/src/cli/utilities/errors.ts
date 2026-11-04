@@ -84,16 +84,35 @@ export function createFetchError(resource: Partial<Response & Error>, url?: stri
  * @param fetchError - The error to extract information from.
  * @param context - The context description of the error.
  */
+/**
+ * Finds the first `code` carried by an error or one of its nested causes.
+ * Fetch failures hide the actionable error (for example undici's
+ * `UND_ERR_HEADERS_OVERFLOW`) one or two `cause` hops below a generic
+ * `TypeError: fetch failed`, so walk the chain instead of only looking at
+ * the outermost error.
+ */
+function findCauseCode(error: Error): string | undefined {
+  let current: unknown = error
+  for (let depth = 0; depth < 5 && current instanceof Error; depth++) {
+    const code = (current as Error & {code?: unknown}).code
+    if (typeof code === 'string' && code.length > 0) return code
+    current = current.cause
+  }
+  return undefined
+}
+
 export function extractFetchErrorInfo(fetchError: Error | FetchError, context = 'Unexpected error during fetch') {
   const error = fetchError as FetchError
   const status = error.statusCode ?? 502
   const statusText = error.statusMessage ?? 'Bad Gateway'
 
+  const cause = (error.cause ?? fetchError) as Error
+  const causeCode = findCauseCode(cause)
+
   let headline = `${context.replace(/\.$/, '')} with status ${status} (${statusText}).`
   if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
   if (error.data?.url) headline += `\nURL: ${error.data.url}`
-
-  const cause = (error.cause ?? fetchError) as Error
+  if (causeCode) headline += `\nCause: ${causeCode}`
 
   return {
     headline,
@@ -101,6 +120,7 @@ export function extractFetchErrorInfo(fetchError: Error | FetchError, context = 
     status,
     statusText,
     cause,
+    causeCode,
     requestId: error.data?.requestId,
     url: error.data?.url,
   }

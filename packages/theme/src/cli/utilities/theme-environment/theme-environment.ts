@@ -1,4 +1,5 @@
 import {getHotReloadHandler, setupInMemoryTemplateWatcher} from './hot-reload/server.js'
+import {MAX_HEADER_SIZE, installStorefrontFetchDispatcher} from './storefront-fetch.js'
 import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
@@ -130,6 +131,8 @@ interface DevelopmentServerInstance {
 }
 
 function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
+  installStorefrontFetchDispatcher()
+
   const app = createApp()
   const allowedOrigins = [
     `http://${ctx.options.host}:${ctx.options.port}`,
@@ -168,7 +171,10 @@ function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWor
   app.use(getProxyHandler(theme, ctx))
   app.use(getHtmlHandler(theme, ctx))
 
-  const server = createServer(toNodeListener(app))
+  // Pin the request-header cap for the same reason as the fetch dispatcher:
+  // the browser's cookie jar for this origin accumulates the storefront's
+  // cookies, so legitimate requests can exceed Node's default cap.
+  const server = createServer({maxHeaderSize: MAX_HEADER_SIZE}, toNodeListener(app))
 
   return {
     dispatch: app.handler.bind(app),

@@ -5,6 +5,7 @@ import {getAssetsHandler} from '../theme-environment/local-assets.js'
 import {getProxyHandler} from '../theme-environment/proxy.js'
 import {getHotReloadHandler, triggerHotReload} from '../theme-environment/hot-reload/server.js'
 import {createHostValidationHandler} from '../theme-environment/host-validation.js'
+import {MAX_HEADER_SIZE, installStorefrontFetchDispatcher} from '../theme-environment/storefront-fetch.js'
 import {emptyThemeFileSystem} from '../theme-fs-empty.js'
 import {initializeDevServerSession} from '../theme-environment/dev-server-session.js'
 import {createApp, toNodeListener} from 'h3'
@@ -36,6 +37,8 @@ export async function initializeDevelopmentExtensionServer(theme: Theme, devExt:
 }
 
 export function createDevelopmentExtensionServer(theme: Theme, ctx: DevServerContext) {
+  installStorefrontFetchDispatcher()
+
   const app = createApp()
 
   app.use(createHostValidationHandler(ctx.options.host, ctx.options.port))
@@ -44,7 +47,7 @@ export function createDevelopmentExtensionServer(theme: Theme, ctx: DevServerCon
   app.use(getProxyHandler(theme, ctx))
   app.use(getHtmlHandler(theme, ctx))
 
-  const server = createServer(toNodeListener(app))
+  const server = createServer({maxHeaderSize: MAX_HEADER_SIZE}, toNodeListener(app))
 
   return {
     dispatch: app.handler.bind(app),
