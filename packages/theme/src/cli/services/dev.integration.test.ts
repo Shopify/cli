@@ -104,7 +104,10 @@ test('drains logs and reports fatal preview failures through the CLI JSON handle
             await running
           }
         }
-        await PreviewCommand.run(['--json'], ${JSON.stringify(cliPackageUrl)}).catch(() => process.exit(1))
+        await PreviewCommand.run(['--json'], ${JSON.stringify(cliPackageUrl)}).catch((error) => {
+          console.error(error)
+          process.exit(1)
+        })
       `
     const result = await captureOutputWithExitCode(
       process.execPath,
@@ -124,6 +127,7 @@ test('drains logs and reports fatal preview failures through the CLI JSON handle
       },
     )
     expect(result.exitCode, result.stderr).toBe(1)
+    expect(result.stdout, result.stderr).not.toBe('')
     const lines = result.stdout.trimEnd().split('\n')
     expect(JSON.parse(lines.pop()!)).toMatchObject({
       error: {type: 'abort', message: expect.stringContaining('Theme ID mismatch: expected 123 but got 456.')},

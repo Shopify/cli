@@ -1,5 +1,7 @@
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
+export {isExitPageRequest} from '../../src/cli/utilities/theme-environment/storefront-renderer.js'
+
 export const fetchChecksums = async () => []
 export const uploadTheme = () => ({workPromise: Promise.resolve(), renderThemeSyncProgress: async () => {}})
 
