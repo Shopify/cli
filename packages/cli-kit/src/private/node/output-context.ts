@@ -4,6 +4,8 @@ export interface ConcurrentOutputContext {
   outputPrefix?: string
   /** Controls ANSI stripping for terminal output. JSON diagnostics are always unstyled. */
   stripAnsi?: boolean
+  /** Captures console messages before the terminal renderer handles them. */
+  consoleWarn?: (message: string) => void
 }
 
 const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()

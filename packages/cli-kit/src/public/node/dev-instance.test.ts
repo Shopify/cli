@@ -69,6 +69,26 @@ describe('withDevInstance', () => {
 })
 
 describe('acquireDevInstance', () => {
+  test('omits sources from direct messages and streams when no source is supplied', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const mirror = collectingStream()
+      const target = collectingStream()
+      const identity = {command: 'theme dev', directory}
+      await withDevInstance({...identity, logOutput: mirror.stream}, async (instance) => {
+        await instance.log({message: 'Setup'})
+        const output = instance.tee(target.stream, {stringWritesAreMessages: true})
+        useConcurrentOutputContext({outputPrefix: 'theme'}, () => output.write('Ready\n'))
+      })
+      const {logFile} = devInstancePaths(identity)
+      await expect(readLog(logFile)).resolves.toEqual([
+        {timestamp: expect.any(String), message: 'Setup'},
+        {timestamp: expect.any(String), message: 'Ready'},
+      ])
+      expect(target.chunks.join('')).toBe('Ready\n')
+      expect(mirror.chunks.join('')).toBe(await readFile(logFile))
+    })
+  })
+
   test('does not include CLI fatal errors in the session log schema', () => {
     expect(() =>
       devInstanceLogOutputSchema.validate({

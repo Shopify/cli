@@ -2009,7 +2009,7 @@ DESCRIPTION
       },
       "source": {
         "type": "string",
-        "description": "What produced the line, for example a process prefix like web or extensions."
+        "description": "What produced the line, for example a process prefix like web or extensions, when needed."
       },
       "level": {
         "type": "string",
@@ -2026,7 +2026,6 @@ DESCRIPTION
     },
     "required": [
       "timestamp",
-      "source",
       "message"
     ],
     "additionalProperties": false,

@@ -17,7 +17,10 @@ export const devInstanceLogOutputSchema = defineJsonOutputSchema({
   schema: zod
     .object({
       timestamp: jsonOutputTimestampSchema,
-      source: zod.string().describe('What produced the line, for example a process prefix like web or extensions.'),
+      source: zod
+        .string()
+        .optional()
+        .describe('What produced the line, for example a process prefix like web or extensions, when needed.'),
       level: zod.enum(['debug', 'info', 'warning', 'error']).optional(),
       message: zod.string(),
     })
@@ -63,7 +66,7 @@ export function createDevInstanceOutput({logFile, logOutput, isActive, onError}:
     log: writeLogEntry,
     tee: (
       target: Writable,
-      {source, stringWritesAreMessages = false}: {source: string; stringWritesAreMessages?: boolean},
+      {source, stringWritesAreMessages = false}: {source?: string; stringWritesAreMessages?: boolean},
     ) => {
       const decoder = new StringDecoder('utf8')
       let pending = ''
@@ -82,7 +85,7 @@ export function createDevInstanceOutput({logFile, logOutput, isActive, onError}:
       const output = new DevInstanceOutput({
         decodeStrings: !stringWritesAreMessages,
         write(chunk: Buffer | string, encoding, callback) {
-          const nextSource = getConcurrentOutputContext()?.outputPrefix ?? source
+          const nextSource = source === undefined ? undefined : (getConcurrentOutputContext()?.outputPrefix ?? source)
           const completeMessage = stringWritesAreMessages && typeof chunk === 'string'
           const previous = nextSource !== currentSource || completeMessage ? flush() : Promise.resolve()
           currentSource = nextSource
