@@ -296,21 +296,22 @@ describe('fetchThemes', () => {
     )
   })
 
-  test('throws a gateway error that is not reported as unexpected when the edge answers HTTP 520', async () => {
+  test('rethrows a raw HTTP 520 ClientError without reporting it as unexpected', async () => {
     // Given
     const errorResponse = {
       status: 520,
       headers: {},
       error: '<!DOCTYPE html><html><body>Something went wrong</body></html>',
     }
-    vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError(errorResponse as any, {query: ''}))
+    const gatewayError = new ClientError(errorResponse as any, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(gatewayError)
 
     // When
-    const error = await fetchThemes(session).catch((error: unknown) => error)
+    const request = fetchThemes(session)
 
     // Then
-    expect(error).toBeInstanceOf(ClientError)
-    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    await expect(request).rejects.toBe(gatewayError)
+    expect(shouldReportErrorAsUnexpected(gatewayError)).toBe(false)
   })
 })
 
