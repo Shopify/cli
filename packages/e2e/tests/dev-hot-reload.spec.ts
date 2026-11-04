@@ -57,7 +57,7 @@ test.describe('Dev hot reload', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
+        env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
@@ -123,7 +123,7 @@ test.describe('Dev hot reload', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
+        env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
@@ -182,7 +182,7 @@ test.describe('Dev hot reload', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
+        env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {

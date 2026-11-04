@@ -22,7 +22,7 @@ const LoadingBar = ({title, noColor, noProgressBar}: React.PropsWithChildren<Loa
   const colorsDisabled = noColor ?? !shouldDisplayColors()
 
   if (!isTTY || noProgressBar) {
-    return <Text>{title} ...</Text>
+    return <Text>{title}...</Text>
   }
 
   return <LoadingIndicator title={title} noColor={colorsDisabled} />
