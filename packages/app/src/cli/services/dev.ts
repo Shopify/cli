@@ -87,23 +87,28 @@ export function withDevSession<T>(
 }
 
 export async function dev(commandOptions: DevOptions) {
-  const config = await prepareForDev(commandOptions)
-  await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, graphiqlUrl, previewUrl, devSessionStatusManager} = await setupDevProcesses(config)
-  await actionsBeforeLaunchingDevProcesses(config)
-  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config, devSessionStatusManager})
-}
-
-async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
-  const {app, remoteApp, developerPlatformClient, store, specifications, tunnel} = commandOptions
-
-  // Be optimistic about tunnel creation and do it as early as possible
+  const abortController = new AbortController()
   let tunnelClient: TunnelClient | undefined
 
-  if (tunnel.mode === 'auto') {
-    const tunnelPort = await getAvailableTCPPort()
-    tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
+  try {
+    if (commandOptions.tunnel.mode === 'auto') {
+      const tunnelPort = await getAvailableTCPPort()
+      tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
+      abortController.signal.addEventListener('abort', () => tunnelClient?.stopTunnel(), {once: true})
+    }
+
+    const config = await prepareForDev(commandOptions, tunnelClient)
+    await actionsBeforeSettingUpDevProcesses(config)
+    const {processes, graphiqlUrl, previewUrl, devSessionStatusManager} = await setupDevProcesses(config)
+    await actionsBeforeLaunchingDevProcesses(config)
+    await launchDevProcesses({processes, previewUrl, graphiqlUrl, config, devSessionStatusManager, abortController})
+  } finally {
+    abortController.abort()
   }
+}
+
+async function prepareForDev(commandOptions: DevOptions, tunnelClient?: TunnelClient): Promise<DevConfig> {
+  const {app, remoteApp, developerPlatformClient, store, specifications, tunnel} = commandOptions
 
   const remoteConfiguration = await fetchAppRemoteConfiguration(
     remoteApp,
@@ -341,14 +346,15 @@ async function launchDevProcesses({
   graphiqlUrl,
   config,
   devSessionStatusManager,
+  abortController,
 }: {
   processes: DevProcesses
   previewUrl: string
   graphiqlUrl: string | undefined
   config: DevConfig
   devSessionStatusManager: DevSessionStatusManager
+  abortController: AbortController
 }) {
-  const abortController = new AbortController()
   const devInstance = config.commandOptions.devInstance
   const processesForTaskRunner: OutputProcess[] = processes.map((process) => {
     const outputProcess: OutputProcess = {
