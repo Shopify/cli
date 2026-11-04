@@ -86,6 +86,9 @@ envelope. Keep domain details under `details`, and add stable error codes when c
 retain `details.errors`, `details.extensions`, and partial `details.data` when available. Do not print a result followed
 by a second fatal document.
 
+Exception: `shopify app logs-next` omits partial `details.data` on GraphQL failures so failed queries never return
+log results.
+
 Fatal errors and diagnostic events may include a nonempty string `code` when a stable code is known. Omit unknown
 codes rather than using `null` or an empty string. Keep upstream error codes inside their native `details` payload.
 
