@@ -263,6 +263,11 @@ interface PatchResponseOptions {
    * Only the storefront exit page needs this: it redirects shoppers to another site.
    */
   keepExternalRedirects?: boolean
+  /**
+   * Store the response's `_shopify_essential` as the dev session cookie (default: true).
+   * Only requests sent with the dev session's credentials get a cookie bound to the development theme.
+   */
+  captureSessionCookie?: boolean
 }
 
 function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response, options?: PatchResponseOptions) {
@@ -301,7 +306,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
     response.headers.set('Set-Cookie', patchCookieDomains(setCookieHeader, ctx).join(','))
 
     const latestShopifyEssential = setCookieHeader.join(',').match(SESSION_COOKIE_REGEXP)?.[1]
-    if (latestShopifyEssential) {
+    if (latestShopifyEssential && options?.captureSessionCookie !== false) {
       ctx.session.sessionCookies[SESSION_COOKIE_NAME] = latestShopifyEssential
     }
   }
@@ -407,7 +412,11 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     redirect: 'manual',
     headers,
   } as RequestInit & {duplex?: 'half'})
-    .then((response) => patchProxiedResponseHeaders(ctx, response))
+    .then((response) =>
+      patchProxiedResponseHeaders(ctx, response, {
+        captureSessionCookie: !isPassthroughRequest(event) && needsBearerToken(event.path),
+      }),
+    )
     .catch((error: Error) => {
       throw createFetchError(recordError(error), url)
     })
