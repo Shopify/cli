@@ -7,7 +7,6 @@ import {
   MultipleCaptureSchema,
   SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
-import {validateUrl} from '../../../app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type AcceleratedWalletPaymentsAppExtensionConfigType = zod.infer<
@@ -17,6 +16,28 @@ export type AcceleratedWalletPaymentsAppExtensionConfigType = zod.infer<
 export const ACCELERATED_WALLET_TARGET = 'payments.accelerated-wallet.render'
 
 const HexColorSchema = zod.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex color, like #1A2B3C')
+
+const BUTTON_LOGO_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico']
+
+// Checks the shape only, not that the file exists. Backslashes count as separators too, so a Windows-style path
+// can't start at a root or step out of the extension folder either.
+function isButtonLogoPath(path: string): boolean {
+  const hasScheme = path.split('/')[0]!.includes(':')
+  const segments = path.split(/[/\\]/)
+  const startsAtRoot = segments[0] === ''
+  const fileName = segments[segments.length - 1]!
+  const hasImageExtension = BUTTON_LOGO_EXTENSIONS.some(
+    (extension) => fileName.endsWith(extension) && fileName.length > extension.length,
+  )
+  return !hasScheme && !startsAtRoot && !segments.includes('..') && hasImageExtension
+}
+
+const ButtonLogoPathSchema = zod
+  .string()
+  .refine(
+    isButtonLogoPath,
+    `Must be a relative path inside the extension folder to a ${BUTTON_LOGO_EXTENSIONS.join(', ')} file, like assets/logo.png`,
+  )
 
 export const AcceleratedWalletPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
@@ -29,9 +50,12 @@ export const AcceleratedWalletPaymentsAppExtensionSchema = BasePaymentsAppExtens
     supports_3ds: zod.boolean().optional(),
     wallet_session_create_url: zod.string().url(),
     wallet_session_verify_url: zod.string().url(),
-    button_logo_url: validateUrl(zod.string(), {httpsOnly: true, message: 'Must be an HTTPS URL'}),
+    button_logo_path: ButtonLogoPathSchema,
+    button_logo_path_dark: ButtonLogoPathSchema,
     button_background_color: HexColorSchema,
+    button_background_color_dark: HexColorSchema,
     button_foreground_color: HexColorSchema,
+    button_foreground_color_dark: HexColorSchema,
   })
   .refine((schema) => !schema.supports_oversell_protection || schema.confirmation_callback_url, {
     message: 'Property required when supports_oversell_protection is true',
@@ -60,9 +84,12 @@ export interface AcceleratedWalletPaymentsAppExtensionDeployConfigType extends B
   // AcceleratedWallet-specific fields
   wallet_session_create_url: string
   wallet_session_verify_url: string
-  button_logo_url: string
+  button_logo_path: string
+  button_logo_path_dark: string
   button_background_color: string
+  button_background_color_dark: string
   button_foreground_color: string
+  button_foreground_color_dark: string
 }
 
 export function acceleratedWalletDeployConfigToCLIConfig(
@@ -89,9 +116,12 @@ export function acceleratedWalletDeployConfigToCLIConfig(
     supports_installments: config.supports_installments,
     wallet_session_create_url: config.wallet_session_create_url,
     wallet_session_verify_url: config.wallet_session_verify_url,
-    button_logo_url: config.button_logo_url,
+    button_logo_path: config.button_logo_path,
+    button_logo_path_dark: config.button_logo_path_dark,
     button_background_color: config.button_background_color,
+    button_background_color_dark: config.button_background_color_dark,
     button_foreground_color: config.button_foreground_color,
+    button_foreground_color_dark: config.button_foreground_color_dark,
   }
 }
 
@@ -119,8 +149,11 @@ export async function acceleratedWalletPaymentsAppExtensionDeployConfig(
     supports_installments: config.supports_installments,
     wallet_session_create_url: config.wallet_session_create_url,
     wallet_session_verify_url: config.wallet_session_verify_url,
-    button_logo_url: config.button_logo_url,
+    button_logo_path: config.button_logo_path,
+    button_logo_path_dark: config.button_logo_path_dark,
     button_background_color: config.button_background_color,
+    button_background_color_dark: config.button_background_color_dark,
     button_foreground_color: config.button_foreground_color,
+    button_foreground_color_dark: config.button_foreground_color_dark,
   }
 }
