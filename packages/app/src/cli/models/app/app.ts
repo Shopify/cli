@@ -508,8 +508,6 @@ export class App<
         `Migrate to Shopify-managed installation before using Events subscriptions.
 Scopes in your TOML configuration are not managed by Shopify while 'use_legacy_install_flow = true'.
 
-Alternatively, continue using shop-specific webhooks with the legacy install flow.
-
 Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
       )
     }

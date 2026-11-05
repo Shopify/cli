@@ -2536,8 +2536,6 @@ describe('load', () => {
         tryMessage: `Migrate to Shopify-managed installation before using Events subscriptions.
 Scopes in your TOML configuration are not managed by Shopify while 'use_legacy_install_flow = true'.
 
-Alternatively, continue using shop-specific webhooks with the legacy install flow.
-
 Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
       })
     })
@@ -2592,6 +2590,70 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
         await expect(app.preDeployValidation()).resolves.toBeUndefined()
       },
     )
+
+    test.each([
+      {name: 'legacy with Events', legacy: true, events: eventsConfiguration, reject: true},
+      {name: 'managed with Events', legacy: false, events: eventsConfiguration, reject: false},
+      {name: 'legacy with empty Events', legacy: true, events: '[events]\nsubscription = []', reject: false},
+      {name: 'legacy without Events', legacy: true, events: '', reject: false},
+    ])('keeps compliance webhooks separate from Events rejection: $name', async ({legacy, events, reject}) => {
+      await writeConfig(
+        buildAppConfiguration({
+          extra: `
+            [access_scopes]
+            scopes = "read_products"
+            use_legacy_install_flow = ${legacy}
+            ${events}
+            [[webhooks.subscriptions]]
+            compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+            uri = "/compliance"
+          `,
+        }),
+      )
+
+      const app = await loadTestingApp()
+
+      expect(app.errors.getErrors()).toEqual([])
+      expect(
+        app.extensionsForType({
+          identifier: 'privacy_compliance_webhooks',
+          externalIdentifier: 'privacy_compliance_webhooks',
+        }),
+      ).toHaveLength(1)
+      if (reject) {
+        await expect(app.preDeployValidation()).rejects.toMatchObject({
+          message: 'Events subscriptions are not supported when use_legacy_install_flow is enabled.',
+        })
+      } else {
+        await expect(app.preDeployValidation()).resolves.toBeUndefined()
+      }
+    })
+
+    test('allows legacy installation with the older privacy compliance configuration', async () => {
+      await writeConfig(
+        buildAppConfiguration({
+          extra: `
+            [access_scopes]
+            use_legacy_install_flow = true
+            [webhooks.privacy_compliance]
+            customer_deletion_url = "https://example.com/compliance"
+            customer_data_request_url = "https://example.com/compliance"
+            shop_deletion_url = "https://example.com/compliance"
+          `,
+        }),
+      )
+
+      const app = await loadTestingApp()
+
+      expect(app.errors.getErrors()).toEqual([])
+      expect(
+        app.extensionsForType({
+          identifier: 'privacy_compliance_webhooks',
+          externalIdentifier: 'privacy_compliance_webhooks',
+        }),
+      ).toHaveLength(1)
+      await expect(app.preDeployValidation()).resolves.toBeUndefined()
+    })
 
     test('does not validate Events subscriptions excluded from deployment', async () => {
       await writeConfig(
