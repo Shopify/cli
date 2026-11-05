@@ -9,6 +9,18 @@ describe('asset-checksum', () => {
   const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
 
   describe('calculateChecksum', async () => {
+    test('escapes forward slashes in settings data when calculating its checksum', () => {
+      // Given
+      const file = 'config/settings_data.json'
+      const unescaped = String.raw`{"logo":"shopify://shop_images/logo.png"}`
+      const escaped = String.raw`{"logo":"shopify:\/\/shop_images\/logo.png"}`
+      const expectedChecksum = '9c33fd0c98b99cf06e7193d5d4f3bc5e'
+
+      // When/Then
+      expect(calculateChecksum(file, unescaped)).toEqual(expectedChecksum)
+      expect(calculateChecksum(file, escaped)).toEqual(expectedChecksum)
+    })
+
     const testCases = [
       {file: 'assets/base.css', expectedChecksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17'},
       {file: 'assets/sparkle.gif', expectedChecksum: '7adcd48a3cc215a81fabd9dafb919507'},

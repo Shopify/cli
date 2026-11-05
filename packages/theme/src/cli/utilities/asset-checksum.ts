@@ -12,8 +12,8 @@ export function calculateChecksum(fileKey: string, fileContent: string | Buffer 
   }
 
   /**
-   * Settings data files are always minified before persistence, so their
-   * checksum calculation accounts for that minification.
+   * Settings data files are minified with forward slashes escaped before
+   * persistence, so their checksum calculation accounts for those changes.
    */
   if (isSettingsData(fileKey)) {
     return minifiedJSONFileChecksum(fileContent)
@@ -28,8 +28,40 @@ function minifiedJSONFileChecksum(fileContent: string) {
   content = content.replace(/\r\n/g, '\n')
   content = content.replace(/\/\*[\s\S]*?\*\//, '')
   content = normalizeJson(content)
+  content = escapeForwardSlashesInStrings(content)
 
   return md5(content)
+}
+
+function escapeForwardSlashesInStrings(jsonStr: string) {
+  let inStr = false
+  let wasBackslash = false
+  let hasEscapedSlash = false
+  let lastCopiedIndex = 0
+  const parts: string[] = []
+
+  for (let index = 0; index < jsonStr.length; index++) {
+    const char = jsonStr[index]
+
+    if (char === '"' && !wasBackslash) {
+      inStr = !inStr
+    }
+
+    if (inStr && char === '/' && !wasBackslash) {
+      parts.push(jsonStr.slice(lastCopiedIndex, index), '\\')
+      lastCopiedIndex = index
+      hasEscapedSlash = true
+    }
+
+    wasBackslash = char === '\\' && !wasBackslash
+  }
+
+  if (!hasEscapedSlash) {
+    return jsonStr
+  }
+
+  parts.push(jsonStr.slice(lastCopiedIndex))
+  return parts.join('')
 }
 
 function regularFileChecksum(fileKey: string, fileContent: string) {
