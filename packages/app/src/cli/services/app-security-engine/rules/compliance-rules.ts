@@ -1,6 +1,8 @@
+import {configurationLocator} from './config-rules.js'
 import {isReactRouterServerPath} from '../capabilities/detect.js'
+import {tomlKey} from '../scanners/toml-locations.js'
 import {relativePath} from '@shopify/cli-kit/node/path'
-import type {Issue} from '../types.js'
+import type {Issue, Location} from '../types.js'
 import type {ScanContext, Rule, SourceFile} from './types.js'
 
 const MANDATORY_TOPICS = ['shop/redact', 'customers/data_request', 'customers/redact']
@@ -60,9 +62,8 @@ export function isEolApiVersion(version: string, referenceDate: Date, graceDays 
 export function scanEolApiVersions(context: ScanContext, referenceDate = new Date()): Issue[] {
   const configIssues = context.appTomls.flatMap((configuration) => {
     if (!configuration.apiVersion || !isEolApiVersion(configuration.apiVersion, referenceDate)) return []
-    return [
-      makeEolIssue(relativePath(context.appRoot, configuration.path).replace(/\\/g, '/'), configuration.apiVersion),
-    ]
+    const location = configurationLocator(context.appRoot, configuration)(tomlKey(['webhooks', 'api_version']))
+    return [makeEolIssue(location, configuration.apiVersion)]
   })
 
   if (context.detection.framework !== 'react_router') return configIssues
@@ -82,7 +83,7 @@ function scanReactRouterApiVersion(file: SourceFile, reactRouterRoots: string[],
   return declarations.flatMap((match) => {
     const version = match[1]?.includes('-') ? match[1] : enumApiVersion(match[1]!, match[2]!)
     if (!version || !isEolApiVersion(version, referenceDate)) return []
-    return [makeEolIssue(file.path, version, lineAt(file.content!, match.index ?? 0))]
+    return [makeEolIssue({file: file.path, line: lineAt(file.content!, match.index ?? 0)}, version)]
   })
 }
 
@@ -93,14 +94,14 @@ function enumApiVersion(monthName: string, yearText: string): string | undefined
   return `${year}-${month}`
 }
 
-function makeEolIssue(file: string, version: string, line?: number): Issue {
+function makeEolIssue(location: Location, version: string): Issue {
   return {
     id: 'EOL_API_VERSION',
     severity: 'low',
     points: -5,
     title: 'End-of-life API version',
     message: `API version ${version} is past its 12-month support window and 30-day extension grace period.`,
-    location: {file, ...(line === undefined ? {} : {line})},
+    location,
     fix: {
       automated: false,
       description: 'Select a currently supported Shopify API version.',
