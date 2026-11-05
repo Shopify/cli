@@ -270,6 +270,115 @@ describe('getOnMessageHandler()', () => {
     // Verify no client messages were sent since this was a log event
     wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
   })
+
+  test('ignores an incoming message that is not JSON', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = Buffer.from('not json') as unknown as RawData
+
+    expect(() => getOnMessageHandler(wss, options)(data)).not.toThrow()
+
+    expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
+    expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()
+    wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
+
+  test.each(
+    [
+      null,
+      true,
+      42,
+      'message',
+      [],
+      {},
+      {event: 'log'},
+      {event: 'log', data: null},
+      {event: 'log', data: []},
+      {event: 'log', data: {}},
+      {event: 'log', data: {type: 42, message: 'message', extensionName: 'extension'}},
+      {event: 'log', data: {type: 'info', message: {}, extensionName: 'extension'}},
+      {event: 'log', data: {type: 'info', message: 'message'}},
+      {event: 'log', data: {type: 'info', message: 'message', extensionName: null}},
+      {event: 'update'},
+      {event: 'update', data: null},
+      {event: 'update', data: []},
+      {event: 'update', data: {app: 'app'}},
+      {event: 'update', data: {app: {apiKey: 42}}},
+      {event: 'update', data: {extensions: {}}},
+      {event: 'update', data: {extensions: [null]}},
+      {event: 'update', data: {extensions: [{}]}},
+      {event: 'update', data: {extensions: [{uuid: 'extension', extensionPoints: [null]}]}},
+      {event: 'update', data: {extensions: [{uuid: 'extension', extensionPoints: [{}]}]}},
+      {event: 'dispatch'},
+      {event: 'dispatch', data: null},
+      {event: 'dispatch', data: {type: 42}},
+      {event: 'dispatch', data: {type: 'focus', payload: [null]}},
+    ].map((message) => [message]),
+  )('ignores an incoming message with an invalid shape: %j', (message) => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = Buffer.from(JSON.stringify(message))
+
+    expect(() => getOnMessageHandler(wss, options)(data)).not.toThrow()
+
+    expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
+    expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()
+    expect(useConcurrentOutputContext).not.toHaveBeenCalled()
+    wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
+
+  test.each(
+    [undefined, null, [], ['target'], [{target: 'target', resource: {url: 'https://example.com'}}]].map(
+      (extensionPoints) => [extensionPoints],
+    ),
+  )('preserves valid extension update fields with extension points: %j', (extensionPoints) => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const app = {apiKey: 'test-app-api-key', title: 'Updated app'}
+    const extension = {uuid: 'extension', development: {status: 'success'}}
+    const extensions = extensionPoints === undefined ? [extension] : [{...extension, extensionPoints}]
+
+    getOnMessageHandler(wss, options)(Buffer.from(JSON.stringify({event: 'update', data: {app, extensions}})))
+
+    expect(options.payloadStore.updateApp).toHaveBeenCalledWith(app)
+    expect(options.payloadStore.updateExtensions).toHaveBeenCalledWith(extensions)
+  })
+
+  test('preserves additional fields in a valid dispatch message', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const message = {
+      event: 'dispatch',
+      metadata: 'additional message field',
+      data: {type: 'focus', payload: [{uuid: 'extension'}], additional: 'additional payload field'},
+    }
+
+    getOnMessageHandler(wss, options)(Buffer.from(JSON.stringify(message)))
+
+    const outgoingMessage = {
+      ...message,
+      version: '3',
+      data: {
+        ...message.data,
+        extensions: [],
+        store: 'test.store',
+        app: {appId: 'Test app', apiKey: 'test-app-api-key'},
+      },
+    }
+    wss.clients.forEach((ws) => expect(ws.send).toHaveBeenCalledWith(JSON.stringify(outgoingMessage)))
+  })
+
+  test('propagates an unexpected error from the payload store', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const error = new TypeError('Unexpected payload store error')
+    vi.mocked(options.payloadStore.updateApp).mockImplementationOnce(() => {
+      throw error
+    })
+    const data = Buffer.from(JSON.stringify({event: 'update', data: {app: {apiKey: 'test-app-api-key'}}}))
+
+    expect(() => getOnMessageHandler(wss, options)(data)).toThrow(error)
+  })
 })
 
 describe('parseLogMessage()', () => {
