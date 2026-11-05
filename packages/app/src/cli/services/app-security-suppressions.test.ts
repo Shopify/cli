@@ -1,8 +1,13 @@
-import {readAppSecuritySuppressions, type AppSecuritySuppression} from './app-security-suppressions.js'
+import {
+  missingSuppressionPaths,
+  readAppSecuritySuppressions,
+  type AppSecuritySuppression,
+} from './app-security-suppressions.js'
 import {appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
 const deterministicEntry: AppSecuritySuppression = {
@@ -325,6 +330,38 @@ describe('readAppSecuritySuppressions', () => {
         ])
         expect(JSON.stringify(error.customSections)).not.toContain(secretLikeValue)
       })
+    })
+  })
+})
+
+describe('missingSuppressionPaths', () => {
+  test('gives the paths of the entries with code whose files are gone, once each', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'app', 'routes'))
+      await writeFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'export {}\n')
+      const entries: AppSecuritySuppression[] = [
+        {...deterministicEntry, path: 'app/routes/index.ts'},
+        {...deterministicEntry, path: 'app/routes/session.ts'},
+        {...deterministicEntry, path: 'app/routes/session.ts', check: 'CREDENTIAL_LOG_LEAKAGE'},
+        // Without code, an entry gets no likely path, so its file isn't tested.
+        {...agentEntry, path: 'app/routes/deleted.ts'},
+      ]
+
+      await expect(missingSuppressionPaths(directory, entries)).resolves.toEqual(['app/routes/session.ts'])
+    })
+  })
+
+  test('resolves the paths against the app directory, also outside it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = joinPath(directory, 'app')
+      await mkdir(joinPath(directory, 'backend'))
+      await writeFile(joinPath(directory, 'backend', 'server.ts'), 'export {}\n')
+      const entries = [
+        {...deterministicEntry, path: '../backend/server.ts'},
+        {...deterministicEntry, path: '../backend/removed.ts'},
+      ]
+
+      await expect(missingSuppressionPaths(appDirectory, entries)).resolves.toEqual(['../backend/removed.ts'])
     })
   })
 })

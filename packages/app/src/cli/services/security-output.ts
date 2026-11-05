@@ -5,7 +5,12 @@ import {
   type AppSecurityScanDirectory,
   type AppSecuritySelection,
 } from './app-security-selection.js'
-import {suppressedFindingsView, type SuppressedFindingsView} from './security-suppressions-output.js'
+import {
+  suppressedFindingsView,
+  unappliedEntriesView,
+  type SuppressedFindingsView,
+  type UnappliedEntriesView,
+} from './security-suppressions-output.js'
 import {
   activeScanIssues,
   checkDocsUrl,
@@ -45,11 +50,15 @@ export interface SecurityReportInput {
   suppressions: SuppressionEntryResult[]
 }
 
-/** The scan's issues that still count, and what the entries of shopify.app-security.json suppress. */
+/**
+ * The scan's issues that still count, what the entries of shopify.app-security.json suppress, and the entries that
+ * apply to nothing.
+ */
 interface SecurityReportFindings {
   activeIssues: Issue[]
   groups: IssueGroup[]
   suppressed: SuppressedFindingsView | undefined
+  unappliedEntries: UnappliedEntriesView | undefined
 }
 
 type SecurityAlertType = 'success' | 'warning' | 'error'
@@ -65,7 +74,8 @@ const SAMPLE_COVERAGE_GAP_COUNT = 8
 
 /**
  * The scan report. Suppressed findings don't count for the alert type or the headline: the active issues are grouped
- * by severity, and the suppressed ones are listed after them with their reasons, whatever `--verbose`.
+ * by severity, and the suppressed ones are listed after them with their reasons, whatever `--verbose`. The entries of
+ * shopify.app-security.json that apply to nothing follow, and don't change the alert type either.
  */
 export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
   const activeIssues = activeScanIssues(input.scan.issues, input.checks)
@@ -73,6 +83,7 @@ export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
     activeIssues,
     groups: groupIssues(activeIssues),
     suppressed: suppressedFindingsView(input.checks, input.suppressions),
+    unappliedEntries: unappliedEntriesView(input.suppressions),
   }
   const {groups} = findings
 
@@ -190,7 +201,7 @@ function selectionSection(input: SecurityReportInput): AlertCustomSection {
 
 function securityCustomSections(
   input: SecurityReportInput,
-  {groups, suppressed}: SecurityReportFindings,
+  {groups, suppressed, unappliedEntries}: SecurityReportFindings,
 ): AlertCustomSection[] {
   const sections: AlertCustomSection[] = [selectionSection(input)]
 
@@ -213,6 +224,7 @@ function securityCustomSections(
   if (suppressed) {
     sections.push({title: 'Suppressed findings', body: suppressed.counts}, ...suppressed.sections)
   }
+  if (unappliedEntries) sections.push(...unappliedEntries.sections)
 
   if (input.scan.scan.coverage_gaps.length > 0) {
     const gaps = input.scan.scan.coverage_gaps
