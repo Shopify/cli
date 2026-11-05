@@ -1,13 +1,16 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import {scanDirectory as scan} from './scan-directory.js'
+import {recordAgentFindings} from '../checks/index.js'
 import {
   SHOPIFY_SECRET_PATTERNS,
+  redactLines,
   redactMatch,
   redactText,
   gitStatusFor,
   scanCommittedSecrets,
 } from '../rules/secret-rules.js'
+import {buildDeterministicFindings} from '../scan-artifact/index.js'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -163,6 +166,130 @@ describe('redaction never emits known secrets', () => {
     expect(serialized).not.toContain(PROBES.shopifyToken)
     expect(serialized).toContain('REDACTED')
     rmSync(dir, {recursive: true, force: true})
+  })
+})
+
+describe('code excerpts never hold a secret', () => {
+  const keyBody = compose('base64-key-body-', 'must-never-leak')
+  const footer = compose('-----END ', 'RSA PRIVATE KEY-----')
+
+  test('redacts a committed secret, and a private key next to it, in the stored deterministic excerpt', async () => {
+    const dir = removeAfterTest(
+      makeApp({
+        'config.js': [
+          `const key = \`${PROBES.pemHeader}`,
+          keyBody,
+          `${footer}\``,
+          `const shopifyToken = "${PROBES.shopifyToken}"`,
+          'export {key, shopifyToken}',
+          '',
+        ].join('\n'),
+      }),
+    )
+
+    const document = buildDeterministicFindings(await scan(dir), {
+      scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+      scanDirectories: [{directory: '.', origin: 'app_directory'}],
+    })
+
+    const secrets = document.checks.find((check) => check.id === 'COMMITTED_SECRET')!.findings
+    expect(secrets.map((finding) => finding.code_excerpt)).toEqual([
+      [
+        {line: 2, text: '[REDACTED LINE]'},
+        {line: 3, text: '[REDACTED LINE]'},
+        {line: 4, text: expect.stringMatching(/^const shopifyToken = "shpa\[REDACTED:\d+\]"$/)},
+        {line: 5, text: 'export {key, shopifyToken}'},
+      ],
+    ])
+    const serialized = JSON.stringify(document)
+    expect(serialized).not.toContain(PROBES.shopifyToken)
+    expect(serialized).not.toContain(keyBody)
+  })
+
+  test('redacts every line of a secret that spans lines, wherever an excerpt starts', () => {
+    const text = [
+      'before',
+      PROBES.pemHeader,
+      keyBody,
+      footer,
+      'between',
+      'aws_secret_access_key =',
+      `  "${PROBES.awsSecretKey}"`,
+      `token = "${PROBES.githubToken}"`,
+      'after',
+    ].join('\n')
+
+    expect(redactLines(text)).toEqual([
+      'before',
+      '[REDACTED LINE]',
+      '[REDACTED LINE]',
+      '[REDACTED LINE]',
+      'between',
+      '[REDACTED LINE]',
+      '[REDACTED LINE]',
+      expect.stringMatching(/^token = "ghp_\[REDACTED:\d+\]"$/),
+      'after',
+    ])
+  })
+
+  test('redacts every line after a private key header without its footer', () => {
+    expect(redactLines(['before', PROBES.pemHeader, keyBody, 'more key material'].join('\n'))).toEqual([
+      'before',
+      '[REDACTED LINE]',
+      '[REDACTED LINE]',
+      '[REDACTED LINE]',
+    ])
+  })
+
+  test('keeps the lines after a private key block on one line', () => {
+    const block = `${PROBES.pemHeader}${keyBody}${footer}`
+
+    const redacted = redactLines(`key = "${block}"\nafter`)
+
+    expect(redacted).toHaveLength(2)
+    expect(redacted[0]).not.toContain(keyBody)
+    expect(redacted[1]).toBe('after')
+  })
+
+  test('redacts secrets in the lines an agent finding cites, and never quotes a secret file', () => {
+    const files: Record<string, string> = {
+      'app/config.ts': `const token = "${PROBES.shopifyToken}"\n`,
+      '.env': `SHOPIFY_API_SECRET=${HEX32}\n`,
+      'config/secrets.json': `{"apiSecret": "${HEX32}"}\n`,
+    }
+    const cite = (file: string) => ({
+      check_id: 'CREDENTIAL_BROWSER_LEAKAGE',
+      check_version: 1,
+      file,
+      line: 1,
+      message: 'A credential reaches the browser.',
+      evidence: [{file, line: 1}],
+    })
+
+    const result = recordAgentFindings(
+      {
+        schema_version: 1,
+        scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+        findings: Object.keys(files).map(cite),
+      },
+      {engineVersion: '3.99.0', readCitedFile: (file) => files[file]},
+    )
+
+    if (!result.ok) throw new Error(result.errors.join('; '))
+    const findings = result.document.checks[0]!.findings
+    expect(findings.map((finding) => [finding.location.file, finding.code_excerpt])).toEqual([
+      ['app/config.ts', [{line: 1, text: expect.stringContaining('[REDACTED:')}]],
+      ['.env', undefined],
+      ['config/secrets.json', undefined],
+    ])
+    expect(findings.flatMap((finding) => finding.evidence.map((evidence) => evidence.code_excerpt))).toEqual([
+      [{line: 1, text: expect.stringContaining('[REDACTED:')}],
+      undefined,
+      undefined,
+    ])
+    const serialized = JSON.stringify(result.document)
+    expect(serialized).not.toContain(PROBES.shopifyToken)
+    expect(serialized).not.toContain(HEX32)
   })
 })
 

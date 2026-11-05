@@ -8,6 +8,7 @@ import {
   inTemporaryDirectory,
   mkdir,
   readFile,
+  symlink,
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
@@ -453,6 +454,99 @@ describe('securityRecord', () => {
 
         await expect(fileSize(agentFindingsPath)).resolves.toBeGreaterThan(4_900_000)
         await expect(readFindingsDocument(agentFindingsPath, 'agent')).resolves.toMatchObject({status: 'ok'})
+      })
+    })
+  })
+
+  describe('code excerpts', () => {
+    const orders = Array.from({length: 15}, (_, index) => `line ${index + 1}`)
+    const excerptOf = (first: number, last: number) =>
+      orders.slice(first - 1, last).map((text, index) => ({line: first + index, text}))
+
+    /** An app directory below `directory`, so a cited path can leave it. */
+    async function createNestedApp(directory: string): Promise<string> {
+      await mkdir(joinPath(directory, 'app'))
+      return createApp(joinPath(directory, 'app'))
+    }
+
+    test('stores the lines each finding cites, read from the files in the app directory', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        await mkdir(joinPath(appRoot, 'app/routes'))
+        await writeFile(joinPath(appRoot, 'app/routes/orders.tsx'), `${orders.join('\n')}\n`)
+
+        await record(appRoot, testDependencies(JSON.stringify(validDocument())))
+
+        const [first, second] = (await readRecorded(appRoot)).checks[0]!.findings
+        expect(first!.code_excerpt).toEqual(excerptOf(10, 14))
+        expect(first!.evidence).toEqual([
+          {
+            location: {file: 'app/routes/orders.tsx', line: 12},
+            quote: 'prisma.order.findMany()',
+            code_excerpt: excerptOf(12, 12),
+          },
+        ])
+        // Line 30 is past the end of the file.
+        expect(second).not.toHaveProperty('code_excerpt')
+      })
+    })
+
+    test("doesn't read a cited file outside the app directory, or through a symbolic link that leaves it", async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createNestedApp(directory)
+        await writeFile(joinPath(directory, 'outside.ts'), `${orders.join('\n')}\n`)
+        await symlink(joinPath(directory, 'outside.ts'), joinPath(appRoot, 'link.ts'))
+        const document = {
+          ...validDocument(),
+          findings: [finding({file: '../outside.ts', evidence: [{file: 'link.ts', line: 12}]})],
+        }
+
+        await record(appRoot, testDependencies(JSON.stringify(document)))
+
+        const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
+        expect(written).not.toContain('code_excerpt')
+        expect(written).not.toContain('line 12')
+      })
+    })
+
+    test("reads a cited file in an extension directory that the app's configuration adds outside it", async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createNestedApp(directory)
+        const extensionDirectory = joinPath(directory, 'extensions')
+        await mkdir(extensionDirectory)
+        await writeFile(joinPath(extensionDirectory, 'block.liquid'), `${orders.join('\n')}\n`)
+        const selection = {...selectionFor(appRoot), appConfigDirectories: [await fileRealPath(extensionDirectory)]}
+        const document = {
+          ...validDocument(),
+          findings: [finding({file: '../extensions/block.liquid', evidence: [{file: '../extensions/block.liquid'}]})],
+        }
+
+        await securityRecord({selection, path: appRoot}, testDependencies(JSON.stringify(document)))
+
+        const [stored] = (await readRecorded(appRoot)).checks[0]!.findings
+        expect(stored!.code_excerpt).toEqual(excerptOf(10, 14))
+      })
+    })
+
+    test('stores the findings without excerpts when the excerpts would make the file too large for review', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        await mkdir(joinPath(appRoot, 'app/routes'))
+        await writeFile(joinPath(appRoot, 'app/routes/orders.tsx'), `${'x'.repeat(400)}\n`.repeat(1_000))
+        // About 4.9 MB stored without excerpts; each finding's five excerpt lines add about 2 KB.
+        const document = JSON.stringify({
+          schema_version: 1,
+          scope: NO_SCOPE,
+          findings: Array.from({length: 1_000}, (_, index) =>
+            finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(500)}),
+          ),
+        })
+
+        await record(appRoot, testDependencies(document))
+
+        const {agentFindingsPath} = artifactPaths(appRoot)
+        await expect(readFindingsDocument(agentFindingsPath, 'agent')).resolves.toMatchObject({status: 'ok'})
+        await expect(readFile(agentFindingsPath)).resolves.not.toContain('code_excerpt')
       })
     })
   })
