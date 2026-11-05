@@ -124,7 +124,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => scanEolApiVersions(context),
   },
   {
-    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 2),
+    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 3),
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
   },
   {
