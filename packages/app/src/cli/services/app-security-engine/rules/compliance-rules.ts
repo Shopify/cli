@@ -109,8 +109,13 @@ function makeEolIssue(file: string, version: string, line?: number): Issue {
   }
 }
 
+// Blanks comments instead of removing them so match indexes still point into the original source.
 function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' ')).replace(/\/\/[^\n]*/g, '')
+  return source.replace(/\/\*[\s\S]*?\*\//g, blankComment).replace(/\/\/[^\n]*/g, blankComment)
+}
+
+function blankComment(comment: string): string {
+  return comment.replace(/[^\n]/g, ' ')
 }
 
 function maskStringsExceptVersions(source: string): string {
