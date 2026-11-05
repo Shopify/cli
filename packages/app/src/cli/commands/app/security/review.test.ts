@@ -8,10 +8,25 @@ import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-review.js')
 vi.mock('../../../services/security-review/result.js')
+
+/** Runs the command, expecting oclif to refuse the flags before anything is reviewed, and returns the error output. */
+async function parseError(argv: string[]): Promise<string> {
+  const outputMock = mockAndCaptureOutput()
+  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    await expect(SecurityReview.run(argv, import.meta.url)).rejects.toThrow(/process.exit unexpectedly called/)
+    expect(securityReview).not.toHaveBeenCalled()
+    return outputMock.error()
+  } finally {
+    consoleErrorSpy.mockRestore()
+    outputMock.clear()
+  }
+}
 
 describe('app security review command', () => {
   test('documents command-specific telemetry and links to usage reporting', () => {
@@ -124,5 +139,107 @@ describe('app security review command', () => {
       checkIds: ['OPEN_REDIRECT', 'EOL_API_VERSION'],
       blocking: 'medium',
     })
+  })
+
+  test('defines --suppress and the flags that go with it, each with its environment variable', () => {
+    expect(SecurityReview.flags.suppress.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SUPPRESS')
+    expect(SecurityReview.flags.kind.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_KIND')
+    expect(SecurityReview.flags.reason.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_REASON')
+    expect(SecurityReview.flags['results-digest'].env).toBe('SHOPIFY_FLAG_APP_SECURITY_RESULTS_DIGEST')
+    expect(SecurityReview.flags['include-superseded'].env).toBe('SHOPIFY_FLAG_APP_SECURITY_INCLUDE_SUPERSEDED')
+    expect(SecurityReview.flags.kind.description).toContain('false-positive or accepted-risk')
+    for (const flag of ['kind', 'reason', 'results-digest', 'include-superseded'] as const) {
+      expect(SecurityReview.flags[flag].dependsOn).toEqual(['suppress'])
+    }
+  })
+
+  test('forwards --suppress with its flags as typed, so the service checks the kind and the reason', async () => {
+    await SecurityReview.run(
+      [
+        '--suppress',
+        '3',
+        '--kind',
+        'false-positive',
+        '--reason',
+        'A fake token in a test fixture.',
+        '--results-digest',
+        'abc123def456',
+        '--include-superseded',
+      ],
+      import.meta.url,
+    )
+
+    expect(securityReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        suppress: {
+          findingNumber: 3,
+          kind: 'false-positive',
+          reason: 'A fake token in a test fixture.',
+          resultsDigest: 'abc123def456',
+          includeSuperseded: true,
+        },
+      }),
+    )
+
+    await SecurityReview.run(['--suppress', '1', '--kind', 'wont-fix'], import.meta.url)
+
+    expect(securityReview).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        suppress: {
+          findingNumber: 1,
+          kind: 'wont-fix',
+          reason: undefined,
+          resultsDigest: undefined,
+          includeSuperseded: false,
+        },
+      }),
+    )
+  })
+
+  test('reads --suppress and its flags from their environment variables', async () => {
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_SUPPRESS', '2')
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_KIND', 'accepted-risk')
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_REASON', 'Kept until the migration ships.')
+    try {
+      await SecurityReview.run([], import.meta.url)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+
+    expect(securityReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        suppress: expect.objectContaining({
+          findingNumber: 2,
+          kind: 'accepted-risk',
+          reason: 'Kept until the migration ships.',
+        }),
+      }),
+    )
+  })
+
+  test('passes no suppress options without --suppress', async () => {
+    await SecurityReview.run(['--blocking', 'high'], import.meta.url)
+
+    expect(vi.mocked(securityReview).mock.calls[0]![0]).not.toHaveProperty('suppress')
+  })
+
+  test.each([
+    ['--kind', ['--kind', 'false-positive']],
+    ['--reason', ['--reason', 'r']],
+    ['--results-digest', ['--results-digest', 'abc']],
+    ['--include-superseded', ['--include-superseded']],
+  ])('refuses %s without --suppress', async (_flag, argv) => {
+    await expect(parseError(argv)).resolves.toContain('--suppress')
+  })
+
+  test.each([
+    ['0', 'Expected an integer greater than or equal to 1 but received: 0'],
+    ['-1', 'Expected an integer greater than or equal to 1 but received: -1'],
+    ['two', 'Expected an integer but received: two'],
+  ])('refuses --suppress %s, which is not a finding number', async (value, message) => {
+    const error = await parseError(['--suppress', value, '--kind', 'false-positive', '--reason', 'r'])
+
+    expect(error).toContain('Parsing --suppress')
+    expect(error).toContain(message)
   })
 })

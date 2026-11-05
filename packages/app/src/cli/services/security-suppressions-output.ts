@@ -52,7 +52,8 @@ interface SuppressedFinding {
 }
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
-const KIND_LABEL: Record<SuppressionKind, string> = {
+/** How the terminal output names a suppression kind. */
+export const SUPPRESSION_KIND_LABEL: Record<SuppressionKind, string> = {
   'false-positive': 'false positive',
   'accepted-risk': 'accepted risk',
 }
@@ -141,7 +142,7 @@ function suppressedFindingItem({finding, suppression}: SuppressedFinding): Token
 /** An entry is named as the file's validation errors name it: `suppressions[2]`. */
 function suppressionLabel(suppression: FindingSuppression): string {
   if (suppression.origin === 'agent') return 'suppressed by the agent'
-  return `${KIND_LABEL[suppression.kind]} · ${entryLabel(suppression.entry_index)}`
+  return `${SUPPRESSION_KIND_LABEL[suppression.kind]} · ${entryLabel(suppression.entry_index)}`
 }
 
 function entryLabel(index: number): string {
@@ -210,7 +211,7 @@ function entryHeading({index, entry}: SuppressionEntryResult): InlineToken[] {
 function staleEntryItem(result: SuppressionEntryResult): TokenItem<InlineToken> {
   return [
     ...entryHeading(result),
-    {subdued: `· ${KIND_LABEL[result.entry.kind]}`},
+    {subdued: `· ${SUPPRESSION_KIND_LABEL[result.entry.kind]}`},
     `\n${result.entry.reason}`,
     ...(result.likely_path === undefined ? [] : ['\nMaybe moved to', {filePath: result.likely_path}]),
   ]

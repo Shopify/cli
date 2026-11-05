@@ -7,6 +7,7 @@ import type {
   AppSecurityApp,
   AppSecurityBlocking,
   AppSecurityInstructions,
+  AppSecuritySavedSuppression,
   AppSecurityScanDirectory,
   AppSecurityScope,
   AppSecuritySuppressions,
@@ -20,6 +21,7 @@ import type {
   SuppressionEntryStatus,
 } from '../app-security-engine/index.js'
 import type {AppSecurityInstructionsDelivery} from '../app-security-instructions.js'
+import type {SavedSuppression} from '../app-security-suppressions.js'
 
 /**
  * The projections from the app security commands' data to the shared parts of their JSON output, in types.ts. Some
@@ -114,5 +116,23 @@ export function projectAppSecuritySuppressions(
         result.likely_path === undefined ? null : projectAppSecurityRelativePath(appDirectory, result.likely_path),
       candidateFindingCount: result.candidate_locations?.length ?? null,
     })),
+  }
+}
+
+/** Projects an entry that a command saved to shopify.app-security.json. */
+export function projectAppSecuritySavedSuppression(
+  appDirectory: string,
+  {index, change, entry}: SavedSuppression,
+): AppSecuritySavedSuppression {
+  return {
+    index,
+    change,
+    source: entry.source,
+    check: entry.check,
+    kind: entry.kind,
+    path: projectAppSecurityRelativePath(appDirectory, entry.path),
+    code: entry.code ?? null,
+    reason: entry.reason,
+    configurations: entry.configurations,
   }
 }

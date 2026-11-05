@@ -25,6 +25,7 @@ import type {
   Severity,
   StoredCheck,
   StoredFinding,
+  SuppressionKind,
 } from '../types.js'
 
 /**
@@ -199,7 +200,7 @@ interface AgentFinding {
   snippet?: string
   confidence?: 'high' | 'medium' | 'low'
   reasoning?: string
-  suppression?: {justification: string}
+  suppression?: {justification: string; kind: SuppressionKind}
 }
 
 /** One checks_executed entry in the record input, after validation. */
@@ -224,6 +225,7 @@ const MAX_PATH_LENGTH = 1_024
 const MAX_FINDINGS = 1_000
 
 const AGENT_CHECK_STATUSES: ReadonlyArray<string> = ['executed', 'not_applicable', 'unresolved']
+const SUPPRESSION_KINDS: ReadonlyArray<unknown> = ['false-positive', 'accepted-risk'] satisfies SuppressionKind[]
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -276,6 +278,9 @@ export const validateFinding = (value: unknown): string | undefined => {
       return 'suppression requires a justification'
     if (suppression.justification.length > MAX_JUSTIFICATION_LENGTH)
       return `suppression justification exceeds ${MAX_JUSTIFICATION_LENGTH} characters`
+    // `record` saves the suppression to shopify.app-security.json, where every entry has a kind.
+    if (suppression.kind === undefined) return 'suppression.kind is required: false-positive or accepted-risk'
+    if (!SUPPRESSION_KINDS.includes(suppression.kind)) return 'suppression.kind must be false-positive or accepted-risk'
   }
   for (const evidence of finding.evidence) {
     if (!isRecord(evidence)) return 'evidence citation must be an object'
@@ -401,7 +406,12 @@ const redactFinding = (finding: AgentFinding, excerpts: CodeExcerpts): StoredFin
   ...(finding.reasoning === undefined ? {} : {reasoning: redactText(finding.reasoning)}),
   ...(finding.suppression === undefined
     ? {}
-    : {suppression: {justification: redactText(finding.suppression.justification)}}),
+    : {
+        suppression: {
+          justification: redactText(finding.suppression.justification),
+          kind: finding.suppression.kind,
+        },
+      }),
 })
 
 interface CheckGroup {

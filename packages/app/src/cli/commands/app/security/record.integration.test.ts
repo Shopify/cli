@@ -127,6 +127,7 @@ describe('app security record command boundary', () => {
         path: resolve(appDirectory, '.shopify', 'app-security', 'shopify.app', 'agent-findings.json'),
         checkCount: 2,
         findingCount: 1,
+        suppressions: null,
       })
       expect(result.stderr).toBe('')
       await expect(fileExists(agentFindingsPath(appDirectory))).resolves.toBe(true)
@@ -162,6 +163,14 @@ describe('app security record command boundary', () => {
       'a document that fails validation',
       JSON.stringify({...validDocument, schema_version: 2, findings: [{...validDocument.findings[0], line: 0}]}),
       ['schema_version must be 1', 'findings[0] (MISSING_TENANT_ISOLATION): invalid line number: 0'],
+    ],
+    [
+      'a suppression without a kind',
+      JSON.stringify({
+        ...validDocument,
+        findings: [{...validDocument.findings[0], suppression: {justification: 'Every table holds one shop.'}}],
+      }),
+      ['findings[0] (MISSING_TENANT_ISOLATION): suppression.kind is required: false-positive or accepted-risk'],
     ],
     [
       'a document over 5 MB',
@@ -222,6 +231,78 @@ describe('app security record command boundary', () => {
       expect(JSON.parse(result.stdout)).toMatchObject({error: {code: 'results-directory-not-found'}})
       expect(result.stderr).toBe('')
       expect(readStdinString).not.toHaveBeenCalled()
+    })
+  })
+
+  test("saves the agent's suppression to shopify.app-security.json, and says so in the result and the terminal", async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory)
+      await mkdir(joinPath(appDirectory, 'app', 'routes'))
+      await writeFile(
+        joinPath(appDirectory, 'app', 'routes', 'orders.tsx'),
+        `${Array.from({length: 11}, (_, index) => `// line ${index + 1}`).join('\n')}\nconst orders = await prisma.order.findMany()\n`,
+      )
+      const document = {
+        ...validDocument,
+        findings: [
+          {
+            ...validDocument.findings[0],
+            suppression: {justification: 'Every order table holds one shop.', kind: 'accepted-risk'},
+          },
+        ],
+      }
+      vi.mocked(readStdinString).mockResolvedValue(JSON.stringify(document))
+
+      const json = await runCommand(['--path', directory, '--json'])
+      const text = await runCommand(['--path', directory])
+
+      expect(json.exitCode).toBe(0)
+      expect(JSON.parse(json.stdout).suppressions).toStrictEqual({
+        filePath: resolve(appDirectory, 'shopify.app-security.json'),
+        entries: [
+          {
+            index: 0,
+            change: 'added',
+            source: 'agent',
+            check: 'MISSING_TENANT_ISOLATION',
+            kind: 'accepted-risk',
+            path: resolve(appDirectory, 'app', 'routes', 'orders.tsx'),
+            code: 'const orders = await prisma.order.findMany()',
+            reason: 'Every order table holds one shop.',
+            configurations: ['shopify.app.toml'],
+          },
+        ],
+        alreadySavedCount: 0,
+        notSaved: [],
+      })
+      // The second run finds the entry that the first one saved.
+      expect(text.exitCode).toBe(0)
+      expect(boxText(text.stderr)).toContain('1 suppression was already in shopify.app-security.json.')
+      await expect(fileExists(joinPath(appDirectory, 'shopify.app-security.json'))).resolves.toBe(true)
+    })
+  })
+
+  test('without --json, says how many suppressions were saved and to review and commit the file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory)
+      await mkdir(joinPath(appDirectory, 'app', 'routes'))
+      await writeFile(
+        joinPath(appDirectory, 'app', 'routes', 'orders.tsx'),
+        `${Array.from({length: 11}, (_, index) => `// line ${index + 1}`).join('\n')}\nconst orders = await prisma.order.findMany()\n`,
+      )
+      vi.mocked(readStdinString).mockResolvedValue(
+        JSON.stringify({
+          ...validDocument,
+          findings: [{...validDocument.findings[0], suppression: {justification: 'One shop.', kind: 'false-positive'}}],
+        }),
+      )
+
+      const result = await runCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(0)
+      const text = boxText(result.stderr)
+      expect(text).toContain('Saved 1 suppression to shopify.app-security.json.')
+      expect(text).toContain('Review and commit shopify.app-security.json.')
     })
   })
 

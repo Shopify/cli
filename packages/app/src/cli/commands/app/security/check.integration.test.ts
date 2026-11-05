@@ -802,6 +802,137 @@ describe('app security check --json command boundary', () => {
     })
   })
 
+  test('passes --blocking after review --suppress saves an entry for the scanned finding, also after lines move it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const blocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const before = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      const secretCheck = before.checks.find((check: {id: string}) => check.id === 'COMMITTED_SECRET')
+
+      const suppressed = await runJsonCommand(
+        [
+          '--path',
+          directory,
+          '--suppress',
+          String(secretCheck.findings[0].number),
+          '--kind',
+          'false-positive',
+          '--reason',
+          'A fake token for the session tests.',
+          '--results-digest',
+          before.resultsDigest,
+        ],
+        SecurityReview,
+      )
+      const passed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const source = await readFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'utf8')
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        `// Session fixtures.\nimport {session} from './session'\n\n${source}`,
+      )
+      const moved = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(blocked.exitCode).toBe(1)
+      expect(suppressed.exitCode).toBe(0)
+      // The entry names the redacted line that the results hold, never the token.
+      expect(JSON.parse(suppressed.stdout).savedSuppressions.entries).toMatchObject([
+        {source: 'deterministic', check: 'COMMITTED_SECRET', code: 'const access_token = "shpa[REDACTED:38]"'},
+      ])
+      await expect(readFile(appSecuritySuppressionsPath(directory), 'utf8')).resolves.not.toContain('0123456789abcdef')
+      for (const result of [passed, moved]) {
+        expect(result.exitCode).toBe(0)
+        expect(JSON.parse(result.stdout)).toMatchObject({
+          valid: true,
+          suppressions: {entries: [{status: 'matched', matchedFindingCount: 1}]},
+        })
+      }
+    })
+  })
+
+  test('passes --blocking only after review --suppress also saves the companion of a prefer-agent finding', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const routeLines = [
+        'export async function loader({request}) {',
+        '  const {session} = await authenticate.admin(request)',
+        '  console.log(session.accessToken)',
+        '  return null',
+        '}',
+      ]
+      await writeFile(joinPath(directory, 'app', 'routes', 'index.ts'), `${routeLines.join('\n')}\n`)
+      await runJsonCommand(['--path', directory])
+      const {agentFindingsPath} = appSecurityArtifactPaths(await fileRealPath(directory), 'shopify.app')
+      await writeFile(
+        agentFindingsPath,
+        JSON.stringify({
+          schema_version: 1,
+          source: 'agent',
+          engine: {name: 'shopify-app-security', version: '4.9.0'},
+          // Newer than the scan, so the prefer-agent result supersedes the deterministic finding.
+          generated_at: new Date(Date.now() + 60_000).toISOString(),
+          scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+          checks: [
+            {
+              id: 'CREDENTIAL_LOG_LEAKAGE',
+              version: 1,
+              status: 'executed',
+              snapshot: {
+                title: 'Credential reaches a log sink',
+                severity: 'high',
+                description: 'Detects direct credential flows to console and logger sinks.',
+                current_version: 1,
+                precedence: 'prefer-agent',
+              },
+              findings: [
+                {
+                  location: {file: 'app/routes/index.ts', line: 3},
+                  message: 'The session access token is written to the server log.',
+                  evidence: [{location: {file: 'app/routes/index.ts', line: 3}}],
+                  code_excerpt: routeLines.map((text, index) => ({line: index + 1, text})),
+                },
+              ],
+            },
+          ],
+        }),
+      )
+      const review = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      const findings = review.checks.find((check: {id: string}) => check.id === 'CREDENTIAL_LOG_LEAKAGE').findings
+      const agentNumber = findings.find((finding: {source: string}) => finding.source === 'agent').number
+      const deterministicNumber = findings.find(
+        (finding: {source: string}) => finding.source === 'deterministic',
+      ).number
+      const suppressFlags = ['--path', directory, '--suppress', String(agentNumber), '--kind', 'accepted-risk']
+      const reason = ['--reason', 'Logged only in local development.']
+
+      const alone = await runJsonCommand([...suppressFlags, ...reason], SecurityReview)
+      const stillBlocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const withCompanion = await runJsonCommand([...suppressFlags, ...reason, '--include-superseded'], SecurityReview)
+      const passed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(JSON.parse(alone.stdout).savedSuppressions).toMatchObject({
+        entries: [{source: 'agent', findingNumber: agentNumber}],
+        companionFindingNumbers: [deterministicNumber],
+      })
+      expect(JSON.parse(stillBlocked.stdout)).toMatchObject({valid: false, blocking: {blockedCheckCount: 1}})
+      expect(JSON.parse(withCompanion.stdout).savedSuppressions).toMatchObject({
+        entries: [
+          {
+            index: 1,
+            source: 'deterministic',
+            check: 'CREDENTIAL_LOG_LEAKAGE',
+            code: 'console.log(session.accessToken)',
+            kind: 'accepted-risk',
+            reason: 'Logged only in local development.',
+            findingNumber: deterministicNumber,
+          },
+        ],
+        companionFindingNumbers: [],
+      })
+      expect(passed.exitCode).toBe(0)
+      expect(JSON.parse(passed.stdout)).toMatchObject({valid: true, blocking: {blockedCheckCount: 0}})
+    })
+  })
+
   test('aborts with one error document when shopify.app-security.json is invalid, and writes no results', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
