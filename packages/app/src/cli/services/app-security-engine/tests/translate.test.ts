@@ -254,11 +254,11 @@ describe('translateFindingsDocument', () => {
     const agent = translated(agentFindingsDocument) as AgentFindingsDocument
 
     expect({deterministic, agent}).toEqual({deterministic: deterministicFindingsDocument, agent: agentFindingsDocument})
-    const combined = combineFindings({deterministic, agent})
+    const combined = combineFindings({deterministic, agent}).checks
     const combinedWithExcerpts = combineFindings({
       deterministic: translated(withExcerpts(deterministic)) as DeterministicFindingsDocument,
       agent: translated(withExcerpts(agent)) as AgentFindingsDocument,
-    })
+    }).checks
     expect(
       combinedWithExcerpts.map((check) => ({
         ...check,
