@@ -561,6 +561,25 @@ describe('EXPIRING_OFFLINE_TOKEN supported React Router analysis', () => {
     expect(result.unresolvedReason).toBeUndefined()
   })
 
+  test('reports the line of explicit false after line comments', () => {
+    const result = scanExpiringOfflineTokens(
+      context({
+        files: [
+          source(
+            `// Configure the app.
+// Offline tokens do not expire on purpose.
+const shopify = shopifyApp({
+  future: {expiringOfflineAccessTokens: false},
+})`,
+            'app/shopify.server.ts',
+          ),
+        ],
+      }),
+    )
+
+    expect(result.issues.map((finding) => finding.location)).toEqual([{file: 'app/shopify.server.ts', line: 4}])
+  })
+
   test('returns clean only when enablement and refresh-compatible storage are visible', () => {
     const memory = scanExpiringOfflineTokens(
       context({
