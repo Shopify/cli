@@ -20,7 +20,7 @@ import {globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {lt as semverLt, SemVer} from 'semver'
+import {lt as semverLt} from 'semver'
 import type {UpgradeResult} from './upgrade/types.js'
 
 export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
@@ -187,10 +187,9 @@ export async function versionToAutoUpgrade(): Promise<string | undefined> {
     outputDebug('Auto-upgrade: Skipping auto-upgrade for pre-release version.')
     return undefined
   }
-  const newerVersion = await checkForNewVersion('@shopify/cli', currentVersion, {
-    versionRange: `${new SemVer(currentVersion).major}.x`,
-    cacheExpiryInHours: 24,
-  })
+  const {checkForCLIVersions} = await import('../../private/node/cli-version-check.js')
+  const {currentMajor} = await checkForCLIVersions()
+  const newerVersion = currentMajor && semverLt(currentVersion, currentMajor) ? currentMajor : undefined
   if (!newerVersion) outputDebug('Auto-upgrade: No newer version available in the current major.')
   return newerVersion
 }
