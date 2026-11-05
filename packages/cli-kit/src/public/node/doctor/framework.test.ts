@@ -1,8 +1,9 @@
 import {DoctorSuite} from './framework.js'
+import {inTemporaryDirectory, mkdir, writeFile} from '../fs.js'
+import {joinPath} from '../path.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import type {DoctorContext} from './types.js'
 
-vi.mock('../fs.js')
 vi.mock('../system.js')
 
 /**
@@ -35,6 +36,18 @@ class TestSuite extends DoctorSuite {
 
   public exposeAssertEqual<T>(actual: T, expected: T, message: string): void {
     this.assertEqual(actual, expected, message)
+  }
+
+  public async exposeAssertFile(path: string, contentPattern?: RegExp | string, message?: string): Promise<void> {
+    await this.assertFile(path, contentPattern, message)
+  }
+
+  public async exposeAssertNoFile(path: string, message?: string): Promise<void> {
+    await this.assertNoFile(path, message)
+  }
+
+  public async exposeAssertDirectory(path: string, message?: string): Promise<void> {
+    await this.assertDirectory(path, message)
   }
 
   protected tests(): void {
@@ -302,6 +315,99 @@ describe('DoctorSuite', () => {
       expect(results[0]!.assertions[0]!.passed).toBe(false)
       expect(results[0]!.assertions[0]!.expected).toBe('bar')
       expect(results[0]!.assertions[0]!.actual).toBe('foo')
+    })
+  })
+
+  describe('filesystem assertions', () => {
+    test.each([
+      {contentPattern: undefined, passed: true, description: 'File exists: theme.liquid'},
+      {contentPattern: /Hello/, passed: true, description: 'File theme.liquid matches /Hello/'},
+      {contentPattern: 'Hello', passed: true, description: 'File theme.liquid matches Hello'},
+      {contentPattern: 'Goodbye', passed: false, description: 'File theme.liquid matches Goodbye'},
+    ])('reports an existing file against $contentPattern as $passed', async ({contentPattern, passed, description}) => {
+      await inTemporaryDirectory(async (directory) => {
+        // Given
+        await writeFile(joinPath(directory, 'theme.liquid'), 'Hello world')
+        suite.addTest('file check', () => suite.exposeAssertFile('theme.liquid', contentPattern))
+
+        // When
+        const results = await suite.runSuite(createTestContext({workingDirectory: directory}))
+
+        // Then
+        expect(results[0]!.assertions[0]).toMatchObject({description, passed})
+      })
+    })
+
+    test('reports a missing file without reading its content', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        // Given
+        suite.addTest('file check', () => suite.exposeAssertFile('missing.liquid', /Hello/))
+
+        // When
+        const results = await suite.runSuite(createTestContext({workingDirectory: directory}))
+
+        // Then
+        expect(results[0]!.assertions[0]).toMatchObject({
+          description: 'File exists: missing.liquid',
+          passed: false,
+          actual: 'file not found',
+        })
+      })
+    })
+
+    test('resolves absolute paths and custom messages', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        // Given
+        const absolutePath = joinPath(directory, 'theme.liquid')
+        await writeFile(absolutePath, 'Hello world')
+        suite.addTest('file check', () => suite.exposeAssertFile(absolutePath, undefined, 'Theme was generated'))
+
+        // When
+        const results = await suite.runSuite(createTestContext({workingDirectory: directory}))
+
+        // Then
+        expect(results[0]!.assertions[0]).toMatchObject({description: 'Theme was generated', passed: true})
+      })
+    })
+
+    test('reports whether a file is absent', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        // Given
+        await writeFile(joinPath(directory, 'theme.liquid'), 'Hello world')
+        suite.addTest('absence check', async () => {
+          await suite.exposeAssertNoFile('theme.liquid')
+          await suite.exposeAssertNoFile('missing.liquid')
+        })
+
+        // When
+        const results = await suite.runSuite(createTestContext({workingDirectory: directory}))
+
+        // Then
+        expect(results[0]!.assertions).toMatchObject([
+          {description: 'File does not exist: theme.liquid', passed: false, actual: 'file exists'},
+          {description: 'File does not exist: missing.liquid', passed: true},
+        ])
+      })
+    })
+
+    test('reports whether a directory exists', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        // Given
+        await mkdir(joinPath(directory, 'sections'))
+        suite.addTest('directory check', async () => {
+          await suite.exposeAssertDirectory('sections')
+          await suite.exposeAssertDirectory('snippets')
+        })
+
+        // When
+        const results = await suite.runSuite(createTestContext({workingDirectory: directory}))
+
+        // Then
+        expect(results[0]!.assertions).toMatchObject([
+          {description: 'Directory exists: sections', passed: true},
+          {description: 'Directory exists: snippets', passed: false, actual: 'directory not found'},
+        ])
+      })
     })
   })
 
