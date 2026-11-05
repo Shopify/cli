@@ -1,6 +1,6 @@
 ---
 id: EOL_API_VERSION
-version: 2
+version: 3
 severity: low
 precedence: prefer-agent
 ---

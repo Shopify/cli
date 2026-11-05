@@ -515,6 +515,30 @@ describe('EOL_API_VERSION quarterly lifecycle', () => {
       'app/shopify.server.mts',
     ])
   })
+
+  test('reports the line of each React Router declaration after line comments', () => {
+    const findings = scanEolApiVersions(
+      context({
+        files: [
+          source(
+            `// Pin the API version on purpose.
+// The legacy server keeps an older version.
+export const legacy = shopifyApp({
+  appUrl: 'https://legacy.example',
+  apiVersion: '2024-04',
+})
+
+// The main server.
+const shopify = shopifyApp({apiVersion: ApiVersion.January24})`,
+            'app/shopify.server.ts',
+          ),
+        ],
+      }),
+      new Date('2026-08-31T00:00:00.000Z'),
+    )
+
+    expect(findings.map((finding) => finding.location.line)).toEqual([5, 9])
+  })
 })
 
 describe('EXPIRING_OFFLINE_TOKEN supported React Router analysis', () => {
