@@ -41,9 +41,13 @@ const checkSnapshotSchema = zod.object({
   precedence: checkPrecedenceSchema.optional(),
 })
 
+/** Optional everywhere, so files written before excerpts still parse. */
+const codeExcerptSchema = zod.array(zod.object({line: zod.number().int().positive(), text: zod.string()}))
+
 const storedEvidenceSchema = zod.object({
   location: locationSchema,
   quote: zod.string().optional(),
+  code_excerpt: codeExcerptSchema.optional(),
 })
 
 export const storedFindingSchema = zod.object({
@@ -51,6 +55,7 @@ export const storedFindingSchema = zod.object({
   message: zod.string(),
   evidence: zod.array(storedEvidenceSchema),
   snippet: zod.string().optional(),
+  code_excerpt: codeExcerptSchema.optional(),
   fix: fixSchema.optional(),
   confidence: zod.enum(['high', 'medium', 'low']).optional(),
   reasoning: zod.string().optional(),

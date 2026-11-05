@@ -692,6 +692,12 @@ function readRepositoryText(absolutePath: string): string | undefined {
   return result.ok ? result.content.toString() : undefined
 }
 
+/** Reads a text file with the configured reader's rules. A binary file is `undefined`, as it is for secret scanning. */
+export function readRepositoryTextFile(absolutePath: string): string | undefined {
+  const result = readRepositoryFile(absolutePath)
+  return result.ok && !isProbablyBinary(result.content) ? result.content.toString() : undefined
+}
+
 const SOURCE_LANGUAGES = {
   '.js': {name: 'javascript', supported: true},
   '.jsx': {name: 'javascript', supported: true},

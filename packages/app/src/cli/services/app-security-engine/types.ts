@@ -8,6 +8,8 @@ export interface Issue {
   message: string
   location: Location
   snippet?: string
+  /** The finding's line and the lines around it, as the scan read them. */
+  code_excerpt?: CodeExcerptLine[]
   fix: Fix
   confidence?: Confidence
   rule_version?: number
@@ -200,6 +202,18 @@ export const ENGINE_NAME = 'shopify-app-security' as const
 export interface FindingEvidence {
   location: Location
   quote?: string
+  /** The evidence line, as the CLI read it. */
+  code_excerpt?: CodeExcerptLine[]
+}
+
+/**
+ * One line of source that the CLI read when it wrote a finding, so the finding can be matched later without reading
+ * the file again. The text is redacted.
+ */
+export interface CodeExcerptLine {
+  /** Counts from 1. */
+  line: number
+  text: string
 }
 
 /**
@@ -233,6 +247,8 @@ export interface StoredFinding {
   message: string
   evidence: StoredEvidence[]
   snippet?: string
+  /** The finding's line and the lines around it, read by `check` or `record`. Absent in files written before excerpts. */
+  code_excerpt?: CodeExcerptLine[]
   /** Deterministic documents only. */
   fix?: Fix
   /** Agent documents only. */

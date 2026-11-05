@@ -1,7 +1,13 @@
 import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {getEngineVersion, recordAgentFindings, type AgentFindingsDocument} from './app-security-engine/index.js'
+import {
+  createCitedFileReader,
+  getEngineVersion,
+  recordAgentFindings,
+  withoutCodeExcerpts,
+  type AgentFindingsDocument,
+} from './app-security-engine/index.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
@@ -95,9 +101,15 @@ async function readInputDocument(
   }
 }
 
+/** What `check` scans without `--include-dir`: the app directory, and the extension and web directories outside it. */
+function citedFileDirectories(selection: AppSecuritySelection): string[] {
+  return [selection.appDirectory, ...(selection.kind === 'config' ? (selection.appConfigDirectories ?? []) : [])]
+}
+
 /**
  * Validates the agent's findings document from stdin and, only if it is fully valid, replaces
- * agent-findings.json. Doesn't read or require deterministic-findings.json. Prints nothing; every failure throws an
+ * agent-findings.json. Each finding gets the redacted lines it cites, read from the files below the scanned
+ * directories. Doesn't read or require deterministic-findings.json. Prints nothing; every failure throws an
  * AbortError before anything is written.
  */
 export default async function securityRecord(
@@ -110,12 +122,19 @@ export default async function securityRecord(
 
   const recorded = recordAgentFindings(input, {
     engineVersion: dependencies.engineVersion(),
+    readCitedFile: createCitedFileReader(selection.appDirectory, citedFileDirectories(selection)),
   })
   if (!recorded.ok) abortRejectedDocument(recorded.errors, commands)
 
+  // The excerpts are context that `record` adds, so they never make it refuse a document: it drops them instead.
+  const document =
+    encodedArtifactSize(recorded.document) > MAX_ARTIFACT_FILE_SIZE_BYTES
+      ? withoutCodeExcerpts(recorded.document)
+      : recorded.document
+
   // The stored document adds check snapshots and indentation, so an input under the limit can still be stored
   // over it. `review` can't read a file that large, so refuse to replace the existing one with it.
-  const storedSize = encodedArtifactSize(recorded.document)
+  const storedSize = encodedArtifactSize(document)
   if (storedSize > MAX_ARTIFACT_FILE_SIZE_BYTES) {
     abortRejectedDocument(
       [`The recorded findings would be stored as ${storedSize} bytes; the limit is 5 MB. Shorten or remove findings.`],
@@ -123,8 +142,8 @@ export default async function securityRecord(
     )
   }
 
-  const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), recorded.document)
-  const findings = recorded.document.checks.reduce((total, check) => total + check.findings.length, 0)
+  const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
+  const findings = document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
-  return {path, checks: recorded.document.checks.length, findings}
+  return {path, checks: document.checks.length, findings}
 }
