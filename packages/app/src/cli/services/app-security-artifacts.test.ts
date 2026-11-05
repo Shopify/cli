@@ -1,6 +1,7 @@
 import {
   appSecurityArtifactPaths,
   appSecurityDirectory,
+  appSecuritySuppressionsPath,
   cleanAllResultsDirectories,
   cleanResultsDirectory,
   readFindingsDocument,
@@ -49,6 +50,14 @@ describe('appSecurityArtifactPaths', () => {
       expect(() => appSecurityArtifactPaths('/tmp/example-app', resultsKey)).toThrow(AbortError)
     },
   )
+})
+
+describe('appSecuritySuppressionsPath', () => {
+  test('is shopify.app-security.json in the app directory, beside shopify.app.toml and outside .shopify', () => {
+    expect(appSecuritySuppressionsPath('/tmp/example-app')).toBe(
+      joinPath('/tmp/example-app', 'shopify.app-security.json'),
+    )
+  })
 })
 
 describe('readFindingsDocument', () => {
