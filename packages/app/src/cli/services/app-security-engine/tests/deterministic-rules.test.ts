@@ -2,7 +2,7 @@ import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {parseAppToml} from '../scanners/discover.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
-import {missingComplianceWebhooks} from '../rules/compliance-rules.js'
+import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
@@ -88,7 +88,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('COMMITTED_SECRET')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('UNAUTHENTICATED_ENDPOINT')?.version).toBe(3)
-    expect(DETERMINISTIC_CHECKS.get('EOL_API_VERSION')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('EOL_API_VERSION')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('EXPIRING_OFFLINE_TOKEN')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('DEPRECATED_SCRIPT_TAG_SCOPE')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_LOG_LEAKAGE')?.version).toBe(3)
@@ -205,6 +205,7 @@ describe('deterministic rules product contract', () => {
 describe('config finding locations', () => {
   const insecureMessageEnd =
     ' is not a conservative secure URL. Use a Shopify-relative path or an HTTPS URL with an exact host and path.'
+  const afterEndOfLife = new Date('2026-11-05T00:00:00.000Z')
 
   test('gives each insecure callback URL its own line and a message that names its key', () => {
     const context = configContext({
@@ -277,16 +278,70 @@ required_scopes = [
     ])
   })
 
+  test('points the end-of-life API version finding at the line of webhooks.api_version', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Old version"
+# api_version = "2024-01"
+
+[webhooks]
+api_version = "2024-01"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app/uninstalled"
+`,
+      'shopify.app.staging.toml': `name = "Dotted version"
+webhooks.api_version = "2023-10"
+`,
+      'shopify.app.production.toml': `name = "Supported version"
+
+[webhooks]
+api_version = "2026-10"
+`,
+    })
+
+    expect(
+      scanEolApiVersions(context, afterEndOfLife).map(({location, message}) => ({
+        location,
+        version: message.split(' ')[2],
+      })),
+    ).toEqual([
+      {location: {file: 'shopify.app.toml', line: 5}, version: '2024-01'},
+      {location: {file: 'shopify.app.staging.toml', line: 2}, version: '2023-10'},
+    ])
+  })
+
+  test('keeps a file-level end-of-life API version finding when the locator stops before the version', () => {
+    const context = configContext({
+      'shopify.app.toml': `"escaped\\u0020key" = "the locator stops here"
+
+[webhooks]
+api_version = "2024-01"
+`,
+    })
+
+    expect(scanEolApiVersions(context, afterEndOfLife).map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml'},
+    ])
+  })
+
   test('keeps a file-level location when the configuration text is not available', () => {
     const context = configContext({})
     context.appTomls = [
       parseAppToml(
-        {access_scopes: {scopes: 'write_script_tags'}, auth: {redirect_urls: ['http://app.example/callback']}},
+        {
+          access_scopes: {scopes: 'write_script_tags'},
+          auth: {redirect_urls: ['http://app.example/callback']},
+          webhooks: {api_version: '2024-01'},
+        },
         '/app/shopify.app.toml',
       ),
     ]
 
     expect(deprecatedScriptTagScope.check(context).map(({location}) => location)).toEqual([{file: 'shopify.app.toml'}])
+    expect(scanEolApiVersions(context, afterEndOfLife).map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml'},
+    ])
     expect(insecureWebhookUrl.check(context).map(({location, message}) => ({location, message}))).toEqual([
       {
         location: {file: 'shopify.app.toml'},

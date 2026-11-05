@@ -116,7 +116,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   },
   {
     id: 'EOL_API_VERSION',
-    version: 3,
+    version: 4,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'config_and_source',
