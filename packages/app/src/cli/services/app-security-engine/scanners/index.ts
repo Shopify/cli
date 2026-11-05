@@ -138,7 +138,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     4,
   ),
   {
-    ...configRule(deprecatedScriptTagScope, 2),
+    ...configRule(deprecatedScriptTagScope, 3),
     target: 'config_and_source',
     analysisMode: 'regex',
     extensions: JAVASCRIPT_EXTENSIONS,
@@ -147,7 +147,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       ...scanDeprecatedScriptTagApi(context.sourceFiles),
     ],
   },
-  configRule(insecureWebhookUrl, 2),
+  configRule(insecureWebhookUrl, 3),
   {
     id: 'COMMITTED_SECRET',
     version: 4,
