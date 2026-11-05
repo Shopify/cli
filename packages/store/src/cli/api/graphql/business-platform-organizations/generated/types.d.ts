@@ -30,6 +30,8 @@ export type Scalars = {
   BusinessUserID: { input: any; output: any; }
   /** The ID for a BusinessUsersImport. */
   BusinessUsersImportID: { input: any; output: any; }
+  /** The ID for a CoMarketingAttachment. */
+  CoMarketingAttachmentID: { input: any; output: any; }
   /** The ID for a CoMarketingBudgetLine. */
   CoMarketingBudgetLineID: { input: any; output: any; }
   /** The ID for a CollaboratorRelationship. */
