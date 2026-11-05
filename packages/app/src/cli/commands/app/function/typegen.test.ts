@@ -2,14 +2,14 @@ import FunctionTypegen from './typegen.js'
 import {chooseFunction} from '../../../services/function/common.js'
 import {localAppContext} from '../../../services/app-context.js'
 import {testApp, testFunctionExtension, testProject} from '../../../models/app/app.test-data.js'
-import {functionTypegenJsonOutputSchema} from '../../../services/function/typegen/types.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {ExternalError, AbortError, handler} from '@shopify/cli-kit/node/error'
+import {ExternalError, AbortError} from '@shopify/cli-kit/node/error'
 import {exec} from '@shopify/cli-kit/node/system'
 import {packageManagerBinaryCommandForDirectory} from '@shopify/cli-kit/node/node-package-manager'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -46,14 +46,9 @@ async function command(argv: string[], directory: string, custom = false) {
 }
 
 test.each([
-  {custom: true, argv: ['--json', '--no-input']},
-  {custom: true, argv: ['--json']},
-  {custom: false, argv: ['--json', '--no-input']},
   {custom: false, argv: ['--json']},
   {custom: true, argv: ['-jcstaging']},
   {custom: false, argv: ['-jcstaging']},
-  {custom: true, argv: ['-j']},
-  {custom: false, argv: ['-j']},
 ])('emits one result and codegen side events: %j', async ({custom, argv}) => {
   await inTemporaryDirectory(async (directory) => {
     const {instance, extension, app} = await command(argv, directory, custom)
@@ -90,7 +85,7 @@ test.each([
   })
 })
 
-test.each([[], ['--no-input']])('keeps custom codegen text output and the success banner: %j', async (...argv) => {
+test.each([[]])('keeps custom codegen text output and the success banner: %j', async (...argv) => {
   await inTemporaryDirectory(async (directory) => {
     const {instance} = await command(argv, directory, true)
     vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
@@ -100,27 +95,6 @@ test.each([[], ['--no-input']])('keeps custom codegen text output and the succes
       await instance.run()
       expect(stdout()).toBe('Native codegen output\n')
       expect(unstyled(stderr())).toContain('GraphQL types generated successfully.')
-    })
-  })
-})
-
-test('emits one fatal document when the custom generator fails', async () => {
-  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  await inTemporaryDirectory(async (directory) => {
-    const {instance} = await command(['--json'], directory, true)
-    vi.mocked(exec).mockRejectedValue(new ExternalError('Generator failed', 'custom-codegen', []))
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await runWithCommandEventsForCommand(instance.argv, async () => {
-        try {
-          await instance.run()
-          expect.unreachable('Expected typegen to fail')
-        } catch (error) {
-          if (!(error instanceof ExternalError)) throw error
-          await handler(error)
-        }
-      })
-      expect(JSON.parse(stdout())).toMatchObject({error: {type: 'external', message: 'Generator failed'}})
-      expect(stdout()).not.toContain('"status":"success"')
     })
   })
 })
@@ -137,9 +111,81 @@ test('keeps the missing custom generator error for non-JavaScript functions', as
   })
 })
 
-test('exposes the result schema and retains inherited flags', () => {
-  expect(FunctionTypegen.flags.json).toBeDefined()
-  expect(FunctionTypegen.flags['no-input']).toBeDefined()
-  expect(FunctionTypegen.jsonOutputSchema).toBe(functionTypegenJsonOutputSchema)
-  expect(FunctionTypegen.descriptionForHelp()).toContain('FunctionTypegenResult')
+const concurrentTitle = 'Running concurrent processes'
+const typegenDirectory = '/tmp/project/extensions/my-function'
+let typegenApp: ReturnType<typeof testApp>
+let typegenExtension: Awaited<ReturnType<typeof testFunctionExtension>>
+
+describeJsonCommand({
+  command: FunctionTypegen,
+  commandId: 'app:function:typegen',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: [],
+  expectedResult: {
+    status: 'success',
+    function: {handle: null, name: 'test function extension', directory: resolve(typegenDirectory)},
+  },
+  expectedEvents: [
+    {type: 'progress', status: 'started', message: concurrentTitle},
+    {type: 'progress', status: 'completed', message: concurrentTitle, current: 1, total: 1},
+  ],
+  expectedSchema: {
+    type: 'object',
+    required: ['status', 'function'],
+    additionalProperties: false,
+    properties: {function: {$ref: '#/definitions/Function'}},
+  },
+  setup: async () => {
+    typegenApp = testApp()
+    typegenExtension = await testFunctionExtension({dir: typegenDirectory})
+    typegenExtension.configuration.build!.typegen_command = 'custom-codegen --target test'
+    vi.mocked(localAppContext).mockResolvedValue({app: typegenApp, project: testProject(), activeConfig: {} as never})
+    vi.mocked(chooseFunction).mockResolvedValue(typegenExtension)
+    vi.mocked(exec).mockResolvedValue(undefined)
+  },
+  assertExecuted: () => {
+    expect(localAppContext).toHaveBeenCalledExactlyOnceWith({directory: cwd(), userProvidedConfigName: undefined})
+    expect(chooseFunction).toHaveBeenCalledExactlyOnceWith(typegenApp, cwd())
+    expect(exec).toHaveBeenCalledExactlyOnceWith(
+      'custom-codegen',
+      ['--target', 'test'],
+      expect.objectContaining({cwd: typegenDirectory}),
+    )
+    expect(packageManagerBinaryCommandForDirectory).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(localAppContext).not.toHaveBeenCalled()
+    expect(exec).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('GraphQL types generated successfully.')
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
+        if (options?.stdout && options.stdout !== 'inherit') options.stdout.write('Generating types\n')
+        if (options?.stderr && options.stderr !== 'inherit') options.stderr.write('Codegen warning\n')
+      })
+    },
+    expectedEvents: [
+      {type: 'progress', status: 'started', message: concurrentTitle},
+      {type: 'diagnostic', level: 'info', message: 'test-function-extension: Generating types'},
+      {type: 'diagnostic', level: 'info', message: 'test-function-extension: Codegen warning'},
+      {type: 'progress', status: 'completed', message: concurrentTitle, current: 1, total: 1},
+    ],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(exec).mockRejectedValue(new ExternalError('Generator failed', 'custom-codegen', ['--target', 'test']))
+    },
+    expectedError: {
+      error: {type: 'external', message: 'Generator failed', command: 'custom-codegen', args: ['--target', 'test']},
+    },
+    expectedEvents: [
+      {type: 'progress', status: 'started', message: concurrentTitle},
+      {type: 'progress', status: 'failed', message: concurrentTitle},
+    ],
+    exitCode: 1,
+  },
 })

@@ -19,6 +19,7 @@ import {handler} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as ui from '@shopify/cli-kit/node/ui'
 
@@ -148,4 +149,39 @@ test('preserves the text error banner without a fatal error for a GraphQL failur
     expect(stderr()).toContain('GraphQL operation failed.')
     expect(stderr()).toContain('invalidField')
   })
+})
+
+describeJsonCommand({
+  command: Execute,
+  commandId: 'app:execute',
+  moduleURL: new URL('../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: ['--query', query, '--store', 'shop.myshopify.com'],
+  expectedResult: {data: {shop: {name: 'Example shop'}}},
+  expectedEvents: [
+    {type: 'progress', status: 'started', message: 'Authenticating'},
+    {type: 'progress', status: 'completed', message: 'Authenticating'},
+    {type: 'progress', status: 'started', message: 'Executing GraphQL operation'},
+    {type: 'progress', status: 'completed', message: 'Executing GraphQL operation'},
+  ],
+  expectedSchema: {anyOf: expect.any(Array)},
+  setup: () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({shop: {name: 'Example shop'}})
+  },
+  assertExecuted: () => {
+    expect(prepareExecuteContext).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({query, store: 'shop.myshopify.com'}),
+    )
+    expect(createAdminSessionAsApp).toHaveBeenCalledOnce()
+    expect(resolveApiVersion).toHaveBeenCalledOnce()
+    expect(adminRequestDoc).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({version: '2026-10'}))
+  },
+  assertNotExecuted: () => {
+    expect(prepareExecuteContext).not.toHaveBeenCalled()
+    expect(createAdminSessionAsApp).not.toHaveBeenCalled()
+    expect(adminRequestDoc).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('{\n  "shop": {\n    "name": "Example shop"\n  }\n}\n')
+    expect(stderr).toContain('Operation succeeded.')
+  },
 })

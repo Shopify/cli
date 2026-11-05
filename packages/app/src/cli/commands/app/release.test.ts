@@ -7,6 +7,8 @@ import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {graphqlRequestDoc} from '@shopify/cli-kit/node/api/graphql'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
@@ -50,6 +52,8 @@ afterEach(() => {
 
 describe('app release command', () => {
   beforeEach(() => {
+    // Vitest's throwing process.exit makes Oclif print error stacks to the captured native console.
+    vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
     vi.mocked(appManagementRequestDoc).mockImplementation((options) =>
       graphqlRequestDoc({
         ...options,
@@ -65,31 +69,16 @@ describe('app release command', () => {
     vi.mocked(release).mockResolvedValue({status: 'success', version})
   })
 
-  test('writes one JSON result and sends diagnostics to stderr', async () => {
-    vi.mocked(release).mockImplementationOnce(async () => {
-      outputInfo('Releasing an app version')
-      return {status: 'success', version}
-    })
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])
-        expect(JSON.parse(stdout())).toEqual({
-          status: 'success',
-          app: {name: 'app1', clientId: 'api-key'},
-          release: {version: {gid: version.uuid, name: 'v1', message: 'Release message', url: version.location}},
-        })
-        expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Releasing an app version'})
-      })
-    })
-  })
-
   test('release rejection uses one shared error document', async () => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     const userErrors = [{message: 'Release failed.', category: 'validation', details: [], field: ['version']}]
     vi.mocked(release).mockResolvedValue({status: 'failed', version, userErrors})
     await inTemporaryDirectory(async (tmp) => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await expect(runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])).rejects.toThrow()
+        await expect(
+          runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates']),
+        ).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         expect(JSON.parse(stdout())).toMatchObject({
           error: {type: 'abort', message: "Version couldn't be released.", details: {userErrors}},
         })
@@ -129,7 +118,8 @@ describe('app release command', () => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         const argv = ['--path', directory, '--version', 'missing', '--allow-updates']
         if (format === 'json') argv.push('--json')
-        await expect(runRelease(argv)).rejects.toThrow()
+        await expect(runRelease(argv)).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         expect(reportAnalyticsEvent).toHaveBeenCalledExactlyOnceWith(
           expect.objectContaining({
             errorMessage: format === 'json' ? 'Version missing could not be found.' : "Version couldn't be released.",
@@ -194,7 +184,8 @@ describe('app release command', () => {
             '--allow-deletes',
             '--no-input',
           ]),
-        ).rejects.toThrow()
+        ).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         const {error} = JSON.parse(stdout())
         expect(error).toMatchObject({type: 'abort', message: expect.stringContaining(message)})
         expect(error.message).toContain('Request ID: lookup-request-id')
@@ -240,3 +231,64 @@ async function releaseConfig() {
   config.plugins.delete('@shopify/app')
   return config
 }
+
+describeJsonCommand({
+  command: Release,
+  commandId: 'app:release',
+  moduleURL: new URL('../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: ['--version', 'v1', '--allow-updates'],
+  expectedResult: {
+    status: 'success',
+    app: {name: 'app1', clientId: 'api-key'},
+    release: {version: {gid: version.uuid, name: 'v1', message: 'Release message', url: version.location}},
+  },
+  expectedSchema: {
+    anyOf: [
+      {
+        type: 'object',
+        properties: {app: {$ref: '#/definitions/App'}, release: {$ref: '#/definitions/AppRelease'}},
+        required: ['status', 'app', 'release'],
+        additionalProperties: false,
+      },
+      {type: 'object', required: ['status'], additionalProperties: false},
+    ],
+  },
+  setup: () => {
+    vi.mocked(linkedAppContext).mockResolvedValue({
+      app: testAppLinked(),
+      remoteApp: testOrganizationApp(),
+    } as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(release).mockResolvedValue({status: 'success', version})
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledOnce()
+    expect(release).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({version: 'v1', allowUpdates: true, force: false}),
+    )
+  },
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(release).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Version released to users.')
+    expect(stderr).toContain('Release message')
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(release).mockImplementation(async () => {
+        outputInfo('Releasing an app version')
+        return {status: 'success', version}
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'info', message: 'Releasing an app version'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(release).mockRejectedValue(new AbortError('Release failed.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Release failed.'}},
+    exitCode: 1,
+  },
+})

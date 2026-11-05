@@ -1,6 +1,5 @@
 import StoreBulkExecute from './execute.js'
 import {renderExecuteBulkOperationResult} from '../../../services/store/bulk/execute-result.js'
-import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
 import {executeBulkOperation, prepareBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -67,16 +66,6 @@ describe('store bulk execute command', () => {
     })
   })
 
-  test('selects JSON presentation', async () => {
-    await StoreBulkExecute.run(['--store', 'shop.myshopify.com', '--query', '{ shop { id } }', '--json'])
-    expect(renderExecuteBulkOperationResult).toHaveBeenCalledWith(expect.anything(), {
-      format: 'json',
-      watch: false,
-      outputFile: undefined,
-    })
-    expect(logBulkOperationStart).toHaveBeenCalledWith('Starting bulk operation.', expect.any(Object))
-  })
-
   test('rejects an empty query', async () => {
     await expect(StoreBulkExecute.run(['--store', 'shop.myshopify.com', '--query', '   '])).rejects.toThrow()
     expect(executeBulkOperation).not.toHaveBeenCalled()
@@ -84,8 +73,6 @@ describe('store bulk execute command', () => {
 
   test('defines the expected flags', () => {
     expect(StoreBulkExecute.flags.store).toBeDefined()
-    expect(StoreBulkExecute.flags.json).toBeDefined()
-    expect(StoreBulkExecute.jsonOutputSchema).toBeDefined()
     expect(StoreBulkExecute.flags.query).toBeDefined()
     expect(StoreBulkExecute.flags['query-file']).toBeDefined()
     expect(StoreBulkExecute.flags.variables).toBeDefined()

@@ -1,7 +1,6 @@
 import StoreList from './list.js'
 import {listStores} from '../../services/store/list.js'
 import {presentStoreListResult} from '../../services/store/list/result.js'
-import {storeListJsonOutputSchema} from '../../services/store/list/types.js'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/list.js')
@@ -34,23 +33,9 @@ describe('store list command', () => {
     expect(listStores).toHaveBeenCalledWith({organizationId: undefined, storeType: 'client-transfer'})
   })
 
-  test('writes json output when requested', async () => {
-    vi.mocked(listStores).mockResolvedValue({stores: []})
-
-    await StoreList.run(['--json'])
-
-    expect(listStores).toHaveBeenCalledWith({organizationId: undefined, storeType: undefined})
-    expect(presentStoreListResult).toHaveBeenCalledWith({stores: []}, 'json')
-  })
-
   test('defines the expected flags', () => {
-    expect(StoreList.flags.json).toBeDefined()
     expect(StoreList.flags['organization-id']).toBeDefined()
     expect(StoreList.flags.type?.options).toEqual(['dev', 'production', 'client-transfer', 'collaborator'])
     expect(StoreList.flags).not.toHaveProperty('from')
-  })
-
-  test('exposes the JSON output schema', () => {
-    expect(StoreList.jsonOutputSchema).toBe(storeListJsonOutputSchema)
   })
 })

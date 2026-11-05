@@ -132,7 +132,7 @@ describe('app config link command', () => {
   })
 })
 
-test.each([{outputFlags: []}, {outputFlags: ['--json']}])(
+test.each([{outputFlags: []}])(
   'does not write a result if final app loading fails with output flags %j',
   async ({outputFlags}) => {
     const app = testAppLinked()

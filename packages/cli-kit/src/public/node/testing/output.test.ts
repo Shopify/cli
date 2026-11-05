@@ -2,10 +2,36 @@ import {mockAndCaptureStandardStreams, withCapturedStandardStreams} from './outp
 import {outputInfo, outputResult} from '../output.js'
 import {isUnitTest} from '../context/local.js'
 import {environmentVariables} from '../../../private/node/constants.js'
+import {renderInfo} from '../ui.js'
+import {flush} from '@oclif/core'
 import {describe, expect, test, vi} from 'vitest'
 import type {CapturedStandardStreams} from './output.js'
 
 describe('withCapturedStandardStreams', () => {
+  test('cleans up Oclif flush listeners while retaining existing stream listeners', async () => {
+    const existingListener = vi.fn()
+    process.stdout.once('drain', existingListener)
+    const originalListeners = process.stdout.rawListeners('drain')
+    try {
+      await withCapturedStandardStreams(async () => {
+        await flush()
+        expect(process.stdout.listenerCount('drain')).toBe(originalListeners.length + 1)
+      })
+      expect(process.stdout.rawListeners('drain')).toEqual(originalListeners)
+      expect(existingListener).not.toHaveBeenCalled()
+    } finally {
+      process.stdout.removeListener('drain', existingListener)
+    }
+  })
+
+  test('keeps the Console constructor available to the real Ink text presenter', async () => {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderInfo({headline: 'Captured text presentation.'})
+      expect(stdout()).toBe('')
+      expect(stderr()).toContain('Captured text presentation')
+    })
+  })
+
   test('captures output functions on the standard streams and disables unit-test suppression', async () => {
     expect(isUnitTest()).toBe(true)
 
@@ -42,6 +68,7 @@ describe('withCapturedStandardStreams', () => {
   test('restores streams and unit-test detection when the callback throws, keeping output readable', async () => {
     const stdoutWrite = process.stdout.write
     const stderrWrite = process.stderr.write
+    const originalConsole = globalThis.console
     let captured: CapturedStandardStreams | undefined
 
     await expect(
@@ -54,6 +81,7 @@ describe('withCapturedStandardStreams', () => {
 
     expect(process.stdout.write).toBe(stdoutWrite)
     expect(process.stderr.write).toBe(stderrWrite)
+    expect(globalThis.console).toBe(originalConsole)
     expect(isUnitTest()).toBe(true)
     expect(process.env[environmentVariables.unitTest]).toBe('1')
     expect(captured?.stdout()).toBe('written before failing\n')
@@ -61,17 +89,34 @@ describe('withCapturedStandardStreams', () => {
 })
 
 describe('mockAndCaptureStandardStreams', () => {
-  test('captures stdout, stderr, and console warnings separately', () => {
+  test('captures stdout and stderr separately', () => {
     const streams = mockAndCaptureStandardStreams()
 
     try {
       expect(process.stdout.write('result\n')).toBe(true)
       process.stderr.write('diagnostic\n')
-      // eslint-disable-next-line no-console
-      console.warn('Warning: %s', 'example')
-
       expect(streams.stdout()).toBe('result\n')
-      expect(streams.stderr()).toBe('diagnostic\nWarning: example\n')
+      expect(streams.stderr()).toBe('diagnostic\n')
+    } finally {
+      streams.restore()
+    }
+  })
+
+  test.each([
+    ['log', 'stdout'],
+    ['info', 'stdout'],
+    ['debug', 'stdout'],
+    ['warn', 'stderr'],
+    ['error', 'stderr'],
+  ] as const)('captures console.%s on %s', (method, stream) => {
+    const streams = mockAndCaptureStandardStreams()
+
+    try {
+      // eslint-disable-next-line no-console
+      console[method]('Message: %s', 'example')
+
+      expect(streams.stdout()).toBe(stream === 'stdout' ? 'Message: example\n' : '')
+      expect(streams.stderr()).toBe(stream === 'stderr' ? 'Message: example\n' : '')
     } finally {
       streams.restore()
     }
@@ -113,8 +158,7 @@ describe('mockAndCaptureStandardStreams', () => {
   test('restores the original writers and leaves captured output available', () => {
     const stdoutWrite = process.stdout.write
     const stderrWrite = process.stderr.write
-    // eslint-disable-next-line no-console
-    const consoleWarn = console.warn
+    const originalConsole = globalThis.console
     const streams = mockAndCaptureStandardStreams()
 
     try {
@@ -125,8 +169,7 @@ describe('mockAndCaptureStandardStreams', () => {
 
     expect(process.stdout.write).toBe(stdoutWrite)
     expect(process.stderr.write).toBe(stderrWrite)
-    // eslint-disable-next-line no-console
-    expect(console.warn).toBe(consoleWarn)
+    expect(globalThis.console).toBe(originalConsole)
     expect(streams.stdout()).toBe('captured')
   })
 })

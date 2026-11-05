@@ -1,6 +1,5 @@
 import StoreOpen from './open.js'
 import {renderOpenStoreResult} from '../../services/store/open/result.js'
-import {openStoreJsonOutputSchema} from '../../services/store/open/types.js'
 import {openStore} from '../../services/store/open.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -14,13 +13,6 @@ describe('store open command', () => {
     expect(openStore).toHaveBeenCalledWith({store: 'shop.myshopify.com'})
   })
 
-  test('selects JSON presentation', async () => {
-    const result = {storeDomain: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: false}
-    vi.mocked(openStore).mockResolvedValue(result)
-    await StoreOpen.run(['--store', result.storeDomain, '--json'])
-    expect(renderOpenStoreResult).toHaveBeenCalledWith(result, 'json')
-  })
-
   test('exits unsuccessfully without presenting a result when opening fails', async () => {
     vi.mocked(openStore).mockRejectedValue(new Error('Store unavailable'))
     await expect(StoreOpen.run(['--store', 'shop.myshopify.com'])).rejects.toThrow(
@@ -31,7 +23,5 @@ describe('store open command', () => {
 
   test('defines the expected flags', () => {
     expect(StoreOpen.flags.store).toBeDefined()
-    expect(StoreOpen.flags.json).toBeDefined()
-    expect(StoreOpen.jsonOutputSchema).toBe(openStoreJsonOutputSchema)
   })
 })

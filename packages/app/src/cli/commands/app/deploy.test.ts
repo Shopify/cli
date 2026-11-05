@@ -5,6 +5,8 @@ import {testAppLinked, testOrganizationApp, testProject} from '../../models/app/
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -59,32 +61,6 @@ describe('app deploy command', () => {
     })
   })
 
-  test('writes one JSON result and sends diagnostics to stderr', async () => {
-    vi.mocked(deploy).mockImplementationOnce(async () => {
-      outputInfo('Releasing an app version')
-      return completedDeployResult(testAppLinked())
-    })
-    await inTemporaryDirectory(async (directory) => {
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await runDeploy(['--path', directory, '--json', '--allow-updates'])
-        expect(JSON.parse(stdout())).toEqual({
-          status: 'success',
-          app: {name: 'app1', clientId: 'api-key'},
-          deployment: {
-            released: true,
-            version: {
-              gid: 'gid://shopify/Version/1',
-              name: 'v1',
-              message: null,
-              url: 'https://dev.shopify.com/dashboard/1/apps/1/versions/1',
-            },
-          },
-        })
-        expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Releasing an app version'})
-      })
-    })
-  })
-
   test('cancelled JSON exits zero through the silent error path', async () => {
     const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
     vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
@@ -124,3 +100,62 @@ function completedDeployResult(app: ReturnType<typeof testAppLinked>): Exclude<D
     },
   }
 }
+
+describeJsonCommand({
+  command: Deploy,
+  commandId: 'app:deploy',
+  moduleURL: new URL('../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: ['--allow-updates'],
+  expectedResult: {
+    status: 'success',
+    app: {name: 'app1', clientId: 'api-key'},
+    deployment: {
+      released: true,
+      version: {
+        gid: 'gid://shopify/Version/1',
+        name: 'v1',
+        message: null,
+        url: 'https://dev.shopify.com/dashboard/1/apps/1/versions/1',
+      },
+    },
+  },
+  expectedSchema: {anyOf: expect.any(Array)},
+  setup: () => {
+    const app = testAppLinked()
+    vi.mocked(linkedAppContext).mockResolvedValue({
+      app,
+      project: testProject(),
+      remoteApp: testOrganizationApp(),
+    } as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(deploy).mockResolvedValue(completedDeployResult(app))
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledOnce()
+    expect(deploy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({allowUpdates: true}))
+  },
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(deploy).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('New version released to users.')
+    expect(stderr).toContain('v1')
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(deploy).mockImplementation(async () => {
+        outputInfo('Releasing an app version')
+        return completedDeployResult(testAppLinked())
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', message: 'Releasing an app version'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(deploy).mockRejectedValue(new AbortError('Deployment failed.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Deployment failed.'}},
+    exitCode: 1,
+  },
+})

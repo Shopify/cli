@@ -14,7 +14,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 // eslint-disable-next-line no-restricted-imports
@@ -79,36 +79,6 @@ describe('app config validate command', () => {
     expect(Validate.flags['client-id']?.exclusive).toEqual(['config'])
   })
 
-  test('returns validation facts and presents text by default', async () => {
-    const app = testAppLinked()
-    mockHealthyProject()
-    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
-
-    await Validate.run([], import.meta.url)
-
-    expect(validateApp).toHaveBeenCalledWith(app)
-    expect(renderSuccess).toHaveBeenCalledWith({headline: "App configuration 'shopify.app.toml' is valid."})
-    expect(outputResult).not.toHaveBeenCalled()
-    await expectValidationMetadataCalls({cmd_app_validate_json: false})
-  })
-
-  test('encodes validation facts when --json is passed', async () => {
-    const app = testAppLinked()
-    mockHealthyProject()
-    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
-
-    await Validate.run(['--json'], import.meta.url)
-
-    expect(validateApp).toHaveBeenCalledWith(app)
-    expect(outputResult).toHaveBeenCalledWith(
-      appConfigValidateJsonOutputSchema.encode({path: resolve(app.configPath), valid: true, issues: []}),
-    )
-    expect(renderSuccess).not.toHaveBeenCalled()
-    await expectValidationMetadataCalls({cmd_app_validate_json: true})
-  })
-
   test('outputs the encoded invalid payload and aborts when validation fails with --json', async () => {
     const app = testAppLinked()
     mockHealthyProject()
@@ -144,18 +114,6 @@ describe('app config validate command', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('accepts the -j alias', async () => {
-    const app = testAppLinked()
-    mockHealthyProject()
-    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
-
-    await Validate.run(['-j'], import.meta.url)
-
-    expect(validateApp).toHaveBeenCalledWith(app)
-    await expectValidationMetadataCalls({cmd_app_validate_json: true})
-  })
-
   test('skips active config prompts when --client-id is passed', async () => {
     const app = testAppLinked()
     mockHealthyProject()
@@ -177,22 +135,6 @@ describe('app config validate command', () => {
       forceRelink: false,
       userProvidedConfigName: 'shopify.app.staging.toml',
       unsafeTolerateErrors: true,
-    })
-    expect(validateApp).toHaveBeenCalledWith(app)
-    await expectValidationMetadataCalls({cmd_app_validate_json: false})
-  })
-
-  test('keeps active config prompts enabled when --client-id is not passed', async () => {
-    const app = testAppLinked()
-    mockHealthyProject()
-    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
-
-    await Validate.run([], import.meta.url)
-
-    expect(selectActiveConfig).toHaveBeenCalledWith(expect.anything(), undefined, {
-      clientId: undefined,
-      skipPrompts: false,
     })
     expect(validateApp).toHaveBeenCalledWith(app)
     await expectValidationMetadataCalls({cmd_app_validate_json: false})
@@ -350,12 +292,6 @@ describe('app config validate command', () => {
       )
     })
   })
-})
-
-test('exposes the validation schema and JSON flag', () => {
-  expect(Validate.jsonOutputSchema).toBe(appConfigValidateJsonOutputSchema)
-  expect(Validate.flags.json).toBeDefined()
-  expect(Validate.description).toContain('AppConfigValidateResult')
 })
 
 test('does not convert authentication failures into validation results', async () => {

@@ -1,12 +1,6 @@
 import {appConfigLinkJsonOutputSchema, projectAppConfigResult} from './types.js'
-import {renderAppConfigLinkResult} from './result.js'
-import ConfigLink from '../../../../commands/app/config/link.js'
 import {testOrganizationApp} from '../../../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import * as context from '@shopify/cli-kit/node/context/local'
-import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {describe, expect, test} from 'vitest'
 
 function result() {
   return projectAppConfigResult({
@@ -57,26 +51,5 @@ describe('config link result', () => {
 
   test('rejects a missing app client ID', () => {
     expect(() => appConfigLinkJsonOutputSchema.validate({...result(), app: {...result().app, clientId: ''}})).toThrow()
-  })
-
-  test('exposes the schema and JSON flag', () => {
-    expect(ConfigLink.jsonOutputSchema).toBe(appConfigLinkJsonOutputSchema)
-    expect(ConfigLink.flags.json).toBeDefined()
-    expect(ConfigLink.description).toContain('AppConfigLinkResult')
-  })
-
-  test('writes one encoded result to stdout and diagnostics to stderr', () => {
-    vi.spyOn(context, 'isUnitTest').mockReturnValue(false)
-    const streams = mockAndCaptureStandardStreams()
-    try {
-      runWithCommandEventsForCommand(['--json'], () => {
-        outputInfo('Configuration fetched')
-        renderAppConfigLinkResult(result(), 'npm', 'json')
-      })
-      expect(streams.stdout()).toBe(`${appConfigLinkJsonOutputSchema.encode(result())}\n`)
-      expect(JSON.parse(streams.stderr())).toMatchObject({type: 'diagnostic', message: 'Configuration fetched'})
-    } finally {
-      streams.restore()
-    }
   })
 })

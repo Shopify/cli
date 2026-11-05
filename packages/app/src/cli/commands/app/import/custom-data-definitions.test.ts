@@ -1,4 +1,5 @@
 import ImportCustomDataDefinitions from './custom-data-definitions.js'
+import ImportCustomDataDefinitionsDeprecated from '../import-custom-data-definitions.js'
 import {importCustomDataDefinitionsJsonOutputSchema} from '../../../services/generate/shop-import/declarative-definitions/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {storeContext} from '../../../services/store-context.js'
@@ -7,9 +8,10 @@ import {MetafieldDefinitions} from '../../../api/graphql/admin/generated/metafie
 import {testAppLinked, testOrganizationApp, testOrganizationStore} from '../../../models/app/app.test-data.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile, tempDirectory, rmdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -51,44 +53,49 @@ async function withApp(run: (directory: string) => Promise<void>) {
   // Ink uses the Console constructor, which Vitest's console replacement does not provide.
   vi.stubGlobal('console', {...globalThis.console, Console})
   await inTemporaryDirectory(async (directory) => {
-    const configurationPath = joinPath(directory, 'shopify.app.toml')
-    const configuration = 'name = "Test app"\nclient_id = "test-client-id"\n'
-    await writeFile(configurationPath, configuration)
-    const app = testAppLinked({directory, configPath: configurationPath})
-    const remoteApp = testOrganizationApp()
-    vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(storeContext).mockResolvedValue(testOrganizationStore({shopDomain: 'test-shop.myshopify.com'}))
-    vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({
-      storeFqdn: 'test-shop.myshopify.com',
-      token: 'test-token',
-    })
-    vi.mocked(adminAsAppRequestDoc).mockImplementation(async ({query, variables}) => {
-      if (query === MetafieldDefinitions) {
-        return {
-          metafieldDefinitions: {
-            pageInfo: {hasNextPage: false, endCursor: null},
-            nodes:
-              variables?.ownerType === 'PRODUCT'
-                ? [
-                    {
-                      key: 'color',
-                      name: 'color',
-                      namespace: 'app--123456',
-                      type: {name: 'single_line_text_field'},
-                      access: {admin: 'MERCHANT_READ', storefront: 'NONE', customerAccount: 'NONE'},
-                      capabilities: {adminFilterable: {enabled: false}},
-                      validations: [],
-                    },
-                  ]
-                : [],
-          },
-        }
-      }
-      return {metaobjectDefinitions: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}
-    })
+    const {configurationPath, configuration} = await configureApp(directory)
     await run(directory)
     await expect(readFile(configurationPath)).resolves.toBe(configuration)
   })
+}
+
+async function configureApp(directory: string) {
+  const configurationPath = joinPath(directory, 'shopify.app.toml')
+  const configuration = 'name = "Test app"\nclient_id = "test-client-id"\n'
+  await writeFile(configurationPath, configuration)
+  const app = testAppLinked({directory, configPath: configurationPath})
+  const remoteApp = testOrganizationApp()
+  vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
+  vi.mocked(storeContext).mockResolvedValue(testOrganizationStore({shopDomain: 'test-shop.myshopify.com'}))
+  vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({
+    storeFqdn: 'test-shop.myshopify.com',
+    token: 'test-token',
+  })
+  vi.mocked(adminAsAppRequestDoc).mockImplementation(async ({query, variables}) => {
+    if (query === MetafieldDefinitions) {
+      return {
+        metafieldDefinitions: {
+          pageInfo: {hasNextPage: false, endCursor: null},
+          nodes:
+            variables?.ownerType === 'PRODUCT'
+              ? [
+                  {
+                    key: 'color',
+                    name: 'color',
+                    namespace: 'app--123456',
+                    type: {name: 'single_line_text_field'},
+                    access: {admin: 'MERCHANT_READ', storefront: 'NONE', customerAccount: 'NONE'},
+                    capabilities: {adminFilterable: {enabled: false}},
+                    validations: [],
+                  },
+                ]
+              : [],
+        },
+      }
+    }
+    return {metaobjectDefinitions: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}
+  })
+  return {configurationPath, configuration}
 }
 
 async function runCommand(directory: string, argv: string[]) {
@@ -186,3 +193,74 @@ test('preserves a transport failure without printing a success result', async ()
     })
   })
 })
+
+for (const {command, commandId, deprecated} of [
+  {command: ImportCustomDataDefinitions, commandId: 'app:import:custom-data-definitions', deprecated: false},
+  {command: ImportCustomDataDefinitionsDeprecated, commandId: 'app:import-custom-data-definitions', deprecated: true},
+]) {
+  let directory: string
+  describeJsonCommand({
+    command,
+    commandId,
+    moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+    args: () => ['--path', directory, '--store', 'test-shop'],
+    expectedResult: {
+      status: 'success',
+      storeDomain: 'test-shop.myshopify.com',
+      metafieldCount: 1,
+      metaobjectCount: 0,
+      toml,
+      skippedSections: [],
+    },
+    expectedEvents: (events) => {
+      const progress = events.filter((event) => event.type === 'progress')
+      expect(progress).toEqual(expect.arrayContaining([expect.objectContaining({status: 'completed'})]))
+      expect(events.every((event) => event.type === 'progress' || (deprecated && event.type === 'diagnostic'))).toBe(
+        true,
+      )
+      if (deprecated)
+        expect(events).toContainEqual(
+          expect.objectContaining({
+            level: 'warning',
+            message: expect.stringContaining('app import-custom-data-definitions has moved.'),
+          }),
+        )
+    },
+    expectedSchema: {
+      type: 'object',
+      required: ['status', 'storeDomain', 'metafieldCount', 'metaobjectCount', 'toml', 'skippedSections'],
+      additionalProperties: false,
+    },
+    setup: async () => {
+      directory = tempDirectory()
+      const fixture = await configureApp(directory)
+      const fixtureDirectory = directory
+      return async () => {
+        try {
+          await expect(readFile(fixture.configurationPath)).resolves.toBe(fixture.configuration)
+        } finally {
+          await rmdir(fixtureDirectory)
+        }
+      }
+    },
+    assertExecuted: () => {
+      expect(linkedAppContext).toHaveBeenCalledOnce()
+      expect(storeContext).toHaveBeenCalledOnce()
+      expect(ensureAuthenticatedAdminAsApp).toHaveBeenCalledOnce()
+      expect(adminAsAppRequestDoc).toHaveBeenCalled()
+    },
+    assertNotExecuted: () => {
+      expect(linkedAppContext).not.toHaveBeenCalled()
+      expect(storeContext).not.toHaveBeenCalled()
+      expect(adminAsAppRequestDoc).not.toHaveBeenCalled()
+    },
+    textOutput: ({stdout, stderr}) => {
+      expect(stdout).toBe('')
+      expect(stderr).toContain('Conversion to TOML complete.')
+      expect(stderr).toContain('1 metafields and 0 metaobjects')
+      expect(stderr).toContain('test-shop.myshopify.com')
+      expect(stderr).toContain(toml)
+      if (deprecated) expect(stderr).toContain('has moved.')
+    },
+  })
+}

@@ -1,10 +1,9 @@
 import DocFetch from './fetch.js'
-import {docFetchJsonOutputSchema} from '../../services/commands/doc/types.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {inTemporaryDirectory, readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath, cwd} from '@shopify/cli-kit/node/path'
 import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
-import {ShopifyConfig} from '@shopify/cli-kit/node/custom-oclif-loader'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -23,43 +22,47 @@ beforeEach(() => {
   vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
 })
 
-afterEach(() => {
+afterEach(async () => {
+  // Returning exit spies let Oclif queue development warnings after the command completes.
+  await new Promise<void>((resolve) => process.nextTick(resolve))
   vi.unstubAllEnvs()
   mockAndCaptureOutput().clear()
 })
 
-describe('doc fetch command', () => {
-  test('preserves the Markdown output and stdout channel', async () => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await DocFetch.run(['--url', url, '--no-input'], import.meta.url)
-      expect(stdout()).toBe(`${content}\n`)
-      expect(stderr()).toBe('')
+describeJsonCommand({
+  command: DocFetch,
+  commandId: 'doc:fetch',
+  moduleURL: import.meta.url,
+  args: ['--url', url, '--language', 'ruby'],
+  expectedResult: {document: {url, content}},
+  expectedSchema: {
+    anyOf: [
+      {type: 'object', properties: {document: {$ref: '#/definitions/Document'}}},
+      {$ref: '#/definitions/DocumentFile'},
+    ],
+  },
+  setup: () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(content))
+  },
+  assertExecuted: () => {
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(url, {
+      headers: {Accept: 'text/markdown', 'X-Shopify-Surface': 'cli', 'Accept-Language': 'ruby'},
     })
-  })
-
-  test.each([{flags: []}, {flags: ['--no-input']}])(
-    'writes one document object with JSON and flags $flags',
-    async ({flags}) => {
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await DocFetch.run(['--url', url, '--language', 'ruby', '--json', ...flags], import.meta.url)
-        expect(JSON.parse(stdout())).toEqual({document: {url, content}})
-        expect(stderr()).toBe('')
-        expect(fetch).toHaveBeenCalledWith(url, {
-          headers: {Accept: 'text/markdown', 'X-Shopify-Surface': 'cli', 'Accept-Language': 'ruby'},
-        })
-      })
+  },
+  assertNotExecuted: () => {
+    expect(fetch).not.toHaveBeenCalled()
+  },
+  textOutput: {stdout: `${content}\n`, stderr: ''},
+  failure: {
+    setup: () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('', {status: 404, statusText: 'Not Found'}))
     },
-  )
+    expectedError: {error: {type: 'abort', message: `Failed to fetch ${url}: 404 Not Found`}},
+    exitCode: 1,
+  },
+})
 
-  test('supports the shared JSON environment flag', async () => {
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await DocFetch.run(['--url', url], import.meta.url)
-      expect(JSON.parse(stdout())).toEqual({document: {url, content}})
-      expect(stderr()).toBe('')
-    })
-  })
-
+describe('doc fetch command', () => {
   test('reports missing required input before fetching', async () => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -143,25 +146,16 @@ describe('doc fetch command', () => {
     },
   )
 
-  test('exposes the schema in help and through the launcher without fetching', async () => {
-    expect(DocFetch.jsonOutputSchema).toBe(docFetchJsonOutputSchema)
-    expect(DocFetch.flags.json).toBeDefined()
-    expect(DocFetch.description).toContain('Output from `--json` conforms to the `DocFetchResult` schema.')
-    vi.spyOn(ShopifyConfig.prototype, 'runHook').mockResolvedValue({successes: [], failures: []})
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+  test('names the nested document schemas in the launcher schema', async () => {
+    await withCapturedStandardStreams(async ({stdout}) => {
       await launchCLI({
         moduleURL: import.meta.url,
         argv: ['doc', 'fetch', '--json-schema'],
         lazyCommandLoader: async () => DocFetch,
       })
       const schema = JSON.parse(stdout())
-      expect(schema.definitions.Result.anyOf).toHaveLength(2)
-      expect(schema.definitions.Result.anyOf[0].properties.document).toEqual({$ref: '#/definitions/Document'})
       expect(schema.definitions.Document.properties.content.type).toBe('string')
-      expect(schema.definitions.Result.anyOf[1]).toEqual({$ref: '#/definitions/DocumentFile'})
       expect(schema.definitions.DocumentFile.properties.format.const).toBe('markdown')
-      expect(stderr()).toBe('')
-      expect(fetch).not.toHaveBeenCalled()
     })
   })
 })

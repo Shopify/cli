@@ -248,8 +248,13 @@ describe('app dev command', () => {
         return fail()
       })
       if (duringSetup) vi.mocked(storeContext).mockImplementation(fail)
+      // Vitest's throwing process.exit makes Oclif print error stacks to the captured native console.
+      vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await expect(Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url)).rejects.toThrow()
+        await expect(
+          Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url),
+        ).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         const records = stdout()
           .trim()
           .split('\n')
@@ -284,10 +289,13 @@ describe('app dev command', () => {
           await devInstance?.log({source: 'web', message: 'Server ready'})
           throw kind === 'silent' ? new AbortSilentError() : new CancelExecution('Stopped')
         })
+        // Vitest's throwing process.exit makes Oclif print error stacks to the captured native console.
+        vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
         await withCapturedStandardStreams(async ({stdout, stderr}) => {
           await expect(
             Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url),
-          ).rejects.toThrow()
+          ).resolves.toBeUndefined()
+          expect(process.exit).toHaveBeenCalledOnce()
           expect(stdout()).toBe(await readFile(logFile))
           expect(JSON.parse(stdout().trim())).toMatchObject({source: 'web', message: 'Server ready'})
           const diagnostics = stderr()

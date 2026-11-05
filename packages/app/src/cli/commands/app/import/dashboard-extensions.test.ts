@@ -15,6 +15,7 @@ import {afterEach, expect, test, vi} from 'vitest'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import * as output from '@shopify/cli-kit/node/output'
 import * as ui from '@shopify/cli-kit/node/ui'
@@ -113,16 +114,6 @@ async function expectFlushedSilentExit(run: () => Promise<unknown>) {
     await rejection
   }
 }
-
-test.each([{Command: ImportDashboardExtensions}, {Command: ImportExtensions}])(
-  '$Command.name exposes JSON flags and its result schema',
-  ({Command}) => {
-    expect(Command.flags.json).toBeDefined()
-    expect(Command.flags['no-input']).toBeDefined()
-    expect(Command.jsonOutputSchema).toBe(importDashboardExtensionsJsonOutputSchema)
-    expect(Command.description).toContain('ImportDashboardExtensionsResult')
-  },
-)
 
 test.each([
   {action: 'write', Command: ImportDashboardExtensions},
@@ -370,3 +361,50 @@ test.each([
     [extension, ...(row.cancel ? [cancelledExtension] : []), ...(row.fail ? [failedExtension] : [])],
   )
 })
+
+for (const {command, commandId, deprecated} of [
+  {command: ImportDashboardExtensions, commandId: 'app:import:dashboard-extensions', deprecated: false},
+  {command: ImportExtensions, commandId: 'app:import-extensions', deprecated: true},
+]) {
+  let client: ReturnType<typeof testDeveloperPlatformClient>
+  describeJsonCommand({
+    command,
+    commandId,
+    moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+    args: [],
+    expectedResult: {status: 'skipped', reason: 'no-extensions', extensions: [], errors: [], identifiersUpdated: false},
+    expectedEvents: deprecated
+      ? [{type: 'diagnostic', level: 'warning', message: expect.stringContaining('app import-extensions has moved.')}]
+      : [],
+    expectedSchema: {
+      type: 'object',
+      required: ['status', 'reason', 'extensions', 'errors', 'identifiersUpdated'],
+      additionalProperties: false,
+    },
+    setup: () => {
+      client = testDeveloperPlatformClient({
+        appExtensionRegistrations: vi.fn().mockResolvedValue({
+          app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], configurationRegistrations: []},
+        }),
+      })
+      vi.mocked(linkedAppContext).mockResolvedValue({
+        app: testAppLinked(),
+        remoteApp: testOrganizationApp(),
+        developerPlatformClient: client,
+      } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
+    },
+    assertExecuted: () => {
+      expect(linkedAppContext).toHaveBeenCalledOnce()
+      expect(client.appExtensionRegistrations).toHaveBeenCalledOnce()
+    },
+    assertNotExecuted: () => {
+      expect(linkedAppContext).not.toHaveBeenCalled()
+      expect(client.appExtensionRegistrations).not.toHaveBeenCalled()
+    },
+    textOutput: ({stdout, stderr}) => {
+      expect(stdout).toBe('')
+      expect(stderr).toContain('No extensions to migrate.')
+      if (deprecated) expect(stderr).toContain('has moved.')
+    },
+  })
+}

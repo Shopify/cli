@@ -3,18 +3,17 @@ import {chooseFunction} from '../../../services/function/common.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {localAppContext} from '../../../services/app-context.js'
 import {testApp, testFunctionExtension, testProject} from '../../../models/app/app.test-data.js'
-import {
-  functionBuildJsonOutputSchema,
-  type FunctionBuildResult,
-} from '../../../services/function/build-command/types.js'
+import {type FunctionBuildResult} from '../../../services/function/build-command/types.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {AbortError, handler} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
+import {cwd} from '@shopify/cli-kit/node/path'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'node:path'
@@ -46,7 +45,7 @@ async function command(argv: string[], directory: string) {
   return {instance: new FunctionBuild(argv, await Config.load()), extension, app, result}
 }
 
-test.each([['--json'], ['--json', '--no-input'], ['-j'], ['-jcstaging'], ['-cstaging', '-j']])(
+test.each([['-jcstaging'], ['-cstaging', '-j']])(
   'writes one result and structured build diagnostics: %j',
   async (...argv) => {
     await inTemporaryDirectory(async (directory) => {
@@ -86,17 +85,7 @@ test.each([['--json'], ['--json', '--no-input'], ['-j'], ['-jcstaging'], ['-csta
   },
 )
 
-test('reports an absent Wasm artifact as null', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const {instance} = await command(['--json'], directory)
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await runWithCommandEventsForCommand(instance.argv, () => instance.run())
-      expect(JSON.parse(stdout()).function.wasmPath).toBeNull()
-    })
-  })
-})
-
-test.each([[], ['--no-input']])('keeps native build output and the text success banner: %j', async (...argv) => {
+test.each([[]])('keeps native build output and the text success banner: %j', async (...argv) => {
   await inTemporaryDirectory(async (directory) => {
     const {instance, result} = await command(argv, directory)
     vi.mocked(buildFunctionExtension).mockImplementation(async (_extension, options) => {
@@ -113,32 +102,82 @@ test.each([[], ['--no-input']])('keeps native build output and the text success 
   })
 })
 
-test.each(['Compiler failed', 'Failed to build function.'])(
-  'writes a fatal document for failed builds: %s',
-  async (message) => {
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    await inTemporaryDirectory(async (directory) => {
-      const {instance} = await command(['--json'], directory)
-      vi.mocked(buildFunctionExtension).mockRejectedValue(new AbortError(message))
-      await withCapturedStandardStreams(async ({stdout}) => {
-        await runWithCommandEventsForCommand(instance.argv, async () => {
-          try {
-            await instance.run()
-          } catch (failure) {
-            if (!(failure instanceof AbortError)) throw failure
-            await handler(failure)
-          }
-        })
-        expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message}})
-        expect(stdout()).not.toContain('"status":"success"')
-      })
-    })
-  },
-)
+const concurrentTitle = 'Running concurrent processes'
+const functionDirectory = '/tmp/project/extensions/my-function'
+let fixtureApp: ReturnType<typeof testApp>
+let fixtureExtension: Awaited<ReturnType<typeof testFunctionExtension>>
 
-test('exposes the schema, JSON flag and inherited flags', () => {
-  expect(FunctionBuild.flags.json).toBeDefined()
-  expect(FunctionBuild.flags['no-input']).toBeDefined()
-  expect(FunctionBuild.jsonOutputSchema).toBe(functionBuildJsonOutputSchema)
-  expect(FunctionBuild.descriptionForHelp()).toContain('FunctionBuildResult')
+function builtFunction(): FunctionBuildResult {
+  return {
+    status: 'success',
+    function: {handle: null, name: 'test function extension', directory: functionDirectory, wasmPath: null},
+  }
+}
+
+describeJsonCommand({
+  command: FunctionBuild,
+  commandId: 'app:function:build',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: [],
+  expectedResult: builtFunction(),
+  expectedEvents: [
+    {type: 'progress', status: 'started', message: concurrentTitle},
+    {type: 'progress', status: 'completed', message: concurrentTitle, current: 1, total: 1},
+  ],
+  expectedSchema: {
+    type: 'object',
+    required: ['status', 'function'],
+    additionalProperties: false,
+    properties: {function: {$ref: '#/definitions/FunctionBuild'}},
+  },
+  setup: async () => {
+    fixtureApp = testApp()
+    fixtureExtension = await testFunctionExtension({dir: functionDirectory})
+    vi.mocked(localAppContext).mockResolvedValue({app: fixtureApp, project: testProject(), activeConfig: {} as never})
+    vi.mocked(chooseFunction).mockResolvedValue(fixtureExtension)
+    vi.mocked(buildFunctionExtension).mockResolvedValue(builtFunction())
+  },
+  assertExecuted: () => {
+    expect(localAppContext).toHaveBeenCalledExactlyOnceWith({directory: cwd(), userProvidedConfigName: undefined})
+    expect(chooseFunction).toHaveBeenCalledExactlyOnceWith(fixtureApp, cwd())
+    expect(buildFunctionExtension).toHaveBeenCalledExactlyOnceWith(
+      fixtureExtension,
+      expect.objectContaining({app: fixtureApp, useTasks: true, environment: 'production'}),
+    )
+  },
+  assertNotExecuted: () => {
+    expect(localAppContext).not.toHaveBeenCalled()
+    expect(chooseFunction).not.toHaveBeenCalled()
+    expect(buildFunctionExtension).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Function built successfully.')
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(buildFunctionExtension).mockImplementation(async (_extension, options) => {
+        options.stdout.write('Compiler output\n')
+        options.stderr.write('Compiler warning\n')
+        return builtFunction()
+      })
+    },
+    expectedEvents: [
+      {type: 'progress', status: 'started', message: concurrentTitle},
+      {type: 'diagnostic', level: 'info', message: 'test-function-extension: Compiler output'},
+      {type: 'diagnostic', level: 'info', message: 'test-function-extension: Compiler warning'},
+      {type: 'progress', status: 'completed', message: concurrentTitle, current: 1, total: 1},
+    ],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(buildFunctionExtension).mockRejectedValue(new AbortError('Compiler failed'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Compiler failed'}},
+    expectedEvents: [
+      {type: 'progress', status: 'started', message: concurrentTitle},
+      {type: 'progress', status: 'failed', message: concurrentTitle},
+    ],
+    exitCode: 1,
+  },
 })

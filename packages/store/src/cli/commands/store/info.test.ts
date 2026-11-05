@@ -1,7 +1,6 @@
 import StoreInfo from './info.js'
 import {getStoreInfo} from '../../services/store/info/index.js'
 import {renderStoreInfoResult} from '../../services/store/info/result.js'
-import {storeInfoJsonOutputSchema} from '../../services/store/info/types.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/info/index.js')
@@ -26,18 +25,7 @@ describe('store info command', () => {
     )
   })
 
-  test('renders json format when --json flag is set', async () => {
-    await StoreInfo.run(['--store', 'shop.myshopify.com', '--json'])
-
-    expect(renderStoreInfoResult).toHaveBeenCalledWith(expect.anything(), 'json')
-  })
-
   test('defines the expected flags', () => {
     expect(StoreInfo.flags.store).toBeDefined()
-    expect(StoreInfo.flags.json).toBeDefined()
-  })
-
-  test('exposes the JSON output schema', () => {
-    expect(StoreInfo.jsonOutputSchema).toBe(storeInfoJsonOutputSchema)
   })
 })

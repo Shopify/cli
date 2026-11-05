@@ -1,41 +1,67 @@
 import Upgrade from './upgrade.js'
 import {upgradeCLI} from '@shopify/cli-kit/node/upgrade'
-import {upgradeJsonOutputSchema} from '@shopify/cli-kit/node/upgrade/types'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {afterEach, describe, test, vi, expect} from 'vitest'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {afterEach, test, vi, expect} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/upgrade')
 
 afterEach(() => mockAndCaptureOutput().clear())
 
-describe('upgrade command', () => {
-  test('exposes the result schema and JSON flags in help', () => {
-    expect(Upgrade.jsonOutputSchema).toBe(upgradeJsonOutputSchema)
-    expect(Upgrade.flags.json).toBeDefined()
-    expect(Upgrade.description).toContain('Output from `--json` conforms to the `UpgradeResult` schema.')
-  })
+const result = {
+  status: 'success',
+  changed: true,
+  scope: 'global',
+  previousVersion: '4.8.0',
+  version: '4.9.0',
+  packageManager: 'npm',
+} as const
 
-  test('encodes the result when JSON is requested', async () => {
-    const result = {
-      status: 'success',
-      changed: true,
-      scope: 'global',
-      previousVersion: '4.8.0',
-      version: '4.9.0',
-      packageManager: 'npm',
-    } as const
+describeJsonCommand({
+  command: Upgrade,
+  commandId: 'upgrade',
+  moduleURL: import.meta.url,
+  args: [],
+  expectedResult: result,
+  expectedSchema: {anyOf: [{type: 'object'}, {type: 'object'}, {type: 'object'}]},
+  setup: () => {
     vi.mocked(upgradeCLI).mockResolvedValue(result)
+  },
+  assertExecuted: () => {
+    expect(upgradeCLI).toHaveBeenCalledExactlyOnceWith()
+  },
+  assertNotExecuted: () => {
+    expect(upgradeCLI).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Shopify CLI upgraded.')
+    expect(stderr).toContain("You're now on version 4.9.0.")
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(upgradeCLI).mockImplementation(async () => {
+        outputInfo('Upgrade diagnostic')
+        return result
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'info', message: 'Upgrade diagnostic'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(upgradeCLI).mockRejectedValue(new AbortError('Cannot upgrade Shopify CLI.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Cannot upgrade Shopify CLI.'}},
+    exitCode: 1,
+  },
+})
 
-    await Upgrade.run(['--json'], import.meta.url)
+test('calls upgradeCLI directly without prompting', async () => {
+  vi.mocked(upgradeCLI).mockResolvedValue({status: 'skipped', reason: 'development', scope: 'global'})
 
-    expect(mockAndCaptureOutput().output()).toBe(upgradeJsonOutputSchema.encode(result))
-  })
+  await Upgrade.run([], import.meta.url)
 
-  test('calls upgradeCLI directly without prompting', async () => {
-    vi.mocked(upgradeCLI).mockResolvedValue({status: 'skipped', reason: 'development', scope: 'global'})
-
-    await Upgrade.run([], import.meta.url)
-
-    expect(upgradeCLI).toHaveBeenCalledOnce()
-  })
+  expect(upgradeCLI).toHaveBeenCalledOnce()
 })

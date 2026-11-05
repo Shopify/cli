@@ -4,14 +4,15 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testFunctionExtension} from '../../../models/app/app.test-data.js'
 import {renderReplay} from '../../../services/function/ui.js'
 import {selectFunctionRunPrompt} from '../../../prompts/function/replay.js'
-import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
+import {functionRunnerBinary} from '../../../services/function/binaries.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {captureOutputWithExitCode, exec, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, rmdir, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('../../../services/app-context.js')
@@ -57,29 +58,6 @@ async function command(argv: string[], directory: string) {
   return new FunctionReplay(argv, await Config.load())
 }
 
-test('replays a saved log through native validation and the output writer', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
-      stdout: JSON.stringify(nativeResult),
-      stderr: 'Runner warning',
-      exitCode: 0,
-    })
-    const instance = await command(['--json', '--no-watch', '--log', 'abcdef'], directory)
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runWithCommandEventsForCommand(instance.argv, () => instance.run())
-      expect(JSON.parse(stdout())).toEqual(nativeResult)
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Runner warning'})
-    })
-    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.arrayContaining(['--json', '--export', 'run']),
-      expect.objectContaining({input: JSON.stringify(nativeResult.input)}),
-    )
-    expect(renderReplay).not.toHaveBeenCalled()
-    expect(selectFunctionRunPrompt).not.toHaveBeenCalled()
-  })
-})
-
 test('preserves native numeric tokens in finite replay output', async () => {
   await inTemporaryDirectory(async (directory) => {
     const nativeJson = `{"name":"function.wasm","size":1,"memory_usage":64,"instructions":1000,"logs":"",
@@ -113,30 +91,6 @@ test('keeps the default text watch workflow', async () => {
     await instance.run()
     expect(renderReplay).toHaveBeenCalledOnce()
     expect(captureOutputWithExitCode).not.toHaveBeenCalled()
-  })
-})
-
-test('captures finite text replay and preserves native output', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const nativeText = '  Function output:\n{ operations: [] }\n'
-    const nativeStderr = 'Runner warning\n'
-    vi.mocked(captureOutputWithExitCode).mockImplementation(async (_command, _args, options) => {
-      if (options?.stderr && options.stderr !== 'inherit') options.stderr.write(nativeStderr)
-      if (options?.stdout && options.stdout !== 'inherit') options.stdout.write(nativeText)
-      return {stdout: nativeText, stderr: nativeStderr, exitCode: 0}
-    })
-    const instance = await command(['--no-watch', '--log', 'abcdef'], directory)
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await instance.run()
-      expect(stdout()).toBe(nativeText)
-      expect(stderr()).toBe(nativeStderr)
-    })
-    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.not.arrayContaining(['--json']),
-      expect.objectContaining({input: JSON.stringify(nativeResult.input)}),
-    )
-    expect(exec).not.toHaveBeenCalled()
   })
 })
 
@@ -174,8 +128,99 @@ test('requires --log when --no-input is enabled', async () => {
   expect(selectFunctionRunPrompt).not.toHaveBeenCalled()
 })
 
-test('shares the native runner schema and preserves synchronous analytics', () => {
-  expect(FunctionReplay.jsonOutputSchema).toBe(functionRunJsonOutputSchema)
-  expect(FunctionReplay.descriptionForHelp()).toContain('FunctionRunResult')
+test('preserves synchronous analytics', () => {
   expect(FunctionReplay.requiresSyncAnalytics).toBe(true)
+})
+
+const replayText = '  Function output:\n{ operations: [] }\n'
+const replayStderr = 'Runner warning\n'
+let replayDirectory: string
+let replayApp: ReturnType<typeof testAppLinked>
+let replayExtension: Awaited<ReturnType<typeof testFunctionExtension>>
+
+describeJsonCommand({
+  command: FunctionReplay,
+  commandId: 'app:function:replay',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: () => ['--path', replayDirectory, '--no-watch', '--log', 'abcdef'],
+  expectedResult: nativeResult,
+  expectedSchema: {
+    type: 'object',
+    additionalProperties: true,
+    required: expect.arrayContaining(['name', 'size', 'memory_usage', 'instructions', 'logs', 'success']),
+  },
+  setup: async () => {
+    replayDirectory = tempDirectory()
+    replayApp = testAppLinked({directory: replayDirectory})
+    replayExtension = await testFunctionExtension({dir: replayDirectory})
+    vi.mocked(linkedAppContext).mockResolvedValue({app: replayApp} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(chooseFunction).mockResolvedValue(replayExtension)
+    await mkdir(replayApp.getLogsDir())
+    await writeFile(
+      joinPath(replayApp.getLogsDir(), `20240522_150641_827Z_extensions_${replayExtension.handle}_abcdef.json`),
+      JSON.stringify({payload: {input: nativeResult.input, export: 'run'}}),
+    )
+    vi.mocked(captureOutputWithExitCode).mockImplementation(async (_command, args, options) => {
+      if (args.includes('--json')) return {stdout: JSON.stringify(nativeResult, null, 2), stderr: '', exitCode: 0}
+      if (options?.stderr && options.stderr !== 'inherit') options.stderr.write(replayStderr)
+      if (options?.stdout && options.stdout !== 'inherit') options.stdout.write(replayText)
+      return {stdout: replayText, stderr: replayStderr, exitCode: 0}
+    })
+    const directory = replayDirectory
+    return () => rmdir(directory)
+  },
+  assertExecuted: (format) => {
+    expect(linkedAppContext).toHaveBeenCalledExactlyOnceWith({
+      directory: replayDirectory,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
+    })
+    expect(chooseFunction).toHaveBeenCalledExactlyOnceWith(replayApp, replayDirectory)
+    expect(captureOutputWithExitCode).toHaveBeenCalledExactlyOnceWith(
+      functionRunnerBinary().path,
+      expect.arrayContaining(['--export', 'run', ...(format === 'json' ? ['--json'] : [])]),
+      expect.objectContaining({input: JSON.stringify(nativeResult.input)}),
+    )
+    if (format === 'text') {
+      expect(captureOutputWithExitCode).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.not.arrayContaining(['--json']),
+        expect.anything(),
+      )
+    }
+    expect(renderReplay).not.toHaveBeenCalled()
+    expect(selectFunctionRunPrompt).not.toHaveBeenCalled()
+    expect(exec).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(captureOutputWithExitCode).not.toHaveBeenCalled()
+  },
+  textOutput: {stdout: replayText, stderr: replayStderr},
+  diagnostics: {
+    setup: () => {
+      vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+        stdout: JSON.stringify(nativeResult, null, 2),
+        stderr: 'Runner warning',
+        exitCode: 0,
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'warning', message: 'Runner warning'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout: '', stderr: 'Invalid WASM', exitCode: 1})
+    },
+    expectedError: {
+      error: {
+        type: 'external',
+        message: 'Function runner failed with exit code 1.',
+        command: functionRunnerBinary().path,
+        args: expect.arrayContaining(['--export', 'run', '--json']),
+        details: {exitCode: 1, stderr: 'Invalid WASM'},
+      },
+    },
+    exitCode: 1,
+  },
 })

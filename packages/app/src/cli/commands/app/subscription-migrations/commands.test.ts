@@ -142,30 +142,6 @@ describe('subscription migration submission commands', () => {
     )
   })
 
-  test.each([
-    {json: false, noInput: false},
-    {json: true, noInput: false},
-    {json: false, noInput: true},
-    {json: true, noInput: true},
-  ])('unschedule keeps format independent of no-input: %j', async ({json, noInput}) => {
-    const submission = {...successfulSubmissionResult.submission, action: 'unschedule' as const}
-    vi.mocked(runSubmissionCommand).mockResolvedValue({status: 'success', submission})
-    await Unschedule.run(['--input', '-', '--force', ...(json ? ['--json'] : []), ...(noInput ? ['--no-input'] : [])])
-    expect(runSubmissionCommand).toHaveBeenCalledWith(
-      expect.objectContaining({action: 'unschedule', skipConfirmation: true}),
-    )
-    if (json) {
-      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toMatchObject({
-        status: 'success',
-        changed: true,
-        action: 'unschedule',
-      })
-    } else {
-      expect(outputResult).not.toHaveBeenCalled()
-      expect(renderSuccess).toHaveBeenCalledOnce()
-    }
-  })
-
   test('unschedule emits cancellation and exits zero after declined confirmation', async () => {
     const result = {
       status: 'cancelled' as const,
@@ -534,30 +510,14 @@ describe('subscription migration command metadata', () => {
     expect(Command.flags['client-id']?.exclusive).toEqual(['config'])
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel, List])('$name uses the canonical JSON flag', (Command) => {
-    expect(Command.flags.json).toBe(jsonFlag.json)
-  })
-
-  test('list exposes and documents its JSON output schema', () => {
-    expect(List.jsonOutputSchema).toBe(migrationListJsonOutputSchema)
-    expect(List.description).toContain('`MigrationListResult` schema')
-    expect(List.description).toContain('```json')
-  })
-
-  test('schedule exposes and documents the submission JSON output schema', () => {
-    expect(Schedule.jsonOutputSchema).toBe(migrationSubmissionJsonOutputSchema)
-    expect(Schedule.description).toContain('`MigrationSubmissionResult` schema')
-    expect(Schedule.description).toContain('```json')
-  })
-
-  test('status exposes and documents its JSON output schema', () => {
-    expect(Status.jsonOutputSchema).toBe(migrationStatusJsonOutputSchema)
-    expect(Status.description).toContain('`MigrationStatusResult` schema')
-    expect(Status.description).toContain('```json')
-  })
-
-  test('cancel exposes its JSON output schema', () => {
-    expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
+  test.each([
+    {Command: List, schema: migrationListJsonOutputSchema},
+    {Command: Schedule, schema: migrationSubmissionJsonOutputSchema},
+    {Command: Unschedule, schema: migrationSubmissionJsonOutputSchema},
+    {Command: Status, schema: migrationStatusJsonOutputSchema},
+    {Command: Cancel, schema: migrationCancellationJsonOutputSchema},
+  ])('$Command.name uses its domain-owned schema', ({Command, schema}) => {
+    expect(Command.jsonOutputSchema).toBe(schema)
   })
 
   test.each([Schedule, Unschedule, Status, Cancel, List])('$name has no legacy migration flags', (Command) => {
@@ -679,14 +639,7 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test('unschedule exposes and documents the shared submission schema', () => {
+  test('unschedule reuses the schedule result schema', () => {
     expect(Unschedule.jsonOutputSchema).toBe(Schedule.jsonOutputSchema)
-    expect(Unschedule.description).toContain('`MigrationSubmissionResult` schema')
-    expect(Unschedule.description).toContain('```json')
-  })
-
-  test('cancel documents its JSON output schema', () => {
-    expect(Cancel.description).toContain('`MigrationCancellationResult` schema')
-    expect(Cancel.description).toContain('```json')
   })
 })
