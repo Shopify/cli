@@ -4,6 +4,7 @@ import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
+import {isCharToken} from './token-item.js'
 import {LinksContext} from '../contexts/LinksContext.js'
 import React, {FunctionComponent, useContext} from 'react'
 import {Box, Text} from 'ink'
@@ -42,7 +43,7 @@ const InlineBlocks: React.FC<{blocks: Block[]}> = ({blocks}) => {
     <Text>
       {blocks.map((block, blockIndex) => (
         <Text key={blockIndex}>
-          {blockIndex !== 0 && !(typeof block.value !== 'string' && 'char' in block.value) && <Text> </Text>}
+          {blockIndex !== 0 && !isCharToken(block.value) && <Text> </Text>}
           <TokenizedText item={block.value} />
         </Text>
       ))}

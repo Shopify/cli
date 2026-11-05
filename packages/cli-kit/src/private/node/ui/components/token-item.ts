@@ -61,6 +61,14 @@ export type Token =
 export type InlineToken = Exclude<Token, ListToken>
 export type TokenItem<T extends Token = Token> = T | T[]
 
+/**
+ * Char tokens hold punctuation that belongs to the preceding token, so they are
+ * rendered flush against it instead of being separated by a space.
+ */
+export function isCharToken(token: Token): boolean {
+  return typeof token !== 'string' && 'char' in token
+}
+
 export function tokenItemToString(token: TokenItem): string {
   if (typeof token === 'string') {
     return token
@@ -90,7 +98,7 @@ export function tokenItemToString(token: TokenItem): string {
   } else {
     return token
       .map((item, index) => {
-        if (index !== 0 && !(typeof item !== 'string' && 'char' in item)) {
+        if (index !== 0 && !isCharToken(item)) {
           return ` ${tokenItemToString(item)}`
         } else {
           return tokenItemToString(item)
@@ -111,7 +119,7 @@ export function tokenItemToJsonString(token: TokenItem): string {
   return token
     .map((item, index) => {
       const value = tokenToJsonString(item)
-      const needsLeadingSpace = index !== 0 && !(typeof item !== 'string' && 'char' in item)
+      const needsLeadingSpace = index !== 0 && !isCharToken(item)
       return needsLeadingSpace ? ` ${value}` : value
     })
     .join('')
