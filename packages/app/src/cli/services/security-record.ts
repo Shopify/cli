@@ -52,6 +52,8 @@ export interface RecordedSuppressions {
     problem: string
     /** Set when only an entry without `code` can suppress the finding, as `planSuppression` says. */
     withoutCode?: {findingCount: number}
+    /** Set when the entry would be invalid, also by hand: the fields that the file's validation rejects. */
+    invalidFields?: string[]
   }[]
 }
 
@@ -247,6 +249,7 @@ async function planAgentSuppressions(
               location: target.finding.location,
               problem: plan.problem,
               ...(plan.withoutCode ? {withoutCode: plan.withoutCode} : {}),
+              ...(plan.invalidFields ? {invalidFields: plan.invalidFields} : {}),
             },
           ]
         : [],

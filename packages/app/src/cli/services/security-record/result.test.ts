@@ -180,6 +180,112 @@ describe('renderSecurityRecordResult', () => {
       })
     })
 
+    /** The text of the "not saved" warning for these suppressions, on one line. */
+    async function notSavedWarning(notSaved: RecordedSuppressions['notSaved']): Promise<string> {
+      let text = ''
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const output = mockAndCaptureOutput()
+        output.clear()
+
+        renderSecurityRecordResult(
+          {
+            path: artifactPaths(appRoot).agentFindingsPath,
+            checks: 1,
+            findings: 3,
+            suppressions: {path: joinPath(appRoot, 'shopify.app-security.json'), saved: [], alreadySaved: 0, notSaved},
+          },
+          {selection: selectionFor(appRoot), path: appRoot},
+          'text',
+        )
+
+        text = unstyled(output.warn()).replace(/[│\s]+/g, ' ')
+        output.clear()
+      })
+      return text
+    }
+
+    const wildcardPath = {
+      checkId: 'MISSING_TENANT_ISOLATION',
+      location: {file: 'app/routes/*.tsx', line: 3},
+      problem: "its entry would be invalid: path: can't contain wildcards: name one file",
+      invalidFields: ['path'],
+    }
+
+    test('say that no entry can keep a suppression whose path the file cannot name, and advise no entry by hand', async () => {
+      const text = await notSavedWarning([wildcardPath])
+
+      expect(text).toContain(
+        "They're recorded in agent-findings.json, so they apply to these findings only, until the next record. • app/routes/*.tsx:3",
+      )
+      expect(text).toContain(
+        "It can't be saved because its entry would be invalid: path: can't contain wildcards: name one file. shopify.app-security.json can't name this path, so no entry can keep it. An entry for it by hand would make the file invalid too.",
+      )
+      expect(text).not.toContain('add entries')
+      expect(text).not.toContain('a code that names it alone')
+    })
+
+    test('advise entries by hand only for the suppressions that the file can name', async () => {
+      const text = await notSavedWarning([
+        wildcardPath,
+        {
+          checkId: 'SCOPE_OVER_REQUEST',
+          location: {file: 'shopify.app.toml', line: 4},
+          problem: 'every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+        },
+      ])
+
+      expect(text).toContain(
+        'until the next record. To keep the ones that shopify.app-security.json can name, add entries to it by hand.',
+      )
+      expect(text).toContain('so no entry can keep it.')
+      expect(text).toContain('Give its entry a code that names it alone.')
+    })
+
+    test('advise no entry by hand when another field would make the entry invalid', async () => {
+      const text = await notSavedWarning([
+        {
+          checkId: 'CREDENTIAL_LOGGING',
+          location: {file: 'app/routes/orders.tsx', line: 3},
+          problem: 'its entry would be invalid: check: not a known check ID',
+          invalidFields: ['check'],
+        },
+      ])
+
+      expect(text).toContain(
+        "It can't be saved because its entry would be invalid: check: not a known check ID. An entry for it by hand with the same values would make shopify.app-security.json invalid too.",
+      )
+      expect(text).not.toContain('add entries')
+    })
+
+    test('keep the JSON fields of a suppression whose entry would be invalid', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const suppressions = {path: joinPath(appRoot, 'shopify.app-security.json'), saved: [], alreadySaved: 0}
+
+        await withCapturedStandardStreams(({stdout}) => {
+          renderSecurityRecordResult(
+            {
+              path: artifactPaths(appRoot).agentFindingsPath,
+              checks: 1,
+              findings: 1,
+              suppressions: {...suppressions, notSaved: [wildcardPath]},
+            },
+            {selection: selectionFor(appRoot), path: appRoot},
+            'json',
+          )
+
+          expect(JSON.parse(stdout()).suppressions.notSaved).toStrictEqual([
+            {
+              checkId: 'MISSING_TENANT_ISOLATION',
+              location: {filePath: resolve(appRoot, 'app', 'routes', '*.tsx'), line: 3},
+              message: "its entry would be invalid: path: can't contain wildcards: name one file",
+            },
+          ])
+        })
+      })
+    })
+
     test('say nothing about the file when the document has no suppression', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)

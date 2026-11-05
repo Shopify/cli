@@ -699,6 +699,35 @@ describe('securityRecord', () => {
       )
     })
 
+    test('reports a suppression whose path no entry can name as not saved, with the invalid field', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createAppWithRoute(directory)
+        // A file name with a `*`, which the app can have, but which an entry's path can't hold.
+        const document = documentWith([
+          finding({line: 3, suppression}),
+          finding({file: 'app/routes/*.tsx', line: 3, evidence: [{file: 'app/routes/*.tsx', line: 3}], suppression}),
+        ])
+
+        const result = await record(appRoot, testDependencies(document))
+
+        expect(result.suppressions).toStrictEqual({
+          path: appSecuritySuppressionsPath(appRoot),
+          saved: [{index: 0, change: 'added', entry: savedEntry}],
+          alreadySaved: 0,
+          notSaved: [
+            {
+              checkId: 'MISSING_TENANT_ISOLATION',
+              location: {file: 'app/routes/*.tsx', line: 3},
+              problem: "its entry would be invalid: path: can't contain wildcards: name one file",
+              invalidFields: ['path'],
+            },
+          ],
+        })
+        const [, stored] = (await readRecorded(appRoot)).checks[0]!.findings
+        expect(stored!.suppression).toStrictEqual(suppression)
+      })
+    })
+
     test('refuses to write into an invalid shopify.app-security.json, and records nothing', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createAppWithRoute(directory)

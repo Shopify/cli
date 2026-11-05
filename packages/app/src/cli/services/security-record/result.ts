@@ -59,31 +59,59 @@ function suppressionLines({saved, alreadySaved}: RecordedSuppressions): string[]
 
 /**
  * Each suppression that no entry could name alone, so it applies to this run's findings only, with the entry to add by
- * hand: one with a code that names the finding alone, only when such a code exists, or else one without code.
+ * hand: one with a code that names the finding alone, only when such a code exists, or else one without code. A
+ * suppression whose entry would be invalid gets no entry by hand, because that entry would be invalid too.
  */
 function renderNotSavedSuppressions({notSaved}: RecordedSuppressions): void {
   renderWarning({
     headline: `${countLabel(notSaved.length, 'suppression')} couldn't be saved to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
-    body: `They're recorded in agent-findings.json, so they apply to these findings only, until the next record. To keep them, add entries to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand.`,
+    body: [
+      "They're recorded in agent-findings.json, so they apply to these findings only, until the next record.",
+      ...entriesByHandLine(notSaved),
+    ].join(' '),
     customSections: [
       {
         body: {
           list: {
-            items: notSaved.map(
-              ({checkId, location, problem, withoutCode}): TokenItem<InlineToken> => [
+            items: notSaved.map((suppression): TokenItem<InlineToken> => {
+              const {checkId, location, problem} = suppression
+              return [
                 {filePath: location.line === undefined ? location.file : `${location.file}:${location.line}`},
                 {subdued: `· ${checkId}`},
                 `\nIt can't be saved because ${problem}.`,
-                withoutCode
-                  ? `\nNo code from its lines, evidence or message names it alone. An agent entry without code suppresses all ${countLabel(withoutCode.findingCount, 'agent finding')} of ${checkId} in that file. To keep only this one suppressed, change the code so that the findings differ.`
-                  : '\nGive its entry a code that names it alone.',
-              ],
-            ),
+                `\n${notSavedAdvice(suppression)}`,
+              ]
+            }),
           },
         },
       },
     ],
   })
+}
+
+type NotSavedSuppression = RecordedSuppressions['notSaved'][number]
+
+/** "To keep them, add entries to shopify.app-security.json by hand.", unless every entry by hand would be invalid. */
+function entriesByHandLine(notSaved: NotSavedSuppression[]): string[] {
+  const keepableCount = notSaved.filter(({invalidFields}) => invalidFields === undefined).length
+  if (keepableCount === 0) return []
+  if (keepableCount === notSaved.length) {
+    return [`To keep them, add entries to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand.`]
+  }
+  return [`To keep the ones that ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} can name, add entries to it by hand.`]
+}
+
+function notSavedAdvice({checkId, withoutCode, invalidFields}: NotSavedSuppression): string {
+  if (invalidFields?.includes('path')) {
+    return `${APP_SECURITY_SUPPRESSIONS_FILE_NAME} can't name this path, so no entry can keep it. An entry for it by hand would make the file invalid too.`
+  }
+  if (invalidFields) {
+    return `An entry for it by hand with the same values would make ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} invalid too.`
+  }
+  if (withoutCode) {
+    return `No code from its lines, evidence or message names it alone. An agent entry without code suppresses all ${countLabel(withoutCode.findingCount, 'agent finding')} of ${checkId} in that file. To keep only this one suppressed, change the code so that the findings differ.`
+  }
+  return 'Give its entry a code that names it alone.'
 }
 
 function appSecurityRecordResult(
