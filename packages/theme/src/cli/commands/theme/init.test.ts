@@ -5,10 +5,12 @@ import {renderAIInstructionsWarning} from '../../services/init/result.js'
 import {Config} from '@oclif/core'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, rmdir, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSelectPrompt, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {expect, test, vi} from 'vitest'
 // Native JSON paths must preserve Windows separators instead of pathe normalization.
@@ -37,6 +39,7 @@ vi.mock('../../services/init.js', async (importOriginal) => ({
 }))
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   recordEvent: vi.fn(),
+  reportAnalyticsEvent: vi.fn(),
   compileData: vi.fn().mockReturnValue({timings: {}, errors: {}, retries: {}, events: {}}),
 }))
 vi.mock('@shopify/cli-kit/node/metadata')
@@ -48,7 +51,7 @@ async function run(argv: string[]) {
   await new Init(argv, config).run()
 }
 
-test.each([true, false])('emits the cloned theme after skipped AI setup, interactive=%s', async (interactive) => {
+test.each([true])('emits the cloned theme after skipped AI setup, interactive=%s', async (interactive) => {
   vi.mocked(terminalSupportsPrompting).mockReturnValue(interactive)
   vi.mocked(promptAIInstruction).mockResolvedValue(null)
   await inTemporaryDirectory(async (directory) => {
@@ -146,18 +149,6 @@ test('preserves the cloned project when AI setup fails', async () => {
   })
 })
 
-test('does not emit a result when cloning fails', async () => {
-  vi.mocked(downloadGitRepository).mockRejectedValue(new Error('Clone failed'))
-  await inTemporaryDirectory(async (directory) => {
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(
-        runWithCommandEventsForCommand(['--json'], () => run(['example', '--path', directory, '--json'])),
-      ).rejects.toThrow('Clone failed')
-      expect(stdout()).toBe('')
-    })
-  })
-})
-
 test('keeps the copy warning in the text presenter', () => {
   renderAIInstructionsWarning(['CLAUDE.md'])
   expect(renderWarning).toHaveBeenCalledWith({
@@ -166,10 +157,7 @@ test('keeps the copy warning in the text presenter', () => {
   })
 })
 
-test('exposes the schema and rejects invalid instruction choices', () => {
-  expect(Init.jsonOutputSchema).toBe(themeInitJsonOutputSchema)
-  expect(Init.flags.json).toBeDefined()
-  expect(Init.description).toContain('--json-schema')
+test('rejects invalid instruction choices', () => {
   expect(() =>
     themeInitJsonOutputSchema.validate({
       status: 'success',
@@ -205,7 +193,6 @@ test.each([
   {argv: [], interactive: true, choice: 'upstream', repoUrl: SKELETON_THEME_URL, latest: false},
   {argv: ['--latest'], interactive: true, repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
   {argv: ['--no-input'], interactive: true, repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
-  {argv: [], interactive: false, repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
   {
     argv: ['--clone-url', 'https://example.com/theme.git'],
     interactive: true,
@@ -240,4 +227,82 @@ test.each([
     else expect(renderSelectPrompt).not.toHaveBeenCalled()
     if (argv.some((flag) => flag === '--no-input') || !interactive) expect(promptAIInstruction).not.toHaveBeenCalled()
   })
+})
+
+let initDirectory: string
+const skeletonRelease = `${SKELETON_THEME_URL}#v1.0.0`
+const cloneTask = () => `Cloning ${skeletonRelease} into ${joinPath(initDirectory, 'example')}`
+
+describeJsonCommand({
+  command: Init,
+  commandId: 'theme:init',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: () => ['example', '--path', initDirectory],
+  expectedResult: () => ({
+    status: 'success',
+    changed: true,
+    directory: nativePath(initDirectory, 'example'),
+    repoUrl: SKELETON_THEME_URL,
+    latest: true,
+    aiInstructions: null,
+    instructionFilePaths: [],
+    reason: null,
+  }),
+  expectedEvents: (events) => {
+    expect(events).toMatchObject([
+      {type: 'progress', status: 'started', message: cloneTask()},
+      {type: 'progress', status: 'completed', message: cloneTask()},
+    ])
+  },
+  expectedSchema: {
+    type: 'object',
+    required: [
+      'status',
+      'changed',
+      'directory',
+      'repoUrl',
+      'latest',
+      'aiInstructions',
+      'instructionFilePaths',
+      'reason',
+    ],
+    additionalProperties: false,
+  },
+  setup: () => {
+    initDirectory = tempDirectory()
+    const directory = initDirectory
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+    return () => rmdir(directory)
+  },
+  assertExecuted: () => {
+    expect(downloadGitRepository).toHaveBeenCalledExactlyOnceWith({
+      repoUrl: skeletonRelease,
+      destination: joinPath(initDirectory, 'example'),
+      latestTag: undefined,
+      shallow: true,
+    })
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
+    expect(promptAIInstruction).not.toHaveBeenCalled()
+    expect(createAIInstructions).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(downloadGitRepository).not.toHaveBeenCalled()
+  },
+  // Text mode renders only the clone task progress.
+  textOutput: ({stdout}) => {
+    expect(stdout).toBe('')
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(downloadGitRepository).mockRejectedValue(new AbortError('Clone failed.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Clone failed.'}},
+    expectedEvents: (events) => {
+      expect(events).toMatchObject([
+        {type: 'progress', status: 'started', message: cloneTask()},
+        {type: 'progress', status: 'failed', message: cloneTask()},
+      ])
+    },
+    exitCode: 1,
+  },
 })

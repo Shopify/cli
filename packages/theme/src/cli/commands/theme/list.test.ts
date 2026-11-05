@@ -1,10 +1,12 @@
 import List from './list.js'
 import {list} from '../../services/list.js'
 import {themeListJsonOutputSchema} from '../../services/list/types.js'
-import {Config} from '@oclif/core'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../../services/list.js')
 vi.mock('@shopify/cli-kit/node/session')
@@ -19,13 +21,48 @@ function restoreExitCode(value: typeof process.exitCode): void {
   process.exitCode = value
 }
 
-test('exposes the schema, preserves false fields and rejects invalid themes', () => {
-  expect(List.jsonOutputSchema).toBe(themeListJsonOutputSchema)
-  expect(List.flags.json).toBeDefined()
+test('preserves false fields and rejects invalid themes', () => {
   expect(JSON.parse(themeListJsonOutputSchema.encode([theme]))).toEqual({themes: [publicTheme]})
   expect(JSON.parse(themeListJsonOutputSchema.encode([]))).toEqual({themes: []})
   expect(() => themeListJsonOutputSchema.validate({themes: [{...publicTheme, id: 1}]})).toThrow()
   expect(() => themeListJsonOutputSchema.validate({themes: [{...publicTheme, processing: null}]})).toThrow()
+})
+
+const listSession = {storeFqdn: 'shop.myshopify.com', token: 'token'}
+
+// Registered before the module-reset tests below so the suite shares this file's mocked modules.
+describeJsonCommand({
+  command: List,
+  commandId: 'theme:list',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store=shop.myshopify.com', '--password=token'],
+  expectedResult: {themes: [publicTheme]},
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(listSession)
+    vi.mocked(list).mockResolvedValue([theme])
+  },
+  assertExecuted: (format) => {
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith(listSession.storeFqdn, 'token')
+    expect(list).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({json: format === 'json'}), listSession)
+  },
+  assertNotExecuted: () => {
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(list).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Dawn')
+    expect(stderr).toContain('[live]')
+    expect(stderr).toContain('#1')
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(list).mockRejectedValue(new AbortError('Fetch failed.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Fetch failed.'}},
+    exitCode: 1,
+  },
 })
 
 test.each(['single', 'named single', 'multiple', 'partial failure', 'total failure'])(
@@ -95,15 +132,3 @@ test.each(['single', 'named single', 'multiple', 'partial failure', 'total failu
     } else expect(streams.stderr()).toBe('')
   },
 )
-
-test('propagates a single-environment failure without producing a result', async () => {
-  const output = mockAndCaptureOutput()
-  const config = new Config({root: __dirname})
-  await config.load()
-  vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({storeFqdn: 'shop.myshopify.com', token: 'token'})
-  vi.mocked(list).mockRejectedValue(new Error('Fetch failed'))
-  await expect(new List(['--store=shop.myshopify.com', '--password=token', '--json'], config).run()).rejects.toThrow(
-    'Fetch failed',
-  )
-  expect(output.output()).toBe('')
-})

@@ -1,5 +1,6 @@
 import Delete from './delete.js'
 import {themeDeleteJsonOutputSchema} from '../../services/delete/types.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import {findThemes} from '../../utilities/theme-selector.js'
 import * as localStorage from '../../services/local-storage.js'
 import {Config} from '@oclif/core'
@@ -12,6 +13,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -65,48 +67,28 @@ function restoreExitCode(value: typeof process.exitCode): void {
 }
 
 describe('theme delete JSON output', () => {
-  test('exposes its schema and JSON flag in help', () => {
-    expect(Delete.jsonOutputSchema).toBe(themeDeleteJsonOutputSchema)
-    expect(Delete.flags.json).toBeDefined()
-    expect(Delete.description).toContain('ThemeDeleteResult')
-  })
-
-  test.each([
-    {themes: []},
-    {themes: [theme]},
-    {themes: [theme, {...theme, id: 2, src: 'https://example.com/theme.zip'}]},
-  ])('writes one complete result without terminal output %#', async ({themes}) => {
-    vi.mocked(findThemes).mockResolvedValue(themes)
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await run(['--store', store, '--theme', '1', '--force', '--json'])
-      expect(JSON.parse(stdout())).toEqual({
-        status: 'success',
-        changed: themes.length > 0,
-        themes: themes.map((theme) => ({
-          id: String(theme.id),
-          name: theme.name,
-          role: theme.role,
-          processing: theme.processing,
-          sourceUrl: ('src' in theme ? theme.src : undefined) ?? null,
-          storeDomain: store,
-        })),
+  test.each([{themes: []}, {themes: [theme, {...theme, id: 2, src: 'https://example.com/theme.zip'}]}])(
+    'writes one complete result without terminal output %#',
+    async ({themes}) => {
+      vi.mocked(findThemes).mockResolvedValue(themes)
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await run(['--store', store, '--theme', '1', '--force', '--json'])
+        expect(JSON.parse(stdout())).toEqual({
+          status: 'success',
+          changed: themes.length > 0,
+          themes: themes.map((theme) => ({
+            id: String(theme.id),
+            name: theme.name,
+            role: theme.role,
+            processing: theme.processing,
+            sourceUrl: ('src' in theme ? theme.src : undefined) ?? null,
+            storeDomain: store,
+          })),
+        })
+        expect(stderr()).toBe('')
       })
-      expect(stderr()).toBe('')
-    })
-  })
-
-  test('writes diagnostics to stderr', async () => {
-    vi.mocked(findThemes).mockResolvedValue([theme])
-    vi.mocked(themeDelete).mockImplementation(async () => {
-      outputWarn('Retrying request')
-      return true
-    })
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await run(['--store', store, '--theme', '1', '--force', '--json'])
-      expect(JSON.parse(stdout())).toHaveProperty('themes')
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: 'Retrying request'})
-    })
-  })
+    },
+  )
 
   test('keeps successful JSON output when development theme cleanup fails', async () => {
     vi.mocked(findThemes).mockResolvedValue([{...theme, role: 'development'}])
@@ -257,4 +239,58 @@ describe('theme delete JSON output', () => {
   ])('rejects malformed results %#', (result) => {
     expect(() => themeDeleteJsonOutputSchema.validate(result)).toThrow()
   })
+})
+
+describeJsonCommand({
+  command: Delete,
+  commandId: 'theme:delete',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store', store, '--theme', '1', '--force'],
+  expectedResult: {
+    status: 'success',
+    changed: true,
+    themes: [{id: '1', name: 'Original', role: 'unpublished', storeDomain: store, processing: false, sourceUrl: null}],
+  },
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (storeFqdn) => ({token: 'token', storeFqdn}))
+    vi.mocked(findThemes).mockResolvedValue([theme])
+  },
+  assertExecuted: () => {
+    const session = {token: 'token', storeFqdn: store}
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith(store, undefined)
+    expect(findThemes).toHaveBeenCalledExactlyOnceWith(session, expect.objectContaining({themes: ['1'], force: true}))
+    expect(themeDelete).toHaveBeenCalledExactlyOnceWith(1, session)
+  },
+  assertNotExecuted: () => {
+    expect(findThemes).not.toHaveBeenCalled()
+    expect(themeDelete).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain("'Original' (#1)")
+    expect(stderr).toContain(`was deleted from ${store}.`)
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(themeDelete).mockImplementation(async () => {
+        outputWarn('Retrying request')
+        return true
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'warning', message: 'Retrying request'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(themeDelete).mockRejectedValue(new Error('Deletion failed'))
+    },
+    expectedError: {
+      error: {
+        type: 'abort',
+        message: 'Deletion failed',
+        details: {errors: [{themeId: '1', message: 'Deletion failed'}]},
+      },
+    },
+    exitCode: 1,
+  },
 })

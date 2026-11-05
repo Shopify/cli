@@ -1,5 +1,6 @@
 import Rename from './rename.js'
 import {themeRenameJsonOutputSchema} from '../../services/rename/types.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -9,6 +10,8 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -63,12 +66,6 @@ password = "token"
 }
 
 describe('theme rename JSON output', () => {
-  test('exposes its schema and JSON flag in help', () => {
-    expect(Rename.jsonOutputSchema).toBe(themeRenameJsonOutputSchema)
-    expect(Rename.flags.json).toBeDefined()
-    expect(Rename.description).toContain('ThemeRenameResult')
-  })
-
   test.each([undefined, '', 'https://example.com/theme.zip'])(
     'returns the updated theme and nullable source URL (%s)',
     async (src) => {
@@ -86,30 +83,6 @@ describe('theme rename JSON output', () => {
       })
     },
   )
-
-  test('routes diagnostics to stderr', async () => {
-    vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
-    vi.mocked(themeUpdate).mockImplementation(async () => {
-      outputWarn('Retrying request')
-      return renamedTheme
-    })
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await run(['--store', store, '--theme', '1', '--name', 'Renamed Theme', '--json'])
-      expect(JSON.parse(stdout()).theme.name).toBe('Renamed Theme')
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: 'Retrying request'})
-    })
-  })
-
-  test('leaves execution failures to the shared error handler without writing a result', async () => {
-    vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
-    vi.mocked(themeUpdate).mockRejectedValue(new Error('Renameing failed'))
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(run(['--store', store, '--theme', '1', '--name', 'Renamed Theme', '--json'])).rejects.toThrow(
-        'Renameing failed',
-      )
-      expect(stdout()).toBe('')
-    })
-  })
 
   test.each(['none', 'partial', 'all'])('collects one document in configured order (%s failures)', async (failures) => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
@@ -182,4 +155,65 @@ describe('theme rename JSON output', () => {
   ])('rejects malformed results %#', (result) => {
     expect(() => themeRenameJsonOutputSchema.validate(result)).toThrow()
   })
+})
+
+const renameSession = {token: 'token', storeFqdn: store}
+
+describeJsonCommand({
+  command: Rename,
+  commandId: 'theme:rename',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store', store, '--theme', '1', '--name', 'Renamed Theme'],
+  expectedResult: {
+    status: 'success',
+    changed: true,
+    originalName: 'Original',
+    theme: {
+      id: '1',
+      name: 'Renamed Theme',
+      role: 'unpublished',
+      storeDomain: store,
+      processing: false,
+      sourceUrl: null,
+    },
+  },
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (storeFqdn) => ({token: 'token', storeFqdn}))
+    vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
+    vi.mocked(themeUpdate).mockResolvedValue(renamedTheme)
+  },
+  assertExecuted: () => {
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith(store, undefined)
+    expect(findOrSelectTheme).toHaveBeenCalledExactlyOnceWith(renameSession, {
+      header: 'Select a theme to rename',
+      filter: expect.objectContaining({theme: '1'}),
+    })
+    expect(themeUpdate).toHaveBeenCalledExactlyOnceWith(1, {name: 'Renamed Theme'}, renameSession)
+  },
+  assertNotExecuted: () => {
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(findOrSelectTheme).not.toHaveBeenCalled()
+    expect(themeUpdate).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain("The theme 'Original' (#1) was renamed to 'Renamed Theme'")
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(themeUpdate).mockImplementation(async () => {
+        outputWarn('Retrying request')
+        return renamedTheme
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'warning', message: 'Retrying request'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(themeUpdate).mockRejectedValue(new AbortError('Renaming failed.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Renaming failed.'}},
+    exitCode: 1,
+  },
 })

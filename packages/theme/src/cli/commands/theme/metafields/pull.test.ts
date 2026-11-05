@@ -2,13 +2,23 @@ import MetafieldsPull from './pull.js'
 import {themeMetafieldsPullJsonOutputSchema} from '../../../services/metafields-pull/types.js'
 import {ensureDirectoryConfirmed} from '../../../utilities/theme-ui.js'
 import {ensureThemeStore} from '../../../utilities/theme-store.js'
+import {themeResultJsonSchema} from '../../../services/json-output/schema.test-data.js'
 import {Config} from '@oclif/core'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {inTemporaryDirectory, mkdir, readFile, fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  inTemporaryDirectory,
+  mkdir,
+  readFile,
+  fileExists,
+  rmdir,
+  tempDirectory,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {expect, test, vi, beforeEach} from 'vitest'
 // Native JSON paths must preserve Windows separators instead of pathe normalization.
 // eslint-disable-next-line no-restricted-imports
@@ -174,10 +184,7 @@ test('does not emit a result when writing the downloaded file fails', async () =
   })
 })
 
-test('exposes the schema and rejects incomplete definitions and unknown outcomes', () => {
-  expect(MetafieldsPull.jsonOutputSchema).toBe(themeMetafieldsPullJsonOutputSchema)
-  expect(MetafieldsPull.flags.json).toBeDefined()
-  expect(MetafieldsPull.description).toContain('--json-schema')
+test('rejects incomplete definitions and unknown outcomes', () => {
   expect(() => themeMetafieldsPullJsonOutputSchema.validate({status: 'skipped', reason: 'unknown'})).toThrow()
   expect(() => themeMetafieldsPullJsonOutputSchema.validate({status: 'failed', failedOwnerTypes: []})).toThrow()
 })
@@ -233,34 +240,79 @@ test.each(['success', 'total failure'])('returns an explicit single environment 
   })
 })
 
-class LifecycleMetafieldsPull extends MetafieldsPull {
-  execute(): Promise<void> {
-    return this._run<void>()
-  }
+const pulledDefinition = {
+  key: 'subtitle',
+  namespace: 'custom',
+  name: 'Subtitle',
+  description: 'Definition description',
+  type: {name: 'single_line_text_field', category: 'TEXT'},
 }
+const ownerTypes = [
+  'ARTICLE',
+  'BLOG',
+  'COLLECTION',
+  'COMPANY',
+  'COMPANY_LOCATION',
+  'LOCATION',
+  'MARKET',
+  'ORDER',
+  'PAGE',
+  'PRODUCT',
+  'PRODUCTVARIANT',
+  'SHOP',
+]
+let themeDirectory: string
 
-test('renders a single fatal JSON envelope for a failed download', async () => {
-  vi.mocked(metafieldDefinitionsByOwnerType).mockRejectedValue(new Error('Unavailable'))
-  vi.spyOn(MetafieldsPull.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(undefined)
-  vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-  const config = new Config({root: __dirname})
-  await config.load()
-  await inTemporaryDirectory(async (directory) => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await new LifecycleMetafieldsPull(
-        ['--path', directory, '--store', 'example.myshopify.com', '--json'],
-        config,
-      ).execute()
-      expect(JSON.parse(stdout())).toEqual({
-        error: {
-          type: 'abort',
-          message: 'Failed to fetch metafield definitions.',
-          tryMessage: expect.any(String),
-          details: {failedOwnerTypes: expect.arrayContaining(['PRODUCT', 'SHOP'])},
-        },
-      })
-      expect(stderr()).toBe('')
+describeJsonCommand({
+  command: MetafieldsPull,
+  commandId: 'theme:metafields:pull',
+  moduleURL: new URL('../../../../../../cli/src/index.ts', import.meta.url).href,
+  args: () => ['--path', themeDirectory, '--store', 'example.myshopify.com'],
+  expectedResult: () => ({
+    status: 'success',
+    changed: true,
+    path: nativePath(themeDirectory, '.shopify/metafields.json'),
+    definitions: [{ownerType: 'PRODUCT', ...pulledDefinition}],
+    failedOwnerTypes: [],
+  }),
+  expectedSchema: themeResultJsonSchema,
+  setup: async () => {
+    themeDirectory = tempDirectory()
+    const directory = themeDirectory
+    await Promise.all(['config', 'layout', 'templates'].map((name) => mkdir(joinPath(directory, name))))
+    vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation(async (owner) =>
+      owner === 'PRODUCT' ? [pulledDefinition] : [],
+    )
+    return () => rmdir(directory)
+  },
+  assertExecuted: () => {
+    expect(metafieldDefinitionsByOwnerType).toHaveBeenCalledTimes(ownerTypes.length)
+    expect(metafieldDefinitionsByOwnerType).toHaveBeenCalledWith('PRODUCT', {
+      storeFqdn: 'example.myshopify.com',
+      token: 'token',
     })
-  })
-  expect(process.exit).toHaveBeenCalledWith(1)
+    expect(ensureDirectoryConfirmed).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(metafieldDefinitionsByOwnerType).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('successfully downloaded')
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(metafieldDefinitionsByOwnerType).mockRejectedValue(new Error('Unavailable'))
+    },
+    expectedError: {
+      error: {
+        type: 'abort',
+        message: 'Failed to fetch metafield definitions.',
+        tryMessage: 'Check your connection and permissions, then try again.',
+        details: {failedOwnerTypes: ownerTypes},
+      },
+    },
+    exitCode: 1,
+  },
 })
