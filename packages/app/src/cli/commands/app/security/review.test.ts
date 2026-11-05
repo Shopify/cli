@@ -5,17 +5,20 @@ import {resolveAppSecurityCommands} from '../../../services/app-security-command
 import {appSecurityInstructions} from '../../../services/app-security-instructions.js'
 import {SUPPRESSION_KINDS} from '../../../services/app-security-suppressions.js'
 import securityReview from '../../../services/security-review.js'
+import {interactiveSecurityReview} from '../../../services/security-review-output.js'
 import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
 import {appSecurityReviewJsonOutputSchema} from '../../../services/security-review/types.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-review.js')
 vi.mock('../../../services/security-review/result.js')
+vi.mock('../../../services/security-review-output.js')
 
 /**
  * The arguments of the `review --suppress` command that the agent instructions show, for an app in the working
@@ -45,14 +48,18 @@ function instructedSuppressArguments(values: {[placeholder: string]: string}): s
     .map((argument) => values[argument] ?? argument)
 }
 
-/** Runs the command, expecting oclif to refuse the flags before anything is reviewed, and returns the error output. */
+/**
+ * Runs the command, expecting oclif to refuse the flags before anything is reviewed, and returns the error output: on
+ * stderr, or as the JSON error document on stdout with --json.
+ */
 async function parseError(argv: string[]): Promise<string> {
   const outputMock = mockAndCaptureOutput()
   const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   try {
     await expect(SecurityReview.run(argv, import.meta.url)).rejects.toThrow(/process.exit unexpectedly called/)
     expect(securityReview).not.toHaveBeenCalled()
-    return outputMock.error()
+    expect(interactiveSecurityReview).not.toHaveBeenCalled()
+    return outputMock.error() + outputMock.output()
   } finally {
     consoleErrorSpy.mockRestore()
     outputMock.clear()
@@ -301,5 +308,72 @@ describe('app security review command', () => {
 
     expect(error).toContain('Parsing --suppress')
     expect(error).toContain(message)
+  })
+
+  test('defines --interactive with its environment variable, apart from --json and --suppress', () => {
+    expect(SecurityReview.flags.interactive.env).toBe('SHOPIFY_FLAG_APP_SECURITY_INTERACTIVE')
+    expect(SecurityReview.flags.interactive.exclusive).toEqual(['json', 'suppress'])
+    expect(SecurityReview.flags.interactive.allowNo).toBeFalsy()
+  })
+
+  test('passes the interactive session to the review with --interactive', async () => {
+    const session = vi.fn()
+    vi.mocked(interactiveSecurityReview).mockReturnValue(session)
+
+    await SecurityReview.run(['--interactive', '--check-id', 'EOL_API_VERSION', '--blocking', 'high'], import.meta.url)
+
+    expect(interactiveSecurityReview).toHaveBeenCalledOnce()
+    expect(securityReview).toHaveBeenCalledWith(
+      expect.objectContaining({interactive: session, checkIds: ['EOL_API_VERSION'], blocking: 'high'}),
+    )
+    expect(vi.mocked(securityReview).mock.calls[0]![0]).not.toHaveProperty('suppress')
+    expect(renderSecurityReviewResult).toHaveBeenCalledWith(undefined, {verbose: false}, 'text')
+  })
+
+  test('reads --interactive from its environment variable', async () => {
+    vi.mocked(interactiveSecurityReview).mockReturnValue(vi.fn())
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_INTERACTIVE', '1')
+    try {
+      await SecurityReview.run([], import.meta.url)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+
+    expect(interactiveSecurityReview).toHaveBeenCalledOnce()
+  })
+
+  test('starts no session without --interactive', async () => {
+    await SecurityReview.run(['--json'], import.meta.url)
+    await SecurityReview.run(['--suppress', '1', '--kind', 'false-positive', '--reason', 'r'], import.meta.url)
+
+    expect(interactiveSecurityReview).not.toHaveBeenCalled()
+    for (const [options] of vi.mocked(securityReview).mock.calls) expect(options).not.toHaveProperty('interactive')
+  })
+
+  test('fails before it reviews anything when the session cannot prompt', async () => {
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(interactiveSecurityReview).mockImplementation(() => {
+      throw new AbortError('The interactive review needs an interactive terminal.')
+    })
+    try {
+      await expect(SecurityReview.run(['--interactive'], import.meta.url)).rejects.toThrow(
+        /process.exit unexpectedly called/,
+      )
+
+      expect(outputMock.error()).toContain('The interactive review needs an interactive terminal.')
+      expect(securityReview).not.toHaveBeenCalled()
+    } finally {
+      outputMock.clear()
+    }
+  })
+
+  test.each([
+    ['--json', ['--interactive', '--json']],
+    ['-j', ['--interactive', '-j']],
+    ['--suppress', ['--interactive', '--suppress', '1', '--kind', 'false-positive', '--reason', 'r']],
+  ])('refuses --interactive with %s, so it never prompts there', async (_flag, argv) => {
+    await expect(parseError(argv)).resolves.toMatch(
+      /--(json|suppress)=\S+ cannot also be provided when using --interactive/,
+    )
   })
 })

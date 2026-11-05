@@ -14,7 +14,9 @@ export default class SecurityInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review app security check results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.
+
+The agent records its findings with \`shopify app security record\`, which saves the suppression of each finding that has one to \`shopify.app-security.json\`. Review and commit that file.`
 
   static jsonOutputSchema = appSecurityInstructionsJsonOutputSchema
 

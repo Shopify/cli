@@ -5709,8 +5709,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum severity of an active finding that causes a non-zero exit code: high, medium, or low.
+      Suppressed findings never count. Defaults to none, which never fails on findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -5806,6 +5806,14 @@ DESCRIPTION
   `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
   write them later. With `--json`, the command offers to include the instructions in the result, with or without copying
   them, and `--print-instructions` includes them.
+
+  Findings that an entry of `shopify.app-security.json` in the app directory matches are suppressed: they don't count
+  for `--blocking`, and the output lists each one with its kind and reason. An entry that matches no finding is stale,
+  and an entry whose code matches more than one finding is ambiguous. Neither suppresses anything, and the output lists
+  both, so you can remove or update them. Agent entries aren't evaluated, because the check reads no agent results. An
+  invalid file makes the check fail with every problem. To add entries, run `shopify app security review --interactive`
+  or `shopify app security review --suppress`, or have your coding agent record a suppression that you approved. Then
+  review and commit the file.
 
   With `--json`, the result describes the scan and the files it wrote, whether `--blocking` passed, and how the entries
   of `shopify.app-security.json` applied, but not the findings: run `shopify app security review --json` for those.
@@ -6243,6 +6251,8 @@ EXAMPLES
   $ shopify app security check --no-git-ignore --exclude local-data
 
   $ shopify app security check --include-dir ../backend --list-files
+
+  $ shopify app security check --blocking high
 ```
 
 ## `shopify app security clean`
@@ -6469,6 +6479,9 @@ DESCRIPTION
   them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's
   generated review pack is trusted as workflow input.
 
+  The agent records its findings with `shopify app security record`, which saves the suppression of each finding that
+  has one to `shopify.app-security.json`. Review and commit that file.
+
   Use `--json-schema` to print the result, error, and event schemas.
 
   Output from `--json` conforms to the `AppSecurityInstructionsResult` schema.
@@ -6654,7 +6667,8 @@ DESCRIPTION
   A finding's `suppression` needs a `justification` and a `kind`, `false-positive` or `accepted-risk`. The command saves
   each suppression as an entry of `shopify.app-security.json` in the app directory, so it also applies to later results,
   and says how many it saved. Review and commit that file. A suppression that no entry can name alone is reported, and
-  applies to the recorded findings only.
+  applies to the recorded findings only. Run `shopify app security review` to see the findings with every suppression
+  applied.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6924,8 +6938,9 @@ Show the combined app security check results.
 ```
 USAGE
   $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [--include-superseded
-    --suppress <value>] [-j] [--json-schema] [--kind <value> ] [--no-color] [--no-input] [--path <value>] [--reason
-    <value> ] [--results-digest <value> ] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+    --suppress <value>] [--interactive | -j | ] [--json-schema] [--kind <value> ] [--no-color] [--no-input] [--path
+    <value>] [--reason <value> ] [--results-digest <value> ] [--verbose] [--without-app-config [--client-id <value> | -c
+    <value>]]
 
 FLAGS
   -c, --config=<value>
@@ -6937,8 +6952,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum severity of an active finding that causes a non-zero exit code: high, medium, or low.
+      Suppressed findings never count. Defaults to none, which never fails on findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -6954,6 +6969,11 @@ FLAGS
       With --suppress, also suppress the superseded deterministic findings of the agent finding's check in the same file,
       which check --blocking still counts.
       [env: SHOPIFY_FLAG_APP_SECURITY_INCLUDE_SUPERSEDED]
+
+  --interactive
+      Go through the active findings one at a time, most severe first, and choose Suppress, Continue or Quit for each.
+      Needs an interactive terminal.
+      [env: SHOPIFY_FLAG_APP_SECURITY_INTERACTIVE]
 
   --json-schema
       Print the command's JSON schemas.
@@ -7011,9 +7031,17 @@ DESCRIPTION
 
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
   reasoning and evidence, and for suppressed and superseded findings in full, and `--blocking` to exit with code 1 when
-  a check with findings is at or above a severity. Suppressed findings are always listed with their kind and reason.
-  With `--json`, the result always includes every finding in full, and how the entries of `shopify.app-security.json`
-  applied.
+  a check with active findings is at or above a severity. With `--json`, the result always includes every finding in
+  full, and how the entries of `shopify.app-security.json` applied.
+
+  `shopify.app-security.json`, in the app directory, holds the findings that your team decided not to fix. Commit it, so
+  that your team and CI use the same decisions. Each entry names a finding's source, check ID and file, and can name a
+  `code` text of the finding. It has a kind, `false-positive` or `accepted-risk`, a reason, which is required, and the
+  app configurations it applies to. A finding that an entry matches is suppressed: it doesn't count for `--blocking`,
+  and it's always listed with its kind and reason. An entry that matches no finding is stale, and an entry whose code
+  matches more than one finding is ambiguous. Neither suppresses anything, and the review lists both, so you can remove
+  or update them. Entries for checks without a result, or for other app configurations, aren't evaluated. An invalid
+  file makes the command fail with every problem.
 
   Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
   every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
@@ -7024,6 +7052,15 @@ DESCRIPTION
   agent finding that supersedes a deterministic finding of the same check in the same file, `check --blocking` still
   counts the deterministic finding, because it reads no agent results: the output names it, and `--include-superseded`
   suppresses it too, with the same kind and reason.
+
+  Use `--interactive` in a terminal to go through the active findings one at a time, most severe first, each shown in
+  full with its number. For each finding, choose Suppress, Continue or Quit. Suppress asks whether the finding is a
+  false positive or an accepted risk, and for a reason, which is required. Then it saves the entry at once, as
+  `--suppress` does. When the finding has superseded deterministic findings that `check --blocking` still counts, it
+  asks separately whether to suppress them too. Continue leaves the finding active. Quit stops the review and keeps what
+  you saved. At the end, the command shows the review with the findings you suppressed, and lists the entries it saved.
+  `--interactive` never prompts in CI, without a terminal, or with `--no-input`: it fails before it reads anything. It
+  can't be combined with `--json` or `--suppress`.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -8383,6 +8420,19 @@ DESCRIPTION
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
+
+EXAMPLES
+  $ shopify app security review
+
+  $ shopify app security review --interactive
+
+  $ shopify app security review --check-id COMMITTED_SECRET --verbose
+
+  $ shopify app security review --suppress 3 --kind false-positive --reason="A fake token in a test fixture." --results-digest 1a2b3c4d5e6f
+
+  $ shopify app security review --suppress 2 --kind accepted-risk --reason="Kept until the migration ships." --include-superseded
+
+  $ shopify app security review --blocking high
 ```
 
 ## `shopify app subscription-migrations cancel`

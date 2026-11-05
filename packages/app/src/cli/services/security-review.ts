@@ -14,7 +14,6 @@ import {
   saveAppSecuritySuppressions,
   suppressionConfiguration,
   type SavedSuppression,
-  type SuppressionChange,
   type SuppressionDecision,
   type SuppressionTarget,
 } from './app-security-suppressions.js'
@@ -40,6 +39,8 @@ interface SecurityReviewOptions {
   blocking: AppSecurityBlockingLevel
   /** `--suppress` and the flags that go with it. Absent without `--suppress`. */
   suppress?: SecurityReviewSuppressOptions
+  /** `--interactive`: the session that offers each active finding. Absent without `--interactive`, and with `--suppress`. */
+  interactive?: InteractiveSecurityReview
 }
 
 /** The flags of `review --suppress`, as typed. */
@@ -88,6 +89,8 @@ export interface ReviewedAppSecurityResults {
   commands: AppSecurityCommands
   /** What `--suppress` saved. Absent without `--suppress`. */
   savedSuppressions?: SavedReviewSuppressions
+  /** How the `--interactive` session ended, and what it saved. Absent without `--interactive`. */
+  interactiveReview?: InteractiveReviewOutcome
 }
 
 /** The entries of shopify.app-security.json that `--suppress` added or extended. */
@@ -104,10 +107,65 @@ export interface SavedReviewSuppressions {
 }
 
 /** A finding with its number: its position, from 1, among the findings of every check, in the order `review` lists them. */
-interface NumberedFinding {
+export interface NumberedFinding {
   number: number
   check: CombinedCheck
   finding: CombinedFinding
+}
+
+/**
+ * Why `--suppress` can't save a suppression for a finding: the error that `--suppress` aborts with, and that
+ * `--interactive` shows before it goes on. Nothing is saved then.
+ */
+export interface SuppressionRefusal {
+  code: 'results-digest-mismatch' | 'finding-not-found' | 'finding-not-suppressible'
+  message: string
+  tryMessage: string
+  details: unknown
+}
+
+/** What saving a suppression for a numbered finding did: the entries it saved, or why it saved nothing. */
+export type FindingSuppressionResult =
+  | {status: 'saved'; savedSuppressions: SavedReviewSuppressions}
+  | {status: 'refused'; refusal: SuppressionRefusal}
+
+/**
+ * The `--interactive` session. It offers each finding of `session.findings`, saves each decision at once through
+ * `session.suppress`, and returns what it saved. `securityReview` runs it after it reads the results, and then reviews
+ * them again, so the result shows what the session saved.
+ */
+export type InteractiveSecurityReview = (session: InteractiveReviewSession) => Promise<InteractiveReviewOutcome>
+
+export interface InteractiveReviewSession {
+  /** The reviewed results when the session starts. */
+  result: SecurityReviewResult
+  /** The app configuration that new entries list, such as `shopify.app.toml`. */
+  configuration: string
+  /** The active findings of the checks that `--check-id` selects, most severe first: the findings the session offers. */
+  findings: NumberedFinding[]
+  /**
+   * Saves a suppression for a finding of `findings` as `--suppress` does, with the same planner, writer and refusals.
+   * The results are read again first, and the digest of `result` is checked, so a number that may name another
+   * finding is refused (`results-digest-mismatch`).
+   */
+  suppress(request: InteractiveSuppressionRequest): Promise<FindingSuppressionResult>
+}
+
+export interface InteractiveSuppressionRequest {
+  findingNumber: number
+  decision: SuppressionDecision
+  /** Suppress the finding's companions too, as `--include-superseded` does: them alone when an entry suppresses the finding. */
+  includeSuperseded: boolean
+}
+
+/** What the `--interactive` session saved, and how it ended. */
+export interface InteractiveReviewOutcome {
+  /** Each saved entry with the number of the finding it was saved for, in the order of the decisions. */
+  saved: SavedReviewSuppressions['saved']
+  /** For each suppressed agent finding whose companions the person chose not to suppress, the companions' numbers. */
+  declinedCompanions: {findingNumber: number; companionNumbers: number[]}[]
+  /** Every finding was offered, the person chose Quit, or the session stopped because the results changed. */
+  ending: 'finished' | 'quit' | 'results-changed'
 }
 
 const RESULTS_DIGEST_LENGTH = 12
@@ -203,8 +261,8 @@ function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void 
 
 /**
  * Reviews the combined app security check results (§9). Loads both result files and narrows them with `--check-id`.
- * Prints nothing: an error aborts, and everything else, including missing files, returns the reviewed results for
- * the presenter.
+ * Prints nothing itself: an error aborts, and everything else, including missing files, returns the reviewed results
+ * for the presenter. With `--interactive`, it runs the session that the command passes, between two reviews.
  */
 export default async function securityReview(
   options: SecurityReviewOptions,
@@ -231,10 +289,26 @@ export default async function securityReview(
   const loaded = await review()
   const savedSuppressions =
     options.suppress && decision
-      ? await suppressFinding(selection, loaded.results, loaded.result, options.suppress, decision)
+      ? savedOrAbort(await suppressFinding(selection, loaded.results, loaded.result, options.suppress, decision))
       : undefined
-  // The save changes only shopify.app-security.json, so the numbers stay, and the finding now shows as suppressed.
-  const {results, result} = savedSuppressions ? await review() : loaded
+  const interactiveReview = options.interactive
+    ? await options.interactive({
+        result: loaded.result,
+        configuration: suppressionConfiguration(selection),
+        findings: interactiveReviewFindings(loaded.result),
+        suppress: async ({findingNumber, decision: requestDecision, includeSuperseded}) => {
+          const current = await review()
+          const suppressOptions = {
+            findingNumber,
+            resultsDigest: loaded.result.resultsDigest ?? undefined,
+            includeSuperseded,
+          }
+          return suppressFinding(selection, current.results, current.result, suppressOptions, requestDecision)
+        },
+      })
+    : undefined
+  // A save changes only shopify.app-security.json, so the numbers stay, and the finding now shows as suppressed.
+  const {results, result} = savedSuppressions !== undefined || interactiveReview !== undefined ? await review() : loaded
 
   // Every check, not just the --check-id ones, so the count doesn't depend on the filter. Without result files
   // there's nothing to count, so the field stays unset rather than reporting zero.
@@ -253,7 +327,25 @@ export default async function securityReview(
       results.sources.deterministic?.document.coverage.scope,
     ),
     ...(savedSuppressions ? {savedSuppressions} : {}),
+    ...(interactiveReview ? {interactiveReview} : {}),
   }
+}
+
+/** The active findings of the checks that `--check-id` selects, in the order of their numbers: most severe first. */
+function interactiveReviewFindings(result: SecurityReviewResult): NumberedFinding[] {
+  const selectedCheckIds = new Set(result.checks.map((check) => check.id))
+  return numberFindings(result.allChecks).filter(
+    ({check, finding}) => selectedCheckIds.has(check.id) && finding.disposition === 'active',
+  )
+}
+
+function savedOrAbort(result: FindingSuppressionResult): SavedReviewSuppressions {
+  if (result.status === 'saved') return result.savedSuppressions
+  const {code, message, tryMessage, details} = result.refusal
+  const error = new AbortError(message, tryMessage)
+  error.code = code
+  error.details = details
+  throw error
 }
 
 /** The kind and reason of `--suppress`, checked before anything is read. Aborts with every problem. */
@@ -273,31 +365,31 @@ function suppressionDecision(options: SecurityReviewSuppressOptions): Suppressio
 
 /**
  * Saves an entry to shopify.app-security.json for the finding that `--suppress` numbers, as `planSuppression` plans
- * it, and one for each companion with `--include-superseded`. All or nothing: any refusal aborts before the write.
+ * it, and one for each companion with `--include-superseded`. All or nothing: any refusal returns before the write.
  */
 async function suppressFinding(
   selection: AppSecuritySelection,
   results: AppSecurityResults,
   review: SecurityReviewResult,
-  options: SecurityReviewSuppressOptions,
+  options: Pick<SecurityReviewSuppressOptions, 'findingNumber' | 'resultsDigest' | 'includeSuperseded'>,
   decision: SuppressionDecision,
-): Promise<SavedReviewSuppressions> {
+): Promise<FindingSuppressionResult> {
   if (options.resultsDigest !== undefined && options.resultsDigest !== review.resultsDigest) {
-    abortDigestMismatch(options.resultsDigest, review.resultsDigest)
+    return refused(digestMismatch(options.resultsDigest, review.resultsDigest))
   }
   const numbered = numberFindings(review.allChecks)
   const target = numbered.find(({number}) => number === options.findingNumber)
-  if (!target) abortFindingNotFound(options.findingNumber, numbered.length)
+  if (!target) return refused(findingNotFound(options.findingNumber, numbered.length))
   const companions = companionFindings(target, numbered)
   const alreadySuppressed = target.finding.disposition === 'suppressed'
   // `--include-superseded` on a finding that an entry already suppresses saves only its companions.
   const canAddCompanionsOnly =
     alreadySuppressed && options.includeSuperseded && target.finding.suppressed_by?.origin === 'file'
   if (target.finding.disposition === 'superseded' || (alreadySuppressed && !canAddCompanionsOnly)) {
-    abortNotSuppressible(target)
+    return refused(notSuppressible(target))
   }
   const findings = [...(alreadySuppressed ? [] : [target]), ...(options.includeSuperseded ? companions : [])]
-  if (findings.length === 0) abortNotSuppressible(target)
+  if (findings.length === 0) return refused(notSuppressible(target))
 
   const suppressionResults = {
     deterministic: results.sources.deterministic?.document ?? null,
@@ -306,24 +398,37 @@ async function suppressFinding(
     configuration: suppressionConfiguration(selection),
   }
   const entries = results.suppressions.map(({entry}) => entry)
-  const changes = findings.flatMap((numberedFinding): {findingNumber: number; change: SuppressionChange}[] => {
-    const plan = planSuppression(storedTarget(results, numberedFinding), decision, suppressionResults, entries)
-    if (plan.status === 'refused') abortNoUniqueEntry(numberedFinding, plan.problem)
-    return plan.status === 'change' ? [{findingNumber: numberedFinding.number, change: plan.change}] : []
-  })
+  const plans = findings.map((numberedFinding) => ({
+    numberedFinding,
+    plan: planSuppression(storedTarget(results, numberedFinding), decision, suppressionResults, entries),
+  }))
+  const refusedPlan = plans.find(({plan}) => plan.status === 'refused')
+  if (refusedPlan?.plan.status === 'refused') {
+    return refused(noUniqueEntry(refusedPlan.numberedFinding, refusedPlan.plan.problem))
+  }
+  const changes = plans.flatMap(({numberedFinding, plan}) =>
+    plan.status === 'change' ? [{findingNumber: numberedFinding.number, change: plan.change}] : [],
+  )
 
   const {path, saved} = await saveAppSecuritySuppressions(
     selection.appDirectory,
     changes.map(({change}) => change),
   )
   return {
-    path,
-    saved: saved.map((savedSuppression, index) => ({
-      ...savedSuppression,
-      findingNumber: changes[index]!.findingNumber,
-    })),
-    companionNumbers: options.includeSuperseded ? [] : companions.map(({number}) => number),
+    status: 'saved',
+    savedSuppressions: {
+      path,
+      saved: saved.map((savedSuppression, index) => ({
+        ...savedSuppression,
+        findingNumber: changes[index]!.findingNumber,
+      })),
+      companionNumbers: options.includeSuperseded ? [] : companions.map(({number}) => number),
+    },
   }
+}
+
+function refused(refusal: SuppressionRefusal): FindingSuppressionResult {
+  return {status: 'refused', refusal}
 }
 
 /**
@@ -353,35 +458,36 @@ function storedTarget(results: AppSecurityResults, {check, finding}: NumberedFin
   return {source, checkId: check.id, findingIndex, finding: storedFinding}
 }
 
-function abortDigestMismatch(givenDigest: string, resultsDigest: string | null): never {
-  const error = new AbortError(
-    `The results changed since digest ${givenDigest}, so the finding numbers may name other findings. Nothing was saved.`,
-    'Run the review again, check the number of the finding, and pass the new digest with --results-digest.',
-  )
-  error.code = 'results-digest-mismatch'
-  error.details = {resultsDigest}
-  throw error
+function digestMismatch(givenDigest: string, resultsDigest: string | null): SuppressionRefusal {
+  return {
+    code: 'results-digest-mismatch',
+    message: `The results changed since digest ${givenDigest}, so the finding numbers may name other findings. Nothing was saved.`,
+    tryMessage: 'Run the review again, check the number of the finding, and pass the new digest with --results-digest.',
+    details: {resultsDigest},
+  }
 }
 
-function abortFindingNotFound(findingNumber: number, findingCount: number): never {
-  const error = new AbortError(
-    `No finding has number ${findingNumber}. Nothing was saved.`,
-    findingCount === 0
-      ? 'The results have no findings.'
-      : `The findings are numbered from 1 to ${findingCount}. Run the review to see their numbers.`,
-  )
-  error.code = 'finding-not-found'
-  error.details = {findingNumber, findingCount}
-  throw error
+function findingNotFound(findingNumber: number, findingCount: number): SuppressionRefusal {
+  return {
+    code: 'finding-not-found',
+    message: `No finding has number ${findingNumber}. Nothing was saved.`,
+    tryMessage:
+      findingCount === 0
+        ? 'The results have no findings.'
+        : `The findings are numbered from 1 to ${findingCount}. Run the review to see their numbers.`,
+    details: {findingNumber, findingCount},
+  }
 }
 
 /** Refuses a suppressed or superseded finding, or a suppressed one whose companions are all suppressed. */
-function abortNotSuppressible({number, check, finding}: NumberedFinding): never {
+function notSuppressible({number, check, finding}: NumberedFinding): SuppressionRefusal {
   const [message, tryMessage] = notSuppressibleText(number, check, finding)
-  const error = new AbortError(`${message} Nothing was saved.`, tryMessage)
-  error.code = 'finding-not-suppressible'
-  error.details = {findingNumber: number, disposition: finding.disposition}
-  throw error
+  return {
+    code: 'finding-not-suppressible',
+    message: `${message} Nothing was saved.`,
+    tryMessage,
+    details: {findingNumber: number, disposition: finding.disposition},
+  }
 }
 
 function notSuppressibleText(number: number, check: CombinedCheck, finding: CombinedFinding): [string, string] {
@@ -401,12 +507,11 @@ function notSuppressibleText(number: number, check: CombinedCheck, finding: Comb
   ]
 }
 
-function abortNoUniqueEntry({number}: NumberedFinding, problem: string): never {
-  const error = new AbortError(
-    `Finding ${number} can't be suppressed: ${problem}. Nothing was saved.`,
-    `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
-  )
-  error.code = 'finding-not-suppressible'
-  error.details = {findingNumber: number}
-  throw error
+function noUniqueEntry({number}: NumberedFinding, problem: string): SuppressionRefusal {
+  return {
+    code: 'finding-not-suppressible',
+    message: `Finding ${number} can't be suppressed: ${problem}. Nothing was saved.`,
+    tryMessage: `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
+    details: {findingNumber: number},
+  }
 }
