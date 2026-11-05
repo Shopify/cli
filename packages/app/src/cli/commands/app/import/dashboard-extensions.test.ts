@@ -258,16 +258,33 @@ test('reports missing non-interactive selection through the JSON fatal path', as
   })
 })
 
-test('leaves a failed import on the fatal path without printing a result', async () => {
+test.each([false, true])('preserves the original fatal import error without a result: JSON %s', async (json) => {
   await withApp(async (app) => {
     const record = publicExtension(app.directory)
     await mkdir(record.directory)
     await mkdir(record.configurationPath)
     vi.mocked(ui.renderSelectPrompt).mockResolvedValueOnce(extension.uuid).mockResolvedValueOnce('write')
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(runCommand(app.directory)).rejects.toThrow()
-      expect(stdout()).toBe('')
+    let importError: unknown
+    const originalImport = extensionImportService.importExtensions
+    const importSpy = vi.spyOn(extensionImportService, 'importExtensions').mockImplementation(async (options) => {
+      try {
+        return await originalImport(options)
+      } catch (error) {
+        importError = error
+        throw error
+      }
     })
+    try {
+      await withCapturedStandardStreams(async ({stdout}) => {
+        const command = new ImportDashboardExtensions(['--path', app.directory], await Config.load())
+        const failure = await (json ? runCommand(app.directory) : command.run()).catch((error) => error)
+        expect(importError).toBeInstanceOf(extensionImportService.ExtensionImportFailedError)
+        expect(failure).toBe((importError as extensionImportService.ExtensionImportFailedError).originalError)
+        expect(stdout()).toBe('')
+      })
+    } finally {
+      importSpy.mockRestore()
+    }
   })
 })
 
@@ -308,11 +325,13 @@ test.each([
       const failureReady = new Promise<void>((resolve) => {
         reportFailure = resolve
       })
+      let importError: unknown
       const originalImport = extensionImportService.importExtensions
       const importSpy = vi.spyOn(extensionImportService, 'importExtensions').mockImplementation(async (options) => {
         try {
           return await originalImport(options)
         } catch (error) {
+          importError = error
           reportFailure()
           throw error
         }
@@ -362,6 +381,20 @@ test.each([
         expect(hooks.mock.calls.map(([event]) => event)).not.toContain('postrun')
         expect(reportAnalyticsEvent).toHaveBeenCalledTimes(row.fail ? 1 : 0)
         expect(errorHandlers.sendErrorToBugsnag).toHaveBeenCalledTimes(row.fail ? 1 : 0)
+        if (row.fail) {
+          const completion = await (
+            importError as
+              | extensionImportService.ExtensionImportFailedError
+              | extensionImportService.ExtensionImportCancelledError
+          ).completedImports()
+          const originalError = completion.failures[0]!.error
+          expect(reportAnalyticsEvent).toHaveBeenCalledExactlyOnceWith({
+            config,
+            errorMessage: originalError instanceof Error ? originalError.message : undefined,
+            exitMode: 'unexpected_error',
+          })
+          expect(errorHandlers.sendErrorToBugsnag).toHaveBeenCalledExactlyOnceWith(originalError, 'unexpected_error')
+        }
       } finally {
         exit.mockRestore()
         importSpy.mockRestore()
