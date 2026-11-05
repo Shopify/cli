@@ -1,5 +1,5 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
-import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
+import {checkStatusLabels, checksWithFindingsLabel, countLabel, listedNumbers} from './app-security-format.js'
 import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
 import {suppressionReasonProblem, type SavedSuppression} from './app-security-suppressions.js'
 import {
@@ -591,12 +591,6 @@ function declinedCompanionsItem({
 }: InteractiveReviewOutcome['declinedCompanions'][number]): string {
   const pronoun = companionNumbers.length === 1 ? 'it' : 'them'
   return `${companionsLabel(companionNumbers)} the same check in the same file as finding ${findingNumber}, so check --blocking, which reads no agent results, still counts ${pronoun}. To suppress ${pronoun}, run the review with --suppress ${findingNumber} --include-superseded and the same --kind and --reason.`
-}
-
-/** "7", "7 and 8", "7, 8 and 9". */
-function listedNumbers(numbers: (number | string)[]): string {
-  if (numbers.length === 1) return String(numbers[0])
-  return `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
 }
 
 /** "Finding 7 is a superseded deterministic finding of", "Findings 7 and 8 are superseded deterministic findings of". */

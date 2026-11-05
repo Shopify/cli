@@ -660,11 +660,35 @@ describe('securityRecord', () => {
               location: {file: 'app/routes/orders.tsx', line: 3},
               problem:
                 'every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+              // Only an entry without code can suppress it, and that entry also suppresses the other finding.
+              withoutCode: {findingCount: 2},
             },
           ],
         })
         await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
         await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(true)
+      })
+    })
+
+    test('reports a suppression as not saved, with no entry without code, when its message alone names it', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createAppWithRoute(directory)
+        // The same line, and no word of it in either message, so the plan finds no code. Each message names its finding.
+        const document = documentWith([
+          finding({line: 3, message: "The loader reads every shop's data.", suppression}),
+          finding({line: 3, message: "Every shop's data is loaded."}),
+        ])
+
+        const result = await record(appRoot, testDependencies(document))
+
+        expect(result.suppressions?.notSaved).toStrictEqual([
+          {
+            checkId: 'MISSING_TENANT_ISOLATION',
+            location: {file: 'app/routes/orders.tsx', line: 3},
+            problem:
+              'every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+          },
+        ])
       })
     })
 

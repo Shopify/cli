@@ -1029,6 +1029,71 @@ describe('app security check --json command boundary', () => {
     })
   })
 
+  test('review --suppress refuses a finding that no code can name alone, and advises the entry without code that works', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
+      // Two sessions whose five excerpt lines are the same, so the two findings differ only by their line numbers.
+      const session = `  {\n    shop: 'example.myshopify.com',\n    accessToken: '${testToken}',\n  },\n\n`
+      await mkdir(joinPath(directory, 'test', 'fixtures'), {recursive: true})
+      await writeFile(
+        joinPath(directory, 'test', 'fixtures', 'sessions.ts'),
+        `export const sessions = [\n${session}${session}]\n`,
+      )
+      await runJsonCommand(['--path', directory])
+      const before = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      const secretCheck = before.checks.find((check: {id: string}) => check.id === 'COMMITTED_SECRET')
+      const numbers = secretCheck.findings.map((finding: {number: number}) => finding.number)
+      const suppressFlags = [
+        '--path',
+        directory,
+        '--suppress',
+        String(numbers[0]),
+        '--kind',
+        'false-positive',
+        '--reason',
+        'Fake tokens for the session tests.',
+      ]
+
+      const json = await runJsonCommand(suppressFlags, SecurityReview)
+      const text = await runCommand(suppressFlags, SecurityReview)
+      // Follow the advice: an entry without code, added by hand.
+      await writeSuppressions(directory, [
+        {
+          source: 'deterministic',
+          check: 'COMMITTED_SECRET',
+          kind: 'false-positive',
+          path: 'test/fixtures/sessions.ts',
+          reason: 'Fake tokens for the session tests.',
+          configurations: ['shopify.app.toml'],
+        },
+      ])
+      const passed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(secretCheck.findings).toMatchObject([{location: {line: 4}}, {location: {line: 9}}])
+      const tryMessage = `No code from its lines, evidence or message names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: ${numbers[0]} and ${numbers[1]}. To suppress them all, add such an entry to shopify.app-security.json by hand. To suppress only finding ${numbers[0]}, change the code so that the findings differ, and run check again.`
+      expect(json.exitCode).toBe(1)
+      expect(JSON.parse(json.stdout)).toStrictEqual({
+        error: {
+          type: 'abort',
+          code: 'finding-not-suppressible',
+          message: `Finding ${numbers[0]} can't be suppressed: every code from its lines also names another finding of COMMITTED_SECRET in test/fixtures/sessions.ts. Nothing was saved.`,
+          tryMessage,
+          details: {findingNumber: numbers[0]},
+        },
+      })
+      expect(text.exitCode).toBe(1)
+      expect(boxText(text.stderr)).toContain(tryMessage)
+      expect(boxText(text.stderr)).not.toContain('a code that names it alone')
+      expect(JSON.parse(passed.stdout)).toMatchObject({
+        valid: true,
+        blocking: {level: 'high', blockedCheckCount: 0},
+        suppressions: {suppressedFindingCount: 2, entries: [{status: 'matched', matchedFindingCount: 2}]},
+      })
+      expect(json.stdout + text.stdout + text.stderr).not.toContain(testToken)
+    })
+  })
+
   test('aborts with one error document when shopify.app-security.json is invalid, and writes no results', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)

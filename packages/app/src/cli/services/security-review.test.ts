@@ -412,6 +412,69 @@ const bothWithExcerpts: Files = {
   agent: withExcerpts(agentFindingsDocument),
 }
 
+/** A test fixture with two sessions whose five excerpt lines are the same, as `check` redacts them, at lines 2–6 and 7–11. */
+const sessionLines = [
+  'export const sessions = [',
+  ...[1, 2].flatMap(() => [
+    '  {',
+    "    shop: 'example.myshopify.com',",
+    "    accessToken: 'shpa[REDACTED:38]',",
+    '  },',
+    '',
+  ]),
+  ']',
+]
+
+/**
+ * The COMMITTED_SECRET findings of the sessions fixture, at lines 4 and 9, and one in another file. The two in the
+ * fixture differ only by their line numbers, which the matching doesn't read, so no code can name either of them alone.
+ */
+const committedSecrets: Files = {
+  deterministic: {
+    ...deterministicFindingsDocument,
+    checks: [
+      {
+        id: 'COMMITTED_SECRET',
+        version: 1,
+        status: 'executed',
+        analysis_mode: 'regex',
+        snapshot: {
+          title: 'Committed secret or environment file',
+          severity: 'high',
+          description: 'Detects environment files and common API key/token patterns in source files.',
+          current_version: 1,
+        },
+        findings: [
+          ...[4, 9].map((line) =>
+            withExcerpt(
+              {
+                location: {file: 'test/fixtures/sessions.ts', line},
+                message: 'A Shopify token pattern was found in repository text.',
+                evidence: [],
+                snippet: sessionLines[line - 1],
+              },
+              sessionLines,
+            ),
+          ),
+          withExcerpt(
+            {
+              location: {file: 'test/fixtures/shop.ts', line: 1},
+              message: 'A Shopify token pattern was found in repository text.',
+              evidence: [],
+            },
+            ["export const accessToken = 'shpa[REDACTED:38]'"],
+          ),
+        ],
+      },
+    ],
+  },
+}
+
+/** The advice for finding 1 or 2 of `committedSecrets`: the entry without code that suppresses both, or a code change. */
+function committedSecretsAdvice(findingNumber: number): string {
+  return `No code from its lines, evidence or message names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: 1 and 2. To suppress them all, add such an entry to shopify.app-security.json by hand. To suppress only finding ${findingNumber}, change the code so that the findings differ, and run check again.`
+}
+
 describe('securityReview --suppress', () => {
   /** Runs `review --suppress` on the app with these flags; the kind and reason default to valid ones. */
   function suppress(appRoot: string, flags: Partial<SecurityReviewSuppressOptions> & {findingNumber: number}) {
@@ -772,6 +835,64 @@ describe('securityReview --suppress', () => {
     })
   })
 
+  test('refuses a finding that no code can name alone, and advises the entry without code that suppresses all the findings in its file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, committedSecrets)
+
+      const error = await captureError(() => suppress(appRoot, {findingNumber: 2}))
+
+      expect(error).toMatchObject({
+        code: 'finding-not-suppressible',
+        message:
+          "Finding 2 can't be suppressed: every code from its lines also names another finding of COMMITTED_SECRET in test/fixtures/sessions.ts. Nothing was saved.",
+        tryMessage: committedSecretsAdvice(2),
+        details: {findingNumber: 2},
+      })
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+    })
+  })
+
+  test('keeps the advice of a code by hand when its message names the finding alone, although the plan finds no code', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const lines = ['export async function loader() {', '  console.log(session.accessToken)', '  return null', '}']
+      const [credentialCheck] = agentFindingsDocument.checks
+      const finding = (message: string) =>
+        withExcerpt(
+          {
+            location: {file: 'app/routes/orders.tsx', line: 2},
+            message,
+            evidence: [{location: {file: 'app/routes/orders.tsx', line: 2}}],
+          },
+          lines,
+        )
+      // The same line, but each agent finding has its own message, so an entry with that message as its code names it alone.
+      const appRoot = await createApp(directory, {
+        agent: {
+          ...agentFindingsDocument,
+          checks: [
+            {
+              ...credentialCheck!,
+              findings: [
+                finding('The loader writes the access token to the log.'),
+                finding('The token reaches a log.'),
+              ],
+            },
+          ],
+        },
+      })
+
+      const error = await captureError(() => suppress(appRoot, {findingNumber: 1}))
+
+      expect(error).toMatchObject({
+        code: 'finding-not-suppressible',
+        message:
+          "Finding 1 can't be suppressed: every code from its lines also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx. Nothing was saved.",
+        tryMessage: 'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
+      })
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+    })
+  })
+
   test('refuses every number when there are no results files', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {})
@@ -954,6 +1075,22 @@ describe('securityReview --interactive', () => {
       })
 
       await expect(readEntries(appRoot)).resolves.toMatchObject([{check: 'EOL_API_VERSION'}])
+    })
+  })
+
+  test('returns the advice of an entry without code for a finding that no code can name alone', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, committedSecrets)
+
+      await reviewInteractively(appRoot, async (session) => {
+        await expect(session.suppress({findingNumber: 1, decision, includeSuperseded: false})).resolves.toMatchObject({
+          status: 'refused',
+          refusal: {code: 'finding-not-suppressible', tryMessage: committedSecretsAdvice(1)},
+        })
+        return outcomeOf()
+      })
+
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
     })
   })
 
