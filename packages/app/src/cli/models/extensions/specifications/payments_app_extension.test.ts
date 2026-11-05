@@ -45,9 +45,12 @@ describe('PaymentsAppExtension', () => {
     targeting: [{target: 'payments.accelerated-wallet.render'}],
     wallet_session_create_url: 'https://example.com/wallet-sessions',
     wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
-    button_logo_url: 'https://example.com/logo.svg',
+    button_logo_path: 'assets/logo.png',
+    button_logo_path_dark: 'assets/logo-dark.png',
     button_background_color: '#000000',
-    button_foreground_color: '#FFFFFF',
+    button_background_color_dark: '#FFFFFF',
+    button_foreground_color: '#F5F5F5',
+    button_foreground_color_dark: '#1A1A1A',
   }
 
   beforeEach(async () => {
@@ -118,9 +121,12 @@ describe('PaymentsAppExtension', () => {
       start_payment_session_url: acceleratedWalletConfig.payment_session_url,
       wallet_session_create_url: acceleratedWalletConfig.wallet_session_create_url,
       wallet_session_verify_url: acceleratedWalletConfig.wallet_session_verify_url,
-      button_logo_url: acceleratedWalletConfig.button_logo_url,
+      button_logo_path: acceleratedWalletConfig.button_logo_path,
+      button_logo_path_dark: acceleratedWalletConfig.button_logo_path_dark,
       button_background_color: acceleratedWalletConfig.button_background_color,
+      button_background_color_dark: acceleratedWalletConfig.button_background_color_dark,
       button_foreground_color: acceleratedWalletConfig.button_foreground_color,
+      button_foreground_color_dark: acceleratedWalletConfig.button_foreground_color_dark,
     })
   })
 

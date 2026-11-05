@@ -17,9 +17,12 @@ const config: AcceleratedWalletPaymentsAppExtensionConfigType = {
   confirmation_callback_url: 'https://example.com/confirm',
   wallet_session_create_url: 'https://example.com/wallet-sessions',
   wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
-  button_logo_url: 'https://example.com/logo.svg',
+  button_logo_path: 'assets/logo.png',
+  button_logo_path_dark: 'assets/logo-dark.png',
   button_background_color: '#000000',
-  button_foreground_color: '#FFFFFF',
+  button_background_color_dark: '#FFFFFF',
+  button_foreground_color: '#F5F5F5',
+  button_foreground_color_dark: '#1A1A1A',
   merchant_label: 'some-label',
   buyer_label: 'Example Wallet',
   buyer_label_translations: [{locale: 'fr', label: 'Portefeuille exemple'}],
@@ -69,9 +72,12 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
   test.each([
     'wallet_session_create_url',
     'wallet_session_verify_url',
-    'button_logo_url',
+    'button_logo_path',
+    'button_logo_path_dark',
     'button_background_color',
+    'button_background_color_dark',
     'button_foreground_color',
+    'button_foreground_color_dark',
   ] as const)('returns an error if %s is not provided', async (key) => {
     // When/Then
     expect(() => AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, [key]: undefined})).toThrowError(
@@ -104,28 +110,63 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
     },
   )
 
-  test.each(['http://example.com/logo.svg', 'not-a-url'])(
-    'returns an error if button_logo_url is %s',
-    async (value) => {
+  describe.each(['button_logo_path', 'button_logo_path_dark'] as const)('%s', (key) => {
+    test.each([
+      'logo.png',
+      'assets/logo.jpg',
+      'assets/logo.jpeg',
+      'assets/images/logo.gif',
+      'assets/logo.webp',
+      'assets/logo.avif',
+      'assets/favicon.ico',
+      './assets/logo.png',
+    ])('accepts %s', async (value) => {
+      // When
+      const {success} = AcceleratedWalletPaymentsAppExtensionSchema.safeParse({...config, [key]: value})
+
+      // Then
+      expect(success).toBe(true)
+    })
+
+    test.each([
+      ['an empty string', ''],
+      ['an HTTPS URL', 'https://example.com/logo.png'],
+      ['a data URL', 'data:image/logo.png'],
+      ['a Windows drive path', 'C:\\assets\\logo.png'],
+      ['an absolute path', '/assets/logo.png'],
+      ['a protocol-relative URL', '//example.com/logo.png'],
+      ['a Windows root path', '\\assets\\logo.png'],
+      ['a path that starts with ..', '../logo.png'],
+      ['a path with a .. segment', 'assets/../logo.png'],
+      ['a Windows path with a .. segment', 'assets\\..\\logo.png'],
+      ['an upper-case extension', 'assets/logo.PNG'],
+      ['an extension that is not allowed', 'assets/logo.svg'],
+      ['a path with no extension', 'assets/logo'],
+      ['an extension with no file name', 'assets/.png'],
+      ['a folder', 'assets/logo.png/'],
+    ])('returns an error for %s', async (_description, value) => {
       // When/Then
-      expect(() => AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, button_logo_url: value})).toThrowError(
+      expect(() => AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, [key]: value})).toThrowError(
         new zod.ZodError([
           {
             code: zod.ZodIssueCode.custom,
-            message: 'Must be an HTTPS URL',
-            path: ['button_logo_url'],
+            message:
+              'Must be a relative path inside the extension folder to a .png, .jpg, .jpeg, .gif, .webp, .avif, .ico file, like assets/logo.png',
+            path: [key],
           },
         ]),
       )
-    },
-  )
+    })
+  })
 
   test('accepts lowercase hex colors', async () => {
     // When
     const {success} = AcceleratedWalletPaymentsAppExtensionSchema.safeParse({
       ...config,
       button_background_color: '#1a2b3c',
+      button_background_color_dark: '#abcdef',
       button_foreground_color: '#ffffff',
+      button_foreground_color_dark: '#0f0f0f',
     })
 
     // Then
@@ -138,7 +179,9 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
       AcceleratedWalletPaymentsAppExtensionSchema.parse({
         ...config,
         button_background_color: 'black',
+        button_background_color_dark: '#GGGGGG',
         button_foreground_color: '#FFF',
+        button_foreground_color_dark: '000000',
       }),
     ).toThrowError(
       new zod.ZodError([
@@ -152,7 +195,19 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
           validation: 'regex',
           code: zod.ZodIssueCode.invalid_string,
           message: 'Must be a 6-digit hex color, like #1A2B3C',
+          path: ['button_background_color_dark'],
+        },
+        {
+          validation: 'regex',
+          code: zod.ZodIssueCode.invalid_string,
+          message: 'Must be a 6-digit hex color, like #1A2B3C',
           path: ['button_foreground_color'],
+        },
+        {
+          validation: 'regex',
+          code: zod.ZodIssueCode.invalid_string,
+          message: 'Must be a 6-digit hex color, like #1A2B3C',
+          path: ['button_foreground_color_dark'],
         },
       ]),
     )
@@ -241,9 +296,12 @@ describe('acceleratedWalletPaymentsAppExtensionDeployConfig', () => {
       supports_installments: config.supports_installments,
       wallet_session_create_url: config.wallet_session_create_url,
       wallet_session_verify_url: config.wallet_session_verify_url,
-      button_logo_url: config.button_logo_url,
+      button_logo_path: config.button_logo_path,
+      button_logo_path_dark: config.button_logo_path_dark,
       button_background_color: config.button_background_color,
+      button_background_color_dark: config.button_background_color_dark,
       button_foreground_color: config.button_foreground_color,
+      button_foreground_color_dark: config.button_foreground_color_dark,
     })
   })
 })
