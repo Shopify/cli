@@ -13,7 +13,10 @@ import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import WebSocket, {RawData, WebSocketServer} from 'ws'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {IncomingMessage} from 'http'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {createServer, IncomingMessage} from 'http'
+import {EventEmitter} from 'events'
+import {AddressInfo} from 'net'
 import {Duplex} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/ui/components', () => ({
@@ -116,6 +119,54 @@ describe('getConnectionDoneHandler()', () => {
     const ws = getMockWebsocket()
     getConnectionDoneHandler(wss, options)(ws)
     expect(ws.on).toHaveBeenCalledWith('message', expect.anything())
+  })
+  test('on client connection registers an error handler that logs the error without throwing', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const ws = Object.assign(new EventEmitter(), {send: vi.fn()}) as unknown as WebSocket
+    const output = mockAndCaptureOutput()
+
+    getConnectionDoneHandler(wss, options)(ws)
+
+    expect(() => ws.emit('error', new RangeError('Max payload size exceeded'))).not.toThrow()
+    expect(output.debug()).toContain('Websocket connection error: Max payload size exceeded')
+  })
+  test('closes a client that sends an oversized frame and keeps notifying the other clients', async () => {
+    const options = getMockSetupWebSocketConnectionOptions()
+    const httpServer = createServer()
+    const wss = new WebSocketServer({noServer: true, clientTracking: true, maxPayload: 1024})
+    httpServer.on('upgrade', websocketUpgradeHandler(wss, options))
+    await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve))
+    const url = `ws://127.0.0.1:${(httpServer.address() as AddressInfo).port}/extensions`
+
+    const connectClient = async () => {
+      const client = new WebSocket(url)
+      await new Promise((resolve) => client.once('message', resolve))
+      return client
+    }
+
+    try {
+      const listeningClient = await connectClient()
+      const badClient = await connectClient()
+
+      const badClientCloseCode = new Promise((resolve) => badClient.once('close', resolve))
+      badClient.send('a'.repeat(2048))
+      await expect(badClientCloseCode).resolves.toBe(1009)
+
+      const dispatchingClient = await connectClient()
+      const receivedDispatch = new Promise((resolve) => {
+        listeningClient.once('message', (data: RawData) => resolve(JSON.parse(data.toString())))
+      })
+      dispatchingClient.send(JSON.stringify({event: 'dispatch', data: {type: 'focus'}}))
+
+      await expect(receivedDispatch).resolves.toMatchObject({event: 'dispatch', data: {type: 'focus'}})
+
+      listeningClient.terminate()
+      dispatchingClient.terminate()
+    } finally {
+      wss.close()
+      await new Promise((resolve) => httpServer.close(resolve))
+    }
   })
 })
 describe('getOnMessageHandler()', () => {
