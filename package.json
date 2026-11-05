@@ -36,6 +36,7 @@
     "test:e2e-cleanup-apps": "pnpm --filter e2e exec tsx scripts/cleanup-apps.ts",
     "test:regenerate-snapshots": "packages/e2e/scripts/regenerate-snapshots.sh",
     "test": "pnpm vitest run",
+    "test:bin": "node --test \"bin/*.test.js\"",
     "type-check:affected": "nx affected --target=type-check",
     "type-check": "nx run-many --target=type-check --all",
     "update-bugsnag": "bin/update-bugsnag.js"

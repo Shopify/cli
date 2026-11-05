@@ -209,6 +209,9 @@ jobs:
           SHARD_OPTIONS: ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
+      - name: Bin script tests
+        run: pnpm test:bin
+        if: ${{ matrix.os == 'ubuntu-latest' }}
 
   unit-tests-gate:
     name: "Unit tests"
