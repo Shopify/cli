@@ -289,6 +289,8 @@ function noSuppressionsFileJson(appDirectory: string) {
     filePath: resolve(appDirectory, 'shopify.app-security.json'),
     entryCount: 0,
     suppressedFindingCount: 0,
+    staleEntryCount: 0,
+    ambiguousEntryCount: 0,
     entries: [],
   }
 }
@@ -694,6 +696,64 @@ describe('app security review command boundary', () => {
         'shopify.app.toml:8 · deterministic · accepted risk · suppressions[0] The upgrade ships with the next release.',
       )
       expect(text).not.toContain('Suppressed:')
+    })
+  })
+
+  test('reports stale, ambiguous and not-evaluated entries, with a likely new path only while the old file is gone', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const [leak] = agentFindings.checks
+      const secondLeak = {
+        ...leak!.findings[0]!,
+        location: {file: 'app/routes/orders.tsx', line: 9},
+        message: 'The shop access token is written to the server log.',
+      }
+      const appDirectory = await createApp(directory, {
+        deterministic: deterministicFindings,
+        agent: {...agentFindings, checks: [{...leak!, findings: [...leak!.findings, secondLeak]}]},
+      })
+      const leakEntry = {...suppressionEntries[1]!, code: 'The session access token'}
+      await writeSuppressions(appDirectory, [
+        {...leakEntry, path: 'app/routes/old-orders.tsx'},
+        {...leakEntry, code: 'access token is written to the server log'},
+        {...leakEntry, check: 'UNAUTHENTICATED_ENDPOINT'},
+        {...suppressionEntries[0], configurations: ['shopify.app.staging.toml']},
+      ])
+
+      const json = await runJsonCommand(['--path', directory])
+      const text = await runCommand(['--path', directory])
+      await mkdir(joinPath(appDirectory, 'app', 'routes'))
+      await writeFile(joinPath(appDirectory, 'app', 'routes', 'old-orders.tsx'), 'export {}\n')
+      const withOldFile = await runJsonCommand(['--path', directory])
+
+      expect(json.exitCode).toBe(0)
+      expect(JSON.parse(json.stdout).suppressions).toMatchObject({
+        entryCount: 4,
+        suppressedFindingCount: 0,
+        staleEntryCount: 1,
+        ambiguousEntryCount: 1,
+        entries: [
+          {
+            status: 'stale',
+            likelyPath: resolve(appDirectory, 'app', 'routes', 'orders.tsx'),
+            candidateFindingCount: null,
+          },
+          {status: 'ambiguous', likelyPath: null, candidateFindingCount: 2},
+          {status: 'not-evaluated', likelyPath: null, candidateFindingCount: null},
+          {status: 'not-evaluated', likelyPath: null, candidateFindingCount: null},
+        ],
+      })
+      const box = boxText(text.stderr)
+      expect(box).toContain('2 entries in shopify.app-security.json suppress nothing.')
+      expect(box).toContain(
+        'suppressions[0]: agent CREDENTIAL_LOG_LEAKAGE in app/routes/old-orders.tsx · false positive The logger redacts tokens. Maybe moved to app/routes/orders.tsx',
+      )
+      expect(box).toContain(
+        'suppressions[1]: agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx · matches 2 findings At app/routes/orders.tsx:5, app/routes/orders.tsx:9',
+      )
+      expect(box).toContain(
+        'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+      )
+      expect(JSON.parse(withOldFile.stdout).suppressions.entries[0]).toMatchObject({status: 'stale', likelyPath: null})
     })
   })
 

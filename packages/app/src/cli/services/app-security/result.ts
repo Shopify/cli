@@ -17,6 +17,7 @@ import type {
   CombinedCheck,
   CoverageScanDirectory,
   SuppressionEntryResult,
+  SuppressionEntryStatus,
 } from '../app-security-engine/index.js'
 import type {AppSecurityInstructionsDelivery} from '../app-security-instructions.js'
 
@@ -93,18 +94,25 @@ export function projectAppSecuritySuppressions(
   const suppressedFindings = checks
     .flatMap((check) => check.findings)
     .filter((finding) => finding.disposition === 'suppressed' && finding.suppressed_by?.origin === 'file')
+  const countStatus = (status: SuppressionEntryStatus) =>
+    suppressions.filter((result) => result.status === status).length
   return {
     filePath: projectAppSecurityPath(appSecuritySuppressionsPath(appDirectory)),
     entryCount: suppressions.length,
     suppressedFindingCount: suppressedFindings.length,
-    entries: suppressions.map(({index, entry, status, matched_finding_count: matchedFindingCount}) => ({
-      index,
-      source: entry.source,
-      check: entry.check,
-      kind: entry.kind,
-      path: projectAppSecurityRelativePath(appDirectory, entry.path),
-      status,
-      matchedFindingCount,
+    staleEntryCount: countStatus('stale'),
+    ambiguousEntryCount: countStatus('ambiguous'),
+    entries: suppressions.map((result) => ({
+      index: result.index,
+      source: result.entry.source,
+      check: result.entry.check,
+      kind: result.entry.kind,
+      path: projectAppSecurityRelativePath(appDirectory, result.entry.path),
+      status: result.status,
+      matchedFindingCount: result.matched_finding_count,
+      likelyPath:
+        result.likely_path === undefined ? null : projectAppSecurityRelativePath(appDirectory, result.likely_path),
+      candidateFindingCount: result.candidate_locations?.length ?? null,
     })),
   }
 }

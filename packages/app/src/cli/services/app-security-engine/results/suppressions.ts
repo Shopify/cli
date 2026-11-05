@@ -1,5 +1,5 @@
 import {normalizePath} from '@shopify/cli-kit/node/path'
-import type {CodeExcerptLine, FindingsSource, StoredCheck, StoredFinding} from '../types.js'
+import type {CodeExcerptLine, FindingsSource, Location, StoredCheck, StoredFinding} from '../types.js'
 
 /**
  * Matching of the entries of shopify.app-security.json against stored findings (§8.2). Pure: the caller reads and
@@ -26,6 +26,11 @@ export interface SuppressionEntry {
 export interface SuppressionsInput {
   entries: SuppressionEntry[]
   resultsKey: string
+  /**
+   * The entry paths whose files no longer exist in the app directory. Only a stale entry whose file is gone gets a
+   * likely new path. Absent means that no file is known to be gone.
+   */
+  missingPaths?: string[]
 }
 
 /**
@@ -38,6 +43,12 @@ export interface SuppressionsInput {
  */
 export type SuppressionEntryStatus = 'matched' | 'stale' | 'ambiguous' | 'not-evaluated'
 
+/**
+ * Why an entry is not evaluated: it names other configurations than the run's results key, or its source has no
+ * executed result for the check that could hold the finding.
+ */
+export type SuppressionNotEvaluatedReason = 'other-configurations' | 'no-executed-result'
+
 export interface SuppressionEntryResult {
   /** The entry's index in the file, from 0. */
   index: number
@@ -49,6 +60,15 @@ export interface SuppressionEntryResult {
    * reads no agent results and needs the entry.
    */
   matched_finding_count: number
+  /** For an ambiguous entry only: the locations of the findings that its `code` couldn't choose between. */
+  candidate_locations?: Location[]
+  /**
+   * For a stale entry with `code` whose file is gone only: the path of the one finding of the same source and check,
+   * at another path, whose code or message holds the entry's text. A hint: the entry still applies to nothing.
+   */
+  likely_path?: string
+  /** For a not-evaluated entry only. */
+  not_evaluated_reason?: SuppressionNotEvaluatedReason
 }
 
 /** What suppresses a finding: an entry of shopify.app-security.json, or the agent's own per-run suppression. */
@@ -71,9 +91,12 @@ interface EntryMatch {
   status: SuppressionEntryStatus
   /** Indexes into the stored check's findings. */
   findingIndexes: number[]
+  /** For an ambiguous entry: indexes into the stored check's findings that `code` couldn't choose between. */
+  candidateIndexes?: number[]
 }
 
-const NOT_EVALUATED: EntryMatch = {status: 'not-evaluated', findingIndexes: []}
+/** An entry's result, with the matched finding indexes that only the matching needs. */
+type EntryResult = SuppressionEntryResult & {findingIndexes: number[]}
 
 interface ScoredCandidate {
   index: number
@@ -91,16 +114,32 @@ interface ScoredCandidate {
  * 4. When more than one candidate matches, those where the text occurs in both the code and the message are kept. When
  *    more than one is still left, or none, the entry is ambiguous and matches nothing.
  * 5. An entry that matches nothing is stale when its source's result for the check is executed, and not evaluated
- *    otherwise.
+ *    otherwise. When a stale entry's file is gone and exactly one finding of its source and check at another path
+ *    holds its text, that path is the entry's likely new path. The entry still matches nothing: there is no
+ *    rematching.
  */
 export function matchSuppressionEntries(
-  {entries: suppressionEntries, resultsKey}: SuppressionsInput = {entries: [], resultsKey: ''},
+  {entries: suppressionEntries, resultsKey, missingPaths = []}: SuppressionsInput = {entries: [], resultsKey: ''},
   recordedCheck: RecordedCheckLookup,
 ): SuppressionMatches {
-  const entries = suppressionEntries.map((entry, index): SuppressionEntryResult & EntryMatch => {
-    const check = appliesToResultsKey(entry, resultsKey) ? recordedCheck(entry.source, entry.check) : undefined
-    const {status, findingIndexes} = check ? matchEntry(entry, check) : NOT_EVALUATED
-    return {index, entry, status, matched_finding_count: findingIndexes.length, findingIndexes}
+  const missing = new Set(missingPaths)
+  const entries = suppressionEntries.map((entry, index): EntryResult => {
+    if (!appliesToResultsKey(entry, resultsKey)) return notEvaluated(index, entry, 'other-configurations')
+    const check = recordedCheck(entry.source, entry.check)
+    if (!check) return notEvaluated(index, entry, 'no-executed-result')
+
+    const {status, findingIndexes, candidateIndexes} = matchEntry(entry, check)
+    const likelyPath = status === 'stale' && missing.has(entry.path) ? likelyNewPath(entry, check) : undefined
+    return {
+      index,
+      entry,
+      status,
+      matched_finding_count: findingIndexes.length,
+      findingIndexes,
+      ...(candidateIndexes ? {candidate_locations: candidateIndexes.map((at) => check.findings[at]!.location)} : {}),
+      ...(likelyPath === undefined ? {} : {likely_path: likelyPath}),
+      ...(status === 'not-evaluated' ? {not_evaluated_reason: 'no-executed-result'} : {}),
+    }
   })
 
   const firstEntryByFinding = new Map<string, SuppressionEntryResult>()
@@ -162,6 +201,17 @@ function findingKey(source: FindingsSource, checkId: string, index: number): str
   return JSON.stringify([source, checkId, index])
 }
 
+function notEvaluated(index: number, entry: SuppressionEntry, reason: SuppressionNotEvaluatedReason): EntryResult {
+  return {
+    index,
+    entry,
+    status: 'not-evaluated',
+    matched_finding_count: 0,
+    findingIndexes: [],
+    not_evaluated_reason: reason,
+  }
+}
+
 function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
   const candidates = check.findings.flatMap((finding, index) =>
     normalizePath(finding.location.file) === entry.path ? [{finding, index}] : [],
@@ -172,19 +222,40 @@ function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
   // Text that is only whitespace, commas and semicolons names nothing.
   if (text === '') return matchOrMiss([], check)
   const matches = candidates
-    .map(
-      ({finding, index}): ScoredCandidate => ({
-        index,
-        inCode: occursInCode(text, finding, entry.path),
-        inMessage: normalizeSuppressionText(finding.message).includes(text),
-      }),
-    )
+    .map(({finding, index}): ScoredCandidate => ({index, ...textOccurrence(text, finding, entry.path)}))
     .filter(({inCode, inMessage}) => inCode || inMessage)
   if (matches.length <= 1) return matchOrMiss(matches, check)
 
   const inCodeAndMessage = matches.filter(({inCode, inMessage}) => inCode && inMessage)
   if (inCodeAndMessage.length === 1) return matchOrMiss(inCodeAndMessage, check)
-  return {status: 'ambiguous', findingIndexes: []}
+  // The findings that rule 4 kept, or every match when it kept none.
+  const undecided = inCodeAndMessage.length > 1 ? inCodeAndMessage : matches
+  return {status: 'ambiguous', findingIndexes: [], candidateIndexes: undecided.map(({index}) => index)}
+}
+
+/**
+ * The likely new path of a stale entry with `code`: the path of the one finding of the entry's check, at another path,
+ * whose code or message holds the entry's text, as rule 3 compares it. Undefined when no finding or several do.
+ */
+function likelyNewPath(entry: SuppressionEntry, check: StoredCheck): string | undefined {
+  if (entry.code === undefined) return undefined
+  const text = normalizeSuppressionText(entry.code)
+  if (text === '') return undefined
+  const paths = check.findings.flatMap((finding) => {
+    const path = normalizePath(finding.location.file)
+    if (path === entry.path) return []
+    const {inCode, inMessage} = textOccurrence(text, finding, path)
+    return inCode || inMessage ? [path] : []
+  })
+  return paths.length === 1 ? paths[0] : undefined
+}
+
+/** Whether normalized text occurs in a finding's captured code, in `path`, and in its message. */
+function textOccurrence(text: string, finding: StoredFinding, path: string): Omit<ScoredCandidate, 'index'> {
+  return {
+    inCode: occursInCode(text, finding, path),
+    inMessage: normalizeSuppressionText(finding.message).includes(text),
+  }
 }
 
 function matchOrMiss(matches: {index: number}[], check: StoredCheck): EntryMatch {

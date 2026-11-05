@@ -6043,6 +6043,16 @@ DESCRIPTION
             "minimum": 0,
             "description": "The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted."
           },
+          "staleEntryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of entries with the status stale. They don't change the exit code or --blocking."
+          },
+          "ambiguousEntryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of entries with the status ambiguous. They don't change the exit code or --blocking."
+          },
           "entries": {
             "type": "array",
             "items": {
@@ -6055,10 +6065,12 @@ DESCRIPTION
           "filePath",
           "entryCount",
           "suppressedFindingCount",
+          "staleEntryCount",
+          "ambiguousEntryCount",
           "entries"
         ],
         "additionalProperties": false,
-        "description": "The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the count cover every check, whatever --check-id selects."
+        "description": "The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the counts cover every check, whatever --check-id selects."
       },
       "AppSecuritySuppressionEntry": {
         "type": "object",
@@ -6106,6 +6118,29 @@ DESCRIPTION
             "type": "integer",
             "minimum": 0,
             "description": "The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes."
+          },
+          "likelyPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a stale entry with code whose file no longer exists: the absolute path of the one finding of the same source and check, at another path, whose code or message holds the entry's code. The code probably moved there, but the entry still suppresses nothing. Otherwise null."
+          },
+          "candidateFindingCount": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null."
           }
         },
         "required": [
@@ -6115,7 +6150,9 @@ DESCRIPTION
           "kind",
           "path",
           "status",
-          "matchedFindingCount"
+          "matchedFindingCount",
+          "likelyPath",
+          "candidateFindingCount"
         ],
         "additionalProperties": false,
         "description": "One entry of shopify.app-security.json, and how it applied to the results."
@@ -7031,6 +7068,16 @@ DESCRIPTION
             "minimum": 0,
             "description": "The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted."
           },
+          "staleEntryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of entries with the status stale. They don't change the exit code or --blocking."
+          },
+          "ambiguousEntryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of entries with the status ambiguous. They don't change the exit code or --blocking."
+          },
           "entries": {
             "type": "array",
             "items": {
@@ -7043,10 +7090,12 @@ DESCRIPTION
           "filePath",
           "entryCount",
           "suppressedFindingCount",
+          "staleEntryCount",
+          "ambiguousEntryCount",
           "entries"
         ],
         "additionalProperties": false,
-        "description": "The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the count cover every check, whatever --check-id selects."
+        "description": "The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the counts cover every check, whatever --check-id selects."
       },
       "AppSecuritySuppressionEntry": {
         "type": "object",
@@ -7094,6 +7143,29 @@ DESCRIPTION
             "type": "integer",
             "minimum": 0,
             "description": "The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes."
+          },
+          "likelyPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a stale entry with code whose file no longer exists: the absolute path of the one finding of the same source and check, at another path, whose code or message holds the entry's code. The code probably moved there, but the entry still suppresses nothing. Otherwise null."
+          },
+          "candidateFindingCount": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null."
           }
         },
         "required": [
@@ -7103,7 +7175,9 @@ DESCRIPTION
           "kind",
           "path",
           "status",
-          "matchedFindingCount"
+          "matchedFindingCount",
+          "likelyPath",
+          "candidateFindingCount"
         ],
         "additionalProperties": false,
         "description": "One entry of shopify.app-security.json, and how it applied to the results."

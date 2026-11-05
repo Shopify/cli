@@ -49,6 +49,7 @@ export type {
   SuppressionEntryResult,
   SuppressionEntryStatus,
   SuppressionKind,
+  SuppressionNotEvaluatedReason,
 } from './results/suppressions.js'
 export {MAX_JUSTIFICATION_LENGTH, recordAgentFindings} from './checks/index.js'
 export {reportingSourcesByCheckId} from './registry/index.js'

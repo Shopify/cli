@@ -426,12 +426,16 @@ describe('combineFindings', () => {
 
     function combineWith(
       entries: SuppressionEntry[],
-      sources: {deterministic?: StoredCheck[]; agent?: StoredCheck[]; resultsKey?: string},
+      sources: {deterministic?: StoredCheck[]; agent?: StoredCheck[]; resultsKey?: string; missingPaths?: string[]},
     ) {
       return combineFindings({
         deterministic: sources.deterministic ? deterministicDocument(sources.deterministic) : null,
         agent: sources.agent ? agentDocument(sources.agent) : null,
-        suppressions: {entries, resultsKey: sources.resultsKey ?? 'shopify.app'},
+        suppressions: {
+          entries,
+          resultsKey: sources.resultsKey ?? 'shopify.app',
+          ...(sources.missingPaths ? {missingPaths: sources.missingPaths} : {}),
+        },
       })
     }
 
@@ -637,6 +641,82 @@ describe('combineFindings', () => {
         {status: 'ambiguous', count: 0},
         {status: 'ambiguous', count: 0},
       ])
+      for (const result of suppressions) {
+        expect(result.candidate_locations).toEqual([
+          {file: path, line: 8},
+          {file: path, line: 20},
+        ])
+      }
+    })
+
+    test("an ambiguous entry's candidates are the findings that rule 4 kept, when it kept several", () => {
+      const scopes = excerpt(4, '[access_scopes]', 'scopes = "read_customers,write_script_tags"')
+      const findings = [
+        finding({
+          location: {file: 'shopify.app.toml', line: 5},
+          message: 'read_customers is not used.',
+          code_excerpt: scopes,
+        }),
+        finding({
+          location: {file: 'shopify.app.toml', line: 5},
+          message: 'write_script_tags is deprecated.',
+          code_excerpt: scopes,
+        }),
+        finding({
+          location: {file: 'shopify.app.toml', line: 12},
+          message: 'write_script_tags is requested again.',
+          code_excerpt: excerpt(12, 'optional_scopes = "write_script_tags"'),
+        }),
+      ]
+
+      const {suppressions} = combineWith([entry({path: 'shopify.app.toml', code: 'write_script_tags'})], {
+        deterministic: [check({findings})],
+      })
+
+      expect(suppressions[0]).toMatchObject({status: 'ambiguous', matched_finding_count: 0})
+      expect(suppressions[0]!.candidate_locations).toEqual([
+        {file: 'shopify.app.toml', line: 5},
+        {file: 'shopify.app.toml', line: 12},
+      ])
+    })
+
+    test('a stale entry whose file is gone names the path of the one finding elsewhere that holds its code, and matches nothing', () => {
+      const renamed = finding({...loggedToken, location: {file: 'app/routes/orders.server.tsx', line: 12}})
+      const elsewhere = finding({...loggedOrder, location: {file: 'app/routes/other.tsx', line: 30}})
+      const suppression = entry({code: 'console.log(session.accessToken)'})
+
+      const {checks, suppressions} = combineWith([suppression], {
+        deterministic: [check({findings: [renamed, elsewhere]})],
+        missingPaths: [path],
+      })
+
+      expect(dispositions(checks).map(({disposition}) => disposition)).toEqual(['active', 'active'])
+      expect(suppressions).toEqual([
+        {
+          index: 0,
+          entry: suppression,
+          status: 'stale',
+          matched_finding_count: 0,
+          likely_path: 'app/routes/orders.server.tsx',
+        },
+      ])
+    })
+
+    test('names no likely path while the file exists, for an entry without code, or when several findings hold the code', () => {
+      const renamed = finding({...loggedToken, location: {file: 'app/routes/orders.server.tsx', line: 12}})
+      const copied = finding({...loggedToken, location: {file: 'app/routes/admin.tsx', line: 12}})
+      const withCode = entry({code: 'console.log(session.accessToken)'})
+      const likelyPaths = (entries: SuppressionEntry[], findings: StoredFinding[], missingPaths: string[] = [path]) =>
+        combineWith(entries, {deterministic: [check({findings})], missingPaths}).suppressions.map((result) => [
+          result.status,
+          result.likely_path,
+        ])
+
+      expect(likelyPaths([withCode], [renamed], [])).toEqual([['stale', undefined]])
+      expect(likelyPaths([entry()], [renamed])).toEqual([['stale', undefined]])
+      expect(likelyPaths([withCode], [renamed, copied])).toEqual([['stale', undefined]])
+      // Another entry's missing file doesn't count.
+      expect(likelyPaths([withCode], [renamed], ['app/routes/deleted.tsx'])).toEqual([['stale', undefined]])
     })
 
     test('an entry that matches nothing in an executed result is stale', () => {
@@ -672,6 +752,10 @@ describe('combineFindings', () => {
           {status: 'not-evaluated', count: 0},
           {status: 'not-evaluated', count: 0},
         ])
+        expect(suppressions.map((result) => result.not_evaluated_reason)).toEqual([
+          'no-executed-result',
+          'no-executed-result',
+        ])
       }
     })
 
@@ -681,6 +765,7 @@ describe('combineFindings', () => {
         const {suppressions} = combineWith([entry({source: 'agent'})], {agent: [check({status})]})
 
         expect(statuses(suppressions)).toEqual([{status: 'not-evaluated', count: 0}])
+        expect(suppressions[0]!.not_evaluated_reason).toBe('no-executed-result')
       },
     )
 
@@ -688,8 +773,14 @@ describe('combineFindings', () => {
       const deterministic = [check({findings: [loggedToken]})]
       const staging = entry({configurations: ['shopify.app.staging.toml', '1234abcd']})
 
-      expect(statuses(combineWith([staging], {deterministic}).suppressions)).toEqual([
-        {status: 'not-evaluated', count: 0},
+      expect(combineWith([staging], {deterministic}).suppressions).toEqual([
+        {
+          index: 0,
+          entry: staging,
+          status: 'not-evaluated',
+          matched_finding_count: 0,
+          not_evaluated_reason: 'other-configurations',
+        },
       ])
       expect(dispositions(combineWith([staging], {deterministic}).checks)[0]!.disposition).toBe('active')
       for (const resultsKey of ['shopify.app.staging', '1234abcd']) {

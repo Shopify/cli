@@ -25,14 +25,26 @@ const suppressionEntry = {
   path: onWindows ? 'C:\\apps\\my-app\\test\\session.ts' : '/apps/my-app/test/session.ts',
   status: 'matched',
   matchedFindingCount: 2,
+  likelyPath: null,
+  candidateFindingCount: null,
 }
 const suppressions = {
   filePath: onWindows ? 'C:\\apps\\my-app\\shopify.app-security.json' : '/apps/my-app/shopify.app-security.json',
-  entryCount: 2,
+  entryCount: 3,
   suppressedFindingCount: 2,
+  staleEntryCount: 1,
+  ambiguousEntryCount: 1,
   entries: [
     suppressionEntry,
-    {...suppressionEntry, index: 1, kind: 'accepted-risk', status: 'stale', matchedFindingCount: 0},
+    {
+      ...suppressionEntry,
+      index: 1,
+      kind: 'accepted-risk',
+      status: 'stale',
+      matchedFindingCount: 0,
+      likelyPath: onWindows ? 'C:\\apps\\my-app\\test\\fixtures\\session.ts' : '/apps/my-app/test/fixtures/session.ts',
+    },
+    {...suppressionEntry, index: 2, status: 'ambiguous', matchedFindingCount: 0, candidateFindingCount: 2},
   ],
 }
 const scan = {
@@ -69,7 +81,17 @@ describe('appSecurityCheckJsonOutputSchema', () => {
     ],
     [
       'a scan without a suppressions file',
-      {...scan, suppressions: {...suppressions, entryCount: 0, suppressedFindingCount: 0, entries: []}},
+      {
+        ...scan,
+        suppressions: {
+          ...suppressions,
+          entryCount: 0,
+          suppressedFindingCount: 0,
+          staleEntryCount: 0,
+          ambiguousEntryCount: 0,
+          entries: [],
+        },
+      },
     ],
     [
       'every entry status',
@@ -132,18 +154,37 @@ describe('appSecurityCheckJsonOutputSchema', () => {
       {...scan, suppressions: {...suppressions, filePath: 'shopify.app-security.json'}},
     ],
     ['a negative entry count', {...scan, suppressions: {...suppressions, entryCount: -1}}],
+    [
+      'suppressions without the stale entry count',
+      {...scan, suppressions: {...suppressions, staleEntryCount: undefined}},
+    ],
+    ['a fractional ambiguous entry count', {...scan, suppressions: {...suppressions, ambiguousEntryCount: 0.5}}],
+    [
+      'an entry without its likely path',
+      {...scan, suppressions: {...suppressions, entries: [{...suppressionEntry, likelyPath: undefined}]}},
+    ],
+    [
+      'a relative likely path',
+      {...scan, suppressions: {...suppressions, entries: [{...suppressionEntry, likelyPath: 'test/session.ts'}]}},
+    ],
+    [
+      'a negative candidate finding count',
+      {...scan, suppressions: {...suppressions, entries: [{...suppressionEntry, candidateFindingCount: -1}]}},
+    ],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityCheckJsonOutputSchema.validate(value)).toThrow()
   })
 
-  test('the --json-schema output accepts a scan with suppressions and rejects a kind with an underscore', async () => {
+  test('the --json-schema output accepts a scan with suppressions, and rejects a kind with an underscore and missing counts', async () => {
     const jsonSchema = await normaliseJsonSchema(JSON.stringify(appSecurityCheckJsonOutputSchema.jsonSchema))
     const underscoreKind = {
       ...scan,
       suppressions: {...suppressions, entries: [{...suppressionEntry, kind: 'false_positive'}]},
     }
+    const withoutCounts = {...scan, suppressions: {...suppressions, staleEntryCount: undefined}}
 
     expect(jsonSchemaValidate(scan, jsonSchema, 'fail').state).toBe('ok')
     expect(jsonSchemaValidate(underscoreKind, jsonSchema, 'fail').state).toBe('error')
+    expect(jsonSchemaValidate(withoutCounts, jsonSchema, 'fail').state).toBe('error')
   })
 })

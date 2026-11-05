@@ -13,7 +13,7 @@ import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/nod
 import clipboard from 'clipboardy'
 import {describe, expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
+import {mkdir, readFile, rename, rm, writeFile} from 'node:fs/promises'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
 import {resolve} from 'node:path'
 
@@ -469,6 +469,8 @@ async function scanResult(appDirectory: string) {
       filePath: resolve(appDirectory, 'shopify.app-security.json'),
       entryCount: 0,
       suppressedFindingCount: 0,
+      staleEntryCount: 0,
+      ambiguousEntryCount: 0,
       entries: [],
     },
   }
@@ -634,10 +636,14 @@ describe('app security check --json command boundary', () => {
       expect(report).toContain(
         'app/routes/index.ts:1 · deterministic · false positive · suppressions[0] A fake token for the session tests.',
       )
+      // Every entry matched, so no entry is reported as stale, ambiguous or not evaluated.
+      expect(report).not.toMatch(/Stale entries|Ambiguous entries|Not evaluated|suppresses nothing/)
       expect(JSON.parse(json.stdout).suppressions).toStrictEqual({
         filePath: resolve(appDirectory, 'shopify.app-security.json'),
         entryCount: 1,
         suppressedFindingCount: 1,
+        staleEntryCount: 0,
+        ambiguousEntryCount: 0,
         entries: [
           {
             index: 0,
@@ -647,6 +653,8 @@ describe('app security check --json command boundary', () => {
             path: resolve(appDirectory, 'app', 'routes', 'index.ts'),
             status: 'matched',
             matchedFindingCount: 1,
+            likelyPath: null,
+            candidateFindingCount: null,
           },
         ],
       })
@@ -661,6 +669,110 @@ describe('app security check --json command boundary', () => {
           },
         },
       ])
+    })
+  })
+
+  test('reports a stale entry with the likely new path of a renamed file, and without one once the code is deleted', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      await writeSuppressions(directory, [committedSecretEntry])
+      const appDirectory = await fileRealPath(directory)
+      const routes = joinPath(directory, 'app', 'routes')
+      await rename(joinPath(routes, 'index.ts'), joinPath(routes, 'session.ts'))
+
+      const renamedJson = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const renamedText = await runCommand(['--path', directory, '--skip-instructions'])
+      await writeFile(joinPath(routes, 'session.ts'), 'export const accessToken = process.env.SHOPIFY_ACCESS_TOKEN\n')
+      const deletedJson = await runJsonCommand(['--path', directory])
+
+      // The entry still applies to nothing, so the token in the renamed file fails --blocking.
+      expect(renamedJson.exitCode).toBe(1)
+      expect(JSON.parse(renamedJson.stdout)).toMatchObject({
+        valid: false,
+        blocking: {blockedCheckCount: 1},
+        suppressions: {
+          suppressedFindingCount: 0,
+          staleEntryCount: 1,
+          ambiguousEntryCount: 0,
+          entries: [
+            {
+              status: 'stale',
+              matchedFindingCount: 0,
+              likelyPath: resolve(appDirectory, 'app', 'routes', 'session.ts'),
+              candidateFindingCount: null,
+            },
+          ],
+        },
+      })
+      const report = boxText(renamedText.stderr)
+      expect(report).toContain(
+        'Stale entries in shopify.app-security.json • suppressions[0]: deterministic COMMITTED_SECRET in app/routes/index.ts · false positive A fake token for the session tests. Maybe moved to app/routes/session.ts',
+      )
+      expect(report).toContain('This entry matches no finding. Remove it, or update it to match the code.')
+      expect(JSON.parse(deletedJson.stdout).suppressions).toMatchObject({
+        staleEntryCount: 1,
+        entries: [{status: 'stale', likelyPath: null}],
+      })
+    })
+  })
+
+  test('reports an entry whose code matches two findings as ambiguous, with both locations, and suppresses neither', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        `const access_token = "${testToken}"\nconst refresh_token = "${testToken}"\n`,
+      )
+      await writeSuppressions(directory, [{...committedSecretEntry, code: '"shpa[REDACTED:38]"'}])
+
+      const json = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const text = await runCommand(['--path', directory, '--skip-instructions'])
+
+      expect(json.exitCode).toBe(1)
+      expect(JSON.parse(json.stdout)).toMatchObject({
+        valid: false,
+        suppressions: {
+          suppressedFindingCount: 0,
+          staleEntryCount: 0,
+          ambiguousEntryCount: 1,
+          entries: [{status: 'ambiguous', matchedFindingCount: 0, likelyPath: null, candidateFindingCount: 2}],
+        },
+      })
+      const report = boxText(text.stderr)
+      expect(report).toContain(
+        'Ambiguous entries in shopify.app-security.json • suppressions[0]: deterministic COMMITTED_SECRET in app/routes/index.ts · matches 2 findings At app/routes/index.ts:1, app/routes/index.ts:2',
+      )
+      expect(report).toContain('This entry suppresses nothing. Give it a more specific code that matches one finding.')
+      expect(report).not.toContain('Suppressed findings')
+      expect(json.stdout + text.stdout + text.stderr).not.toContain(testToken)
+    })
+  })
+
+  test('counts agent entries and entries for another configuration as not evaluated, never as stale', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      await writeSuppressions(directory, [
+        {...committedSecretEntry, source: 'agent', check: 'CREDENTIAL_LOG_LEAKAGE', code: 'console.log(session)'},
+        {...committedSecretEntry, configurations: ['shopify.app.staging.toml']},
+      ])
+
+      const json = await runJsonCommand(['--path', directory])
+      const text = await runCommand(['--path', directory, '--skip-instructions'])
+
+      expect(JSON.parse(json.stdout).suppressions).toMatchObject({
+        staleEntryCount: 0,
+        ambiguousEntryCount: 0,
+        entries: [
+          {index: 0, status: 'not-evaluated', likelyPath: null, candidateFindingCount: null},
+          {index: 1, status: 'not-evaluated', likelyPath: null, candidateFindingCount: null},
+        ],
+      })
+      const report = boxText(text.stderr)
+      expect(report).toContain(
+        'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+      )
+      expect(report).not.toMatch(/Stale entries|Ambiguous entries/)
     })
   })
 

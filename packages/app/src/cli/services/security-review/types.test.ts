@@ -100,8 +100,10 @@ const result = {
   blocking: {level: 'high', blockedCheckCount: 1},
   suppressions: {
     filePath: onWindows ? 'C:\\apps\\my-app\\shopify.app-security.json' : '/apps/my-app/shopify.app-security.json',
-    entryCount: 1,
+    entryCount: 2,
     suppressedFindingCount: 1,
+    staleEntryCount: 1,
+    ambiguousEntryCount: 0,
     entries: [
       {
         index: 0,
@@ -111,6 +113,19 @@ const result = {
         path: ordersPath,
         status: 'matched',
         matchedFindingCount: 1,
+        likelyPath: null,
+        candidateFindingCount: null,
+      },
+      {
+        index: 1,
+        source: 'agent',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: onWindows ? 'C:\\apps\\my-app\\app\\routes\\orders.old.tsx' : '/apps/my-app/app/routes/orders.old.tsx',
+        status: 'stale',
+        matchedFindingCount: 0,
+        likelyPath: ordersPath,
+        candidateFindingCount: null,
       },
     ],
   },
@@ -156,7 +171,17 @@ describe('appSecurityReviewJsonOutputSchema', () => {
     ],
     [
       'no suppressions file',
-      {...result, suppressions: {...result.suppressions, entryCount: 0, suppressedFindingCount: 0, entries: []}},
+      {
+        ...result,
+        suppressions: {
+          ...result.suppressions,
+          entryCount: 0,
+          suppressedFindingCount: 0,
+          staleEntryCount: 0,
+          ambiguousEntryCount: 0,
+          entries: [],
+        },
+      },
     ],
   ])('accepts a result with %s', (_description, value) => {
     expect(appSecurityReviewJsonOutputSchema.validate(value)).toStrictEqual(value)
@@ -292,6 +317,17 @@ describe('appSecurityReviewJsonOutputSchema', () => {
       withFindings({...agentFinding, suppression: {...agentSuppression, origin: 'inline'}}),
     ],
     ['no suppressions', {...result, suppressions: undefined}],
+    ['no ambiguous entry count', {...result, suppressions: {...result.suppressions, ambiguousEntryCount: undefined}}],
+    [
+      'an entry without its candidate finding count',
+      {
+        ...result,
+        suppressions: {
+          ...result.suppressions,
+          entries: [{...result.suppressions.entries[0], candidateFindingCount: undefined}],
+        },
+      },
+    ],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityReviewJsonOutputSchema.validate(value)).toThrow()
   })
