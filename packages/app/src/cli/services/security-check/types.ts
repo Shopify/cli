@@ -4,6 +4,8 @@ import {
   appSecurityInstructionsSchema,
   appSecurityScanDirectorySchema,
   appSecurityScopeSchema,
+  appSecuritySuppressionEntrySchema,
+  appSecuritySuppressionsSchema,
   createAbsolutePathSchema,
 } from '../app-security/types.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
@@ -35,7 +37,7 @@ export const appSecurityCheckJsonOutputSchema = defineJsonOutputSchema({
           valid: zod
             .boolean()
             .describe(
-              'Whether --blocking passed: no finding of the scan has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings.',
+              "Whether --blocking passed: no check of the scan has an active finding and a severity at or above the level. Findings that shopify.app-security.json suppresses don't count. blocking.blockedCheckCount counts the checks that fail, and --blocking none always passes. Run review --json for the findings.",
             ),
           app: appSecurityAppSchema,
           resultsDirectory: createAbsolutePathSchema().describe(
@@ -55,6 +57,7 @@ export const appSecurityCheckJsonOutputSchema = defineJsonOutputSchema({
             .nonnegative()
             .describe('The number of checks in agent-checks.json for a coding agent to investigate.'),
           blocking: appSecurityBlockingSchema,
+          suppressions: appSecuritySuppressionsSchema,
           instructions: appSecurityInstructionsSchema
             .optional()
             .describe(
@@ -76,6 +79,8 @@ export const appSecurityCheckJsonOutputSchema = defineJsonOutputSchema({
     AppSecurityScope: appSecurityScopeSchema,
     AppSecurityScanDirectory: appSecurityScanDirectorySchema,
     AppSecurityBlocking: appSecurityBlockingSchema,
+    AppSecuritySuppressions: appSecuritySuppressionsSchema,
+    AppSecuritySuppressionEntry: appSecuritySuppressionEntrySchema,
     AppSecurityInstructions: appSecurityInstructionsSchema,
     AppSecurityCheckFileList: appSecurityCheckFileListSchema,
   },
