@@ -3,4 +3,4 @@
 '@shopify/cli': patch
 ---
 
-Auto-upgrade installs the newest stable release in the current major, including fixes published after a newer major is available.
+Auto-upgrade finds the newest stable current-major release in the background, with bounded requests and failure backoff.

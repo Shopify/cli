@@ -24,6 +24,7 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
+import {checkForCLIVersions} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {SemVer} from 'semver'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
@@ -48,6 +49,7 @@ vi.mock('./node-package-manager.js', async (importOriginal) => ({
 }))
 vi.mock('./system.js')
 vi.mock('../../private/node/conf-store.js')
+vi.mock('../../private/node/cli-version-check.js')
 vi.mock('./version.js', async (importOriginal) => {
   const actual: any = await importOriginal()
   return {
@@ -368,27 +370,24 @@ describe('versionToAutoUpgrade', () => {
 
   test('looks up the latest stable release in the current major', async () => {
     const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
-    vi.mocked(checkForNewVersion).mockResolvedValue(version)
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: version})
 
     await expect(versionToAutoUpgrade()).resolves.toBe(version)
 
-    expect(checkForNewVersion).toHaveBeenCalledWith('@shopify/cli', CLI_KIT_VERSION, {
-      versionRange: `${new SemVer(CLI_KIT_VERSION).major}.x`,
-      cacheExpiryInHours: 24,
-    })
+    expect(checkForCLIVersions).toHaveBeenCalledWith()
   })
 
   test('still selects a same-major update when latest points to a newer major', async () => {
     const sameMajorVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
     vi.mocked(checkForCachedNewVersion).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('major').version)
-    vi.mocked(checkForNewVersion).mockResolvedValue(sameMajorVersion)
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: sameMajorVersion})
 
     await expect(versionToAutoUpgrade()).resolves.toBe(sameMajorVersion)
     expect(checkForCachedNewVersion).not.toHaveBeenCalled()
   })
 
   test('returns undefined when the current major has no newer release', async () => {
-    vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: CLI_KIT_VERSION})
 
     await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
   })
@@ -397,21 +396,21 @@ describe('versionToAutoUpgrade', () => {
     vi.mocked(isCI).mockReturnValue(true)
 
     await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
-    expect(checkForNewVersion).not.toHaveBeenCalled()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
   })
 
   test('does not look up updates when auto-upgrade is disabled', async () => {
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
 
     await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
-    expect(checkForNewVersion).not.toHaveBeenCalled()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
   })
 
   test('does not look up updates for a pre-release CLI', async () => {
     vi.mocked(isPreReleaseVersion).mockReturnValue(true)
 
     await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
-    expect(checkForNewVersion).not.toHaveBeenCalled()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
   })
 
   test('a forced upgrade still restricts the lookup to the current major', async () => {
@@ -419,13 +418,16 @@ describe('versionToAutoUpgrade', () => {
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
     vi.mocked(isCI).mockReturnValue(true)
     const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
-    vi.mocked(checkForNewVersion).mockResolvedValue(version)
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: version})
 
     await expect(versionToAutoUpgrade()).resolves.toBe(version)
-    expect(checkForNewVersion).toHaveBeenCalledWith('@shopify/cli', CLI_KIT_VERSION, {
-      versionRange: `${new SemVer(CLI_KIT_VERSION).major}.x`,
-      cacheExpiryInHours: 24,
-    })
+    expect(checkForCLIVersions).toHaveBeenCalledWith()
+  })
+
+  test('does not upgrade after a failed version lookup', async () => {
+    vi.mocked(checkForCLIVersions).mockResolvedValue({})
+
+    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
   })
 })
 
