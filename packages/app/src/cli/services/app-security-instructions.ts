@@ -18,6 +18,8 @@ import clipboard from 'clipboardy'
 
 const SCAN_CONTEXT_PLACEHOLDER = '{{SCAN_CONTEXT}}'
 const RECORD_DOCUMENT_PLACEHOLDER = '<the findings document from step 4>'
+/** The values that the agent fills in from the user's decision and the review result. Shown bare, as placeholders. */
+const SUPPRESS_ARGUMENTS = '--suppress <number> --kind <kind> --reason <reason> --results-digest <digest>'
 const CODE_FENCE_LANGUAGES: {[shell in AppSecurityShell]: string} = {
   posix: 'bash',
   powershell: 'powershell',
@@ -30,6 +32,7 @@ interface AppSecurityInstructionPaths {
   deterministicScanCommand: string
   recordInstructions: string
   reviewCommand: string
+  suppressCommand: string
   cleanCommand: string
   deterministicFindingsPath: string
   agentChecksPath: string
@@ -100,13 +103,15 @@ function instructionPaths(
     appDirectory,
     resultsKey,
   )
+  const reviewCommand = formatAppSecurityCommand(nonInteractiveJsonCommand(commands.review), shell)
   return {
     commands,
     scanCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.scan), shell),
     // A deterministic-only scan is read from its terminal report: `check --json` has no findings.
     deterministicScanCommand: formatAppSecurityCommand(commands.scan, shell),
     recordInstructions: recordInstructions(nonInteractiveJsonCommand(commands.record), shell),
-    reviewCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.review), shell),
+    reviewCommand,
+    suppressCommand: `${reviewCommand} ${SUPPRESS_ARGUMENTS}`,
     cleanCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.clean), shell),
     deterministicFindingsPath,
     agentChecksPath,
@@ -211,6 +216,7 @@ export function appSecurityInstructions(options: {
     '{{DETERMINISTIC_SCAN_COMMAND}}': paths.deterministicScanCommand,
     '{{RECORD_COMMAND}}': paths.recordInstructions,
     '{{REVIEW_COMMAND}}': paths.reviewCommand,
+    '{{SUPPRESS_COMMAND}}': paths.suppressCommand,
     '{{CLEAN_COMMAND}}': paths.cleanCommand,
     '{{DETERMINISTIC_FINDINGS_PATH}}': markdownPath(paths.deterministicFindingsPath),
     '{{AGENT_CHECKS_PATH}}': markdownPath(paths.agentChecksPath),
