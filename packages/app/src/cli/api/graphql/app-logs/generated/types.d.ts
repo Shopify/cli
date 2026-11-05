@@ -48,7 +48,11 @@ export type Scalars = {
 
 /**
  * The fields logs can be filtered on. logFilterFields lists which fields apply to
- * each log type. A filter on a field that a log type doesn't have excludes that type's logs.
+ * each log type. If a filter field applies to none of the originally requested log
+ * types, the query returns BAD_REQUEST. Otherwise, each filter excludes log types
+ * it does not apply to. Filters are combined with AND: if each filter individually
+ * applies to a requested type but no type supports all filters, the query returns
+ * an empty result.
  */
 export type LogFilterField =
   /** The event handle the app sent, such as onboarding_completed, as in eventHandle. */
