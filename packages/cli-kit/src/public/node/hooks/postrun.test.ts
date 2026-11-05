@@ -104,7 +104,7 @@ describe('autoUpgradeIfNeeded', () => {
     await autoUpgradeIfNeeded()
 
     // Then
-    expect(runCLIUpgrade).toHaveBeenCalled()
+    expect(runCLIUpgrade).toHaveBeenCalledWith({autoupgrade: true, version: '3.91.0'})
   })
 
   test('falls back to warning when the upgrade fails', async () => {
