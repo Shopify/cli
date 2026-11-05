@@ -465,6 +465,12 @@ async function scanResult(appDirectory: string) {
     scanDirectories: [{directory: resolve(appDirectory), origin: 'app-directory'}],
     agentCheckCount: agentChecks.checks.length,
     blocking: {level: 'none', blockedCheckCount: 0},
+    suppressions: {
+      filePath: resolve(appDirectory, 'shopify.app-security.json'),
+      entryCount: 0,
+      suppressedFindingCount: 0,
+      entries: [],
+    },
   }
 }
 
@@ -608,6 +614,53 @@ describe('app security check --json command boundary', () => {
           },
         ],
       })
+    })
+  })
+
+  test('shows a suppressed finding with its kind and reason without --verbose, and reports the entry as JSON', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      await writeSuppressions(directory, [committedSecretEntry])
+      const appDirectory = await fileRealPath(directory)
+
+      const text = await runCommand(['--path', directory, '--skip-instructions'])
+      const json = await runJsonCommand(['--path', directory])
+      const review = await runJsonCommand(['--path', directory, '--check-id', 'COMMITTED_SECRET'], SecurityReview)
+
+      // The app has three other findings: the suppressed high one no longer makes the report an error.
+      const report = boxText(text.stderr)
+      expect(report).toMatch(/^╭─ warning ─+╮ 3 security issues found\./)
+      expect(report).toContain('Suppressed findings 3 active · 1 suppressed')
+      expect(report).toContain(
+        'app/routes/index.ts:1 · deterministic · false positive · suppressions[0] A fake token for the session tests.',
+      )
+      expect(JSON.parse(json.stdout).suppressions).toStrictEqual({
+        filePath: resolve(appDirectory, 'shopify.app-security.json'),
+        entryCount: 1,
+        suppressedFindingCount: 1,
+        entries: [
+          {
+            index: 0,
+            source: 'deterministic',
+            check: 'COMMITTED_SECRET',
+            kind: 'false-positive',
+            path: resolve(appDirectory, 'app', 'routes', 'index.ts'),
+            status: 'matched',
+            matchedFindingCount: 1,
+          },
+        ],
+      })
+      expect(JSON.parse(review.stdout).checks[0].findings).toMatchObject([
+        {
+          disposition: 'suppressed',
+          suppression: {
+            justification: 'A fake token for the session tests.',
+            origin: 'file',
+            entryIndex: 0,
+            kind: 'false-positive',
+          },
+        },
+      ])
     })
   })
 

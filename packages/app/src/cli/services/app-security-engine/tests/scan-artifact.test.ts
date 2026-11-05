@@ -4,11 +4,12 @@ import {combineFindings} from '../results/combine.js'
 import {MAX_EXCERPT_LINE_LENGTH} from '../results/code-excerpt.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
-import {buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
+import {activeScanIssues, buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {BuildDeterministicFindingsOptions} from '../scan-artifact/index.js'
+import type {SuppressionEntry} from '../results/suppressions.js'
 import type {CheckExecution, DeterministicFindingsDocument, Issue, ScanResult} from '../types.js'
 
 function buildDeterministicFindings(scanResult: ScanResult, options: Partial<BuildDeterministicFindingsOptions> = {}) {
@@ -358,6 +359,55 @@ describe('buildDeterministicFindings', () => {
       expect(document.checks.length).toBeGreaterThan(0)
       expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
     })
+  })
+})
+
+describe('activeScanIssues', () => {
+  const entry = (overrides: Partial<SuppressionEntry> = {}): SuppressionEntry => ({
+    source: 'deterministic',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'false-positive',
+    path: 'app/a.ts',
+    reason: 'A test fixture.',
+    configurations: ['shopify.app.toml'],
+    ...overrides,
+  })
+
+  /** The checks that `check` combines from the scan's deterministic-findings.json and these entries. */
+  function combinedChecks(scanResult: ScanResult, entries: SuppressionEntry[]) {
+    return combineFindings({
+      deterministic: buildDeterministicFindings(scanResult),
+      agent: null,
+      suppressions: {entries, resultsKey: 'shopify.app'},
+    }).checks
+  }
+
+  test('leaves out the issues whose stored findings an entry suppresses, compared in their stored, redacted form', () => {
+    const secret = `shpat_${'b'.repeat(24)}`
+    const suppressedIssue = deterministicIssue({snippet: `console.log("${secret}")`})
+    const otherIssue = deterministicIssue({message: 'Another token is logged', location: {file: 'app/a.ts', line: 7}})
+    const otherCheckIssue = deterministicIssue({id: 'COMMITTED_SECRET', location: {file: 'app/a.ts', line: 2}})
+    const scanResult = result(
+      [suppressedIssue, otherIssue, otherCheckIssue],
+      [execution(), execution({id: 'COMMITTED_SECRET'})],
+    )
+
+    const checks = combinedChecks(scanResult, [entry({code: 'A token is logged'})])
+
+    expect(activeScanIssues(scanResult.issues, checks)).toEqual([otherIssue, otherCheckIssue])
+  })
+
+  test('leaves out identical issues together when a path-level entry suppresses them', () => {
+    const scanResult = result([deterministicIssue(), deterministicIssue()])
+
+    expect(activeScanIssues(scanResult.issues, combinedChecks(scanResult, [entry()]))).toEqual([])
+  })
+
+  test('keeps every issue when nothing is suppressed', () => {
+    const scanResult = result([deterministicIssue(), deterministicIssue({location: {file: 'app/a.ts', line: 7}})])
+
+    expect(activeScanIssues(scanResult.issues, combinedChecks(scanResult, []))).toEqual(scanResult.issues)
+    expect(activeScanIssues(scanResult.issues, [])).toEqual(scanResult.issues)
   })
 })
 

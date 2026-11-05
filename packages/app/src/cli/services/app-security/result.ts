@@ -1,4 +1,5 @@
 import {effectiveClientId, type AppSecuritySelection} from '../app-security-selection.js'
+import {appSecuritySuppressionsPath} from '../app-security-artifacts.js'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 // eslint-disable-next-line no-restricted-imports -- JSON file paths use native platform separators.
 import {resolve} from 'node:path'
@@ -8,15 +9,22 @@ import type {
   AppSecurityInstructions,
   AppSecurityScanDirectory,
   AppSecurityScope,
+  AppSecuritySuppressions,
 } from './types.js'
 import type {AppSecurityBlockingLevel} from '../app-security-api.js'
-import type {AppSecurityScope as StoredAppSecurityScope, CoverageScanDirectory} from '../app-security-engine/index.js'
+import type {
+  AppSecurityScope as StoredAppSecurityScope,
+  CombinedCheck,
+  CoverageScanDirectory,
+  SuppressionEntryResult,
+} from '../app-security-engine/index.js'
 import type {AppSecurityInstructionsDelivery} from '../app-security-instructions.js'
 
 /**
  * The projections from the app security commands' data to the shared parts of their JSON output, in types.ts. Some
  * of that data has the stored results files' own format, from app-security-engine/results/schema.ts: the projections
- * convert it, so that format never appears in the public contract.
+ * convert it, so that format never appears in the public contract. A suppression kind keeps the spelling of
+ * shopify.app-security.json, which people write.
  */
 
 const SCAN_DIRECTORY_ORIGINS: Record<CoverageScanDirectory['origin'], AppSecurityScanDirectory['origin']> = {
@@ -71,4 +79,32 @@ export function projectAppSecurityBlocking(blocking: {
   blockedChecks: number
 }): AppSecurityBlocking {
   return {level: blocking.level, blockedCheckCount: blocking.blockedChecks}
+}
+
+/**
+ * Projects shopify.app-security.json and how its entries applied to `checks`, the combined checks that the entries
+ * were applied to. A finding that both an entry and the agent suppress counts for the entry, which comes first.
+ */
+export function projectAppSecuritySuppressions(
+  appDirectory: string,
+  suppressions: SuppressionEntryResult[],
+  checks: CombinedCheck[],
+): AppSecuritySuppressions {
+  const suppressedFindings = checks
+    .flatMap((check) => check.findings)
+    .filter((finding) => finding.disposition === 'suppressed' && finding.suppressed_by?.origin === 'file')
+  return {
+    filePath: projectAppSecurityPath(appSecuritySuppressionsPath(appDirectory)),
+    entryCount: suppressions.length,
+    suppressedFindingCount: suppressedFindings.length,
+    entries: suppressions.map(({index, entry, status, matched_finding_count: matchedFindingCount}) => ({
+      index,
+      source: entry.source,
+      check: entry.check,
+      kind: entry.kind,
+      path: projectAppSecurityRelativePath(appDirectory, entry.path),
+      status,
+      matchedFindingCount,
+    })),
+  }
 }
