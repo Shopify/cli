@@ -96,8 +96,8 @@ function findAlias(aliases: string[]) {
 
 /**
  * Triggers a background check for a newer CLI version (non-blocking).
- * The result is cached for manual-upgrade hints. Automatic upgrades use a separate
- * lookup restricted to the current major version.
+ * Caches the result for release notices and manual-upgrade hints.
+ * Automatic upgrades use a separate lookup restricted to the current major version.
  */
 export async function checkForNewVersionInBackground(): Promise<void> {
   const [{CLI_KIT_VERSION}, {isPreReleaseVersion}, {checkForNewVersion}] = await Promise.all([

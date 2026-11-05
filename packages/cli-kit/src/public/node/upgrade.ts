@@ -21,7 +21,7 @@ import {presentUpgradeResult} from './upgrade/result.js'
 import {execUpgradeCommand, upgradeOutputStreams} from './upgrade/output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {isCI} from './system.js'
-import {globalCLIVersion, isPreReleaseVersion, availableHomebrewCLIVersion} from './version.js'
+import {globalCLIVersion, isPreReleaseVersion, isMajorVersionChange, availableHomebrewCLIVersion} from './version.js'
 import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -236,18 +236,20 @@ export async function hasBlockingAutoUpgradeNotification(): Promise<boolean> {
 }
 
 /**
- * Shows a daily upgrade-available warning for users who have not enabled auto-upgrade.
- * Skipped in CI and for pre-release versions. When auto-upgrade is enabled this is a no-op
- * because the postrun hook will handle the upgrade directly.
+ * Shows a daily notice for a new major, independently of automatic same-major upgrades.
+ * When auto-upgrade is disabled, also shows notices for minor and patch releases.
+ * Skipped in CI and for pre-release versions.
  */
 export async function warnIfUpgradeAvailable(): Promise<void> {
-  if (isCI() || isPreReleaseVersion(CLI_KIT_VERSION) || getAutoUpgradeEnabled()) return
+  if (isCI() || isPreReleaseVersion(CLI_KIT_VERSION)) return
 
   const newerVersion = checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
   if (!newerVersion) return
+  const isMajor = isMajorVersionChange(CLI_KIT_VERSION, newerVersion)
+  if (getAutoUpgradeEnabled() && !isMajor) return
 
   await runAtMinimumInterval('warn-on-available-upgrade', {days: 1}, async () => {
-    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    outputWarn(getOutputUpdateCLIReminder(newerVersion, isMajor))
   })
 }
 
