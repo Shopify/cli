@@ -93,6 +93,7 @@ export function renderSecurityReviewResult(
       now: new Date(),
       commands: review.commands,
       ...(review.savedSuppressions ? {savedSuppressions: review.savedSuppressions} : {}),
+      ...(review.interactiveReview ? {interactiveReview: review.interactiveReview} : {}),
     })
   }
 
