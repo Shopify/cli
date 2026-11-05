@@ -471,6 +471,9 @@ describe('appSecurityInstructions suppressions', () => {
       expect(suppressing).toContain("Use the user's kind and reason.")
       expect(suppressing).toContain("If the user didn't give both, ask. Never invent a reason.")
       expect(suppressing).toContain('Only if the user approves, add `--include-superseded`')
+      expect(suppressing).toContain(
+        'A `superseded` deterministic finding can also be suppressed by its own `number` with `review --suppress`, for example when the agent result has no finding in its file',
+      )
       expect(suppressing).toContain('tell the user to review and commit `shopify.app-security.json`')
       expect(sectionText(instructions, '### 3. Investigate each check')).toContain(
         'Never drop or soften a verified finding because it looks accepted.',

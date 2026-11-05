@@ -173,6 +173,7 @@ function renderAlert(alert: SecurityReviewAlert): void {
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
   const {checks, filter, suppressions} = input.result
   const numberOf: FindingNumberLookup = (finding) => input.result.findingNumbers.get(finding)!
+  const supersededNumbers = supersededFindingNumbers(input.result)
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
   const passedOrNotApplicable = checks.filter(
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
@@ -191,15 +192,31 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
     ...(suppressed ? [suppressedFindingsAlert(suppressed)] : []),
     ...(unappliedEntries ? [unappliedEntriesAlert(unappliedEntries)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
-    ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions)] : []),
-    ...(input.interactiveReview ? [interactiveReviewOutcomeAlert(input.interactiveReview)] : []),
+    ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions, supersededNumbers)] : []),
+    ...(input.interactiveReview ? [interactiveReviewOutcomeAlert(input.interactiveReview, supersededNumbers)] : []),
   ]
 }
 
 type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
 
-/** One saved entry: its index, the finding it was saved for and the change, then what it holds. */
-function savedEntrySection({index, change, entry, findingNumber}: NumberedSavedSuppression): AlertCustomSection {
+/**
+ * The numbers of the superseded findings of every check. An entry doesn't change a finding's disposition, so a
+ * superseded finding stays superseded after its entry is saved.
+ */
+function supersededFindingNumbers(result: SecurityReviewResult): ReadonlySet<number> {
+  return new Set(
+    [...result.findingNumbers].flatMap(([finding, number]) => (finding.disposition === 'superseded' ? [number] : [])),
+  )
+}
+
+/**
+ * One saved entry: its index, the finding it was saved for and the change, then what it holds. For a superseded
+ * finding, a last line says why it needs an entry.
+ */
+function savedEntrySection(
+  {index, change, entry, findingNumber}: NumberedSavedSuppression,
+  supersededNumbers: ReadonlySet<number>,
+): AlertCustomSection {
   return {
     title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
     body: [
@@ -209,8 +226,13 @@ function savedEntrySection({index, change, entry, findingNumber}: NumberedSavedS
       ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
       {subdued: `\nReason: ${entry.reason}`},
       {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
+      ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
     ],
   }
+}
+
+function supersededEntryLine(findingNumber: number): string {
+  return `The agent result supersedes finding ${findingNumber} in the review, but check --blocking, which reads no agent results, counts it. This entry suppresses it for check --blocking.`
 }
 
 const COMMIT_SUPPRESSIONS_STEP: AlertCustomSection = {
@@ -223,8 +245,11 @@ function savedHeadline(saved: SavedSuppression[]): string {
 }
 
 /** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
-function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressions): SecurityReviewAlert {
-  const entrySections = saved.map(savedEntrySection)
+function savedSuppressionsAlert(
+  {saved, companionNumbers}: SavedReviewSuppressions,
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
+  const entrySections = saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers))
   const companionSections: AlertCustomSection[] =
     companionNumbers.length === 0
       ? []
@@ -279,9 +304,11 @@ const defaultInteractiveReviewDependencies: InteractiveReviewDependencies = {
 /**
  * The session of `review --interactive`: for each active finding, most severe first, it shows the finding in full and
  * offers Suppress, Continue or Quit. Suppress asks for the kind and a reason and saves the entry at once; then, for an
- * agent finding with superseded deterministic companions, it asks separately whether to suppress them too. Aborts at
- * once when the terminal can't prompt, so the command fails before it reads anything, and never prompts in CI,
- * without a terminal, or with `--no-input`.
+ * agent finding with superseded deterministic companions, it asks separately whether to suppress them too. After the
+ * active findings, when there are any, it offers in the same way the superseded deterministic findings that
+ * `check --blocking` still counts and that the session didn't already ask about as companions. Aborts at once when the
+ * terminal can't prompt, so the command fails before it reads anything, and never prompts in CI, without a terminal,
+ * or with `--no-input`.
  */
 export function interactiveSecurityReview(
   dependencies: InteractiveReviewDependencies = defaultInteractiveReviewDependencies,
@@ -296,8 +323,41 @@ export function interactiveSecurityReview(
   }
   return async (session) => {
     renderAlert(interactiveReviewIntroAlert(session))
-    return reviewFindingsFrom(session, dependencies, 0, {saved: [], declinedCompanions: [], ending: 'finished'})
+    const active = await reviewFindingsFrom(session, dependencies, activeRound(session.findings), 0, {
+      saved: [],
+      declinedCompanions: [],
+      ending: 'finished',
+    })
+    if (active.ending !== 'finished') return active
+    const superseded = undecidedFindings(session.supersededFindings, active)
+    if (superseded.length === 0) return active
+    renderAlert(supersededFindingsIntroAlert(superseded))
+    return reviewFindingsFrom(session, dependencies, supersededRound(superseded), 0, active)
   }
+}
+
+/** The findings that one part of the session offers, and how each finding's box counts them. */
+interface ReviewRound {
+  findings: NumberedFinding[]
+  /** "Active finding 2 of 5", "Superseded finding 1 of 2". */
+  progress(position: number): string
+}
+
+function activeRound(findings: NumberedFinding[]): ReviewRound {
+  return {findings, progress: (position) => `Active finding ${position} of ${findings.length}`}
+}
+
+function supersededRound(findings: NumberedFinding[]): ReviewRound {
+  return {findings, progress: (position) => `Superseded finding ${position} of ${findings.length}`}
+}
+
+/** The findings that the session didn't save or decline as the companions of an agent finding. */
+function undecidedFindings(findings: NumberedFinding[], outcome: InteractiveReviewOutcome): NumberedFinding[] {
+  const decided = new Set([
+    ...outcome.saved.map(({findingNumber}) => findingNumber),
+    ...outcome.declinedCompanions.flatMap(({companionNumbers}) => companionNumbers),
+  ])
+  return findings.filter(({number}) => !decided.has(number))
 }
 
 /** What the session did for one finding. */
@@ -311,17 +371,18 @@ interface FindingDecision {
 
 const NO_DECISION: FindingDecision = {saved: [], declinedCompanionNumbers: [], resultsChanged: false}
 
-/** Offers the findings from `position` on, one at a time: each prompt waits for the answer to the one before. */
+/** Offers the round's findings from `position` on, one at a time: each prompt waits for the answer to the one before. */
 async function reviewFindingsFrom(
   session: InteractiveReviewSession,
   dependencies: InteractiveReviewDependencies,
+  round: ReviewRound,
   position: number,
   outcome: InteractiveReviewOutcome,
 ): Promise<InteractiveReviewOutcome> {
-  const numbered = session.findings[position]
+  const numbered = round.findings[position]
   if (!numbered) return outcome
 
-  renderAlert(interactiveFindingAlert(numbered, position + 1, session.findings.length))
+  renderAlert(interactiveFindingAlert(numbered, round.progress(position + 1)))
   const action = await dependencies.selectAction(interactiveActionPrompt(numbered))
   if (action === 'quit') return {...outcome, ending: 'quit'}
   const decision = action === 'suppress' ? await suppressInteractively(session, dependencies, numbered) : NO_DECISION
@@ -337,7 +398,7 @@ async function reviewFindingsFrom(
     ending: decision.resultsChanged ? 'results-changed' : 'finished',
   }
   if (decision.resultsChanged) return next
-  return reviewFindingsFrom(session, dependencies, position + 1, next)
+  return reviewFindingsFrom(session, dependencies, round, position + 1, next)
 }
 
 /**
@@ -357,14 +418,15 @@ async function suppressInteractively(
   const finding = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: false})
   if (finding.status === 'refused') return showRefusal(finding.refusal)
   const {saved, companionNumbers} = finding.savedSuppressions
-  renderAlert(savedNowAlert(saved))
+  const supersededNumbers = supersededFindingNumbers(session.result)
+  renderAlert(savedNowAlert(saved, supersededNumbers))
   if (companionNumbers.length === 0) return {...NO_DECISION, saved}
 
   const confirmed = await dependencies.confirmCompanions(companionsPrompt(numbered, companionNumbers))
   if (!confirmed) return {...NO_DECISION, saved, declinedCompanionNumbers: companionNumbers}
   const companions = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: true})
   if (companions.status === 'refused') return {...showRefusal(companions.refusal), saved}
-  renderAlert(savedNowAlert(companions.savedSuppressions.saved))
+  renderAlert(savedNowAlert(companions.savedSuppressions.saved, supersededNumbers))
   return {...NO_DECISION, saved: [...saved, ...companions.savedSuppressions.saved]}
 }
 
@@ -396,17 +458,30 @@ function interactiveReviewIntroAlert({findings, configuration}: InteractiveRevie
   }
 }
 
+/** Why the session offers the superseded findings, before the first of them. */
+function supersededFindingsIntroAlert(findings: NumberedFinding[]): SecurityReviewAlert {
+  const one = findings.length === 1
+  const pronoun = one ? 'it' : 'them'
+  return {
+    type: 'info',
+    options: {
+      headline: `Reviewing ${countLabel(findings.length, 'superseded finding')} that check --blocking still ${
+        one ? 'counts' : 'count'
+      }.`,
+      body: `An agent result supersedes ${
+        one ? 'this deterministic finding' : 'these deterministic findings'
+      }, so the review doesn't count ${pronoun}. But check --blocking, which reads no agent results, still counts ${pronoun}, so a CI gate that runs it can fail. Choose Suppress, Continue or Quit for each finding, as before.`,
+    },
+  }
+}
+
 /** The finding in full, with its evidence and reasoning, in the box of its check. */
-function interactiveFindingAlert(
-  {number, check, finding}: NumberedFinding,
-  position: number,
-  total: number,
-): SecurityReviewAlert {
+function interactiveFindingAlert({number, check, finding}: NumberedFinding, progress: string): SecurityReviewAlert {
   return {
     type: check.severity === 'high' ? 'error' : 'warning',
     options: {
       headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
-      body: {subdued: `Active finding ${position} of ${total}`},
+      body: {subdued: progress},
       ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
       customSections: [findingSection(finding, number, true)],
     },
@@ -464,16 +539,21 @@ function companionsPrompt(
 }
 
 /** What one decision saved, shown at once. */
-function savedNowAlert(saved: NumberedSavedSuppression[]): SecurityReviewAlert {
-  return {type: 'success', options: {headline: savedHeadline(saved), customSections: saved.map(savedEntrySection)}}
+function savedNowAlert(saved: NumberedSavedSuppression[], supersededNumbers: ReadonlySet<number>): SecurityReviewAlert {
+  return {
+    type: 'success',
+    options: {
+      headline: savedHeadline(saved),
+      customSections: saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers)),
+    },
+  }
 }
 
 /** After the review: everything the session saved, the companions left out, how it ended, and the next step. */
-function interactiveReviewOutcomeAlert({
-  saved,
-  declinedCompanions,
-  ending,
-}: InteractiveReviewOutcome): SecurityReviewAlert {
+function interactiveReviewOutcomeAlert(
+  {saved, declinedCompanions, ending}: InteractiveReviewOutcome,
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
   const endingLines = {
     finished: undefined,
     quit: 'You quit the review. The suppressions you saved are kept.',
@@ -496,7 +576,11 @@ function interactiveReviewOutcomeAlert({
     options: {
       headline: savedHeadline(saved),
       ...body,
-      customSections: [...saved.map(savedEntrySection), ...declinedSections, COMMIT_SUPPRESSIONS_STEP],
+      customSections: [
+        ...saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers)),
+        ...declinedSections,
+        COMMIT_SUPPRESSIONS_STEP,
+      ],
     },
   }
 }

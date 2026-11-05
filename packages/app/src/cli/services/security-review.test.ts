@@ -384,6 +384,12 @@ const sourceLines: Record<string, string[]> = {
     '  return null',
     '}',
   ],
+  'app/shopify.server.ts': [
+    ...Array.from({length: 38}, (_, index) => `// line ${index + 1}`),
+    'export function logConfiguration() {',
+    '  logger.info(apiSecretKey)',
+    '}',
+  ],
   'shopify.app.toml': [...Array.from({length: 7}, (_, index) => `# line ${index + 1}`), 'api_version = "2024-01"'],
 }
 
@@ -579,6 +585,81 @@ describe('securityReview --suppress', () => {
     })
   })
 
+  test('saves an entry for a superseded deterministic finding by its number, which check --blocking counts', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      const resultsDigest = await digestOf(appRoot)
+
+      // Finding 3 is superseded by the prefer-agent result for CREDENTIAL_LOG_LEAKAGE, which has no finding in its file.
+      const reviewed = await suppress(appRoot, {
+        findingNumber: 3,
+        kind: 'false-positive',
+        reason: 'The logger drops secrets.',
+        resultsDigest,
+      })
+
+      const entry = {
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'false-positive',
+        path: 'app/shopify.server.ts',
+        code: 'logger.info(apiSecretKey)',
+        reason: 'The logger drops secrets.',
+        configurations: ['shopify.app.toml'],
+      }
+      expect(reviewed.savedSuppressions).toStrictEqual({
+        path: appSecuritySuppressionsPath(appRoot),
+        saved: [{index: 0, change: 'added', entry, findingNumber: 3}],
+        companionNumbers: [],
+      })
+      await expect(readEntries(appRoot)).resolves.toStrictEqual([entry])
+      // It stays superseded in the review, but its entry matched it, so check --blocking leaves it out.
+      const numbered = numberFindings(reviewed.result.allChecks)
+      expect(numbered.find(({number}) => number === 3)?.finding).toMatchObject({
+        source: 'deterministic',
+        disposition: 'superseded',
+        suppressed_by: {origin: 'file', entry_index: 0, kind: 'false-positive', reason: 'The logger drops secrets.'},
+      })
+      expect(numbered.find(({number}) => number === 1)?.finding.suppressed_by).toBeUndefined()
+      expect(reviewed.result.suppressions).toMatchObject([{status: 'matched', matched_finding_count: 1}])
+      expect(reviewed.result.resultsDigest).toBe(resultsDigest)
+    })
+  })
+
+  test('refuses a superseded finding that an entry already suppresses, also with --include-superseded', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      await suppress(appRoot, {findingNumber: 3})
+      // The agent finding 2, then its companion, finding 1.
+      await suppress(appRoot, {findingNumber: 2, includeSuperseded: true})
+      const entries = await readEntries(appRoot)
+
+      const refusals = await Promise.all(
+        [
+          {findingNumber: 3, includeSuperseded: false},
+          {findingNumber: 3, includeSuperseded: true},
+          {findingNumber: 1, includeSuperseded: false},
+        ].map((flags) => captureError(() => suppress(appRoot, flags))),
+      )
+
+      expect(
+        refusals.map(({code, message, tryMessage, details}) => ({code, message, tryMessage, details})),
+      ).toStrictEqual(
+        [
+          [3, 0],
+          [3, 0],
+          [1, 2],
+        ].map(([findingNumber, entryIndex]) => ({
+          code: 'finding-not-suppressible',
+          message: `Finding ${findingNumber} is already suppressed by suppressions[${entryIndex}] in shopify.app-security.json. Nothing was saved.`,
+          tryMessage: 'To change the suppression, edit shopify.app-security.json.',
+          details: {findingNumber, disposition: 'superseded'},
+        })),
+      )
+      await expect(readEntries(appRoot)).resolves.toStrictEqual(entries)
+    })
+  })
+
   test('adds the configuration to the entry of another configuration that names the same finding', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, bothWithExcerpts)
@@ -667,13 +748,6 @@ describe('securityReview --suppress', () => {
       'The findings are numbered from 1 to 6. Run the review to see their numbers.',
     ],
     [
-      'a superseded finding',
-      1,
-      'finding-not-suppressible',
-      'Finding 1 is superseded: the agent result for CREDENTIAL_LOG_LEAKAGE replaces the deterministic findings. Nothing was saved.',
-      'To suppress it for check --blocking, which reads no agent results, suppress the agent finding in the same file with --include-superseded.',
-    ],
-    [
       'a finding that the agent suppressed',
       4,
       'finding-not-suppressible',
@@ -730,24 +804,68 @@ describe('securityReview --interactive', () => {
     return (JSON.parse(await readFile(appSecuritySuppressionsPath(appRoot))) as {suppressions: unknown}).suppressions
   }
 
+  /** Records the active and the superseded findings that each session offers, as `<number> <check> <source>`. */
+  function offeredFindings() {
+    const offered: {active: string[]; superseded: string[]}[] = []
+    const label = ({number, check, finding}: InteractiveReviewSession['findings'][number]) =>
+      `${number} ${check.id} ${finding.source}`
+    const record = async (session: InteractiveReviewSession) => {
+      offered.push({active: session.findings.map(label), superseded: session.supersededFindings.map(label)})
+      return outcomeOf()
+    }
+    return {offered, record}
+  }
+
   test('offers the active findings of the checks that --check-id selects, most severe first', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, bothWithExcerpts)
-      const offered: string[][] = []
-      const record = async (session: InteractiveReviewSession) => {
-        offered.push(session.findings.map(({number, check, finding}) => `${number} ${check.id} ${finding.source}`))
+      const {offered, record} = offeredFindings()
+      const checkSession = async (session: InteractiveReviewSession) => {
         expect(session.configuration).toBe('shopify.app.toml')
         expect(session.result.resultsDigest).toMatch(/^[0-9a-f]{12}$/)
-        return outcomeOf()
+        return record(session)
       }
 
-      await reviewInteractively(appRoot, record)
-      await reviewInteractively(appRoot, record, ['EOL_API_VERSION', 'CREDENTIAL_LOG_LEAKAGE'])
+      await reviewInteractively(appRoot, checkSession)
+      await reviewInteractively(appRoot, checkSession, ['EOL_API_VERSION', 'CREDENTIAL_LOG_LEAKAGE'])
+      await reviewInteractively(appRoot, checkSession, ['EOL_API_VERSION'])
 
-      // Finding 4 is suppressed by the agent, and 1 and 3 are superseded.
+      // Finding 4 is suppressed by the agent, and 1 and 3 are superseded deterministic findings.
       expect(offered).toStrictEqual([
-        ['2 CREDENTIAL_LOG_LEAKAGE agent', '5 MISSING_TENANT_ISOLATION agent', '6 EOL_API_VERSION deterministic'],
-        ['2 CREDENTIAL_LOG_LEAKAGE agent', '6 EOL_API_VERSION deterministic'],
+        {
+          active: [
+            '2 CREDENTIAL_LOG_LEAKAGE agent',
+            '5 MISSING_TENANT_ISOLATION agent',
+            '6 EOL_API_VERSION deterministic',
+          ],
+          superseded: ['1 CREDENTIAL_LOG_LEAKAGE deterministic', '3 CREDENTIAL_LOG_LEAKAGE deterministic'],
+        },
+        {
+          active: ['2 CREDENTIAL_LOG_LEAKAGE agent', '6 EOL_API_VERSION deterministic'],
+          superseded: ['1 CREDENTIAL_LOG_LEAKAGE deterministic', '3 CREDENTIAL_LOG_LEAKAGE deterministic'],
+        },
+        {active: ['6 EOL_API_VERSION deterministic'], superseded: []},
+      ])
+    })
+  })
+
+  test('offers only the superseded findings that no entry suppresses, which check --blocking still counts', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      const {offered, record} = offeredFindings()
+
+      await reviewInteractively(appRoot, async (session) => {
+        await expect(session.suppress({findingNumber: 3, decision, includeSuperseded: false})).resolves.toMatchObject({
+          status: 'saved',
+          savedSuppressions: {saved: [{index: 0, change: 'added', findingNumber: 3}], companionNumbers: []},
+        })
+        return outcomeOf()
+      })
+      await reviewInteractively(appRoot, record)
+
+      expect(offered[0]?.superseded).toStrictEqual(['1 CREDENTIAL_LOG_LEAKAGE deterministic'])
+      await expect(readEntries(appRoot)).resolves.toMatchObject([
+        {source: 'deterministic', check: 'CREDENTIAL_LOG_LEAKAGE', path: 'app/shopify.server.ts'},
       ])
     })
   })
