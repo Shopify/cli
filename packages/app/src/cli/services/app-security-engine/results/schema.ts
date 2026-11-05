@@ -17,6 +17,7 @@ import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocum
 export const severitySchema = zod.enum(['high', 'medium', 'low'])
 export const checkStatusSchema = zod.enum(['executed', 'not_applicable', 'unresolved'])
 export const checkPrecedenceSchema = zod.enum(['union', 'prefer-agent'])
+const suppressionKindSchema = zod.enum(['false-positive', 'accepted-risk'])
 
 /** Lines and columns count from 1. */
 const locationSchema = zod.object({
@@ -59,7 +60,7 @@ export const storedFindingSchema = zod.object({
   fix: fixSchema.optional(),
   confidence: zod.enum(['high', 'medium', 'low']).optional(),
   reasoning: zod.string().optional(),
-  suppression: zod.object({justification: zod.string()}).optional(),
+  suppression: zod.object({justification: zod.string(), kind: suppressionKindSchema.optional()}).optional(),
 })
 
 export const storedCheckSchema = zod.object({

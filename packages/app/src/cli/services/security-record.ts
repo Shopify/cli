@@ -1,4 +1,9 @@
-import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
+import {
+  appSecuritySuppressionsPath,
+  encodedArtifactSize,
+  MAX_ARTIFACT_FILE_SIZE_BYTES,
+  writeAgentFindings,
+} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {
@@ -7,8 +12,18 @@ import {
   recordAgentFindings,
   withoutCodeExcerpts,
   type AgentFindingsDocument,
+  type StoredFinding,
 } from './app-security-engine/index.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
+import {
+  planSuppression,
+  readAppSecuritySuppressions,
+  saveAppSecuritySuppressions,
+  suppressionConfiguration,
+  type SavedSuppression,
+  type SuppressionChange,
+  type SuppressionResults,
+} from './app-security-suppressions.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import type {AppSecurityCommands} from './app-security-commands.js'
@@ -20,6 +35,18 @@ export interface SecurityRecordResult {
   path: string
   checks: number
   findings: number
+  /** How the agent's suppressions were saved to shopify.app-security.json, or null when the document has none. */
+  suppressions: RecordedSuppressions | null
+}
+
+/** The agent's suppressions, each saved to shopify.app-security.json, already there, or not saved with the reason. */
+export interface RecordedSuppressions {
+  /** The absolute path of shopify.app-security.json. */
+  path: string
+  saved: SavedSuppression[]
+  /** The number of suppressions that an entry of the file already held, so the file didn't change for them. */
+  alreadySaved: number
+  notSaved: {checkId: string; location: StoredFinding['location']; problem: string}[]
 }
 
 export interface SecurityRecordOptions {
@@ -142,8 +169,74 @@ export default async function securityRecord(
     )
   }
 
+  const suppressions = await planAgentSuppressions(selection, document)
   const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
+  const saved =
+    suppressions && suppressions.changes.length > 0
+      ? (await saveAppSecuritySuppressions(selection.appDirectory, suppressions.changes)).saved
+      : []
   const findings = document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
-  return {path, checks: document.checks.length, findings}
+  return {
+    path,
+    checks: document.checks.length,
+    findings,
+    suppressions: suppressions
+      ? {
+          path: appSecuritySuppressionsPath(selection.appDirectory),
+          saved,
+          alreadySaved: suppressions.alreadySaved,
+          notSaved: suppressions.notSaved,
+        }
+      : null,
+  }
+}
+
+/**
+ * Plans an entry of shopify.app-security.json for each finding that the agent suppressed, with the writer and the
+ * matching rules of `review --suppress`, against the recorded document. Returns null when no finding is suppressed, and
+ * then doesn't read the file. An invalid file aborts before anything is written. A suppression that no entry can name
+ * alone is recorded in agent-findings.json as usual, and reported as not saved.
+ */
+async function planAgentSuppressions(
+  selection: AppSecuritySelection,
+  document: AgentFindingsDocument,
+): Promise<{changes: SuppressionChange[]; alreadySaved: number; notSaved: RecordedSuppressions['notSaved']} | null> {
+  const targets = document.checks.flatMap((check) =>
+    check.findings.flatMap((finding, findingIndex) =>
+      finding.suppression?.kind === undefined
+        ? []
+        : [
+            {
+              checkId: check.id,
+              findingIndex,
+              finding,
+              kind: finding.suppression.kind,
+              reason: finding.suppression.justification,
+            },
+          ],
+    ),
+  )
+  if (targets.length === 0) return null
+
+  const entries = await readAppSecuritySuppressions(selection.appDirectory)
+  const results: SuppressionResults = {
+    deterministic: null,
+    agent: document,
+    resultsKey: resultsKey(selection),
+    configuration: suppressionConfiguration(selection),
+  }
+  const plans = targets.map(({kind, reason, ...target}) => ({
+    target,
+    plan: planSuppression({source: 'agent', ...target}, {kind, reason}, results, entries),
+  }))
+  return {
+    changes: plans.flatMap(({plan}) => (plan.status === 'change' ? [plan.change] : [])),
+    alreadySaved: plans.filter(({plan}) => plan.status === 'saved').length,
+    notSaved: plans.flatMap(({target, plan}) =>
+      plan.status === 'refused'
+        ? [{checkId: target.checkId, location: target.finding.location, problem: plan.problem}]
+        : [],
+    ),
+  }
 }

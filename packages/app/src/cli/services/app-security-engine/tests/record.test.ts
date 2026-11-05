@@ -66,7 +66,7 @@ describe('recordAgentFindings', () => {
           snippet: 'db.order.delete()',
           confidence: 'high',
           reasoning: 'No session check',
-          suppression: {justification: 'Admin-only route'},
+          suppression: {justification: 'Admin-only route', kind: 'false-positive'},
         }),
       ],
     })
@@ -90,7 +90,7 @@ describe('recordAgentFindings', () => {
       snippet: 'db.order.delete()',
       confidence: 'high',
       reasoning: 'No session check',
-      suppression: {justification: 'Admin-only route'},
+      suppression: {justification: 'Admin-only route', kind: 'false-positive'},
     })
     expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
@@ -159,6 +159,22 @@ describe('recordAgentFindings', () => {
       'checks_executed[1] (OPEN_REDIRECT): unresolved requires a reason',
       `findings[1] (${tenant.id}): invalid line number: 0`,
       `findings[2] (${tenant.id}): finding requires at least one evidence citation`,
+    ])
+  })
+
+  test('rejects a suppression without a valid kind, naming the finding and the field', () => {
+    const errors = recordRejected({
+      schema_version: 1,
+      findings: [
+        finding({suppression: {justification: 'Admin-only route'}}),
+        finding({line: 30, suppression: {justification: 'Admin-only route', kind: 'wont_fix'}}),
+        finding({line: 40, suppression: {justification: 'Admin-only route', kind: 'accepted-risk'}}),
+      ],
+    })
+
+    expect(errors).toEqual([
+      `findings[0] (${tenant.id}): suppression.kind is required: false-positive or accepted-risk`,
+      `findings[1] (${tenant.id}): suppression.kind must be false-positive or accepted-risk`,
     ])
   })
 
@@ -282,7 +298,7 @@ describe('recordAgentFindings', () => {
           message: `Leaks ${FAKE_SHOPIFY_TOKEN}`,
           snippet: `const token = "${FAKE_SHOPIFY_TOKEN}"`,
           reasoning: `Found ${FAKE_SHOPIFY_TOKEN}`,
-          suppression: {justification: `Rotated ${FAKE_SHOPIFY_TOKEN}`},
+          suppression: {justification: `Rotated ${FAKE_SHOPIFY_TOKEN}`, kind: 'accepted-risk'},
           evidence: [{file: `config/${FAKE_SHOPIFY_TOKEN}.ts`, line: 1, quote: FAKE_SHOPIFY_TOKEN}],
         }),
       ],
