@@ -1,16 +1,21 @@
-import {
-  blockedCheckCount,
-  executeAppSecurity,
-  type AppSecurityBlockingLevel,
-  type AppSecurityExecution,
-} from './app-security-api.js'
+import {blockedCheckCount, executeAppSecurity, type AppSecurityBlockingLevel} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
+import {combineFindings} from './app-security-engine/index.js'
+import {deterministicFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
-import type {Issue} from './app-security-engine/index.js'
+import type {
+  AgentFindingsDocument,
+  CheckPrecedence,
+  CombinedCheck,
+  Severity,
+  StoredCheck,
+  StoredCheckStatus,
+  SuppressionEntry,
+} from './app-security-engine/index.js'
 
 function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-security', 'shopify.app', name)
@@ -32,7 +37,8 @@ afterEach(() => {
 async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
   const execution = await executeAppSecurity(scanInputFor(options.directory))
   const artifacts = await writeCheckArtifacts(options.directory, 'shopify.app', execution)
-  return {execution, artifacts, blockedChecks: blockedCheckCount(execution, options.blocking)}
+  const {checks} = combineFindings({deterministic: execution.deterministicFindings, agent: null})
+  return {execution, artifacts, blockedChecks: blockedCheckCount(checks, options.blocking)}
 }
 
 async function createApp(directory: string, source = 'export const loader = () => ({ok: true})'): Promise<string> {
@@ -49,31 +55,129 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
-function executionWithIssues(issues: Pick<Issue, 'id' | 'severity'>[]): AppSecurityExecution {
-  return {scan: {issues}} as unknown as AppSecurityExecution
+interface StoredCheckOptions {
+  severity: Severity
+  findings?: number
+  status?: StoredCheckStatus
+  precedence?: CheckPrecedence
+}
+
+/** A stored check with `findings` findings, one per line of app/routes/index.ts. */
+function storedCheck(
+  id: string,
+  {severity, findings = 1, status = 'executed', precedence}: StoredCheckOptions,
+): StoredCheck {
+  return {
+    id,
+    version: 1,
+    status,
+    snapshot: {
+      title: id,
+      severity,
+      description: `Describes ${id}.`,
+      current_version: 1,
+      ...(precedence ? {precedence} : {}),
+    },
+    findings: Array.from({length: findings}, (_, index) => ({
+      location: {file: 'app/routes/index.ts', line: index + 1},
+      message: `Finding ${index + 1} of ${id}.`,
+      evidence: [],
+    })),
+  }
+}
+
+/** The checks as `check` combines them: its deterministic results alone, with the entries applied. */
+function scannedChecks(checks: StoredCheck[], entries: SuppressionEntry[] = []): CombinedCheck[] {
+  return combineFindings({
+    deterministic: {...deterministicFindingsDocument, checks},
+    agent: null,
+    suppressions: {entries, resultsKey: 'shopify.app'},
+  }).checks
+}
+
+function entryFor(check: string): SuppressionEntry {
+  return {
+    source: 'deterministic',
+    check,
+    kind: 'false-positive',
+    path: 'app/routes/index.ts',
+    reason: 'A test fixture.',
+    configurations: ['shopify.app.toml'],
+  }
 }
 
 describe('blockedCheckCount', () => {
-  test('counts the checks with an issue that meets the blocking severity', () => {
-    const medium = {id: 'OPEN_REDIRECT', severity: 'medium'} as const
-    expect(blockedCheckCount(executionWithIssues([medium]), 'high')).toBe(0)
-    expect(blockedCheckCount(executionWithIssues([medium]), 'medium')).toBe(1)
-    expect(blockedCheckCount(executionWithIssues([medium]), 'low')).toBe(1)
-    expect(blockedCheckCount(executionWithIssues([{id: 'COMMITTED_SECRET', severity: 'high'}]), 'none')).toBe(0)
-    expect(blockedCheckCount(executionWithIssues([]), 'low')).toBe(0)
+  test('counts the checks with an active finding that meets the blocking severity', () => {
+    const medium = scannedChecks([storedCheck('OPEN_REDIRECT', {severity: 'medium'})])
+    expect(blockedCheckCount(medium, 'high')).toBe(0)
+    expect(blockedCheckCount(medium, 'medium')).toBe(1)
+    expect(blockedCheckCount(medium, 'low')).toBe(1)
+    expect(blockedCheckCount(scannedChecks([storedCheck('COMMITTED_SECRET', {severity: 'high'})]), 'none')).toBe(0)
+    expect(
+      blockedCheckCount(scannedChecks([storedCheck('OPEN_REDIRECT', {severity: 'high', findings: 0})]), 'low'),
+    ).toBe(0)
   })
 
-  test('counts a check once, however many of its issues meet the blocking severity', () => {
-    const execution = executionWithIssues([
-      {id: 'COMMITTED_SECRET', severity: 'high'},
-      {id: 'COMMITTED_SECRET', severity: 'high'},
-      {id: 'OPEN_REDIRECT', severity: 'medium'},
-      {id: 'EOL_API_VERSION', severity: 'low'},
+  test('counts a check once, however many of its findings meet the blocking severity', () => {
+    const checks = scannedChecks([
+      storedCheck('COMMITTED_SECRET', {severity: 'high', findings: 2}),
+      storedCheck('OPEN_REDIRECT', {severity: 'medium'}),
+      storedCheck('EOL_API_VERSION', {severity: 'low'}),
     ])
 
-    expect(blockedCheckCount(execution, 'high')).toBe(1)
-    expect(blockedCheckCount(execution, 'medium')).toBe(2)
-    expect(blockedCheckCount(execution, 'low')).toBe(3)
+    expect(blockedCheckCount(checks, 'high')).toBe(1)
+    expect(blockedCheckCount(checks, 'medium')).toBe(2)
+    expect(blockedCheckCount(checks, 'low')).toBe(3)
+  })
+
+  test('leaves out suppressed findings, so a check whose findings are all suppressed passes', () => {
+    const stored = [
+      storedCheck('COMMITTED_SECRET', {severity: 'high', findings: 2}),
+      storedCheck('OPEN_REDIRECT', {severity: 'medium'}),
+    ]
+
+    expect(blockedCheckCount(scannedChecks(stored, [entryFor('COMMITTED_SECRET')]), 'high')).toBe(0)
+    expect(blockedCheckCount(scannedChecks(stored, [entryFor('COMMITTED_SECRET')]), 'low')).toBe(1)
+    expect(blockedCheckCount(scannedChecks(stored, [entryFor('OPEN_REDIRECT')]), 'low')).toBe(1)
+  })
+
+  test('leaves out a suppressed deterministic finding of a prefer-agent check, with or without a current agent result', () => {
+    const deterministic = {
+      ...deterministicFindingsDocument,
+      checks: [storedCheck('CREDENTIAL_LOG_LEAKAGE', {severity: 'high'})],
+    }
+    const agent: AgentFindingsDocument = {
+      schema_version: 1,
+      source: 'agent',
+      engine: {name: 'shopify-app-security', version: '1.0.0'},
+      generated_at: '2026-09-02T00:00:00.000Z',
+      scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+      checks: [storedCheck('CREDENTIAL_LOG_LEAKAGE', {severity: 'high', findings: 0, precedence: 'prefer-agent'})],
+    }
+    const suppressions = {entries: [entryFor('CREDENTIAL_LOG_LEAKAGE')], resultsKey: 'shopify.app'}
+
+    // `check` reads no agent results, so only the entry keeps the deterministic finding out of --blocking.
+    expect(blockedCheckCount(combineFindings({deterministic, agent: null}).checks, 'high')).toBe(1)
+    expect(blockedCheckCount(combineFindings({deterministic, agent: null, suppressions}).checks, 'high')).toBe(0)
+    // `review` with the current agent result: the finding is superseded, and the entry still matches it.
+    const reviewed = combineFindings({deterministic, agent, suppressions})
+    expect(blockedCheckCount(reviewed.checks, 'high')).toBe(0)
+    expect(reviewed.suppressions.map(({status}) => status)).toEqual(['matched'])
+  })
+
+  test('counts an active finding of an unresolved check, but not an unresolved check without one', () => {
+    expect(
+      blockedCheckCount(
+        scannedChecks([storedCheck('UNSAFE_INNERHTML', {severity: 'high', status: 'unresolved'})]),
+        'high',
+      ),
+    ).toBe(1)
+    expect(
+      blockedCheckCount(
+        scannedChecks([storedCheck('UNSAFE_INNERHTML', {severity: 'high', status: 'unresolved', findings: 0})]),
+        'high',
+      ),
+    ).toBe(0)
   })
 })
 

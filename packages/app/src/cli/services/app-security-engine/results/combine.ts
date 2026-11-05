@@ -1,5 +1,13 @@
 import {compareFindingLocations, compareStrings} from './order.js'
 import {
+  findingSuppression,
+  matchSuppressionEntries,
+  type FindingSuppression,
+  type SuppressionEntryResult,
+  type SuppressionMatches,
+  type SuppressionsInput,
+} from './suppressions.js'
+import {
   SEVERITY_RANK,
   type AgentFindingsDocument,
   type AnalysisMode,
@@ -23,6 +31,11 @@ export type FindingDisposition = 'active' | 'suppressed' | 'superseded'
 export interface CombinedFinding extends StoredFinding {
   source: FindingsSource
   disposition: FindingDisposition
+  /**
+   * What suppresses the finding. Set on every suppressed finding, and on a superseded deterministic finding that an
+   * entry of shopify.app-security.json matched. Absent otherwise.
+   */
+  suppressed_by?: FindingSuppression
 }
 
 /** One source's own result for a check, kept next to the combined result. */
@@ -59,6 +72,15 @@ export interface CombinedCheck {
 interface CombineFindingsInput {
   deterministic: DeterministicFindingsDocument | null
   agent: AgentFindingsDocument | null
+  /** The entries of shopify.app-security.json and the run's results key. Absent means no entries. */
+  suppressions?: SuppressionsInput
+}
+
+/** The combined checks, and how each entry of shopify.app-security.json applied to them. */
+export interface CombinedFindings {
+  checks: CombinedCheck[]
+  /** One result per entry of shopify.app-security.json, in file order. */
+  suppressions: SuppressionEntryResult[]
 }
 
 /** Counts derived from combined checks. The first four partition the checks; the last two count findings. */
@@ -102,15 +124,24 @@ interface SourceChecks {
  * - Under 'prefer-agent' the agent result replaces the deterministic one: the agent's status stands and every
  *   deterministic finding is superseded. Under 'union' both sources' findings stay active and a pass from either
  *   source counts as a pass.
- * - Only the agent can suppress a finding (`isSuppressed`).
+ * - Every other finding is suppressed when `findingSuppression`, the one rule for both sources, finds what suppresses
+ *   it: an entry of shopify.app-security.json that matched it (`matchSuppressionEntries`), or the agent's own per-run
+ *   `suppression` on an agent finding. Entries match each source's findings whatever the precedence, so an entry's
+ *   status doesn't depend on whether an agent result supersedes the finding.
  */
-export function combineFindings(input: CombineFindingsInput): CombinedCheck[] {
-  return [...sourceChecksById(input)]
-    .map(([id, checks]) => combineCheck(id, checks))
+export function combineFindings(input: CombineFindingsInput): CombinedFindings {
+  const checksById = sourceChecksById(input)
+  const matches = matchSuppressionEntries(
+    input.suppressions,
+    (source, checkId) => checksById.get(checkId)?.[source]?.check,
+  )
+  const checks = [...checksById]
+    .map(([id, sourceChecks]) => combineCheck(id, sourceChecks, matches))
     .sort(
       (left, right) =>
         SEVERITY_RANK[right.severity] - SEVERITY_RANK[left.severity] || compareStrings(left.id, right.id),
     )
+  return {checks, suppressions: matches.entries}
 }
 
 export function activeFindings(check: CombinedCheck): CombinedFinding[] {
@@ -127,15 +158,6 @@ export function isCheckPassed(check: CombinedCheck): boolean {
  */
 export function isAgentResultStale(check: CombinedCheck): boolean {
   return check.applied_precedence !== check.precedence
-}
-
-/**
- * The one rule for the `suppression` combination input, used by the combination and by `review`'s
- * finding display, so both agree. Only the agent suppresses findings today; when suppression becomes uniform
- * across sources, only this function changes.
- */
-export function isSuppressed(finding: StoredFinding, source: FindingsSource): boolean {
-  return source === 'agent' && finding.suppression !== undefined
 }
 
 export function summarizeCombinedChecks(checks: CombinedCheck[]): CombinedChecksSummary {
@@ -201,7 +223,11 @@ function recordedCheck(check: StoredCheck, document: Pick<FindingsDocument, 'gen
   return {check, generatedAt: checkGeneratedAt(check, document)}
 }
 
-function combineCheck(id: string, {deterministic, agent, describingCheck}: SourceChecks): CombinedCheck {
+function combineCheck(
+  id: string,
+  {deterministic, agent, describingCheck}: SourceChecks,
+  matches: SuppressionMatches,
+): CombinedCheck {
   const precedence = agent?.check.snapshot.precedence ?? 'union'
   const {snapshot} = describingCheck
   const appliedPrecedence = applyPrecedence(precedence, deterministic, agent)
@@ -209,12 +235,8 @@ function combineCheck(id: string, {deterministic, agent, describingCheck}: Sourc
   const agentReplacesDeterministic = appliedPrecedence === 'prefer-agent' && agent !== undefined
 
   const findings = [
-    ...(deterministic?.check.findings ?? []).map((finding) =>
-      combinedFinding(finding, 'deterministic', agentReplacesDeterministic ? 'superseded' : 'active'),
-    ),
-    ...(agent?.check.findings ?? []).map((finding) =>
-      combinedFinding(finding, 'agent', isSuppressed(finding, 'agent') ? 'suppressed' : 'active'),
-    ),
+    ...sourceFindings(id, 'deterministic', deterministic, matches, agentReplacesDeterministic),
+    ...sourceFindings(id, 'agent', agent, matches, false),
   ].sort(compareFindings)
 
   return {
@@ -266,12 +288,29 @@ function unionStatus(statuses: StoredCheckStatus[]): StoredCheckStatus {
   return 'not_applicable'
 }
 
-function combinedFinding(
-  finding: StoredFinding,
+/** One source's findings of a check: superseded when the agent result replaces them, else suppressed or active. */
+function sourceFindings(
+  checkId: string,
   source: FindingsSource,
-  disposition: FindingDisposition,
-): CombinedFinding {
-  return {...finding, source, disposition}
+  recorded: RecordedCheck | undefined,
+  matches: SuppressionMatches,
+  superseded: boolean,
+): CombinedFinding[] {
+  return (recorded?.check.findings ?? []).map((finding, index) => {
+    const suppression = findingSuppression(finding, source, matches.entryFor(source, checkId, index))
+    return {
+      ...finding,
+      source,
+      disposition: findingDisposition(superseded, suppression),
+      ...(suppression ? {suppressed_by: suppression} : {}),
+    }
+  })
+}
+
+/** Superseded comes first: the agent result replaces a deterministic finding whether or not an entry suppresses it. */
+function findingDisposition(superseded: boolean, suppression: FindingSuppression | undefined): FindingDisposition {
+  if (superseded) return 'superseded'
+  return suppression ? 'suppressed' : 'active'
 }
 
 function sourceCheckResult({check, generatedAt}: RecordedCheck): SourceCheckResult {
