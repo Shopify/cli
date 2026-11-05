@@ -98,6 +98,16 @@ export function getRegistry(): RegistryEntry[] {
   )
 }
 
+/** The sources that can report findings for each check ID: those with an active implementation of the check. */
+export function reportingSourcesByCheckId(): Map<string, Set<ImplementationProvenance>> {
+  const sources = new Map<string, Set<ImplementationProvenance>>()
+  for (const entry of getRegistry()) {
+    if (entry.status !== 'active') continue
+    sources.set(entry.id, new Set([...(sources.get(entry.id) ?? []), entry.kind]))
+  }
+  return sources
+}
+
 function registryEntry(
   entry: RuleCatalogEntry,
   implementation: Pick<RegistryEntry, 'version' | 'kind' | 'status'> & {prompt_hash?: string},

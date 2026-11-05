@@ -215,7 +215,8 @@ interface AgentCheckReport {
 const MAX_MESSAGE_LENGTH = 4_000
 const MAX_SNIPPET_LENGTH = 4_000
 const MAX_REASONING_LENGTH = 8_000
-const MAX_JUSTIFICATION_LENGTH = 4_000
+/** Also the limit on a suppression entry's `reason` in shopify.app-security.json. */
+export const MAX_JUSTIFICATION_LENGTH = 4_000
 const MAX_REASON_CODE_LENGTH = 100
 const MAX_EVIDENCE = 50
 const MAX_QUOTE_LENGTH = 4_000

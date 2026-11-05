@@ -19,6 +19,12 @@ export const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 
 const APP_SECURITY_DIRECTORY_COMPONENTS = ['.shopify', 'app-security']
 
+/**
+ * The suppressions file. It sits in the app directory beside the app configurations, never under `.shopify/`, so it
+ * can be committed and `clean` never removes it.
+ */
+export const APP_SECURITY_SUPPRESSIONS_FILE_NAME = 'shopify.app-security.json'
+
 export interface AppSecurityArtifactPaths {
   /** `<app directory>/.shopify/app-security/<results key>`. */
   resultsDirectory: string
@@ -36,6 +42,10 @@ export type ReadArtifactResult<T> =
 /** The directory that holds one results directory per results key. */
 export function appSecurityDirectory(appDirectory: string): string {
   return joinPath(appDirectory, ...APP_SECURITY_DIRECTORY_COMPONENTS)
+}
+
+export function appSecuritySuppressionsPath(appDirectory: string): string {
+  return joinPath(appDirectory, APP_SECURITY_SUPPRESSIONS_FILE_NAME)
 }
 
 export function appSecurityArtifactPaths(appDirectory: string, resultsKey: string): AppSecurityArtifactPaths {
@@ -156,7 +166,8 @@ function hasSource<TSource extends FindingsSource>(
   return document.source === source
 }
 
-async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
+/** Reads and parses a JSON file of at most 5 MB. A missing file is `missing`; any other failure is `invalid`. */
+export async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
   if (!(await fileExists(path))) return {status: 'missing'}
 
   let content: string
