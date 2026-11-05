@@ -144,6 +144,12 @@ export interface InteractiveReviewSession {
   /** The active findings of the checks that `--check-id` selects, most severe first: the findings the session offers. */
   findings: NumberedFinding[]
   /**
+   * The superseded deterministic findings of the selected checks that no entry suppresses, most severe first. The
+   * review doesn't count them, but `check --blocking`, which reads no agent results, does, so the session offers them
+   * after `findings`.
+   */
+  supersededFindings: NumberedFinding[]
+  /**
    * Saves a suppression for a finding of `findings` as `--suppress` does, with the same planner, writer and refusals.
    * The results are read again first, and the digest of `result` is checked, so a number that may name another
    * finding is refused (`results-digest-mismatch`).
@@ -295,7 +301,8 @@ export default async function securityReview(
     ? await options.interactive({
         result: loaded.result,
         configuration: suppressionConfiguration(selection),
-        findings: interactiveReviewFindings(loaded.result),
+        findings: interactiveReviewFindings(loaded.result, isActive),
+        supersededFindings: interactiveReviewFindings(loaded.result, isCountedByCheckBlocking),
         suppress: async ({findingNumber, decision: requestDecision, includeSuperseded}) => {
           const current = await review()
           const suppressOptions = {
@@ -331,12 +338,27 @@ export default async function securityReview(
   }
 }
 
-/** The active findings of the checks that `--check-id` selects, in the order of their numbers: most severe first. */
-function interactiveReviewFindings(result: SecurityReviewResult): NumberedFinding[] {
+/** The findings of the checks that `--check-id` selects that `include` keeps, in the order of their numbers: most severe first. */
+function interactiveReviewFindings(
+  result: SecurityReviewResult,
+  include: (finding: CombinedFinding) => boolean,
+): NumberedFinding[] {
   const selectedCheckIds = new Set(result.checks.map((check) => check.id))
   return numberFindings(result.allChecks).filter(
-    ({check, finding}) => selectedCheckIds.has(check.id) && finding.disposition === 'active',
+    ({check, finding}) => selectedCheckIds.has(check.id) && include(finding),
   )
+}
+
+function isActive(finding: CombinedFinding): boolean {
+  return finding.disposition === 'active'
+}
+
+/**
+ * A superseded deterministic finding that no entry matched. The agent result replaces it in the review, but
+ * `check --blocking` reads no agent results, so it still counts it.
+ */
+function isCountedByCheckBlocking(finding: CombinedFinding): boolean {
+  return finding.disposition === 'superseded' && finding.suppressed_by === undefined
 }
 
 function savedOrAbort(result: FindingSuppressionResult): SavedReviewSuppressions {
@@ -366,6 +388,8 @@ function suppressionDecision(options: SecurityReviewSuppressOptions): Suppressio
 /**
  * Saves an entry to shopify.app-security.json for the finding that `--suppress` numbers, as `planSuppression` plans
  * it, and one for each companion with `--include-superseded`. All or nothing: any refusal returns before the write.
+ * A superseded deterministic finding can be numbered too, because `check --blocking` still counts it until an entry
+ * matches it.
  */
 async function suppressFinding(
   selection: AppSecuritySelection,
@@ -381,13 +405,12 @@ async function suppressFinding(
   const target = numbered.find(({number}) => number === options.findingNumber)
   if (!target) return refused(findingNotFound(options.findingNumber, numbered.length))
   const companions = companionFindings(target, numbered)
-  const alreadySuppressed = target.finding.disposition === 'suppressed'
+  // A superseded finding that an entry matched is suppressed for `check --blocking`, the only command that counts it.
+  const alreadySuppressed = target.finding.suppressed_by !== undefined
   // `--include-superseded` on a finding that an entry already suppresses saves only its companions.
   const canAddCompanionsOnly =
     alreadySuppressed && options.includeSuperseded && target.finding.suppressed_by?.origin === 'file'
-  if (target.finding.disposition === 'superseded' || (alreadySuppressed && !canAddCompanionsOnly)) {
-    return refused(notSuppressible(target))
-  }
+  if (alreadySuppressed && !canAddCompanionsOnly) return refused(notSuppressible(target))
   const findings = [...(alreadySuppressed ? [] : [target]), ...(options.includeSuperseded ? companions : [])]
   if (findings.length === 0) return refused(notSuppressible(target))
 
@@ -479,32 +502,18 @@ function findingNotFound(findingNumber: number, findingCount: number): Suppressi
   }
 }
 
-/** Refuses a suppressed or superseded finding, or a suppressed one whose companions are all suppressed. */
-function notSuppressible({number, check, finding}: NumberedFinding): SuppressionRefusal {
-  const [message, tryMessage] = notSuppressibleText(number, check, finding)
-  return {
-    code: 'finding-not-suppressible',
-    message: `${message} Nothing was saved.`,
-    tryMessage,
-    details: {findingNumber: number, disposition: finding.disposition},
-  }
-}
-
-function notSuppressibleText(number: number, check: CombinedCheck, finding: CombinedFinding): [string, string] {
-  if (finding.disposition === 'superseded') {
-    return [
-      `Finding ${number} is superseded: the agent result for ${check.id} replaces the deterministic findings.`,
-      'To suppress it for check --blocking, which reads no agent results, suppress the agent finding in the same file with --include-superseded.',
-    ]
-  }
+/** Refuses a suppressed finding, or a suppressed one whose companions are all suppressed. */
+function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal {
   const by =
     finding.suppressed_by?.origin === 'file'
       ? `suppressions[${finding.suppressed_by.entry_index}] in ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}`
       : 'the agent'
-  return [
-    `Finding ${number} is already suppressed by ${by}.`,
-    `To change the suppression, edit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
-  ]
+  return {
+    code: 'finding-not-suppressible',
+    message: `Finding ${number} is already suppressed by ${by}. Nothing was saved.`,
+    tryMessage: `To change the suppression, edit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+    details: {findingNumber: number, disposition: finding.disposition},
+  }
 }
 
 function noUniqueEntry({number}: NumberedFinding, problem: string): SuppressionRefusal {

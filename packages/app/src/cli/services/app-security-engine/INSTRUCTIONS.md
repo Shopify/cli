@@ -165,6 +165,8 @@ Replace `<number>` with the finding's `number`, `<kind>` with the user's kind, `
 
 When the user suppresses an agent finding, the deterministic findings of the same check in the same file that it supersedes are its companions. `check --blocking` reads no agent results, so it still counts them. `review --suppress` names them in `savedSuppressions.companionFindingNumbers`; after `record`, find them in the review as `superseded` deterministic findings. Ask the user whether to suppress them too. Only if the user approves, add `--include-superseded` to the command for the agent finding: it saves an entry for each companion with the same kind and reason, also when the agent finding is already suppressed.
 
+A `superseded` deterministic finding can also be suppressed by its own `number` with `review --suppress`, for example when the agent result has no finding in its file, so no agent finding has it as a companion. `check --blocking` still counts it. As for any finding, suppress it only when the user explicitly asks you to.
+
 After a suppression is saved, tell the user to review and commit `shopify.app-security.json`. When a suppression isn't saved, tell the user why. The user can add an entry by hand; don't edit the file yourself.
 
 ## Removing local artifacts
