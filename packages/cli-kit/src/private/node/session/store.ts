@@ -1,24 +1,33 @@
 import {SessionsSchema} from './schema.js'
-import {getSessions, removeCurrentSessionId, removeSessions, setSessions} from '../conf-store.js'
+import {getSessions, removeCurrentSessionId, removeSessions, setSessions, withSessionStoreLock} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import {AbortError} from '../../../public/node/error.js'
+import type {ConfSchema} from '../conf-store.js'
+import type {LocalStorage} from '../../../public/node/local-storage.js'
 import type {Session, Sessions} from './schema.js'
 
 /**
- * Serializes the session as a JSON and stores it in the system.
- * @param session - the session to store.
+ * Merges changed sessions into the latest stored accounts.
+ * @param sessions - Only the sessions changed by the caller.
+ * @param config - Optional local storage instance.
  */
-export async function store(sessions: Sessions) {
-  const jsonSessions = JSON.stringify(sessions)
-  setSessions(jsonSessions)
+export async function store(sessions: Sessions, config?: LocalStorage<ConfSchema>) {
+  await withSessionStoreLock(async () => {
+    const storedSessions = (await fetch(config)) ?? {}
+    for (const [fqdn, changedSessions] of Object.entries(sessions)) {
+      storedSessions[fqdn] = {...storedSessions[fqdn], ...changedSessions}
+    }
+    setSessions(JSON.stringify(storedSessions), config)
+  }, config)
 }
 
 /**
  * Fetches the sessions from the local storage and returns it.
- * If the format of the object is invalid, the method will discard it.
+ * Unreadable data is preserved instead of removing every saved account.
  * @returns Returns a promise that resolves with the sessions object if it exists and is valid.
  */
-export async function fetch(): Promise<Sessions | undefined> {
-  const content = getSessions()
+export async function fetch(config?: LocalStorage<ConfSchema>): Promise<Sessions | undefined> {
+  const content = getSessions(config)
 
   if (!content) {
     return undefined
@@ -29,25 +38,26 @@ export async function fetch(): Promise<Sessions | undefined> {
     contentJson = JSON.parse(content)
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error
-    await remove()
-    return undefined
   }
 
   const parsedSessions = await SessionsSchema.safeParseAsync(contentJson)
   if (parsedSessions.success) {
     return parsedSessions.data
-  } else {
-    await remove()
-    return undefined
   }
+  throw new AbortError(
+    'The saved CLI accounts could not be read. They have not been changed.',
+    'Try the CLI version used to save these accounts. To remove all saved accounts and sign in again, run `shopify auth logout`, then `shopify auth login`.',
+  )
 }
 
 /**
  * Removes a session from the system.
  */
-export async function remove() {
-  removeSessions()
-  removeCurrentSessionId()
+export async function remove(config?: LocalStorage<ConfSchema>) {
+  await withSessionStoreLock(async () => {
+    removeSessions(config)
+    removeCurrentSessionId(config)
+  }, config)
 }
 
 /**
@@ -71,16 +81,16 @@ export async function getSessionAlias(userId: string): Promise<string | undefine
  * @param userId - The user ID of the session to update.
  * @param alias - The new alias to set.
  */
-export async function setSessionAlias(userId: string, alias: string): Promise<void> {
-  const sessions = await fetch()
-  if (!sessions) return
-
+export async function setSessionAlias(userId: string, alias: string, config?: LocalStorage<ConfSchema>): Promise<void> {
   const fqdn = await identityFqdn()
-  const session: Session | undefined = sessions[fqdn]?.[userId]
-  if (!session) return
+  await withSessionStoreLock(async () => {
+    const sessions = await fetch(config)
+    const session: Session | undefined = sessions?.[fqdn]?.[userId]
+    if (!session) return
 
-  session.identity.alias = alias
-  await store(sessions)
+    session.identity.alias = alias
+    setSessions(JSON.stringify(sessions), config)
+  }, config)
 }
 
 /**

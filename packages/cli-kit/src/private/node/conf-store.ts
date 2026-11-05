@@ -2,6 +2,7 @@ import {isLocalEnvironment} from './context/service.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
+import lockfile from 'proper-lockfile'
 
 interface CacheValue<T> {
   value: T
@@ -53,6 +54,22 @@ function sessionStoreKey(): 'devSessionStore' | 'sessionStore' {
 
 function currentSessionIdKey(): 'currentDevSessionId' | 'currentSessionId' {
   return isLocalEnvironment() ? 'currentDevSessionId' : 'currentSessionId'
+}
+
+/** Serializes session mutations across CLI processes without holding a lock during authentication. */
+export async function withSessionStoreLock<T>(
+  action: () => Promise<T>,
+  config: LocalStorage<ConfSchema> = cliKitStore(),
+): Promise<T> {
+  const release = await lockfile.lock(config.path, {
+    realpath: false,
+    retries: {retries: 20, minTimeout: 10, maxTimeout: 100},
+  })
+  try {
+    return await action()
+  } finally {
+    await release()
+  }
 }
 
 /**

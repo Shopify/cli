@@ -9,7 +9,7 @@ import {
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
-import {IdentityToken, Session, Sessions} from './session/schema.js'
+import {IdentityToken, Session} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {automationTokenAuthMethod, automationTokenVariablesProblem} from './session/automation-token.js'
@@ -21,7 +21,7 @@ import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
-import {AdminSession, ensureNoServiceAccountToken, logout} from '../../public/node/session.js'
+import {AdminSession, ensureNoServiceAccountToken} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -262,8 +262,10 @@ ${outputToken.json(applications)}
         await throwOnNoPrompt(noPrompt)
         newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
       } else if (error instanceof InvalidRequestError) {
-        await sessionStore.remove()
-        throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
+        throw new AbortError(
+          '\nError validating auth session',
+          'Run `shopify auth login` and select "Log in with a different account" to sign in again.',
+        )
       } else {
         throw error
       }
@@ -272,15 +274,12 @@ ${outputToken.json(applications)}
 
   const completeSession = {...currentSession, ...newSession} as Session
   const newSessionId = completeSession.identity.userId
-  const updatedSessions: Sessions = {
-    ...sessions,
-    [fqdn]: {...sessions[fqdn], [newSessionId]: completeSession},
-  }
-
   // Save the new session info if it has changed
   if (!isEmpty(newSession)) {
-    await sessionStore.store(updatedSessions)
-    if (!commandSessionId) setCurrentSessionId(newSessionId)
+    await sessionStore.store({[fqdn]: {[newSessionId]: completeSession}})
+    if (!commandSessionId && (!currentSession || newSessionId !== currentSession.identity.userId)) {
+      setCurrentSessionId(newSessionId)
+    }
   }
 
   const tokens = await tokensFor(applications, completeSession)
@@ -297,7 +296,6 @@ ${outputToken.json(applications)}
 
 async function throwOnNoPrompt(noPrompt: boolean) {
   if (!noPrompt) return
-  await logout()
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 

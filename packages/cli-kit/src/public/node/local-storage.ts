@@ -56,6 +56,15 @@ export class LocalStorage<T extends Record<string, any>> {
   }
 
   /**
+   * Returns the path of the local storage file.
+   *
+   * @returns The absolute path of the local storage file.
+   */
+  get path(): string {
+    return this.config.path
+  }
+
+  /**
    * Get a value from the local storage.
    *
    * @param key - The key to get.
