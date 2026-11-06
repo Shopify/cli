@@ -272,6 +272,11 @@ describe('readAppSecuritySuppressions', () => {
       ['a Windows drive path', 'C:/app/session.ts', 'suppressions[0].path: must be relative to the app directory'],
       ['backslashes', 'test\\fixtures\\session.ts', 'suppressions[0].path: must use / as the separator'],
       ['an empty path', '', 'suppressions[0].path: must not be empty'],
+      [
+        'a path longer than a finding location can be',
+        'a'.repeat(1_025),
+        'suppressions[0].path: must be at most 1024 characters',
+      ],
       ...[' app/session.ts', 'app/session.ts ', 'app/session.ts\n'].map((path) => [
         `the path ${JSON.stringify(path)}, with whitespace around it`,
         path,
@@ -285,6 +290,15 @@ describe('readAppSecuritySuppressions', () => {
       ]),
     ])('rejects %s', async (_name, path, problem) => {
       await expect(entryProblems({path})).resolves.toStrictEqual([problem])
+    })
+
+    test('accepts a path as long as a finding location can be', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const entry = {...deterministicEntry, path: 'a'.repeat(1_024)}
+        await writeSuppressionsFile(directory, suppressionsJson([entry]))
+
+        await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([entry])
+      })
     })
 
     test('accepts a path outside the app directory and a React Router route name with brackets', async () => {
@@ -303,6 +317,11 @@ describe('readAppSecuritySuppressions', () => {
   describe('code and configurations', () => {
     test.each([
       ['an empty code', {code: ' '}, 'suppressions[0].code: must not be empty'],
+      [
+        'a code longer than a finding snippet can be',
+        {code: 'x'.repeat(4_001)},
+        'suppressions[0].code: must be at most 4000 characters',
+      ],
       ['a missing configurations list', {configurations: undefined}, 'suppressions[0].configurations: required'],
       [
         'an empty configurations list',
@@ -340,6 +359,15 @@ describe('readAppSecuritySuppressions', () => {
         ])
       },
     )
+
+    test('accepts a code as long as a finding snippet can be', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const entry = {...deterministicEntry, code: 'x'.repeat(4_000)}
+        await writeSuppressionsFile(directory, suppressionsJson([entry]))
+
+        await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([entry])
+      })
+    })
 
     test('accepts app configuration file names and client IDs as configurations', async () => {
       await inTemporaryDirectory(async (directory) => {
