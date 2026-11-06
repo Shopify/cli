@@ -7,7 +7,7 @@ export const historicalLogFlags = {
   'client-id': appFlags['client-id'],
   type: Flags.string({
     description: 'Log type; repeat to select multiple. Defaults to all supported types.',
-    options: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event'],
+    options: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest'],
     multiple: true,
     multipleNonGreedy: true,
     env: 'SHOPIFY_FLAG_TYPE',
@@ -27,7 +27,7 @@ export const historicalLogFlags = {
     env: 'SHOPIFY_FLAG_TOPIC',
   }),
   'status-code': Flags.string({
-    description: 'Exact webhook HTTP status code (100–599); no status classes.',
+    description: 'Exact webhook or REST HTTP status code (100–599); no status classes.',
     env: 'SHOPIFY_FLAG_STATUS_CODE',
   }),
   'operation-type': Flags.string({
@@ -39,7 +39,7 @@ export const historicalLogFlags = {
     env: 'SHOPIFY_FLAG_OPERATION_NAME',
   }),
   'request-id': Flags.string({
-    description: 'Exact GraphQL request ID; excludes non-GraphQL records.',
+    description: 'Exact GraphQL or REST request ID; excludes other record types.',
     env: 'SHOPIFY_FLAG_REQUEST_ID',
   }),
   'function-handle': Flags.string({
@@ -53,6 +53,14 @@ export const historicalLogFlags = {
   'event-handle': Flags.string({
     description: 'Exact app event or app billing event handle; excludes other record types.',
     env: 'SHOPIFY_FLAG_EVENT_HANDLE',
+  }),
+  method: Flags.string({
+    description: 'Exact REST HTTP method; excludes non-REST records.',
+    env: 'SHOPIFY_FLAG_METHOD',
+  }),
+  'request-path': Flags.string({
+    description: 'Exact REST request path; excludes non-REST records.',
+    env: 'SHOPIFY_FLAG_REQUEST_PATH',
   }),
   since: Flags.string({
     description: 'Inclusive start: positive duration (s/m/h/d) or whole-second RFC 3339 timestamp.',
