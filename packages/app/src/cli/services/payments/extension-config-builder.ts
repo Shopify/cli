@@ -30,6 +30,11 @@ import {
   cardPresentDeployConfigToCLIConfig,
   CARD_PRESENT_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/card_present_payments_app_extension_schema.js'
+import {
+  AcceleratedWalletPaymentsAppExtensionDeployConfigType,
+  acceleratedWalletDeployConfigToCLIConfig,
+  ACCELERATED_WALLET_TARGET,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/accelerated_wallet_payments_app_extension_schema.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {slugify} from '@shopify/cli-kit/common/string'
 
@@ -96,6 +101,12 @@ export function buildExtensionConfig(extension: ExtensionRegistration, allExtens
         extension,
         allExtensions,
         cardPresentDeployConfigToCLIConfig,
+      )
+    case ACCELERATED_WALLET_TARGET:
+      return buildPaymentsToml<AcceleratedWalletPaymentsAppExtensionDeployConfigType>(
+        extension,
+        allExtensions,
+        acceleratedWalletDeployConfigToCLIConfig,
       )
     case undefined:
     default:

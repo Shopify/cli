@@ -15,6 +15,9 @@ const SAMPLE_REDEEMABLE_CONFIG =
 const SAMPLE_CARD_PRESENT_CONFIG =
   '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/void_sessions","sync_terminal_transaction_result_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/terminal_transaction_result","supported_payment_methods":["visa","master","american_express"],"supported_countries":["AU","CA","GB","US"],"test_mode_available":true,"merchant_label":"Card Present Payments App Extension","api_version":"2025-04"}'
 
+const SAMPLE_ACCELERATED_WALLET_CONFIG =
+  '{"start_payment_session_url":"https://example.com/payment-sessions","start_refund_session_url":"https://example.com/refund-sessions","start_capture_session_url":"https://example.com/capture-sessions","start_void_session_url":"https://example.com/void-sessions","confirmation_callback_url":"https://example.com/confirm","wallet_session_create_url":"https://example.com/wallet-sessions","wallet_session_verify_url":"https://example.com/wallet-sessions/verify","button_logo_path":"assets/logo.png","button_logo_path_dark":"assets/logo-dark.png","button_background_color":"#000000","button_background_color_dark":"#FFFFFF","button_foreground_color":"#F5F5F5","button_foreground_color_dark":"#1A1A1A","supported_payment_methods":["visa"],"supported_countries":["CA","US"],"test_mode_available":true,"merchant_label":"Accelerated Wallet Payments App Extension","default_buyer_label":null,"buyer_label_to_locale":null,"supports_3ds":false,"supports_oversell_protection":false,"api_version":"2026-10","supports_installments":false,"supports_deferred_payments":false,"multiple_capture":false,"supported_buyer_contexts":[{"currency":"USD"}]}'
+
 const translateDeployConfigKeyToCLI = (deployConfigKey: string): string => {
   switch (deployConfigKey) {
     case 'start_payment_session_url':
@@ -452,6 +455,62 @@ describe('extension-config-builder', () => {
           supported_payment_methods: ['visa', 'master', 'american_express'],
           test_mode_available: true,
           targeting: [{target: 'payments.card-present.render'}],
+        },
+      ],
+    })
+  })
+
+  test('correctly builds a config object for an accelerated wallet extension', async () => {
+    // Given
+    const extension1: ExtensionRegistration = {
+      id: '30366498817',
+      uuid: '626ab61a-e494-4e16-b511-e8721ec011a4',
+      title: 'Example Wallet',
+      type: 'payments_extension',
+      draftVersion: {
+        context: 'payments.accelerated-wallet.render',
+        config: SAMPLE_ACCELERATED_WALLET_CONFIG,
+      },
+    }
+
+    // When
+    const got = buildExtensionConfig(extension1, [extension1])
+
+    // Then
+    expectObjectIncludesKeys(got, SAMPLE_ACCELERATED_WALLET_CONFIG)
+    expect(got).toEqual({
+      api_version: '2026-10',
+      extensions: [
+        {
+          name: 'Example Wallet',
+          type: 'payments_extension',
+          handle: 'example-wallet',
+          payment_session_url: 'https://example.com/payment-sessions',
+          refund_session_url: 'https://example.com/refund-sessions',
+          capture_session_url: 'https://example.com/capture-sessions',
+          void_session_url: 'https://example.com/void-sessions',
+          confirmation_callback_url: 'https://example.com/confirm',
+          wallet_session_create_url: 'https://example.com/wallet-sessions',
+          wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
+          button_logo_path: 'assets/logo.png',
+          button_logo_path_dark: 'assets/logo-dark.png',
+          button_background_color: '#000000',
+          button_background_color_dark: '#FFFFFF',
+          button_foreground_color: '#F5F5F5',
+          button_foreground_color_dark: '#1A1A1A',
+          multiple_capture: false,
+          merchant_label: 'Accelerated Wallet Payments App Extension',
+          supported_countries: ['CA', 'US'],
+          supported_payment_methods: ['visa'],
+          supported_buyer_contexts: [{currency: 'USD'}],
+          test_mode_available: true,
+          buyer_label: null,
+          buyer_label_translations: null,
+          supports_oversell_protection: false,
+          supports_3ds: false,
+          supports_deferred_payments: false,
+          supports_installments: false,
+          targeting: [{target: 'payments.accelerated-wallet.render'}],
         },
       ],
     })
