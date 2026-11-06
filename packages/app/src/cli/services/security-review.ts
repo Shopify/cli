@@ -15,6 +15,7 @@ import {
   suppressionConfiguration,
   type SavedSuppression,
   type SuppressionDecision,
+  type SuppressionPlan,
   type SuppressionTarget,
 } from './app-security-suppressions.js'
 import {
@@ -24,6 +25,7 @@ import {
   type SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import {blockedCheckCount, type AppSecurityBlockingLevel} from './app-security-api.js'
+import {countLabel, listedNumbers} from './app-security-format.js'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizePath} from '@shopify/cli-kit/node/path'
@@ -427,7 +429,7 @@ async function suppressFinding(
   }))
   const refusedPlan = plans.find(({plan}) => plan.status === 'refused')
   if (refusedPlan?.plan.status === 'refused') {
-    return refused(noUniqueEntry(refusedPlan.numberedFinding, refusedPlan.plan.problem))
+    return refused(noUniqueEntry(refusedPlan.numberedFinding, refusedPlan.plan, numbered))
   }
   const changes = plans.flatMap(({numberedFinding, plan}) =>
     plan.status === 'change' ? [{findingNumber: numberedFinding.number, change: plan.change}] : [],
@@ -517,11 +519,42 @@ function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal
   }
 }
 
-function noUniqueEntry({number}: NumberedFinding, problem: string): SuppressionRefusal {
+/**
+ * Refuses a finding that no saved entry can name alone. The advice names what a person can add by hand: an entry with a
+ * more specific code, only when one can name the finding alone, or else an entry without code, which suppresses every
+ * finding of the finding's source and check in its file.
+ */
+function noUniqueEntry(
+  target: NumberedFinding,
+  {problem, withoutCode}: Extract<SuppressionPlan, {status: 'refused'}>,
+  numbered: NumberedFinding[],
+): SuppressionRefusal {
   return {
     code: 'finding-not-suppressible',
-    message: `Finding ${number} can't be suppressed: ${problem}. Nothing was saved.`,
-    tryMessage: `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
-    details: {findingNumber: number},
+    message: `Finding ${target.number} can't be suppressed: ${problem}. Nothing was saved.`,
+    tryMessage: withoutCode
+      ? entryWithoutCodeAdvice(target, numbered)
+      : `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
+    details: {findingNumber: target.number},
   }
+}
+
+/** "No code from its lines, … names it alone. A deterministic entry for X in a.ts without code suppresses all 2 …: 3 and 4. …" */
+function entryWithoutCodeAdvice({number, check, finding}: NumberedFinding, numbered: NumberedFinding[]): string {
+  const path = normalizePath(finding.location.file)
+  const numbers = numbered
+    .filter(
+      (other) =>
+        other.check.id === check.id &&
+        other.finding.source === finding.source &&
+        normalizePath(other.finding.location.file) === path,
+    )
+    .map((other) => other.number)
+  const entry = finding.source === 'agent' ? 'An agent entry' : 'A deterministic entry'
+  return [
+    'No code from its lines, evidence or message names it alone.',
+    `${entry} for ${check.id} in ${path} without code suppresses all ${countLabel(numbers.length, `${finding.source} finding`)} of that check in that file: ${listedNumbers(numbers)}.`,
+    `To suppress them all, add such an entry to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand.`,
+    `To suppress only finding ${number}, change the code so that the findings differ, and run check again.`,
+  ].join(' ')
 }

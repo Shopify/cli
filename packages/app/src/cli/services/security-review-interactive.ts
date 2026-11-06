@@ -1,9 +1,8 @@
 import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
-import {countLabel} from './app-security-format.js'
+import {countLabel, listedNumbers} from './app-security-format.js'
 import {suppressionReasonProblem} from './app-security-suppressions.js'
 import {
   interactiveFindingAlert,
-  listedNumbers,
   renderAlert,
   savedNowAlert,
   supersededFindingNumbers,

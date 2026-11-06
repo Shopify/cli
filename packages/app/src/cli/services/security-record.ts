@@ -47,7 +47,13 @@ export interface RecordedSuppressions {
   saved: SavedSuppression[]
   /** The number of suppressions that an entry of the file already held, so the file didn't change for them. */
   alreadySaved: number
-  notSaved: {checkId: string; location: StoredFinding['location']; problem: string}[]
+  notSaved: {
+    checkId: string
+    location: StoredFinding['location']
+    problem: string
+    /** Set when only an entry without `code` can suppress the finding, as `planSuppression` says. */
+    withoutCode?: {findingCount: number}
+  }[]
 }
 
 export interface SecurityRecordOptions {
@@ -266,7 +272,14 @@ async function planAgentSuppressions(
     alreadySaved: plans.filter(({plan}) => plan.status === 'saved').length,
     notSaved: plans.flatMap(({target, plan}) =>
       plan.status === 'refused'
-        ? [{checkId: target.checkId, location: target.finding.location, problem: plan.problem}]
+        ? [
+            {
+              checkId: target.checkId,
+              location: target.finding.location,
+              problem: plan.problem,
+              ...(plan.withoutCode ? {withoutCode: plan.withoutCode} : {}),
+            },
+          ]
         : [],
     ),
   }

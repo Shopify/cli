@@ -309,12 +309,15 @@ export type SuppressionChange =
 /**
  * - `saved`: an entry of the file already suppresses the finding, so nothing changes.
  * - `change`: the change that suppresses the finding, and only that finding.
- * - `refused`: no entry can suppress the finding alone. `problem` says why, as the end of a sentence.
+ * - `refused`: no entry can suppress the finding alone. `problem` says why, as the end of a sentence. `withoutCode` is
+ *   set when no `code` that a person could write by hand names the finding alone either (`handWrittenCodes`). Then only
+ *   an entry without `code` suppresses it, and that entry suppresses every finding of its source and check in its file:
+ *   `findingCount` findings, the refused one included.
  */
-type SuppressionPlan =
+export type SuppressionPlan =
   | {status: 'saved'; entryIndex: number}
   | {status: 'change'; change: SuppressionChange}
-  | {status: 'refused'; problem: string}
+  | {status: 'refused'; problem: string; withoutCode?: {findingCount: number}}
 
 /**
  * Lines before and after the flagged line that a candidate `code` covers, in the order the candidates widen: the line
@@ -329,6 +332,9 @@ const CODE_WINDOWS: [number, number][] = [
   [-1, 2],
   [-2, 2],
 ]
+
+/** A word of a code line that a `code` can name: an identifier, a property path, or a URL part. */
+const CODE_WORD = /[\w$.:/@-]{3,}/g
 
 /**
  * Plans how to save a suppression for one finding of the current results. The new entry names the finding's source,
@@ -383,18 +389,30 @@ export function planSuppression(
     }
   }
 
+  // A refusal says whether an entry written by hand needs a code that the plan doesn't try, or must leave it out.
+  const refusedPlan = (problem: string): SuppressionPlan => {
+    const namedByHand = handWrittenCodes(target.finding, path).some((code) =>
+      matchesOnly(entryWithCode(code), target, results),
+    )
+    if (namedByHand) return {status: 'refused', problem}
+    const [withoutCode] = matchSuppressionEntries(
+      {entries: [base], resultsKey: results.resultsKey},
+      recordedCheckLookup(results),
+    ).entries
+    return {status: 'refused', problem, withoutCode: {findingCount: withoutCode?.matched_finding_count ?? 0}}
+  }
+
   const codes = codeCandidates(target.finding)
   if (codes.length === 0) {
-    return {status: 'refused', problem: 'the results hold no code for its line, so no entry can name it alone'}
+    return refusedPlan('the results hold no code for its line, so no entry can name it alone')
   }
   const entry = codes.map(entryWithCode).find((candidate) => matchesOnly(candidate, target, results))
   if (entry) return {status: 'change', change: {type: 'add', entry}}
-  return {
-    status: 'refused',
-    problem: hasLine
+  return refusedPlan(
+    hasLine
       ? `every code from its lines also names another finding of ${target.checkId} in ${path}`
       : `it has no line, so its entry would cover every finding of ${target.checkId} in ${path}, and there are several`,
-  }
+  )
 }
 
 /** The `code` candidates in the order `planSuppression` tries them: `undefined` alone for a finding without a line. */
@@ -412,11 +430,34 @@ function codeCandidates(finding: StoredFinding): (string | undefined)[] {
       .filter((text) => text !== '')
       .join(' '),
   )
-  const wordsInMessage = (flaggedLine.text.match(/[\w$.:/@-]{3,}/g) ?? [])
+  const wordsInMessage = (flaggedLine.text.match(CODE_WORD) ?? [])
     .filter((word) => finding.message.includes(word))
     .sort((left, right) => right.length - left.length)
   return [...new Set([...windows, ...wordsInMessage])].filter(
     (code) => code !== '' && code.length <= MAX_SNIPPET_LENGTH,
+  )
+}
+
+/**
+ * The codes that a person could write by hand for a finding: the codes that `planSuppression` tries, each line of its
+ * excerpt and of its evidence in its file, each word of those lines that its message names, and its message. The
+ * matching compares a `code` with these texts only, and a longer `code` matches fewer findings. So when none of these
+ * codes names the finding alone, a part of them doesn't either, in practice, and an entry by hand must leave out `code`.
+ */
+function handWrittenCodes(finding: StoredFinding, path: string): string[] {
+  const lines = [
+    ...(finding.code_excerpt ?? []),
+    ...finding.evidence.flatMap((evidence) =>
+      evidence.code_excerpt !== undefined && normalizePath(evidence.location.file) === path
+        ? evidence.code_excerpt
+        : [],
+    ),
+  ].map(({text}) => text.trim())
+  const wordsInMessage = lines
+    .flatMap((line) => line.match(CODE_WORD) ?? [])
+    .filter((word) => finding.message.includes(word))
+  return [...new Set([...codeCandidates(finding), ...lines, ...wordsInMessage, finding.message.trim()])].filter(
+    (code): code is string => code !== undefined && code !== '' && code.length <= MAX_CODE_LENGTH,
   )
 }
 
