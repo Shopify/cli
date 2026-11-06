@@ -367,6 +367,57 @@ test('requests app events with exact filters and preserves native JSON without a
   })
 })
 
+test.each(['0.1234567890123456789', 'invalid-value'])(
+  'requests app billing events with shared filters and preserves native billing value %s',
+  async (value) => {
+    const appBillingEventRecord = {
+      timestamp: record.timestamp,
+      type: 'APP_BILLING_EVENT',
+      shopMyshopifyDomain: 'example.myshopify.com',
+      eventHandle: 'sms_sent',
+      resultStatus: 'FAILURE',
+      value,
+      billingResultCode: 'INVALID_VALUE',
+      errorMessage: 'Billing value was rejected.',
+      idempotencyKey: 'billing-event-123',
+    }
+    authorize()
+    logResponse([appBillingEventRecord])
+
+    const result = await retrieveLogs({
+      ...scope,
+      type: ['app-billing-event'],
+      store: 'example',
+      status: 'failure',
+      'event-handle': 'sms_sent',
+    })
+
+    expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+      clientId,
+      types: ['APP_BILLING_EVENT'],
+      timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+      limit: 20,
+      filters: [
+        {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+        {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+        {field: 'EVENT_HANDLE', operator: 'EQUALS', value: 'sms_sent'},
+      ],
+    })
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
+    expect(result.logs).toEqual([appBillingEventRecord])
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderHistoricalLogs(result, true, 20)
+      expect(JSON.parse(stdout())).toEqual({
+        logs: [appBillingEventRecord],
+        ordering: 'subset-timestamp-asc',
+        limitations: [],
+      })
+      expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+      expect(stderr()).toBe('')
+    })
+  },
+)
+
 test('an empty successful search has no result-limit warning', async () => {
   authorize()
   logResponse([])
@@ -404,7 +455,7 @@ test('default mixed-type search shares one query and limit, preserving every pre
   const result = await retrieveLogs({'client-id': clientId, limit: 3})
   expect(result.logs).toEqual([graphqlRecord, record, appEventRecord])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN', 'APP_EVENT'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN', 'APP_EVENT', 'APP_BILLING_EVENT'],
     limit: 3,
     filters: [],
   })
@@ -417,7 +468,7 @@ test('cross-type filters are sent together and an empty intersection is not an e
   const result = await retrieveLogs({'client-id': clientId, topic: 'orders/create', 'operation-name': 'MyQuery'})
   expect(result.logs).toEqual([])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN', 'APP_EVENT'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN', 'APP_EVENT', 'APP_BILLING_EVENT'],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
       {field: 'OPERATION_NAME', operator: 'EQUALS', value: 'MyQuery'},

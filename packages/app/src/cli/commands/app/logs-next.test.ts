@@ -141,6 +141,23 @@ test.each([
   ])
 })
 
+test('parses app billing events with shared event handle, store, and status filters', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    ['--type', 'app-billing-event', '--event-handle=sms_sent', '--store', 'example', '--status=failure'],
+    await Config.load(),
+  ).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'app-billing-event', backend: 'APP_BILLING_EVENT'}])
+  expect(input.filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'EVENT_HANDLE', operator: 'EQUALS', value: 'sms_sent'},
+  ])
+})
+
 test('accepts the maximum limit through parsing and input validation', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
@@ -164,6 +181,8 @@ test('omitted type and repeated type flags are passed to the service without inv
       'function',
       '--type',
       'app-event',
+      '--type',
+      'app-billing-event',
       '--request-id',
       'request-123',
     ],
@@ -171,7 +190,7 @@ test('omitted type and repeated type flags are passed to the service without inv
   ).run()
   expect(retrieveLogs).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      type: ['webhook', 'graphql', 'function', 'app-event'],
+      type: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event'],
       'request-id': 'request-123',
     }),
   )
@@ -383,6 +402,31 @@ test.each([
   })
 })
 
+test.each([
+  {eventHandle: 'sms_sent', details: 'sms_sent', status: 'FAILURE'},
+  {eventHandle: null, details: 'unknown', status: null},
+  {eventHandle: undefined, details: 'unknown', status: undefined},
+  {eventHandle: `event\n${'a'.repeat(100)}`, details: `event\\u000a${'a'.repeat(88)}…`, status: 'SUCCESS'},
+])('app billing event human output shows $details with the recorded result', async ({eventHandle, details, status}) => {
+  const data = result()
+  data.logs = [{...data.logs[0]!, type: 'APP_BILLING_EVENT', eventHandle, resultStatus: status}]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'app-billing-event'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'APP_BILLING_EVENT',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+  })
+})
+
 test('human output aligns headers with mixed log rows between the warning and JSON hint', async () => {
   const data = result()
   data.logs.push({
@@ -408,6 +452,13 @@ test('human output aligns headers with mixed log rows between the warning and JS
     shopMyshopifyDomain: 'example.myshopify.com',
     eventHandle: 'onboarding_completed',
   })
+  data.logs.push({
+    timestamp: '2026-10-06T13:34:00Z',
+    type: 'APP_BILLING_EVENT',
+    resultStatus: 'SUCCESS',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    eventHandle: 'sms_sent',
+  })
   vi.mocked(retrieveLogs).mockResolvedValue(data)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await new Logs([], await Config.load()).run()
@@ -415,8 +466,8 @@ test('human output aligns headers with mixed log rows between the warning and JS
     const lines = stderr().trim().split('\n')
     expect(lines[0]).toBe('Used fast retrieval: returned records shown oldest first.')
     expect(lines.at(-1)).toBe('Use --json for full records.')
-    expect(lines).toHaveLength(9)
-    expect(lines.at(-2)).toBe('Returned all 4 matching records available at query time.')
+    expect(lines).toHaveLength(10)
+    expect(lines.at(-2)).toBe('Returned all 5 matching records available at query time.')
     const headers = ['Timestamp', 'Type', 'Result', 'Store', 'Details', 'API']
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(headers)
     for (const [index, record] of data.logs.entries()) {
