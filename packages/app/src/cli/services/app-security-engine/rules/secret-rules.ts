@@ -289,7 +289,7 @@ function isEnvFile(path: string): boolean {
 }
 
 /** Whether every value in the file is presumed secret: an environment file or a named secret file. */
-export function isSecretFile(path: string): boolean {
+function isSecretFile(path: string): boolean {
   return isEnvFile(path) || NAMED_SECRET_FILE_PATTERN.test(path)
 }
 
