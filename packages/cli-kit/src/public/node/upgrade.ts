@@ -166,35 +166,31 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
 }
 
 /**
- * Returns the version to auto-upgrade to, or undefined if auto-upgrade should be skipped.
+ * Finds the newest stable release in the current major, or skips automatic upgrades.
  * Auto-upgrade is enabled by default and can be disabled via `setAutoUpgradeEnabled(false)`.
  * Also skips for CI, pre-release versions, or when no newer version is available.
  *
  * @returns The version string to upgrade to, or undefined if no upgrade should happen.
  */
-export function versionToAutoUpgrade(): string | undefined {
+export async function versionToAutoUpgrade(): Promise<string | undefined> {
   const currentVersion = CLI_KIT_VERSION
-  const newerVersion = checkForCachedNewVersion('@shopify/cli', currentVersion)
-  if (!newerVersion) {
-    outputDebug('Auto-upgrade: No newer version available.')
-    return undefined
-  }
-  if (process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1') {
-    outputDebug('Auto-upgrade: Forcing auto-upgrade because of SHOPIFY_CLI_FORCE_AUTO_UPGRADE.')
-    return newerVersion
-  }
-  if (!getAutoUpgradeEnabled()) {
+  const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
+  if (!forced && !getAutoUpgradeEnabled()) {
     outputDebug('Auto-upgrade: Skipping because auto-upgrade is not enabled.')
     return undefined
   }
-  if (isCI()) {
+  if (!forced && isCI()) {
     outputDebug('Auto-upgrade: Skipping auto-upgrade in CI.')
     return undefined
   }
-  if (isPreReleaseVersion(currentVersion)) {
+  if (!forced && isPreReleaseVersion(currentVersion)) {
     outputDebug('Auto-upgrade: Skipping auto-upgrade for pre-release version.')
     return undefined
   }
+  const {checkForCLIVersions} = await import('../../private/node/cli-version-check.js')
+  const {currentMajor} = await checkForCLIVersions()
+  const newerVersion = currentMajor && semverLt(currentVersion, currentMajor) ? currentMajor : undefined
+  if (!newerVersion) outputDebug('Auto-upgrade: No newer version available in the current major.')
   return newerVersion
 }
 

@@ -24,9 +24,10 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
+import {checkForCLIVersions} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {SemVer} from 'semver'
-import {vi, describe, test, expect, beforeEach} from 'vitest'
+import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./notifications-system.js', async (importOriginal) => {
   const actual: any = await importOriginal()
@@ -48,6 +49,7 @@ vi.mock('./node-package-manager.js', async (importOriginal) => ({
 }))
 vi.mock('./system.js')
 vi.mock('../../private/node/conf-store.js')
+vi.mock('../../private/node/cli-version-check.js')
 vi.mock('./version.js', async (importOriginal) => {
   const actual: any = await importOriginal()
   return {
@@ -358,60 +360,74 @@ describe('runCLIUpgrade', () => {
 })
 
 describe('versionToAutoUpgrade', () => {
-  test('returns the newer version for a minor bump when auto-upgrade is enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
+  beforeEach(() => {
+    vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', undefined)
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBe('3.91.0')
-  })
-
-  test('returns the newer version for a patch bump when auto-upgrade is enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.90.1')
     vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBe('3.90.1')
   })
 
-  test('returns undefined when no cached newer version exists', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
-    expect(versionToAutoUpgrade()).toBeUndefined()
+  afterEach(() => vi.unstubAllEnvs())
+
+  test('looks up the latest stable release in the current major', async () => {
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: version})
+
+    await expect(versionToAutoUpgrade()).resolves.toBe(version)
+
+    expect(checkForCLIVersions).toHaveBeenCalledWith()
   })
 
-  test('returns undefined when running in CI', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
+  test('still selects a same-major update when latest points to a newer major', async () => {
+    const sameMajorVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('major').version)
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: sameMajorVersion})
+
+    await expect(versionToAutoUpgrade()).resolves.toBe(sameMajorVersion)
+    expect(checkForCachedNewVersion).not.toHaveBeenCalled()
+  })
+
+  test('returns undefined when the current major has no newer release', async () => {
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: CLI_KIT_VERSION})
+
+    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+  })
+
+  test('does not look up updates in CI', async () => {
     vi.mocked(isCI).mockReturnValue(true)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBeUndefined()
+
+    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
   })
 
-  test('returns undefined when auto-upgrade is not enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
+  test('does not look up updates when auto-upgrade is disabled', async () => {
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
-    expect(versionToAutoUpgrade()).toBeUndefined()
+
+    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
   })
 
-  test('returns the newer version when auto-upgrade preference has never been set (default enabled)', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBe('3.91.0')
-  })
-
-  test('returns the newer version for a major version change when auto-upgrade is enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.0.0')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toEqual('4.0.0')
-  })
-
-  test('returns undefined for a pre-release (nightly/snapshot) version', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
+  test('does not look up updates for a pre-release CLI', async () => {
     vi.mocked(isPreReleaseVersion).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBeUndefined()
-    vi.mocked(isPreReleaseVersion).mockReturnValue(false)
+
+    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
+  })
+
+  test('a forced upgrade still restricts the lookup to the current major', async () => {
+    vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', '1')
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
+    vi.mocked(isCI).mockReturnValue(true)
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(checkForCLIVersions).mockResolvedValue({currentMajor: version})
+
+    await expect(versionToAutoUpgrade()).resolves.toBe(version)
+    expect(checkForCLIVersions).toHaveBeenCalledWith()
+  })
+
+  test('does not upgrade after a failed version lookup', async () => {
+    vi.mocked(checkForCLIVersions).mockResolvedValue({})
+
+    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
   })
 })
 
