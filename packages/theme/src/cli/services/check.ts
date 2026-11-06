@@ -446,16 +446,17 @@ export async function checkTheme(path: string, config?: string, environment?: st
   let customChecksDisabled = false
   const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
     withThemeCheckDiagnostics(
-      () =>
+      (onDiagnostic) =>
         themeCheckRun(
           path,
           config,
           (message) => {
             if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
           },
-          options,
+          {...options, onDiagnostic},
         ),
       {
+        onDiagnostic: options.onDiagnostic,
         onCustomChecksDisabled: () => {
           customChecksDisabled = true
         },

@@ -2,13 +2,10 @@
 import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {AsyncLocalStorage} from 'node:async_hooks'
 import {format} from 'node:util'
-
-const customChecksDisabledWarning =
-  'Custom Theme Checks are disabled. Explicit authorization is required to execute custom check JavaScript.'
+import type {ConfigDiagnostic} from '@shopify/theme-check-node'
 
 interface ThemeCheckDiagnosticContext {
   json: boolean
-  onCustomChecksDisabled?: () => void
 }
 
 const themeCheckDiagnostics = new AsyncLocalStorage<ThemeCheckDiagnosticContext>()
@@ -18,11 +15,26 @@ let originalConsoleError: typeof console.error
 // Theme Check's config validator bypasses its logger and calls console.error directly.
 // Keep interception scoped to these async calls, including overlapping environments.
 export async function withThemeCheckDiagnostics<T>(
-  run: () => Promise<T>,
-  options: {onCustomChecksDisabled?: () => void} = {},
+  run: (onDiagnostic: (diagnostic: ConfigDiagnostic) => void) => Promise<T>,
+  options: {
+    onCustomChecksDisabled?: () => void
+    onDiagnostic?: (diagnostic: ConfigDiagnostic) => void
+  } = {},
 ): Promise<T> {
-  const context = {json: commandEventOutputMode() === 'json', ...options}
-  if (!context.json && !context.onCustomChecksDisabled) return run()
+  const context = {json: commandEventOutputMode() === 'json'}
+  const onDiagnostic = (diagnostic: ConfigDiagnostic) => {
+    options.onDiagnostic?.(diagnostic)
+    if (diagnostic.code === 'custom-checks-disabled' && options.onCustomChecksDisabled) {
+      options.onCustomChecksDisabled()
+      if (!context.json) return
+    }
+    if (context.json) {
+      emitCommandEvent({type: 'diagnostic', level: diagnostic.level, message: diagnostic.message})
+    } else {
+      console.error(diagnostic.message)
+    }
+  }
+  if (!context.json) return run(onDiagnostic)
 
   if (activeChecks === 0) {
     originalConsoleError = console.error
@@ -30,12 +42,6 @@ export async function withThemeCheckDiagnostics<T>(
       const current = themeCheckDiagnostics.getStore()
       if (current) {
         const message = format(...args)
-        // The upstream loader exposes this notice through console.error. Defer it to
-        // the text summary while preserving the diagnostic event for JSON output.
-        if (message === customChecksDisabledWarning && current.onCustomChecksDisabled) {
-          current.onCustomChecksDisabled()
-          if (!current.json) return
-        }
         if (current.json) {
           emitCommandEvent({type: 'diagnostic', level: 'warning', message})
           return
@@ -46,7 +52,7 @@ export async function withThemeCheckDiagnostics<T>(
   }
   activeChecks++
   try {
-    return await themeCheckDiagnostics.run(context, run)
+    return await themeCheckDiagnostics.run(context, () => run(onDiagnostic))
   } finally {
     releaseConsoleError()
   }

@@ -2,6 +2,7 @@
 import {withThemeCheckDiagnostics} from './diagnostics.js'
 import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {expect, test, vi} from 'vitest'
+import type {ConfigDiagnostic} from '@shopify/theme-check-node'
 
 test('keeps overlapping checks scoped and restores the console after failures', async () => {
   const original = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -65,13 +66,20 @@ test('preserves console output in text mode', async () => {
   expect(original).toHaveBeenCalledWith('Text warning')
 })
 
-test('scopes deferred text notices separately from overlapping JSON diagnostics', async () => {
-  const message =
-    'Custom Theme Checks are disabled. Explicit authorization is required to execute custom check JavaScript.'
+test('routes structured notices by code across overlapping text and JSON checks', async () => {
+  const message = 'Custom checks skipped for this run.'
+  const diagnostic: ConfigDiagnostic = {
+    code: 'custom-checks-disabled',
+    level: 'warning',
+    message,
+    root: '/theme',
+    candidates: [{source: 'require', path: '/theme/checks.cjs'}],
+  }
   const original = vi.spyOn(console, 'error').mockImplementation(() => {})
   const textNotice = vi.fn()
   const jsonNotice = vi.fn()
   const jsonSink = vi.fn()
+  const jsonObserver = vi.fn()
   let finishText!: () => void
   let finishJson!: () => void
   const textWait = new Promise<void>((resolve) => {
@@ -83,9 +91,9 @@ test('scopes deferred text notices separately from overlapping JSON diagnostics'
   const failure = new Error('Check failed')
   const text = runWithCommandEvents({outputMode: 'text'}, () =>
     withThemeCheckDiagnostics(
-      async () => {
+      async (onDiagnostic) => {
         await textWait
-        console.error(message)
+        onDiagnostic(diagnostic)
         console.error('Unrelated config warning')
         throw failure
       },
@@ -95,20 +103,21 @@ test('scopes deferred text notices separately from overlapping JSON diagnostics'
   const rejected = expect(text).rejects.toBe(failure)
   const json = runWithCommandEvents({outputMode: 'json', sink: jsonSink}, () =>
     withThemeCheckDiagnostics(
-      async () => {
+      async (onDiagnostic) => {
         await jsonWait
-        console.error(message)
+        onDiagnostic(diagnostic)
       },
-      {onCustomChecksDisabled: jsonNotice},
+      {onCustomChecksDisabled: jsonNotice, onDiagnostic: jsonObserver},
     ),
   )
   try {
     finishJson()
     await json
     expect(jsonNotice).toHaveBeenCalledOnce()
+    expect(jsonObserver).toHaveBeenCalledExactlyOnceWith(diagnostic)
     expect(textNotice).not.toHaveBeenCalled()
     expect(jsonSink).toHaveBeenCalledWith(expect.objectContaining({type: 'diagnostic', level: 'warning', message}))
-    expect(console.error).not.toBe(original)
+    expect(console.error).toBe(original)
     finishText()
     await rejected
     expect(textNotice).toHaveBeenCalledOnce()
