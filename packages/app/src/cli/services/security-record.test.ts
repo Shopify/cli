@@ -835,9 +835,10 @@ describe('securityRecord', () => {
         const appRoot = await createAppWithRoute(directory)
         await record(appRoot, testDependencies(documentWith([])))
         const previousFindings = await readFile(artifactPaths(appRoot).agentFindingsPath)
-        const file = {schema_version: 1, suppressions: [], padding: ''}
+        // Unknown keys are invalid, so `$schema` pads the file.
+        const file = {$schema: '', schema_version: 1, suppressions: []}
         const emptySize = Buffer.byteLength(`${JSON.stringify(file, null, 2)}\n`)
-        file.padding = 'x'.repeat(5_000_000 - emptySize - 10)
+        file.$schema = 'x'.repeat(5_000_000 - emptySize - 10)
         const previousSuppressions = `${JSON.stringify(file, null, 2)}\n`
         await writeFile(appSecuritySuppressionsPath(appRoot), previousSuppressions)
         const dependencies = testDependencies(documentWith([finding({line: 3, suppression})]))
