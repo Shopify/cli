@@ -13,6 +13,7 @@ import {appSecurityResultsFor} from './app-security-results.test-data.js'
 import {
   agentFindingsDocument,
   deterministicFindingsDocument,
+  findingWithExcerpt,
 } from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -363,17 +364,6 @@ describe('finding numbers and the results digest', () => {
   })
 })
 
-/** The finding with the lines around `line` of `lines` as its excerpt, as `check` and `record` capture them. */
-function withExcerpt(finding: StoredFinding, lines: string[]): StoredFinding {
-  const line = finding.location.line!
-  return {
-    ...finding,
-    code_excerpt: lines
-      .map((text, index) => ({line: index + 1, text}))
-      .filter((excerptLine) => Math.abs(excerptLine.line - line) <= 2),
-  }
-}
-
 /** The lines of each file that the shared fixtures cite, at the lines they cite. */
 const sourceLines: Record<string, string[]> = {
   'app/routes/orders.tsx': [
@@ -394,7 +384,7 @@ function withExcerpts<TDocument extends FindingsDocument>(document: TDocument): 
       ...check,
       findings: check.findings.map((finding) => {
         const lines = sourceLines[finding.location.file]
-        return lines ? withExcerpt(finding, lines) : finding
+        return lines ? findingWithExcerpt(finding, lines) : finding
       }),
     })),
   }
@@ -521,7 +511,7 @@ describe('securityReview --suppress', () => {
       const [credentialCheck, ...otherChecks] = bothWithExcerpts.deterministic!.checks
       const [orders, ...otherFindings] = credentialCheck!.findings
       // A second superseded deterministic finding in the same file, on the next line.
-      const nextLine = withExcerpt(
+      const nextLine = findingWithExcerpt(
         {...orders!, location: {...orders!.location, line: 13}},
         sourceLines['app/routes/orders.tsx']!,
       )
@@ -536,7 +526,7 @@ describe('securityReview --suppress', () => {
           {
             ...agentCheck!,
             findings: agentCheck!.findings.map((finding) =>
-              withExcerpt(
+              findingWithExcerpt(
                 {...finding, location: {...finding.location, line: 14}},
                 sourceLines['app/routes/orders.tsx']!,
               ),
@@ -590,10 +580,7 @@ describe('securityReview --suppress', () => {
         reason: 'Staging follows production.',
         configurations: ['shopify.app.staging.toml'],
       }
-      await writeFile(
-        appSecuritySuppressionsPath(appRoot),
-        JSON.stringify({schema_version: 1, suppressions: [stagingEntry]}, null, 2),
-      )
+      await writeAppSecuritySuppressionsFixture(appRoot, [stagingEntry])
 
       const reviewed = await suppress(appRoot, {findingNumber: 6})
 

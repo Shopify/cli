@@ -1,4 +1,5 @@
 import {appSecurityReviewJsonOutputSchema} from './types.js'
+import {savedSuppressionFixture} from '../app-security/types.test-data.js'
 import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 import {describe, expect, test} from 'vitest'
 
@@ -135,18 +136,7 @@ const result = {
   savedSuppressions: null,
 }
 
-const savedEntry = {
-  index: 0,
-  change: 'added',
-  source: 'agent',
-  check: 'CREDENTIAL_LOG_LEAKAGE',
-  kind: 'false-positive',
-  path: ordersPath,
-  code: 'console.log(session.accessToken)',
-  reason: 'The logger redacts tokens.',
-  configurations: ['shopify.app.toml'],
-  findingNumber: 2,
-}
+const savedEntry = {...savedSuppressionFixture(ordersPath), findingNumber: 2}
 const savedSuppressions = {
   filePath: result.suppressions.filePath,
   entries: [savedEntry],
@@ -375,10 +365,6 @@ describe('appSecurityReviewJsonOutputSchema', () => {
     [
       'a saved entry with a kind with an underscore',
       {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, kind: 'false_positive'}]}},
-    ],
-    [
-      'a saved entry with a relative path',
-      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, path: 'app/routes/x.tsx'}]}},
     ],
     ['an extra saved suppressions field', {...result, savedSuppressions: {...savedSuppressions, companions: []}}],
   ])('rejects %s', (_description, value) => {

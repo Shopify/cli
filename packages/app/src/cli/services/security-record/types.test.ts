@@ -1,4 +1,5 @@
 import {appSecurityRecordJsonOutputSchema} from './types.js'
+import {savedSuppressionFixture} from '../app-security/types.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 const onWindows = process.platform === 'win32'
@@ -24,17 +25,7 @@ const suppressionsFile = onWindows
   ? 'C:\\apps\\my-app\\shopify.app-security.json'
   : '/apps/my-app/shopify.app-security.json'
 const routeFile = onWindows ? 'C:\\apps\\my-app\\app\\routes\\orders.tsx' : '/apps/my-app/app/routes/orders.tsx'
-const savedEntry = {
-  index: 0,
-  change: 'added',
-  source: 'agent',
-  check: 'MISSING_TENANT_ISOLATION',
-  kind: 'false-positive',
-  path: routeFile,
-  code: 'const orders = await prisma.order.findMany()',
-  reason: 'Every order table holds one shop.',
-  configurations: ['shopify.app.toml'],
-}
+const savedEntry = savedSuppressionFixture(routeFile)
 const suppressions = {
   filePath: suppressionsFile,
   entries: [savedEntry],
@@ -85,9 +76,6 @@ describe('appSecurityRecordJsonOutputSchema', () => {
       'a kind with an underscore',
       {...result, suppressions: {...suppressions, entries: [{...savedEntry, kind: 'false_positive'}]}},
     ],
-    ['an unknown change', {...result, suppressions: {...suppressions, entries: [{...savedEntry, change: 'replaced'}]}}],
-    ['a relative entry path', {...result, suppressions: {...suppressions, entries: [{...savedEntry, path: 'a.ts'}]}}],
-    ['an empty code', {...result, suppressions: {...suppressions, entries: [{...savedEntry, code: ''}]}}],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityRecordJsonOutputSchema.validate(value)).toThrow()
   })

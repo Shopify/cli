@@ -1,6 +1,7 @@
 import SecurityCheck from './check.js'
 import SecurityReview from './review.js'
 import {writeAppSecuritySuppressionsFixture} from '../../../services/app-security-suppressions.test-data.js'
+import {storedAgentDocument} from '../../../services/app-security-engine/tests/fixtures/findings-documents.js'
 import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from '../../../services/app-security-artifacts.js'
 import {deterministicFindingsDocumentSchema} from '../../../services/app-security-engine/results/schema.js'
 import {appFromIdentifiers} from '../../../services/context.js'
@@ -860,36 +861,22 @@ describe('app security check --json command boundary', () => {
       const {agentFindingsPath} = appSecurityArtifactPaths(await fileRealPath(directory), 'shopify.app')
       await writeFile(
         agentFindingsPath,
-        JSON.stringify({
-          schema_version: 1,
-          source: 'agent',
-          engine: {name: 'shopify-app-security', version: '4.9.0'},
-          // Newer than the scan, so the prefer-agent result supersedes the deterministic finding.
-          generated_at: new Date(Date.now() + 60_000).toISOString(),
-          scope: {include_dirs: [], excludes: [], no_git_ignore: false},
-          checks: [
-            {
-              id: 'CREDENTIAL_LOG_LEAKAGE',
-              version: 1,
-              status: 'executed',
-              snapshot: {
-                title: 'Credential reaches a log sink',
-                severity: 'high',
-                description: 'Detects direct credential flows to console and logger sinks.',
-                current_version: 1,
-                precedence: 'prefer-agent',
+        JSON.stringify(
+          storedAgentDocument({
+            checkId: 'CREDENTIAL_LOG_LEAKAGE',
+            // Newer than the scan, so this result supersedes the deterministic finding.
+            generatedAt: new Date(Date.now() + 60_000).toISOString(),
+            precedence: 'prefer-agent',
+            findings: [
+              {
+                location: {file: 'app/routes/index.ts', line: 3},
+                message: 'The session access token is written to the server log.',
+                evidence: [{location: {file: 'app/routes/index.ts', line: 3}}],
+                code_excerpt: routeLines.map((text, index) => ({line: index + 1, text})),
               },
-              findings: [
-                {
-                  location: {file: 'app/routes/index.ts', line: 3},
-                  message: 'The session access token is written to the server log.',
-                  evidence: [{location: {file: 'app/routes/index.ts', line: 3}}],
-                  code_excerpt: routeLines.map((text, index) => ({line: index + 1, text})),
-                },
-              ],
-            },
-          ],
-        }),
+            ],
+          }),
+        ),
       )
       const review = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
       const findings = review.checks.find((check: {id: string}) => check.id === 'CREDENTIAL_LOG_LEAKAGE').findings

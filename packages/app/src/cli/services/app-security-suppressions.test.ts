@@ -1,3 +1,4 @@
+import {findingWithExcerpt, storedAgentDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {
   missingSuppressionPaths,
   parseSuppressionFlags,
@@ -465,34 +466,11 @@ describe('suppressionConfiguration', () => {
 
 /** An agent finding at `line` of `file`, with the lines around it as its excerpt. */
 function agentFinding(file: string, line: number, lines: string[], message: string): StoredFinding {
-  return {
-    location: {file, line},
-    message,
-    evidence: [{location: {file, line}}],
-    code_excerpt: lines
-      .map((text, index) => ({line: index + 1, text}))
-      .filter((excerptLine) => Math.abs(excerptLine.line - line) <= 2),
-  }
+  return findingWithExcerpt({location: {file, line}, message, evidence: [{location: {file, line}}]}, lines)
 }
 
-/** An agent document with one executed check that holds these findings. */
 function agentDocument(checkId: string, findings: StoredFinding[]): AgentFindingsDocument {
-  return {
-    schema_version: 1,
-    source: 'agent',
-    engine: {name: 'shopify-app-security', version: '4.9.0'},
-    generated_at: '2026-09-01T11:00:00.000Z',
-    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
-    checks: [
-      {
-        id: checkId,
-        version: 1,
-        status: 'executed',
-        snapshot: {title: checkId, severity: 'high', description: '', current_version: 1, precedence: 'union'},
-        findings,
-      },
-    ],
-  }
+  return storedAgentDocument({checkId, findings, generatedAt: '2026-09-01T11:00:00.000Z', precedence: 'union'})
 }
 
 function resultsOf(document: AgentFindingsDocument, configuration = 'shopify.app.toml'): SuppressionResults {

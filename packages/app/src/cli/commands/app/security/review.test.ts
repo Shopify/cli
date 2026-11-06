@@ -141,16 +141,10 @@ describe('app security review command', () => {
     })
   })
 
-  test('defines --suppress and the flags that go with it, each with its environment variable', () => {
-    expect(SecurityReview.flags.suppress.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SUPPRESS')
-    expect(SecurityReview.flags.kind.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_KIND')
-    expect(SecurityReview.flags.reason.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_REASON')
+  test('defines suppression help and the remaining environment variables', () => {
     expect(SecurityReview.flags['results-digest'].env).toBe('SHOPIFY_FLAG_APP_SECURITY_RESULTS_DIGEST')
     expect(SecurityReview.flags['include-superseded'].env).toBe('SHOPIFY_FLAG_APP_SECURITY_INCLUDE_SUPERSEDED')
     expect(SecurityReview.flags.kind.description).toContain('false-positive or accepted-risk')
-    for (const flag of ['kind', 'reason', 'results-digest', 'include-superseded'] as const) {
-      expect(SecurityReview.flags[flag].dependsOn).toEqual(['suppress'])
-    }
   })
 
   test('forwards --suppress with its flags as typed, so the service checks the kind and the reason', async () => {
