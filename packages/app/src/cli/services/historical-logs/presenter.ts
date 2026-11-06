@@ -24,7 +24,7 @@ export function renderHistoricalLogs(result: LogsResult, json: boolean, limit: n
       type: terminalValue(record.type),
       result: terminalValue(record.resultStatus),
       store: terminalValue(record.shopMyshopifyDomain),
-      topicOrOperation: terminalValue(record.topic ?? record.operationName),
+      details: terminalValue(logDetails(record)),
       ...(showApi ? {api: record.type === 'GRAPHQL_REQUEST' ? terminalValue(record.api) : '—'} : {}),
     })),
     columns: {
@@ -32,7 +32,7 @@ export function renderHistoricalLogs(result: LogsResult, json: boolean, limit: n
       type: {header: 'Type'},
       result: {header: 'Result'},
       store: {header: 'Store'},
-      topicOrOperation: {header: 'Topic / operation'},
+      details: {header: 'Details'},
       ...(showApi ? {api: {header: 'API'}} : {}),
     },
   })
@@ -43,6 +43,19 @@ export function renderHistoricalLogs(result: LogsResult, json: boolean, limit: n
   }
   for (const limitation of result.limitations) outputWarn(limitation)
   outputInfo('Use --json for full records.')
+}
+
+function logDetails(record: LogsResult['logs'][number]): unknown {
+  switch (record.type) {
+    case 'WEBHOOK':
+      return record.topic
+    case 'GRAPHQL_REQUEST':
+      return record.operationName
+    case 'FUNCTION_RUN':
+      return record.functionHandle ?? record.target
+    default:
+      return undefined
+  }
 }
 
 function terminalValue(value: unknown): string {

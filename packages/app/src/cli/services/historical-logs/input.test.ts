@@ -11,9 +11,9 @@ function window(input: Pick<LogInput, 'since' | 'until'> = {}) {
   return resolveLogWindow(prepareLogInput(input).window)
 }
 
-test('defaults to both types and a bounded shared limit', () => {
+test('defaults to all supported types and a bounded shared limit', () => {
   expect(prepareLogInput({})).toMatchObject({
-    types: [{backend: 'WEBHOOK'}, {backend: 'GRAPHQL_REQUEST'}],
+    types: [{backend: 'WEBHOOK'}, {backend: 'GRAPHQL_REQUEST'}, {backend: 'FUNCTION_RUN'}],
     limit: 20,
     filters: [],
   })
@@ -93,7 +93,9 @@ test('maps every GraphQL flag without assuming Admin API or parsing opaque value
 
 test.each([
   [{type: ['graphql,webhook']}, 'Supported log types'],
-  [{type: ['function']}, 'Supported log types'],
+  [{type: ['rest']}, 'Supported log types'],
+  [{'function-handle': ' '}, 'nonempty'],
+  [{target: ' '}, 'nonempty'],
   [{type: []}, 'at least one'],
   [{'status-code': '5xx'}, 'exact code'],
   [{topic: 'orders/*'}, 'slash-form'],
@@ -121,10 +123,13 @@ test('preserves all AND filters even when their types do not overlap', () => {
   ])
 })
 
-test('enforces the byte limit without truncating filter values', () => {
-  expect(prepareLogInput({'operation-name': 'é'.repeat(512)}).filters[0]?.value).toBe('é'.repeat(512))
-  expect(() => prepareLogInput({'operation-name': 'é'.repeat(513)})).toThrow('1024 UTF-8 bytes')
-})
+test.each(['operation-name', 'function-handle', 'target'])(
+  'enforces the byte limit without truncating --%s',
+  (flag) => {
+    expect(prepareLogInput({[flag]: 'é'.repeat(512)}).filters[0]?.value).toBe('é'.repeat(512))
+    expect(() => prepareLogInput({[flag]: 'é'.repeat(513)})).toThrow('1024 UTF-8 bytes')
+  },
+)
 
 test('anchors the default hour to the local clock truncated to whole seconds', () => {
   vi.setSystemTime(new Date('2026-10-06T14:02:03.987Z'))
