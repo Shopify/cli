@@ -547,12 +547,45 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     expect(alert.options.customSections).toContainEqual({title: 'Suppressed findings', body: '0 active · 1 suppressed'})
   })
 
-  test('shows the same report as before when no entry suppresses a finding', () => {
-    const issues = [adminContext, fixtureSecret(3), scriptTagScope]
-    const withoutFile = suppressedReportInput(issues, [])
-    const staleEntry = {...fixtureEntry, path: 'test/fixtures/deleted.ts'}
+  test('shows the same report as before without a file', () => {
+    const withoutFile = suppressedReportInput([adminContext, fixtureSecret(3), scriptTagScope], [])
 
     expect(buildSecurityAlert(withoutFile)).toEqual(buildSecurityAlert({...withoutFile, checks: [], suppressions: []}))
-    expect(buildSecurityAlert(suppressedReportInput(issues, [staleEntry]))).toEqual(buildSecurityAlert(withoutFile))
+  })
+
+  test('lists the entries that apply to nothing before the artifacts, and keeps the alert type and headline', () => {
+    const issues = [adminContext, fixtureSecret(3), fixtureSecret(8), scriptTagScope]
+    const entries: SuppressionEntry[] = [
+      {...fixtureEntry, path: 'test/fixtures/deleted.ts'},
+      // Both committed tokens have this message.
+      {...fixtureEntry, code: 'A Shopify access token'},
+      {...scriptTagEntry, source: 'agent', check: 'SCOPE_OVER_REQUEST'},
+      {...scriptTagEntry, configurations: ['shopify.app.staging.toml']},
+    ]
+    const withoutFile = buildSecurityAlert(suppressedReportInput(issues, []))
+
+    const alert = buildSecurityAlert(suppressedReportInput(issues, entries))
+    const sections = alert.options.customSections ?? []
+
+    expect(alert.type).toBe(withoutFile.type)
+    expect(alert.options.headline).toBe(withoutFile.options.headline)
+    expect(sections.map((section) => section.title)).toEqual([
+      'Selection',
+      'High',
+      'Medium',
+      'Stale entries in shopify.app-security.json',
+      undefined,
+      'Ambiguous entries in shopify.app-security.json',
+      undefined,
+      undefined,
+      'Artifacts',
+      'Next steps',
+    ])
+    expect(JSON.stringify(sections[5])).toContain('· matches 2 findings')
+    expect(sections[7]).toEqual({
+      body: {
+        subdued: 'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+      },
+    })
   })
 })

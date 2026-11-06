@@ -49,12 +49,15 @@ interface ReviewOptions {
   blocking?: AppSecurityBlockingLevel
   /** The entries of shopify.app-security.json. */
   entries?: SuppressionEntry[]
+  /** The entry paths whose files are gone. */
+  missingPaths?: string[]
 }
 
 function reviewed(sources: AppSecurityResultsSources, options: ReviewOptions = {}): ReviewedAppSecurityResults {
+  const results = appSecurityResultsFor(appDirectory, 'shopify.app', sources, options.entries, options.missingPaths)
   return {
     selection,
-    result: reviewAppSecurityResults(appSecurityResultsFor(appDirectory, 'shopify.app', sources, options.entries), {
+    result: reviewAppSecurityResults(results, {
       resultsDirectory: appSecurityArtifactPaths(appDirectory, 'shopify.app').resultsDirectory,
       checkIds: options.checkIds ?? [],
       blocking: options.blocking ?? 'none',
@@ -186,6 +189,8 @@ const noSuppressionsFile = {
   filePath: appPath('shopify.app-security.json'),
   entryCount: 0,
   suppressedFindingCount: 0,
+  staleEntryCount: 0,
+  ambiguousEntryCount: 0,
   entries: [],
 }
 
@@ -907,6 +912,8 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
       filePath: appPath('shopify.app-security.json'),
       entryCount: 4,
       suppressedFindingCount: 2,
+      staleEntryCount: 1,
+      ambiguousEntryCount: 0,
       entries: [
         {
           index: 0,
@@ -916,6 +923,8 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           path: appPath('app/routes/orders.tsx'),
           status: 'matched',
           matchedFindingCount: 1,
+          likelyPath: null,
+          candidateFindingCount: null,
         },
         {
           index: 1,
@@ -925,6 +934,8 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           path: appPath('app/routes/orders.tsx'),
           status: 'matched',
           matchedFindingCount: 1,
+          likelyPath: null,
+          candidateFindingCount: null,
         },
         {
           index: 2,
@@ -934,6 +945,8 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           path: appPath('app/routes/deleted.tsx'),
           status: 'stale',
           matchedFindingCount: 0,
+          likelyPath: null,
+          candidateFindingCount: null,
         },
         {
           index: 3,
@@ -943,7 +956,48 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           path: appPath('app/routes/orders.tsx'),
           status: 'not-evaluated',
           matchedFindingCount: 0,
+          likelyPath: null,
+          candidateFindingCount: null,
         },
+      ],
+    })
+  })
+
+  test('reports the likely new path of a stale entry whose file is gone, and the candidate count of an ambiguous entry', async () => {
+    const moved = deterministicDocument({
+      checks: [
+        deterministicCheck({
+          findings: [
+            finding('app/routes/orders.server.tsx', 12, 'accessToken flows into console.log.'),
+            finding('app/routes/admin.tsx', 3, 'accessToken flows into logger.info.'),
+            finding('app/routes/admin.tsx', 9, 'accessToken flows into logger.warn.'),
+          ],
+        }),
+      ],
+    })
+    const movedEntries = [
+      entry({code: 'accessToken flows into console.log'}),
+      entry({path: 'app/routes/admin.tsx', code: 'accessToken flows into logger'}),
+    ]
+
+    const result = (await jsonResult(
+      {deterministic: moved, agent: null},
+      {entries: movedEntries, missingPaths: ['app/routes/orders.tsx']},
+    )) as {checks: {findings: {disposition: string}[]}[]; suppressions: unknown}
+
+    expect(result.checks[0]!.findings.map(({disposition}) => disposition)).toEqual(['active', 'active', 'active'])
+    expect(result.suppressions).toMatchObject({
+      suppressedFindingCount: 0,
+      staleEntryCount: 1,
+      ambiguousEntryCount: 1,
+      entries: [
+        {
+          status: 'stale',
+          matchedFindingCount: 0,
+          likelyPath: appPath('app/routes/orders.server.tsx'),
+          candidateFindingCount: null,
+        },
+        {status: 'ambiguous', matchedFindingCount: 0, likelyPath: null, candidateFindingCount: 2},
       ],
     })
   })

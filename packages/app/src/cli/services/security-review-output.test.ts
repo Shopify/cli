@@ -21,6 +21,7 @@ import type {
   AgentFindingsDocument,
   DeterministicFindingsDocument,
   SuppressionEntry,
+  SuppressionEntryResult,
 } from './app-security-engine/index.js'
 
 const appRoot = '/tmp/review-app'
@@ -45,7 +46,8 @@ function presenterInput(
     entries?: SuppressionEntry[]
   } = {},
 ): SecurityReviewPresenterInput {
-  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, 'shopify.app', sources, options.entries), {
+  const results = appSecurityResultsFor(appRoot, 'shopify.app', sources, options.entries)
+  const result = reviewAppSecurityResults(results, {
     resultsDirectory: paths.resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
@@ -544,9 +546,118 @@ describe('buildSecurityReviewAlerts', () => {
       expect(
         suppressedBox(presenterInput(both, {checkIds: ['EOL_API_VERSION'], entries: [staleEntry]})),
       ).toBeUndefined()
-      expect(buildSecurityReviewAlerts(presenterInput(deterministicOnly, {entries: [staleEntry]}))).toEqual(
-        buildSecurityReviewAlerts(presenterInput(deterministicOnly)),
+      expect(
+        buildSecurityReviewAlerts(presenterInput(deterministicOnly, {entries: [staleEntry]})).slice(0, -2),
+      ).toEqual(buildSecurityReviewAlerts(presenterInput(deterministicOnly)).slice(0, -1))
+    })
+  })
+
+  describe('entries that apply to nothing', () => {
+    function entryResult(
+      index: number,
+      status: SuppressionEntryResult['status'],
+      entry: Partial<SuppressionEntry> = {},
+    ): SuppressionEntryResult {
+      return {
+        index,
+        status,
+        matched_finding_count: status === 'matched' ? 1 : 0,
+        entry: {
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'false-positive',
+          path: 'app/routes/orders.tsx',
+          reason: 'The token is a placeholder.',
+          configurations: ['shopify.app.toml'],
+          ...entry,
+        },
+      }
+    }
+    const notEvaluatedEntries = (): SuppressionEntryResult[] => [
+      {
+        ...entryResult(2, 'not-evaluated', {source: 'agent', check: 'UNSAFE_INNERHTML'}),
+        not_evaluated_reason: 'no-executed-result',
+      },
+      {
+        ...entryResult(3, 'not-evaluated', {configurations: ['shopify.app.staging.toml']}),
+        not_evaluated_reason: 'other-configurations',
+      },
+    ]
+    function inputWithEntries(suppressions: SuppressionEntryResult[], checkIds: string[] = []) {
+      const input = presenterInput(both, {checkIds})
+      return {...input, result: {...input.result, suppressions}}
+    }
+    const entriesBox = (input: SecurityReviewPresenterInput) =>
+      buildSecurityReviewAlerts(input).find((alert) =>
+        String(alert.options.headline).includes('shopify.app-security.json'),
       )
+
+    test('lists stale, ambiguous and not-evaluated entries in a warning before the summary, without --verbose', () => {
+      const input = inputWithEntries([
+        {
+          ...entryResult(0, 'ambiguous'),
+          candidate_locations: [
+            {file: 'app/routes/orders.tsx', line: 12},
+            {file: 'app/routes/orders.tsx', line: 20},
+          ],
+        },
+        {...entryResult(1, 'stale', {path: 'app/routes/old-orders.tsx'}), likely_path: 'app/routes/orders.tsx'},
+        ...notEvaluatedEntries(),
+      ])
+
+      const alerts = buildSecurityReviewAlerts(input)
+
+      expect(alerts.map((alert) => alert.options.headline).slice(-2)).toEqual([
+        '2 entries in shopify.app-security.json suppress nothing.',
+        '3 checks with findings. 1 check unresolved.',
+      ])
+      expect(alerts.at(-2)?.type).toBe('warning')
+      expect(alerts.at(-2)?.options.customSections?.map((section) => section.title)).toEqual([
+        'Stale entries in shopify.app-security.json',
+        undefined,
+        'Ambiguous entries in shopify.app-security.json',
+        undefined,
+        undefined,
+      ])
+      expect(JSON.stringify(alerts.at(-2))).toContain('suppressions[1]:')
+      expect(JSON.stringify(alerts.at(-2))).toContain('suppressions[0]:')
+      expect(alerts.at(-2)?.options.customSections?.at(-1)).toEqual({
+        body: {
+          subdued:
+            'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+        },
+      })
+    })
+
+    test('shows an info box when every entry that applies to nothing is not evaluated', () => {
+      const box = entriesBox(inputWithEntries(notEvaluatedEntries()))
+
+      expect(box).toMatchObject({
+        type: 'info',
+        options: {headline: '2 entries in shopify.app-security.json not evaluated.'},
+      })
+      expect(box?.options.customSections).toHaveLength(1)
+    })
+
+    test('--check-id narrows the box to the entries of the selected checks', () => {
+      const entries = [entryResult(0, 'stale'), ...notEvaluatedEntries()]
+
+      const leakOnly = entriesBox(inputWithEntries(entries, ['CREDENTIAL_LOG_LEAKAGE']))
+      const otherCheck = entriesBox(inputWithEntries(entries, ['EOL_API_VERSION']))
+      const withoutResult = entriesBox(inputWithEntries(entries, ['UNSAFE_INNERHTML']))
+
+      expect(leakOnly?.options.customSections?.at(-1)).toEqual({
+        body: {subdued: 'Not evaluated: 1 entry (1 for other app configurations).'},
+      })
+      expect(JSON.stringify(leakOnly)).toContain('suppressions[0]:')
+      expect(JSON.stringify(leakOnly)).not.toContain('UNSAFE_INNERHTML')
+      expect(otherCheck).toBeUndefined()
+      expect(withoutResult?.options.headline).toBe('1 entry in shopify.app-security.json not evaluated.')
+    })
+
+    test('is left out without a file, and when every entry matched', () => {
+      expect(entriesBox(inputWithEntries([]))).toBeUndefined()
+      expect(entriesBox(inputWithEntries([entryResult(0, 'matched')]))).toBeUndefined()
     })
   })
 

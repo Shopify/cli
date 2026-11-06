@@ -113,6 +113,19 @@ export const appSecuritySuppressionEntrySchema = zod
       .describe(
         'The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes.',
       ),
+    likelyPath: createAbsolutePathSchema()
+      .nullable()
+      .describe(
+        "For a stale entry with code whose file no longer exists: the absolute path of the one finding of the same source and check, at another path, whose code or message holds the entry's code. The code probably moved there, but the entry still suppresses nothing. Otherwise null.",
+      ),
+    candidateFindingCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .nullable()
+      .describe(
+        "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null.",
+      ),
   })
   .strict()
   .describe('One entry of shopify.app-security.json, and how it applied to the results.')
@@ -134,13 +147,23 @@ export const appSecuritySuppressionsSchema = zod
       .describe(
         'The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted.',
       ),
+    staleEntryCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe("The number of entries with the status stale. They don't change the exit code or --blocking."),
+    ambiguousEntryCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe("The number of entries with the status ambiguous. They don't change the exit code or --blocking."),
     entries: zod
       .array(appSecuritySuppressionEntrySchema)
       .describe('One result for each entry, in file order. Empty when the file does not exist.'),
   })
   .strict()
   .describe(
-    'The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the count cover every check, whatever --check-id selects.',
+    'The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the counts cover every check, whatever --check-id selects.',
   )
 
 export type AppSecuritySuppressions = zod.infer<typeof appSecuritySuppressionsSchema>

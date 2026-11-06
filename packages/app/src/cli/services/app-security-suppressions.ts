@@ -11,8 +11,11 @@ import {
   reportingSourcesByCheckId,
   type FindingsSource,
 } from './app-security-engine/index.js'
+import {isMissingFilesystemEntry} from './app-security-engine/scanners/filesystem-errors.js'
 import {isValidFormatAppConfigurationFileName} from '../models/app/config-file-naming.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileRealPath} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const SUPPRESSIONS_SCHEMA_VERSION = 1
@@ -285,4 +288,28 @@ export async function readAppSecuritySuppressions(appDirectory: string): Promise
   const parsed = parseSuppressionsFile(file.value)
   if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
   return parsed.suppressions
+}
+
+/**
+ * The paths of the entries with `code` whose files no longer exist in the app directory, which a stale entry needs for
+ * its likely new path. It only tests whether each file exists, and reads none.
+ */
+export async function missingSuppressionPaths(
+  appDirectory: string,
+  suppressions: AppSecuritySuppression[],
+): Promise<string[]> {
+  const paths = [...new Set(suppressions.filter((suppression) => suppression.code !== undefined).map(({path}) => path))]
+  const missing = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        await fileRealPath(joinPath(appDirectory, path))
+        return false
+        // eslint-disable-next-line no-catch-all/no-catch-all -- Optional hints must not fail the report on inspection errors.
+      } catch (error) {
+        // An access error does not establish that the old file is gone.
+        return isMissingFilesystemEntry(error)
+      }
+    }),
+  )
+  return paths.filter((_path, index) => missing[index])
 }
