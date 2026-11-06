@@ -11574,6 +11574,13 @@
       "descriptionWithMarkdown": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -11758,6 +11765,13 @@
         "<%= config.bin %> <%= command.id %> --store example --script-file ./commands.txt --json --no-input"
       ],
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -11905,6 +11919,13 @@
       "descriptionWithMarkdown": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -12050,6 +12071,13 @@
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "allow-live": {
           "allowNo": false,
           "char": "a",
@@ -12439,6 +12467,13 @@
       "descriptionWithMarkdown": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -12664,6 +12699,13 @@
       "descriptionWithMarkdown": "Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).\n\nCommunicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and stdout, framed with Content-Length headers. CLI diagnostics use stderr.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -12733,6 +12775,13 @@
       "descriptionWithMarkdown": "Lists the themes in your store, along with their IDs and statuses.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -12868,6 +12917,13 @@
       "descriptionWithMarkdown": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -12981,6 +13037,13 @@
       "descriptionWithMarkdown": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -13204,6 +13267,13 @@
       "descriptionWithMarkdown": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -13345,6 +13415,13 @@
       "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -13479,6 +13556,13 @@
       "descriptionWithMarkdown": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -13604,6 +13688,13 @@
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -13777,6 +13868,13 @@
       "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"status\": \"success\",\n    \"changed\": true,\n    \"issues\": [],\n    \"theme\": {\n      \"id\": \"108267175958\",\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"storeDomain\": \"mystore.myshopify.com\",\n      \"editorUrl\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"previewUrl\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "allow-live": {
           "allowNo": false,
           "char": "a",
@@ -14008,6 +14106,13 @@
       "descriptionWithMarkdown": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -14156,6 +14261,13 @@
       "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "enableJsonFlag": false,
       "flags": {
+        "allow-custom-checks": {
+          "allowNo": true,
+          "description": "Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.",
+          "env": "SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS",
+          "name": "allow-custom-checks",
+          "type": "boolean"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
