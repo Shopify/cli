@@ -241,13 +241,16 @@ function likelyNewPath(entry: SuppressionEntry, check: StoredCheck): string | un
   if (entry.code === undefined) return undefined
   const text = normalizeSuppressionText(entry.code)
   if (text === '') return undefined
-  const paths = check.findings.flatMap((finding) => {
+  let likelyPath: string | undefined
+  for (const finding of check.findings) {
     const path = normalizePath(finding.location.file)
-    if (path === entry.path) return []
+    if (path === entry.path) continue
     const {inCode, inMessage} = textOccurrence(text, finding, path)
-    return inCode || inMessage ? [path] : []
-  })
-  return paths.length === 1 ? paths[0] : undefined
+    if (!inCode && !inMessage) continue
+    if (likelyPath !== undefined) return undefined
+    likelyPath = path
+  }
+  return likelyPath
 }
 
 /** Whether normalized text occurs in a finding's captured code, in `path`, and in its message. */

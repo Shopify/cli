@@ -6,7 +6,7 @@ import {
 import {appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {chmod, fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
@@ -335,6 +335,37 @@ describe('readAppSecuritySuppressions', () => {
 })
 
 describe('missingSuppressionPaths', () => {
+  test.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
+    'does not treat an inaccessible file as missing',
+    async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const locked = joinPath(directory, 'locked')
+        const file = joinPath(locked, 'session.ts')
+        await mkdir(locked)
+        await writeFile(file, 'export {}\n')
+        await chmod(locked, 0o000)
+        try {
+          await expect(fileRealPath(file)).rejects.toMatchObject({code: 'EACCES'})
+          await expect(
+            missingSuppressionPaths(directory, [{...deterministicEntry, path: 'locked/session.ts'}]),
+          ).resolves.toEqual([])
+        } finally {
+          await chmod(locked, 0o700)
+        }
+        await expect(fileExists(file)).resolves.toBe(true)
+      })
+    },
+  )
+
+  test('treats a path below a regular file as missing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'parent'), 'export {}\n')
+      await expect(
+        missingSuppressionPaths(directory, [{...deterministicEntry, path: 'parent/session.ts'}]),
+      ).resolves.toEqual(['parent/session.ts'])
+    })
+  })
+
   test('gives the paths of the entries with code whose files are gone, once each', async () => {
     await inTemporaryDirectory(async (directory) => {
       await mkdir(joinPath(directory, 'app', 'routes'))

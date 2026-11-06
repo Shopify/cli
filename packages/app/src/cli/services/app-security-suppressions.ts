@@ -11,8 +11,9 @@ import {
   reportingSourcesByCheckId,
   type FindingsSource,
 } from './app-security-engine/index.js'
+import {isMissingFilesystemEntry} from './app-security-engine/scanners/filesystem-errors.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists} from '@shopify/cli-kit/node/fs'
+import {fileRealPath} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -217,6 +218,17 @@ export async function missingSuppressionPaths(
   suppressions: AppSecuritySuppression[],
 ): Promise<string[]> {
   const paths = [...new Set(suppressions.filter((suppression) => suppression.code !== undefined).map(({path}) => path))]
-  const present = await Promise.all(paths.map((path) => fileExists(joinPath(appDirectory, path))))
-  return paths.filter((_path, index) => !present[index])
+  const missing = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        await fileRealPath(joinPath(appDirectory, path))
+        return false
+        // eslint-disable-next-line no-catch-all/no-catch-all -- Optional hints must not fail the report on inspection errors.
+      } catch (error) {
+        // An access error does not establish that the old file is gone.
+        return isMissingFilesystemEntry(error)
+      }
+    }),
+  )
+  return paths.filter((_path, index) => missing[index])
 }

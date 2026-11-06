@@ -715,6 +715,7 @@ describe('combineFindings', () => {
       expect(likelyPaths([withCode], [renamed], [])).toEqual([['stale', undefined]])
       expect(likelyPaths([entry()], [renamed])).toEqual([['stale', undefined]])
       expect(likelyPaths([withCode], [renamed, copied])).toEqual([['stale', undefined]])
+      expect(likelyPaths([withCode], [renamed, {...renamed}])).toEqual([['stale', undefined]])
       // Another entry's missing file doesn't count.
       expect(likelyPaths([withCode], [renamed], ['app/routes/deleted.tsx'])).toEqual([['stale', undefined]])
     })
