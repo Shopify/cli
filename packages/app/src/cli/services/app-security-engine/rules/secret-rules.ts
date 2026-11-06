@@ -134,11 +134,82 @@ export function redactText(text: string): string {
 }
 
 /**
+ * A name that holds a secret, then the assignment, but not a comparison or an arrow function. Excerpts redact the value
+ * that follows, which no pattern may know.
+ */
+const SECRET_NAME_ASSIGNMENT_PATTERN =
+  /(?:secret|passw(?:or)?d|pwd|token|api[_-]?key|private[_-]?key|credential|auth)\w*["']?\s*(?::=|[:=](?![=>]))\s*/gi
+
+/**
+ * The text of a quoted value, up to its closing quote or, when it continues on the next line, the end of the line. A
+ * line can hold a separator that isn't a line feed, such as U+2028, which is part of the value.
+ */
+const QUOTED_VALUE_PATTERN = /^(["'`])((?:\\[^\r\n]|(?!\1)[^\r\n])*)/
+
+/** An unquoted value, up to the end of the line, however the line ends. */
+const UNQUOTED_VALUE_PATTERN = /^([\s\S]*?)\s*$/
+
+/** The password in a URL's user information, as in `postgres://user:password@host`. */
+const URL_PASSWORD_PATTERN = /(:\/\/[^\s:/?#@]*:)([^\s/?#]+)@/g
+
+const redactedValue = (value: string) => `[REDACTED:${value.length}]`
+
+/**
+ * Where the value assigned after `offset` starts, and its text. In source code, an unquoted value is an expression, such
+ * as a variable, so only a quoted value counts there. A value that's empty or already redacted needs nothing.
+ */
+function assignedValue(line: string, offset: number, sourceCode: boolean): {start: number; text: string} | undefined {
+  const rest = line.slice(offset)
+  const quoted = QUOTED_VALUE_PATTERN.exec(rest)
+  let value: {start: number; text: string} | undefined
+  if (quoted) value = {start: offset + 1, text: quoted[2]!}
+  else if (!sourceCode) value = {start: offset, text: UNQUOTED_VALUE_PATTERN.exec(rest)![1]!}
+  return value && value.text !== '' && !value.text.includes('[REDACTED') ? value : undefined
+}
+
+/**
+ * Redact the secrets that excerpts never quote, though no redaction pattern knows them: URL passwords, and the values
+ * assigned to names such as `password`, `api_key` or `apiSecretKey`. Only excerpts are redacted this way, because they
+ * quote lines that no one chose.
+ */
+function redactUnrecognizedSecrets(line: string, sourceCode: boolean): string {
+  const withoutUrlPasswords = line.replace(
+    URL_PASSWORD_PATTERN,
+    (_match, prefix: string, password: string) => `${prefix}${redactedValue(password)}@`,
+  )
+  let redacted = ''
+  let position = 0
+  for (const name of withoutUrlPasswords.matchAll(SECRET_NAME_ASSIGNMENT_PATTERN)) {
+    // A name inside a value that's already redacted is part of that value.
+    if (name.index < position) continue
+    const value = assignedValue(withoutUrlPasswords, name.index + name[0].length, sourceCode)
+    if (value === undefined) continue
+    redacted += `${withoutUrlPasswords.slice(position, value.start)}${redactedValue(value.text)}`
+    position = value.start + value.text.length
+  }
+  return `${redacted}${withoutUrlPasswords.slice(position)}`
+}
+
+/** The index of the last of the ascending `values` that is at most `offset`, or -1 when none is. */
+function lastIndexAtOrBefore(values: ReadonlyArray<number>, offset: number): number {
+  let low = 0
+  let high = values.length - 1
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2)
+    if (values[middle]! <= offset) low = middle + 1
+    else high = middle - 1
+  }
+  return high
+}
+
+/**
  * Redact a text line by line, for excerpts that quote only some of its lines. A secret can span lines, so a line that
  * holds part of a match that spans lines becomes `[REDACTED LINE]`, even when the excerpt leaves out the line where the
- * match starts. So does every line from a private key header without its footer to the end of the text.
+ * match starts. So does every line from a private key header without its footer to the end of the text. Each other
+ * line is redacted with every pattern, and so are the values that look secret on it: quoted values only, in
+ * `sourceCode`.
  */
-export function redactLines(text: string): string[] {
+export function redactLines(text: string, {sourceCode = false}: {sourceCode?: boolean} = {}): string[] {
   const lines = text.split('\n')
   let nextLineStart = 0
   const lineStarts = lines.map((line) => {
@@ -146,7 +217,7 @@ export function redactLines(text: string): string[] {
     nextLineStart += line.length + 1
     return start
   })
-  const lineAt = (offset: number) => lineStarts.findLastIndex((start) => start <= offset)
+  const lineAt = (offset: number) => lastIndexAtOrBefore(lineStarts, offset)
   const matches = REDACTION_PATTERNS.flatMap((pattern) =>
     [...text.matchAll(new RegExp(pattern.regex.source, `${pattern.regex.flags}g`))].map((match) => ({
       pattern,
@@ -154,21 +225,35 @@ export function redactLines(text: string): string[] {
       end: match.index + match[0].length,
     })),
   )
-  // A header inside a complete private key block is redacted with the block, which ends at its footer.
-  const isInsideBlock = (offset: number) =>
-    matches.some(({pattern, start, end}) => !pattern.redactEntireInput && start <= offset && offset < end)
+  // A header inside a complete private key block is redacted with the block, which ends at its footer. An offset is
+  // inside a match when the furthest end of the matches that start at or before it is after it.
+  const spans = matches
+    .filter(({pattern}) => !pattern.redactEntireInput)
+    .sort((left, right) => left.start - right.start)
+  const spanStarts = spans.map(({start}) => start)
+  let furthestEnd = 0
+  const furthestEnds = spans.map(({end}) => {
+    furthestEnd = Math.max(furthestEnd, end)
+    return furthestEnd
+  })
+  const isInsideBlock = (offset: number) => {
+    const index = lastIndexAtOrBefore(spanStarts, offset)
+    return index >= 0 && furthestEnds[index]! > offset
+  }
   const redactedLines = new Set<number>()
-  const redactLineRange = (firstLine: number, lastLine: number) => {
-    for (let line = firstLine; line <= lastLine; line++) redactedLines.add(line)
+  for (const {start, end} of spans) {
+    if (!text.slice(start, end).includes('\n')) continue
+    const lastLine = lineAt(end - 1)
+    for (let line = lineAt(start); line <= lastLine; line++) redactedLines.add(line)
   }
-  for (const {pattern, start, end} of matches) {
-    if (pattern.redactEntireInput) {
-      if (!isInsideBlock(start)) redactLineRange(lineAt(start), lines.length - 1)
-    } else if (text.slice(start, end).includes('\n')) {
-      redactLineRange(lineAt(start), lineAt(end - 1))
-    }
-  }
-  return lines.map((line, index) => (redactedLines.has(index) ? '[REDACTED LINE]' : redactText(line)))
+  // Headers are found in order, so the first one outside a block redacts every line that any later one would.
+  const firstUnterminatedHeader = matches.find(({pattern, start}) => pattern.redactEntireInput && !isInsideBlock(start))
+  const firstLineRedactedToTheEnd = firstUnterminatedHeader ? lineAt(firstUnterminatedHeader.start) : lines.length
+  return lines.map((line, index) =>
+    index >= firstLineRedactedToTheEnd || redactedLines.has(index)
+      ? '[REDACTED LINE]'
+      : redactUnrecognizedSecrets(redactText(line), sourceCode),
+  )
 }
 
 /**
@@ -197,6 +282,19 @@ function isEnvFile(path: string): boolean {
 /** Whether every value in the file is presumed secret: an environment file or a named secret file. */
 export function isSecretFile(path: string): boolean {
   return isEnvFile(path) || NAMED_SECRET_FILE_PATTERN.test(path)
+}
+
+/** Lowercase names of files that hold secrets, which the secret scan doesn't treat as secret files. */
+const EXCERPT_BLOCKED_FILE_PATTERN =
+  /(^|\/)(?:\.envrc|\.dev\.vars|secrets\.ya?ml|credentials\.ya?ml(?:\.enc)?|[^/]*\.(?:key|pem|p12)|\.npmrc|\.netrc|\.pypirc)$/
+
+/**
+ * Whether an excerpt must never quote the file: a secret file, or another file that holds secrets, by its name in any
+ * case, since a file system that ignores case reads a file by any case of its name.
+ */
+export function isExcerptBlockedFile(path: string): boolean {
+  const lowercasePath = path.toLowerCase()
+  return isSecretFile(lowercasePath) || EXCERPT_BLOCKED_FILE_PATTERN.test(lowercasePath)
 }
 
 /** Why a file git reports as untracked and ignored still reached this rule. */
