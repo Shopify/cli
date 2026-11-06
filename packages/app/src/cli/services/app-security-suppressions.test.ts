@@ -995,6 +995,18 @@ describe('planSuppression', () => {
     })
   })
 
+  test('refuses a finding of a check that this CLI does not know, with the reason as the end of a sentence', () => {
+    const document = agentDocument('NOT_A_CHECK', [
+      agentFinding('app/routes/orders.tsx', 1, ['console.log(db.id)'], 'm'),
+    ])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+      status: 'refused',
+      problem:
+        'its entry would be invalid: check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI',
+    })
+  })
+
   test('leaves the file as it is when an entry already suppresses the finding under these results', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'm'),
