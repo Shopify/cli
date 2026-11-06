@@ -651,6 +651,46 @@ describe('app security check --json command boundary', () => {
     })
   })
 
+  test('rejects an entry whose code key is misspelled, instead of suppressing every finding of the check in the file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const otherToken = ['shpat', 'fedcba9876543210fedcba9876543210'].join('_')
+      const source = await readFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'utf8')
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        `${source}const other_token = "${otherToken}"\n`,
+      )
+      const {code, ...withoutCode} = committedSecretEntry
+      const run = async (entry: object) => {
+        await writeAppSecuritySuppressionsFixture(directory, [entry])
+        const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+        return {exitCode: result.exitCode, output: JSON.parse(result.stdout)}
+      }
+
+      // The entry suppresses one of the two tokens, so --blocking still fails on the other.
+      const intended = await run(committedSecretEntry)
+      const misspelled = await run({...withoutCode, cdoe: code})
+      const wrongCase = await run({...withoutCode, Code: code})
+
+      expect(intended).toMatchObject({exitCode: 1, output: {valid: false, blocking: {blockedCheckCount: 1}}})
+      expect(misspelled).toMatchObject({
+        exitCode: 1,
+        output: {
+          error: {code: 'suppressions-file-invalid', details: {errors: ['suppressions[0]: unknown key "cdoe"']}},
+        },
+      })
+      expect(wrongCase).toMatchObject({
+        exitCode: 1,
+        output: {
+          error: {
+            code: 'suppressions-file-invalid',
+            details: {errors: ['suppressions[0]: unknown key "Code". Did you mean "code"?']},
+          },
+        },
+      })
+    })
+  })
+
   test('aborts with one error document when shopify.app-security.json is invalid, and writes no results', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
