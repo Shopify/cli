@@ -247,7 +247,8 @@ function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
 
 /**
  * The likely new path of a stale entry with `code`: the path of the one finding of the entry's check, at another path,
- * whose code or message holds the entry's text, as rule 3 compares it. Undefined when no finding or several do.
+ * that rule 3 would match there: its code holds the entry's text, or its message does when it has no captured code.
+ * Undefined when no finding or several do.
  */
 function likelyNewPath(entry: SuppressionEntry, check: StoredCheck): string | undefined {
   if (entry.code === undefined) return undefined
@@ -257,8 +258,7 @@ function likelyNewPath(entry: SuppressionEntry, check: StoredCheck): string | un
   for (const finding of check.findings) {
     const path = normalizePath(finding.location.file)
     if (path === entry.path) continue
-    const {inCode, inMessage} = textOccurrence(text, finding, path)
-    if (!inCode && !inMessage) continue
+    if (!isTextMatch(textOccurrence(text, finding, path), finding, path)) continue
     if (likelyPath !== undefined) return undefined
     likelyPath = path
   }

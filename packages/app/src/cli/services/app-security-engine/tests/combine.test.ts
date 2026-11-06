@@ -767,6 +767,8 @@ describe('combineFindings', () => {
       expect(likelyPaths([withCode], [renamed, {...renamed}])).toEqual([['stale', undefined]])
       // Another entry's missing file doesn't count.
       expect(likelyPaths([withCode], [renamed], ['app/routes/deleted.tsx'])).toEqual([['stale', undefined]])
+      // Text only in the message of a finding with captured code doesn't match that finding, so it names no path.
+      expect(likelyPaths([entry({code: 'flows into console.log'})], [renamed])).toEqual([['stale', undefined]])
     })
 
     test('an entry that matches nothing in an executed result is stale', () => {
