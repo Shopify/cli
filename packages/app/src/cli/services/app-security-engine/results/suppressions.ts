@@ -18,7 +18,11 @@ export interface SuppressionEntry {
   /** Text of the flagged code. Without it, the entry covers every finding of the check in the file. */
   code?: string
   reason: string
-  /** App configuration file names, such as shopify.app.toml, or client IDs. */
+  /**
+   * App configuration file names, such as shopify.app.toml, which match a run of that configuration without
+   * `--client-id`, or client IDs passed with `--client-id`. The entry applies when one of them names the run's results
+   * key.
+   */
   configurations: string[]
 }
 
@@ -148,7 +152,9 @@ function normalizeSuppressionText(text: string): string {
 
 /**
  * A configuration names a results key: an app configuration file name without its `.toml` extension, as `check`
- * names the results directory of that configuration, or a client ID as it is.
+ * names the results directory of that configuration without `--client-id`, or a client ID as it is, as `--client-id`
+ * names it. So a file name doesn't apply to a run with `--client-id`, and the client ID in the configuration file
+ * doesn't apply to a run without it.
  */
 function configurationResultsKey(configuration: string): string {
   return configuration.endsWith('.toml') ? configuration.slice(0, -'.toml'.length) : configuration

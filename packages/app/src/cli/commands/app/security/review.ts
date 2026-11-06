@@ -16,7 +16,7 @@ The summary shows the scan directories and the scope of the latest scan, and the
 
 The agent results are optional. Use \`--check-id\` to narrow the review to specific checks, \`--verbose\` for full reasoning, evidence and suppressed findings, and \`--blocking\` to exit with code 1 when a check with active findings is at or above a severity. With \`--json\`, the result always includes every finding in full.
 
-Suppressed findings don't count for \`--blocking\`: those the agent suppressed, and those that an entry of \`shopify.app-security.json\` in the app directory suppresses. \`--verbose\` shows them with the reason. Superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count either. An invalid \`shopify.app-security.json\` stops the command.
+Suppressed findings don't count for \`--blocking\`: those the agent suppressed, and those that an entry of \`shopify.app-security.json\` in the app directory suppresses. \`--verbose\` shows them with the reason. An entry applies to the results that its \`configurations\` name: an app configuration file name without \`--client-id\`, or a client ID passed with \`--client-id\`. Superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count either. An invalid \`shopify.app-security.json\` stops the command.
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 

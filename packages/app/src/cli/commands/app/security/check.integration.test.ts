@@ -633,6 +633,24 @@ describe('app security check --json command boundary', () => {
     })
   })
 
+  test('an entry naming the configuration file applies without --client-id, one naming a client ID only with it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      // The client ID that shopify.app.toml holds: a plain run still doesn't match it.
+      const byClientId = {...committedSecretEntry, configurations: ['test-client-id']}
+      const exitCode = async (entry: typeof committedSecretEntry, flags: string[] = []) => {
+        await writeAppSecuritySuppressionsFixture(directory, [entry])
+        return (await runJsonCommand(['--path', directory, '--blocking', 'high', ...flags])).exitCode
+      }
+      const withClientId = ['--client-id', 'test-client-id']
+
+      await expect(exitCode(committedSecretEntry)).resolves.toBe(0)
+      await expect(exitCode(committedSecretEntry, withClientId)).resolves.toBe(1)
+      await expect(exitCode(byClientId)).resolves.toBe(1)
+      await expect(exitCode(byClientId, withClientId)).resolves.toBe(0)
+    })
+  })
+
   test('aborts with one error document when shopify.app-security.json is invalid, and writes no results', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
