@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 5.1.0
+
+### Patch Changes
+
+- 8cb7b7e: Normalize and validate the store domain in `ensureAuthenticatedAdminAsApp` before sending the app's client secret.
+- d1d59da: Say which access a service account token lacks, or that it was revoked or expired, instead of "Ensure the token is correct and not expired" for both.
+- 572bb90: Auto-upgrade installs the exact version it checked instead of `@shopify/cli@latest`, so a stale version cache can no longer upgrade you to a new major version.
+- d332546: Treat HTTP 520 to 524 edge responses as gateway errors, like 502, 503 and 504
+- f63ce4b: Support `theme language-server --json` and `--json-schema` while preserving native LSP output and stderr diagnostics.
+- c09ed76: Also treat `DO_NOT_TRACK=1` as an analytics opt-out, in addition to `SHOPIFY_CLI_NO_ANALYTICS=1` and `OPT_OUT_INSTRUMENTATION=true`.
+- d418238: Keep tables on one line per row when the output isn't a terminal, and word the store-not-found advice for service account tokens.
+
 ## 5.0.0
 
 ### Minor Changes
