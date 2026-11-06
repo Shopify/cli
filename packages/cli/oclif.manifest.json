@@ -3920,6 +3920,14 @@
           "name": "config",
           "type": "option"
         },
+        "function-handle": {
+          "description": "Exact Function extension handle; excludes non-Function records.",
+          "env": "SHOPIFY_FLAG_FUNCTION_HANDLE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "function-handle",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -4057,6 +4065,14 @@
           "name": "store",
           "type": "option"
         },
+        "target": {
+          "description": "Exact Function execution target; excludes non-Function records.",
+          "env": "SHOPIFY_FLAG_TARGET",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "target",
+          "type": "option"
+        },
         "topic": {
           "description": "Exact webhook topic; excludes non-webhook records.",
           "env": "SHOPIFY_FLAG_TOPIC",
@@ -4073,7 +4089,8 @@
           "name": "type",
           "options": [
             "webhook",
-            "graphql"
+            "graphql",
+            "function"
           ],
           "type": "option"
         },
