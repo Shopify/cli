@@ -56,6 +56,12 @@ function logDetails(record: LogsResult['logs'][number]): unknown {
     case 'APP_EVENT':
     case 'APP_BILLING_EVENT':
       return record.eventHandle
+    case 'REST_REQUEST':
+      return (
+        [record.method, record.requestPath]
+          .filter((value) => typeof value === 'string' && value.length > 0)
+          .join(' ') || undefined
+      )
     default:
       return undefined
   }

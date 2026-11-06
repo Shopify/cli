@@ -158,6 +158,26 @@ test('parses app billing events with shared event handle, store, and status filt
   ])
 })
 
+test.each([
+  {argv: []},
+  {argv: ['--type=rest', '--method=GET', '--request-path=/admin/api/products.json']},
+  {argv: ['--type', 'rest', '--method', 'GET', '--request-path', '/admin/api/products.json']},
+])('parses REST filters from environment variables with flag precedence for $argv', async ({argv}) => {
+  vi.stubEnv('SHOPIFY_FLAG_TYPE', 'rest')
+  vi.stubEnv('SHOPIFY_FLAG_METHOD', 'POST')
+  vi.stubEnv('SHOPIFY_FLAG_REQUEST_PATH', '/environment-path')
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(argv, await Config.load()).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'rest', backend: 'REST_REQUEST'}])
+  expect(input.filters).toEqual([
+    {field: 'METHOD', operator: 'EQUALS', value: argv.length ? 'GET' : 'POST'},
+    {field: 'REQUEST_PATH', operator: 'EQUALS', value: argv.length ? '/admin/api/products.json' : '/environment-path'},
+  ])
+})
+
 test('accepts the maximum limit through parsing and input validation', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
@@ -183,6 +203,8 @@ test('omitted type and repeated type flags are passed to the service without inv
       'app-event',
       '--type',
       'app-billing-event',
+      '--type',
+      'rest',
       '--request-id',
       'request-123',
     ],
@@ -190,7 +212,7 @@ test('omitted type and repeated type flags are passed to the service without inv
   ).run()
   expect(retrieveLogs).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      type: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event'],
+      type: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest'],
       'request-id': 'request-123',
     }),
   )
@@ -246,6 +268,8 @@ test.each([
   ['--function-handle', 'one', '--function-handle=two'],
   ['--target', 'one', '--target=two'],
   ['--event-handle', 'one', '--event-handle=two'],
+  ['--method', 'GET', '--method=POST'],
+  ['--request-path', '/one', '--request-path=/two'],
   ['--since', '1h', '--since=2h'],
   ['--limit', '10', '--limit=20'],
   ['--until', '2026-10-06T13:00:00Z', '--until=2026-10-06T14:00:00Z'],
@@ -259,7 +283,7 @@ test.each([
 })
 
 test.each([
-  ['--type', 'rest'],
+  ['--type', 'unsupported'],
   ['--sort', 'id'],
   ['--sort', 'timestamp', '--order', 'ascending'],
   ['--order', 'asc'],
@@ -427,6 +451,37 @@ test.each([
   })
 })
 
+test.each([
+  {method: 'GET', requestPath: '/products.json', details: 'GET /products.json', status: 'FAILURE'},
+  {method: 'GET', requestPath: null, details: 'GET', status: null},
+  {method: undefined, requestPath: '/products.json', details: '/products.json'},
+  {method: null, requestPath: null, details: 'unknown'},
+  {method: undefined, requestPath: undefined, details: 'unknown'},
+  {method: '', requestPath: '', details: 'unknown'},
+  {method: '', requestPath: '/products.json', details: '/products.json'},
+  {method: 'GET', requestPath: '', details: 'GET'},
+  {method: 42, requestPath: false, details: 'unknown'},
+  {method: 'GET', requestPath: `/\n${'a'.repeat(100)}`, details: `GET /\\u000a${'a'.repeat(88)}…`, status: 'SUCCESS'},
+])('REST human output shows $details with the recorded result', async ({method, requestPath, details, status}) => {
+  const data = result()
+  data.logs = [{...data.logs[0]!, type: 'REST_REQUEST', method, requestPath, resultStatus: status, statusCode: 200}]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'rest'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'REST_REQUEST',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+  })
+})
+
 test('human output aligns headers with mixed log rows between the warning and JSON hint', async () => {
   const data = result()
   data.logs.push({
@@ -459,6 +514,14 @@ test('human output aligns headers with mixed log rows between the warning and JS
     shopMyshopifyDomain: 'example.myshopify.com',
     eventHandle: 'sms_sent',
   })
+  data.logs.push({
+    timestamp: '2026-10-06T13:35:00Z',
+    type: 'REST_REQUEST',
+    resultStatus: 'FAILURE',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    method: 'GET',
+    requestPath: '/products.json',
+  })
   vi.mocked(retrieveLogs).mockResolvedValue(data)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await new Logs([], await Config.load()).run()
@@ -466,8 +529,8 @@ test('human output aligns headers with mixed log rows between the warning and JS
     const lines = stderr().trim().split('\n')
     expect(lines[0]).toBe('Used fast retrieval: returned records shown oldest first.')
     expect(lines.at(-1)).toBe('Use --json for full records.')
-    expect(lines).toHaveLength(10)
-    expect(lines.at(-2)).toBe('Returned all 5 matching records available at query time.')
+    expect(lines).toHaveLength(11)
+    expect(lines.at(-2)).toBe('Returned all 6 matching records available at query time.')
     const headers = ['Timestamp', 'Type', 'Result', 'Store', 'Details', 'API']
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(headers)
     for (const [index, record] of data.logs.entries()) {
@@ -476,7 +539,11 @@ test('human output aligns headers with mixed log rows between the warning and JS
         record.type,
         record.resultStatus ?? '—',
         record.shopMyshopifyDomain,
-        record.topic ?? record.operationName ?? record.functionHandle ?? record.eventHandle,
+        record.topic ??
+          record.operationName ??
+          record.functionHandle ??
+          record.eventHandle ??
+          `${record.method} ${record.requestPath}`,
         record.api ?? '—',
       ]
       const row = lines[index + 3]!
