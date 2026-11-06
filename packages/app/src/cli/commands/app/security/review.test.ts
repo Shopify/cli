@@ -1,18 +1,49 @@
 import SecurityReview from './review.js'
 import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
+import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
+import {appSecurityInstructions} from '../../../services/app-security-instructions.js'
+import {SUPPRESSION_KINDS} from '../../../services/app-security-suppressions.js'
 import securityReview from '../../../services/security-review.js'
 import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
 import {appSecurityReviewJsonOutputSchema} from '../../../services/security-review/types.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-review.js')
 vi.mock('../../../services/security-review/result.js')
+
+/**
+ * The arguments of the `review --suppress` command that the agent instructions show, for an app in the working
+ * directory, with each placeholder replaced by its value.
+ */
+function instructedSuppressArguments(values: {[placeholder: string]: string}): string[] {
+  const appDirectory = cwd()
+  const selection = {
+    kind: 'config' as const,
+    appDirectory,
+    appConfigFilePath: joinPath(appDirectory, 'shopify.app.toml'),
+  }
+  const instructions = appSecurityInstructions({
+    appDirectory,
+    resultsKey: 'shopify.app',
+    commands: resolveAppSecurityCommands(selection, appDirectory),
+    shell: 'posix',
+  })
+  const reviewCommand = 'shopify app security review '
+  const command = instructions
+    .split('\n')
+    .find((line) => line.startsWith(reviewCommand) && line.includes(' --suppress '))
+  if (!command) throw new Error('The instructions show no review --suppress command')
+  return command
+    .slice(reviewCommand.length)
+    .split(' ')
+    .map((argument) => values[argument] ?? argument)
+}
 
 /** Runs the command, expecting oclif to refuse the flags before anything is reviewed, and returns the error output. */
 async function parseError(argv: string[]): Promise<string> {
@@ -208,6 +239,35 @@ describe('app security review command', () => {
           reason: 'Kept until the migration ships.',
         }),
       }),
+    )
+  })
+
+  test('accepts the --suppress command that the agent instructions show, with and without --include-superseded', async () => {
+    const argv = instructedSuppressArguments({
+      '<number>': '4',
+      '<kind>': SUPPRESSION_KINDS[1],
+      '<reason>': 'Kept until the migration ships.',
+      '<digest>': 'abc123def456',
+    })
+
+    expect(argv).not.toContainEqual(expect.stringMatching(/^</))
+
+    await SecurityReview.run(argv, import.meta.url)
+    await SecurityReview.run([...argv, '--include-superseded'], import.meta.url)
+
+    const suppress = {
+      findingNumber: 4,
+      kind: SUPPRESSION_KINDS[1],
+      reason: 'Kept until the migration ships.',
+      resultsDigest: 'abc123def456',
+    }
+    expect(securityReview).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({suppress: {...suppress, includeSuperseded: false}}),
+    )
+    expect(securityReview).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({suppress: {...suppress, includeSuperseded: true}}),
     )
   })
 
