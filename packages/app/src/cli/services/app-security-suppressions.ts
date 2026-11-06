@@ -390,12 +390,14 @@ export type SuppressionChange =
 /**
  * - `saved`: an entry of the file already suppresses the finding, so nothing changes.
  * - `change`: the change that suppresses the finding, and only that finding.
- * - `refused`: no entry can suppress the finding alone. `problem` says why, as the end of a sentence.
+ * - `refused`: no automatic candidate selected the finding alone. `problem` says why, as the end of a sentence.
+ *   `withoutCode` describes the broader entry that suppresses every finding of this source and check in the file.
+ *   It does not establish whether a manual code selector can select the finding alone.
  */
-type SuppressionPlan =
+export type SuppressionPlan =
   | {status: 'saved'; entryIndex: number}
   | {status: 'change'; change: SuppressionChange}
-  | {status: 'refused'; problem: string}
+  | {status: 'refused'; problem: string; withoutCode?: {findingCount: number}}
 
 /**
  * Lines before and after the flagged line that a candidate `code` covers, in the order the candidates widen: the line
@@ -410,6 +412,9 @@ const CODE_WINDOWS: [number, number][] = [
   [-1, 2],
   [-2, 2],
 ]
+
+/** A word of a code line that a `code` can name: an identifier, a property path, or a URL part. */
+const CODE_WORD = /[\w$.:/@-]{3,}/g
 
 /**
  * Plans how to save a suppression for one finding of the current results. The new entry names the finding's source,
@@ -464,18 +469,26 @@ export function planSuppression(
     }
   }
 
+  // Report the scope of the broader option without assuming that the candidate search is exhaustive.
+  const refusedPlan = (problem: string): SuppressionPlan => {
+    const [withoutCode] = matchSuppressionEntries(
+      {entries: [base], resultsKey: results.resultsKey},
+      recordedCheckLookup(results),
+    ).entries
+    return {status: 'refused', problem, withoutCode: {findingCount: withoutCode?.matched_finding_count ?? 0}}
+  }
+
   const codes = codeCandidates(target.finding)
   if (codes.length === 0) {
-    return {status: 'refused', problem: 'the results hold no code for its line, so no entry can name it alone'}
+    return refusedPlan('the results hold no code for its line, so no automatic code selector is available')
   }
   const entry = codes.map(entryWithCode).find((candidate) => matchesOnly(candidate, target, results))
   if (entry) return {status: 'change', change: {type: 'add', entry}}
-  return {
-    status: 'refused',
-    problem: hasLine
-      ? `every code from its lines also names another finding of ${target.checkId} in ${path}`
+  return refusedPlan(
+    hasLine
+      ? `every automatic code candidate also names another finding of ${target.checkId} in ${path}`
       : `it has no line, so its entry would cover every finding of ${target.checkId} in ${path}, and there are several`,
-  }
+  )
 }
 
 /** The `code` candidates in the order `planSuppression` tries them: `undefined` alone for a finding without a line. */
@@ -493,7 +506,7 @@ function codeCandidates(finding: StoredFinding): (string | undefined)[] {
       .filter((text) => text !== '')
       .join(' '),
   )
-  const wordsInMessage = (flaggedLine.text.match(/[\w$.:/@-]{3,}/g) ?? [])
+  const wordsInMessage = (flaggedLine.text.match(CODE_WORD) ?? [])
     .filter((word) => finding.message.includes(word))
     .sort((left, right) => right.length - left.length)
   return [...new Set([...windows, ...wordsInMessage])].filter(

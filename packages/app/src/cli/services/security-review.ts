@@ -15,6 +15,7 @@ import {
   suppressionConfiguration,
   type SavedSuppression,
   type SuppressionDecision,
+  type SuppressionPlan,
   type SuppressionTarget,
 } from './app-security-suppressions.js'
 import {
@@ -24,6 +25,7 @@ import {
   type SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import {blockedCheckCount, type AppSecurityBlockingLevel} from './app-security-api.js'
+import {countLabel, listedNumbers} from './app-security-format.js'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizePath} from '@shopify/cli-kit/node/path'
@@ -427,7 +429,7 @@ async function suppressFinding(
   }))
   const refusedPlan = plans.find(({plan}) => plan.status === 'refused')
   if (refusedPlan?.plan.status === 'refused') {
-    return refused(noUniqueEntry(refusedPlan.numberedFinding, refusedPlan.plan.problem))
+    return refused(noUniqueEntry(refusedPlan.numberedFinding, refusedPlan.plan, numbered))
   }
   const changes = plans.flatMap(({numberedFinding, plan}) =>
     plan.status === 'change' ? [{findingNumber: numberedFinding.number, change: plan.change}] : [],
@@ -517,11 +519,37 @@ function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal
   }
 }
 
-function noUniqueEntry({number}: NumberedFinding, problem: string): SuppressionRefusal {
+/** Refuses an automatic suppression and explains the selective and broader manual options. */
+function noUniqueEntry(
+  target: NumberedFinding,
+  {problem, withoutCode}: Extract<SuppressionPlan, {status: 'refused'}>,
+  numbered: NumberedFinding[],
+): SuppressionRefusal {
   return {
     code: 'finding-not-suppressible',
-    message: `Finding ${number} can't be suppressed: ${problem}. Nothing was saved.`,
-    tryMessage: `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
-    details: {findingNumber: number},
+    message: `Finding ${target.number} can't be suppressed: ${problem}. Nothing was saved.`,
+    tryMessage: withoutCode
+      ? entryWithoutCodeAdvice(target, numbered)
+      : `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
+    details: {findingNumber: target.number},
   }
+}
+
+/** Explain the scope of an entry without code without ruling out a selective manual entry. */
+function entryWithoutCodeAdvice({check, finding}: NumberedFinding, numbered: NumberedFinding[]): string {
+  const path = normalizePath(finding.location.file)
+  const numbers = numbered
+    .filter(
+      (other) =>
+        other.check.id === check.id &&
+        other.finding.source === finding.source &&
+        normalizePath(other.finding.location.file) === path,
+    )
+    .map((other) => other.number)
+  const entry = finding.source === 'agent' ? 'An agent entry' : 'A deterministic entry'
+  return [
+    'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone.',
+    `${entry} for ${check.id} in ${path} without code suppresses all ${countLabel(numbers.length, `${finding.source} finding`)} of that check in that file: ${listedNumbers(numbers)}.`,
+    `Add either entry to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand. Omit code only if you intend to suppress all of these findings.`,
+  ].join(' ')
 }

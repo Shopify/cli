@@ -831,17 +831,92 @@ describe('planSuppression', () => {
     })
   })
 
-  test('refuses a finding that no code can name alone', () => {
+  test('refuses a finding that no code can name alone, with the findings that an entry without code suppresses', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
       agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
+      // A finding in another file, which an entry for app/routes/orders.tsx doesn't suppress.
+      agentFinding('app/routes/billing.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
     ])
 
     expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
       status: 'refused',
       problem:
-        'every code from its lines also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx',
+        'every automatic code candidate also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx',
+      withoutCode: {findingCount: 2},
     })
+  })
+
+  test('counts every finding of the file for a finding without a line that no code can name alone', () => {
+    const fileLevel = {location: {file: 'app/db.server.ts'}, message: 'The query has no shop filter.', evidence: []}
+    const document = agentDocument('MISSING_TENANT_ISOLATION', [fileLevel, fileLevel, fileLevel])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+      status: 'refused',
+      problem:
+        'it has no line, so its entry would cover every finding of MISSING_TENANT_ISOLATION in app/db.server.ts, and there are several',
+      withoutCode: {findingCount: 3},
+    })
+  })
+
+  const evidenceAt = (line: number, text: string) => ({
+    location: {file: 'app/routes/orders.tsx', line},
+    code_excerpt: [{line, text}],
+  })
+  test.each([
+    [
+      'a short property segment in its code and message',
+      [
+        agentFinding('app/routes/orders.tsx', 1, ['console.log(db.id)'], 'id leaks'),
+        {
+          ...agentFinding('app/routes/orders.tsx', 1, ['console.log(db.id)'], 'logging unsafe'),
+          evidence: [evidenceAt(2, '// id leaks')],
+        },
+      ],
+      'id',
+    ],
+    [
+      'a line of its evidence',
+      [
+        {...agentFinding('app/routes/orders.tsx', 3, routeLines, 'm'), evidence: [evidenceAt(8, 'logger.info(')]},
+        {...agentFinding('app/routes/orders.tsx', 3, routeLines, 'm'), evidence: [evidenceAt(11, 'return null')]},
+      ],
+      'logger.info(',
+    ],
+  ])('reports the broader option without ruling out a manual selector from %s', (_name, findings, code) => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', findings)
+
+    const plan = planSuppression(targetOf(document, 0), decision, resultsOf(document), [])
+    // A person can write an entry with that code by hand, and it suppresses the finding alone.
+    const {checks, suppressions} = combineFindings({
+      deterministic: null,
+      agent: document,
+      suppressions: {
+        entries: [
+          {
+            source: 'agent',
+            check: 'CREDENTIAL_LOG_LEAKAGE',
+            kind: 'false-positive',
+            path: 'app/routes/orders.tsx',
+            code,
+            reason: 'The logger redacts tokens.',
+            configurations: ['shopify.app.toml'],
+          },
+        ],
+        resultsKey: 'shopify.app',
+      },
+    })
+
+    expect(plan).toStrictEqual({
+      status: 'refused',
+      problem:
+        'every automatic code candidate also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx',
+      withoutCode: {findingCount: 2},
+    })
+    expect(suppressions[0]).toMatchObject({status: 'matched', matched_finding_count: 1})
+    expect(checks[0]!.findings.filter(({disposition}) => disposition === 'suppressed')).toMatchObject([
+      {message: findings[0]!.message, evidence: findings[0]!.evidence},
+    ])
   })
 
   test('refuses a finding with a line but no captured code, and writes no code for a finding without a line', () => {
@@ -852,7 +927,8 @@ describe('planSuppression', () => {
 
     expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
       status: 'refused',
-      problem: 'the results hold no code for its line, so no entry can name it alone',
+      problem: 'the results hold no code for its line, so no automatic code selector is available',
+      withoutCode: {findingCount: 1},
     })
 
     const fileLevel = agentDocument('MISSING_TENANT_ISOLATION', [

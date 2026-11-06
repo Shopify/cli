@@ -64,20 +64,23 @@ function suppressionLines({saved, alreadySaved}: RecordedSuppressions): string[]
   ]
 }
 
-/** Each suppression that no entry could name alone, so it applies to this run's findings only. */
+/** Explain how to persist a suppression that the automatic candidates could not select. */
 function renderNotSavedSuppressions({notSaved}: RecordedSuppressions): void {
   renderWarning({
     headline: `${countLabel(notSaved.length, 'suppression')} couldn't be saved to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
-    body: `They're recorded in agent-findings.json, so they apply to these findings only, until the next record. To keep them, add an entry for each to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
+    body: `They're recorded in agent-findings.json, so they apply to these findings only, until the next record. To keep them, add entries to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand.`,
     customSections: [
       {
         body: {
           list: {
             items: notSaved.map(
-              ({checkId, location, problem}): TokenItem<InlineToken> => [
+              ({checkId, location, problem, withoutCode}): TokenItem<InlineToken> => [
                 {filePath: location.line === undefined ? location.file : `${location.file}:${location.line}`},
                 {subdued: `· ${checkId}`},
                 `\nIt can't be saved because ${problem}.`,
+                withoutCode
+                  ? `\nThe automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all ${countLabel(withoutCode.findingCount, 'agent finding')} of ${checkId} in that file. Omit code only if you intend to suppress all of these findings.`
+                  : '\nGive its entry a code that names it alone.',
               ],
             ),
           },

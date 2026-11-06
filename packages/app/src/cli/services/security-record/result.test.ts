@@ -180,13 +180,21 @@ describe('renderSecurityRecordResult', () => {
           {
             checkId: 'SCOPE_OVER_REQUEST',
             location: {file: 'shopify.app.toml', line: 4},
-            problem: 'every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+            problem:
+              'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+          },
+          {
+            checkId: 'MISSING_TENANT_ISOLATION',
+            location: {file: 'app/routes/orders.tsx', line: 3},
+            problem:
+              'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+            withoutCode: {findingCount: 2},
           },
         ],
       }
     }
 
-    test('say how many were saved and already saved, to review and commit the file, and which were not saved', async () => {
+    test('say how many were saved and already saved, to review and commit the file, and which were not saved and why', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
         const path = artifactPaths(appRoot).agentFindingsPath
@@ -204,11 +212,21 @@ describe('renderSecurityRecordResult', () => {
         expect(success).toContain('1 suppression was already in shopify.app-security.json.')
         expect(success).toContain('Review and commit shopify.app-security.json.')
         const warning = unstyled(output.warn())
-        expect(warning).toContain("1 suppression couldn't be saved to shopify.app-security.json.")
+        expect(warning).toContain("2 suppressions couldn't be saved to shopify.app-security.json.")
         expect(warning).toContain('shopify.app.toml:4 · SCOPE_OVER_REQUEST')
-        expect(warning.replace(/[│\s]+/g, ' ')).toContain(
-          "It can't be saved because every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml.",
+        expect(warning).toContain('app/routes/orders.tsx:3 · MISSING_TENANT_ISOLATION')
+        const text = warning.replace(/[│\s]+/g, ' ')
+        expect(text).toContain(
+          "They're recorded in agent-findings.json, so they apply to these findings only, until the next record. To keep them, add entries to shopify.app-security.json by hand.",
         )
+        expect(text).toContain(
+          "It can't be saved because every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml. Give its entry a code that names it alone.",
+        )
+        // The broader option must state that it also suppresses the other finding.
+        expect(text).toContain(
+          "It can't be saved because every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx. The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. Omit code only if you intend to suppress all of these findings.",
+        )
+        expect(text.match(/a code that names it alone/g)).toHaveLength(2)
         output.clear()
       })
     })
@@ -259,12 +277,19 @@ describe('renderSecurityRecordResult', () => {
               },
             ],
             alreadySavedCount: 1,
+            // The advice is in the text output only, so the JSON keeps its fields.
             notSaved: [
               {
                 checkId: 'SCOPE_OVER_REQUEST',
                 location: {filePath: resolve(appRoot, 'shopify.app.toml'), line: 4},
                 message:
-                  'every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+                  'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+              },
+              {
+                checkId: 'MISSING_TENANT_ISOLATION',
+                location: {filePath: resolve(appRoot, 'app', 'routes', 'orders.tsx'), line: 3},
+                message:
+                  'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
               },
             ],
           })

@@ -35,7 +35,7 @@ const suppressions = {
       checkId: 'MISSING_TENANT_ISOLATION',
       location: {filePath: routeFile, line: 40},
       message:
-        'every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+        'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
     },
   ],
 }
