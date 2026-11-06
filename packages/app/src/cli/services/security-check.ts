@@ -74,6 +74,8 @@ type ScannedSecurityCheck = {
     /** Checks with a deterministic issue at or above the level. Zero for `none`. */
     blockedChecks: number
   }
+  /** True when deterministic-findings.json was written without code excerpts, which would have made it too large. */
+  codeExcerptsOmitted?: boolean
 } & SecurityCheckResolution
 
 /**
@@ -166,7 +168,7 @@ export default async function securityCheck(
     return {kind: 'listed', ...resolution, ...listing}
   }
 
-  const execution = withReadableFindings(await dependencies.execute(scanOptions))
+  const {execution, codeExcerptsOmitted} = withReadableFindings(await dependencies.execute(scanOptions))
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resolution.resultsKey, {
     deterministicFindings: execution.deterministicFindings,
@@ -179,12 +181,18 @@ export default async function securityCheck(
     execution,
     artifacts,
     blocking: {level: options.blocking, blockedChecks: blockedCheckCount(execution, options.blocking)},
+    ...(codeExcerptsOmitted ? {codeExcerptsOmitted} : {}),
   }
 }
 
 /** Excerpts must not prevent a result from being read, or make live and stored results differ. */
-function withReadableFindings(execution: AppSecurityExecution): AppSecurityExecution {
-  if (encodedArtifactSize(execution.deterministicFindings) <= MAX_ARTIFACT_FILE_SIZE_BYTES) return execution
+function withReadableFindings(execution: AppSecurityExecution): {
+  execution: AppSecurityExecution
+  codeExcerptsOmitted: boolean
+} {
+  if (encodedArtifactSize(execution.deterministicFindings) <= MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    return {execution, codeExcerptsOmitted: false}
+  }
   const deterministicFindings = withoutCodeExcerpts(execution.deterministicFindings)
   if (encodedArtifactSize(deterministicFindings) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
     throw new AbortError(
@@ -193,16 +201,19 @@ function withReadableFindings(execution: AppSecurityExecution): AppSecurityExecu
     )
   }
   return {
-    ...execution,
-    deterministicFindings,
-    scan: {
-      ...execution.scan,
-      issues: execution.scan.issues.map(({code_excerpt: _excerpt, evidence, ...issue}) => ({
-        ...issue,
-        ...(evidence === undefined
-          ? {}
-          : {evidence: evidence.map(({code_excerpt: _evidenceExcerpt, ...item}) => item)}),
-      })),
+    execution: {
+      ...execution,
+      deterministicFindings,
+      scan: {
+        ...execution.scan,
+        issues: execution.scan.issues.map(({code_excerpt: _excerpt, evidence, ...issue}) => ({
+          ...issue,
+          ...(evidence === undefined
+            ? {}
+            : {evidence: evidence.map(({code_excerpt: _evidenceExcerpt, ...item}) => item)}),
+        })),
+      },
     },
+    codeExcerptsOmitted: true,
   }
 }

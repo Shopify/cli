@@ -5,8 +5,8 @@ import {MAX_EXCERPT_LINE_LENGTH, withoutCodeExcerpts} from '../results/code-exce
 import {translateFindingsDocument} from '../results/translate.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
-import {inTemporaryDirectory, symlink, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, mkdir, symlink, writeFile} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {BuildDeterministicFindingsOptions} from '../scan-artifact/index.js'
 import type {CheckExecution, DeterministicFindingsDocument, Issue, ScanResult} from '../types.js'
@@ -368,9 +368,17 @@ describe('code excerpts', () => {
   const committedSecrets = (document: DeterministicFindingsDocument) =>
     document.checks.find((check) => check.id === 'COMMITTED_SECRET')?.findings ?? []
 
+  const credentialLogLeaks = (document: DeterministicFindingsDocument) =>
+    document.checks.find((check) => check.id === 'CREDENTIAL_LOG_LEAKAGE')?.findings ?? []
+
   async function scanApp(directory: string, files: Record<string, string>) {
     await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "excerpts"\n')
-    await Promise.all(Object.entries(files).map(([path, content]) => writeFile(joinPath(directory, path), content)))
+    await Promise.all(
+      Object.entries(files).map(async ([path, content]) => {
+        await mkdir(dirname(joinPath(directory, path)))
+        await writeFile(joinPath(directory, path), content)
+      }),
+    )
     return buildDeterministicFindings(await scan(directory))
   }
 
@@ -443,26 +451,53 @@ describe('code excerpts', () => {
 
   test('a scan stores the flagged line and up to two lines either side, as the file has them', async () => {
     await inTemporaryDirectory(async (directory) => {
+      const logLine = 'console.log(session.accessToken)'
       const document = await scanApp(directory, {
-        'config.js': ['// one', '// two', `const token = "${token}"`, '// four', '// five', '// six', ''].join('\r\n'),
-        'first.js': [`export const token = "${token}"`, '// two', ''].join('\n'),
+        'package.json': JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}}),
+        'app/shopify.server.ts': 'export const shopify = {}\n',
+        'app/routes/log.tsx': ['// one', '// two', logLine, '// four', '// five', '// six', ''].join('\r\n'),
+        'app/routes/first.tsx': [logLine, '// two', ''].join('\n'),
       })
 
-      const [config, first] = committedSecrets(document)
-      expect(config!.location).toEqual({file: 'config.js', line: 3})
-      expect(config!.code_excerpt).toEqual([
+      const [first, log] = credentialLogLeaks(document)
+      expect(log!.location).toEqual({file: 'app/routes/log.tsx', line: 3})
+      expect(log!.code_excerpt).toEqual([
         {line: 1, text: '// one'},
         {line: 2, text: '// two'},
-        {line: 3, text: expect.stringMatching(/^const token = "shpa\[REDACTED:38\]"$/)},
+        {line: 3, text: logLine},
         {line: 4, text: '// four'},
         {line: 5, text: '// five'},
       ])
-      expect(first!.location).toEqual({file: 'first.js', line: 1})
+      expect(first!.location).toEqual({file: 'app/routes/first.tsx', line: 1})
       expect(first!.code_excerpt).toEqual([
-        {line: 1, text: expect.stringContaining('[REDACTED:38]')},
+        {line: 1, text: logLine},
         {line: 2, text: '// two'},
       ])
       expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
+    })
+  })
+
+  test('a scan stores only the flagged line of a committed secret', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const document = await scanApp(directory, {
+        'config.js': ['// one', '// two', `const token = "${token}"`, '// four', '// five', ''].join('\r\n'),
+      })
+
+      const [config] = committedSecrets(document)
+      expect(config!.location).toEqual({file: 'config.js', line: 3})
+      expect(config!.code_excerpt).toEqual([
+        {line: 3, text: expect.stringMatching(/^const token = "shpa\[REDACTED:38\]"$/)},
+      ])
+    })
+  })
+
+  test.each(['Secrets.json', 'config/secrets.yml'])('a scan stores no excerpt in the secret file %s', async (file) => {
+    await inTemporaryDirectory(async (directory) => {
+      const document = await scanApp(directory, {[file]: `{"token": "${token}"}\n`})
+
+      const [secret] = committedSecrets(document)
+      expect(secret!.location).toEqual({file, line: 1})
+      expect(secret).not.toHaveProperty('code_excerpt')
     })
   })
 
