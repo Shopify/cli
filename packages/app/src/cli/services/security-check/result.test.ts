@@ -95,6 +95,41 @@ function scannedWithSuppressions(
   return scanned({execution: committedSecretExecution, checks, suppressions, ...overrides})
 }
 
+/**
+ * A scan whose finding logs a session's token at line 1 of app/routes/index.ts, after a rename of the session, with a
+ * stale entry for the line before the rename: that finding is the entry's likely finding.
+ */
+function scannedAfterRename(overrides: Partial<ScannedSecurityCheck> = {}): ScannedSecurityCheck {
+  const [secretCheck] = committedSecretExecution.deterministicFindings.checks
+  const deterministicFindings = {
+    ...committedSecretExecution.deterministicFindings,
+    checks: [
+      {
+        ...secretCheck!,
+        id: 'CREDENTIAL_LOG_LEAKAGE',
+        snapshot: {...secretCheck!.snapshot, title: 'Credential reaches a log sink'},
+        findings: secretCheck!.findings.map((finding) => ({
+          ...finding,
+          location: {file: finding.location.file, line: 1},
+          code_excerpt: [{line: 1, text: 'console.log(currentSession.accessToken)'}],
+        })),
+      },
+    ],
+  }
+  const entry = {
+    ...fixtureEntry,
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    code: 'console.log(session.accessToken)',
+    reason: 'Only logged in local development.',
+  }
+  const {checks, suppressions} = combineFindings({
+    deterministic: deterministicFindings,
+    agent: null,
+    suppressions: {entries: [entry], resultsKey: 'shopify.app'},
+  })
+  return scanned({execution: {...committedSecretExecution, deterministicFindings}, checks, suppressions, ...overrides})
+}
+
 function listed(overrides: Partial<ListedSecurityCheck> = {}): ListedSecurityCheck {
   const checkSelection = overrides.selection ?? selection
   return {
@@ -541,6 +576,32 @@ describe('renderSecurityCheckResult for a scan', () => {
     )
     expect(report).toContain('Not evaluated: 1 entry (1 for a check without an executed result).')
     expect(process.exitCode).toBe(1)
+  })
+})
+
+describe('renderSecurityCheckResult for the likely finding of a stale entry', () => {
+  test("names its location and the review command, because check doesn't number findings", async () => {
+    const check = scannedAfterRename()
+
+    const {stderr} = await present(check)
+
+    expect(boxText(stderr)).toContain(
+      `Stale entries in shopify.app-security.json • suppressions[0]: deterministic CREDENTIAL_LOG_LEAKAGE in app/routes/index.ts · false positive Only logged in local development. Likely now the finding at app/routes/index.ts:1. To re-attach the entry to it, with its kind and reason, run \`${formatAppSecurityCommand(
+        check.commands.review,
+      )}\`, and pass the finding's number to --suppress.`,
+    )
+  })
+
+  test('reports it as JSON with its path and line, and no number', async () => {
+    const {result} = await presentJson(scannedAfterRename({selection: nativeSelection}))
+
+    expect((result as {suppressions: {entries: unknown[]}}).suppressions.entries).toMatchObject([
+      {
+        status: 'stale',
+        likelyPath: null,
+        likelyFinding: {filePath: nativePath('my-app/app/routes/index.ts'), line: 1, findingNumber: null},
+      },
+    ])
   })
 })
 

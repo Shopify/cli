@@ -1,6 +1,6 @@
 import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
 import {countLabel, listedNumbers} from './app-security-format.js'
-import {suppressionReasonProblem} from './app-security-suppressions.js'
+import {suppressionReasonProblem, type SuppressionDecision} from './app-security-suppressions.js'
 import {
   interactiveFindingAlert,
   renderAlert,
@@ -19,6 +19,8 @@ import type {
 import type {SuppressionKind} from './app-security-engine/index.js'
 import type {SecurityReviewAlert} from './security-review-output.js'
 import type {
+  FindingSuppressionResult,
+  ReattachmentOffer,
   InteractiveReviewOutcome,
   InteractiveReviewSession,
   InteractiveSecurityReview,
@@ -29,8 +31,8 @@ import type {
 
 type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
 
-/** What a person chooses for each finding of `review --interactive`. */
-export type InteractiveReviewAction = 'suppress' | 'continue' | 'quit'
+/** What a person chooses for each finding of `review --interactive`. `reattach` is offered for a stale entry's likely finding. */
+export type InteractiveReviewAction = 'reattach' | 'suppress' | 'continue' | 'quit'
 
 /** Whether `review --interactive` can prompt, and its prompts. Tests pass their own. */
 export interface InteractiveReviewDependencies {
@@ -137,15 +139,16 @@ async function reviewFindings(
   }
   for (const [position, numbered] of round.findings.entries()) {
     const progress = `${round.label} finding ${position + 1} of ${round.findings.length}`
-    renderAlert(interactiveFindingAlert(numbered, progress))
+    const offer = session.reattachments.get(numbered.number)
+    renderAlert(interactiveFindingAlert(numbered, progress, offer))
     // Each answer and save must finish before the next finding is offered.
     // eslint-disable-next-line no-await-in-loop
-    const action = await dependencies.selectAction(interactiveActionPrompt(numbered))
+    const action = await dependencies.selectAction(interactiveActionPrompt(numbered, offer))
     if (action === 'quit') return {...outcome, ending: 'quit'}
     if (action === 'continue') continue
 
     // eslint-disable-next-line no-await-in-loop
-    const decision = await suppressInteractively(session, dependencies, numbered)
+    const decision = await decideFinding(session, dependencies, numbered, action, offer)
     outcome.saved.push(...decision.saved)
     if (decision.declinedCompanionNumbers.length > 0) {
       outcome.declinedCompanions.push({
@@ -156,6 +159,25 @@ async function reviewFindings(
     if (decision.resultsChanged) return {...outcome, ending: 'results-changed'}
   }
   return outcome
+}
+
+/** Saves what the person chose for the finding: a new entry, a re-attached stale entry, or nothing. */
+async function decideFinding(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+  action: Exclude<InteractiveReviewAction, 'quit'>,
+  offer: ReattachmentOffer | undefined,
+): Promise<FindingDecision> {
+  if (action === 'suppress') return suppressInteractively(session, dependencies, numbered)
+  if (action === 'reattach' && offer) {
+    const finding = await session.reattach(numbered.number)
+    return savedWithCompanions(session, dependencies, numbered, finding, {
+      kind: offer.entry.kind,
+      reason: offer.entry.reason,
+    })
+  }
+  return NO_DECISION
 }
 
 /**
@@ -173,6 +195,20 @@ async function suppressInteractively(
   const decision = {kind, reason}
 
   const finding = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: false})
+  return savedWithCompanions(session, dependencies, numbered, finding, decision)
+}
+
+/**
+ * Shows what the save for the finding did. Then, when the finding has companions that `check --blocking` still counts,
+ * asks whether to suppress them with the decision's kind and reason, and saves them only on yes.
+ */
+async function savedWithCompanions(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+  finding: FindingSuppressionResult,
+  decision: SuppressionDecision,
+): Promise<FindingDecision> {
   if (finding.status === 'refused') return showRefusal(finding.refusal)
   const {saved, companionNumbers} = finding.savedSuppressions
   const supersededNumbers = supersededFindingNumbers(session.result)
@@ -202,15 +238,23 @@ function showRefusal(refusal: SuppressionRefusal): FindingDecision {
   return {...NO_DECISION, resultsChanged}
 }
 
-function interactiveReviewIntroAlert({findings, configuration}: InteractiveReviewSession): SecurityReviewAlert {
+function interactiveReviewIntroAlert({
+  findings,
+  configuration,
+  reattachments,
+}: InteractiveReviewSession): SecurityReviewAlert {
   if (findings.length === 0) {
     return {type: 'info', options: {headline: `No active findings to review for ${configuration}.`}}
   }
+  const reattach =
+    reattachments.size === 0
+      ? ''
+      : ` When a stale entry of ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} likely names a finding because its code was edited, you can also choose Re-attach: the entry gets the finding's code, and keeps its kind and reason.`
   return {
     type: 'info',
     options: {
       headline: `Reviewing ${countLabel(findings.length, 'active finding')} for ${configuration}, most severe first.`,
-      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop. The suppressions you save are kept when you quit.`,
+      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop.${reattach} The suppressions you save are kept when you quit.`,
     },
   }
 }
@@ -230,10 +274,25 @@ function supersededFindingsIntroAlert(findings: NumberedFinding[]): SecurityRevi
   }
 }
 
-function interactiveActionPrompt({number}: NumberedFinding): RenderSelectPromptOptions<InteractiveReviewAction> {
+function interactiveActionPrompt(
+  {number}: NumberedFinding,
+  offer: ReattachmentOffer | undefined,
+): RenderSelectPromptOptions<InteractiveReviewAction> {
+  const reattach = offer
+    ? [
+        {
+          // The finding's box shows the entry's kind, reason and code. A reason can be wider than the terminal, and the
+          // prompt redraws a row that the terminal wrapped as one line.
+          label: `Re-attach suppressions[${offer.entryIndex}]`,
+          value: 'reattach' as const,
+          key: 'r',
+        },
+      ]
+    : []
   return {
     message: `What do you want to do with finding #${number}?`,
     choices: [
+      ...reattach,
       {label: 'Suppress', value: 'suppress', key: 's'},
       {label: 'Continue', value: 'continue', key: 'c'},
       {label: 'Quit', value: 'quit', key: 'q'},

@@ -114,6 +114,15 @@ export function redactMatch(line: string, pattern: SecretPattern): string {
   return replaced.includes(secret) ? '[REDACTED LINE]' : replaced
 }
 
+// Every marker that redaction writes in place of a secret: `[REDACTED]`, `[REDACTED:<length>]` after the short prefix
+// that `redactMatch` keeps, `[REDACTED LINE]` and `[REDACTED TEXT]`.
+const REDACTION_MARKER = /\[REDACTED(?::\d+| LINE| TEXT)?\]/
+
+/** Whether a text holds a secret that `redactMatch`, `redactText` or `redactLines` redacted. */
+export function hasRedactedSecret(text: string): boolean {
+  return REDACTION_MARKER.test(text)
+}
+
 /** Redact every known secret occurrence from arbitrary scanner or agent text. */
 export function redactText(text: string): string {
   let redacted = text

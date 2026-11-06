@@ -4,6 +4,7 @@ import {scanDirectory as scan} from './scan-directory.js'
 import {recordAgentFindings} from '../checks/index.js'
 import {
   SHOPIFY_SECRET_PATTERNS,
+  hasRedactedSecret,
   isExcerptBlockedFile,
   redactLines,
   redactMatch,
@@ -157,6 +158,27 @@ describe('redaction never emits known secrets', () => {
 
     expect(redacted).toBe('[REDACTED LINE]')
     expect(redacted).not.toContain(keyBody)
+  })
+
+  test('hasRedactedSecret finds every redaction marker that the redaction writes, and nothing else', () => {
+    const keyBody = compose('base64-key-body-', 'must-never-leak')
+    const redactedTexts = [
+      ...samples.map(([, line]) => redactText(line)),
+      redactText(`${PROBES.pemHeader}${keyBody}`),
+      ...redactLines(`key = "${PROBES.pemHeader}\n${keyBody}"\nafter`).slice(0, 2),
+      redactMatch('no secret here', SHOPIFY_SECRET_PATTERNS[0]!),
+      // More distinct tokens than redaction's work cap.
+      redactText(
+        Array.from({length: 101}, (_, index) => compose('shp', `at_${index.toString(16).padStart(32, '0')}`)).join(' '),
+      ),
+    ]
+
+    expect(redactedTexts.filter((text) => !hasRedactedSecret(text))).toEqual([])
+    expect(redactedTexts).toEqual(expect.arrayContaining(['[REDACTED LINE]', '[REDACTED]', '[REDACTED TEXT]']))
+    expect(redactText(`const k = "${PROBES.shopifyToken}";`)).toMatch(/shpa\[REDACTED:38\]/)
+    for (const text of ['const k = process.env.KEY', 'REDACTED', '[REDACTED:]', 'shpa REDACTED 38']) {
+      expect(hasRedactedSecret(text), text).toBe(false)
+    }
   })
 
   test('does not leak a detected secret into the stored deterministic findings', async () => {

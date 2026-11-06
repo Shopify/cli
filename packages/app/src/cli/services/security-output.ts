@@ -83,7 +83,9 @@ export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
     activeIssues,
     groups: groupIssues(activeIssues),
     suppressed: suppressedFindingsView(input.checks, input.suppressions),
-    unappliedEntries: unappliedEntriesView(input.suppressions),
+    unappliedEntries: unappliedEntriesView(input.suppressions, {
+      review: formatAppSecurityCommand(input.commands.review),
+    }),
   }
   const {groups} = findings
 

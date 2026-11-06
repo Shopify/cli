@@ -6,6 +6,7 @@ import {
   SUPPRESSION_KIND_LABEL,
   suppressedFindingsView,
   unappliedEntriesView,
+  type LikelyFindingCommands,
   type SuppressedFindingsView,
   type UnappliedEntriesView,
 } from './security-suppressions-output.js'
@@ -32,6 +33,7 @@ import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenIt
 import type {
   InteractiveReviewOutcome,
   NumberedFinding,
+  ReattachmentOffer,
   SavedReviewSuppressions,
   SecurityReviewResult,
 } from './security-review.js'
@@ -158,6 +160,7 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
   // Not every entry's check is in the results, so the entries are narrowed by the selected IDs, not by the checks.
   const unappliedEntries = unappliedEntriesView(
     filter ? suppressions.filter((result) => filter.checkIds.includes(result.entry.check)) : suppressions,
+    likelyFindingCommands(input),
   )
 
   return [
@@ -175,6 +178,31 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
 type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
 
 /**
+ * The review command, and the `--suppress` command, with the results digest, that re-attaches a stale entry to its
+ * likely finding: the finding's number is all that it needs.
+ */
+function likelyFindingCommands({result, commands}: SecurityReviewPresenterInput): LikelyFindingCommands {
+  const digestArgs = result.resultsDigest === null ? [] : ['--results-digest', result.resultsDigest]
+  return {
+    review: formatAppSecurityCommand(commands.review),
+    reattach: {
+      findingNumbers: result.likelyFindingNumbers,
+      command: (findingNumber) =>
+        formatAppSecurityCommand({
+          ...commands.review,
+          args: [...commands.review.args, '--suppress', String(findingNumber), ...digestArgs],
+        }),
+    },
+  }
+}
+
+const SAVED_CHANGE_LABEL: Record<SavedSuppression['change'], string> = {
+  added: 'added',
+  'configuration-added': 'configuration added',
+  'code-replaced': 're-attached',
+}
+
+/**
  * The numbers of the superseded findings of every check. An entry doesn't change a finding's disposition, so a
  * superseded finding stays superseded after its entry is saved.
  */
@@ -189,21 +217,43 @@ export function supersededFindingNumbers(result: SecurityReviewResult): Readonly
  * finding, a last line says why it needs an entry.
  */
 function savedEntrySection(
-  {index, change, entry, findingNumber}: NumberedSavedSuppression,
+  {index, change, entry, previous, findingNumber}: NumberedSavedSuppression,
   supersededNumbers: ReadonlySet<number>,
 ): AlertCustomSection {
   return {
-    title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
+    title: `suppressions[${index}] · finding ${findingNumber} · ${SAVED_CHANGE_LABEL[change]}`,
     body: [
       `${entry.source} ${entry.check} in`,
       {filePath: entry.path},
-      {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
-      ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
-      {subdued: `\nReason: ${entry.reason}`},
+      ...(previous ? reattachedEntryLines(entry, previous) : savedEntryLines(entry)),
       {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
       ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
     ],
   }
+}
+
+function savedEntryLines(entry: SavedSuppression['entry']): Token[] {
+  return [
+    {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
+    ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
+    {subdued: `\nReason: ${entry.reason}`},
+  ]
+}
+
+/** What re-attaching changed: the old and new code, and whether the kind and the reason were kept or replaced. */
+function reattachedEntryLines(
+  entry: SavedSuppression['entry'],
+  previous: NonNullable<SavedSuppression['previous']>,
+): Token[] {
+  const kindChange = entry.kind === previous.kind ? 'kept' : `replaced, it was ${SUPPRESSION_KIND_LABEL[previous.kind]}`
+  const reasonKept = entry.reason === previous.reason
+  return [
+    {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]} (${kindChange})`},
+    ...(previous.code === undefined ? [] : [{subdued: `\nOld code: ${previous.code}`}]),
+    ...(entry.code === undefined ? [] : [{subdued: `\nNew code: ${entry.code}`}]),
+    {subdued: `\nReason (${reasonKept ? 'kept' : 'replaced'}): ${entry.reason}`},
+    ...(reasonKept ? [] : [{subdued: `\nOld reason: ${previous.reason}`}]),
+  ]
 }
 
 function supersededEntryLine(findingNumber: number): string {
@@ -248,10 +298,14 @@ function savedSuppressionsAlert(
   }
 }
 
-/** The finding in full, with its evidence and reasoning, in the box of its check. */
+/**
+ * The finding in full, with its evidence and reasoning, in the box of its check. When a stale entry likely names it,
+ * a last section shows that entry, with its old code and the code that Re-attach gives it.
+ */
 export function interactiveFindingAlert(
   {number, check, finding}: NumberedFinding,
   progress: string,
+  offer: ReattachmentOffer | undefined,
 ): SecurityReviewAlert {
   return {
     type: check.severity === 'high' ? 'error' : 'warning',
@@ -259,8 +313,20 @@ export function interactiveFindingAlert(
       headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
       body: {subdued: progress},
       ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
-      customSections: [findingSection(finding, number, true)],
+      customSections: [findingSection(finding, number, true), ...(offer ? [reattachmentSection(offer)] : [])],
     },
+  }
+}
+
+function reattachmentSection({entryIndex, entry, code}: ReattachmentOffer): AlertCustomSection {
+  return {
+    title: `Stale entry suppressions[${entryIndex}] · ${SUPPRESSION_KIND_LABEL[entry.kind]}`,
+    body: [
+      `Its code matches no finding, and the code of this finding is similar. Re-attach gives the entry this finding's code, and keeps its kind and reason.`,
+      {subdued: `\nReason: ${entry.reason}`},
+      ...(entry.code === undefined ? [] : [{subdued: `\nOld code: ${entry.code}`}]),
+      {subdued: `\nNew code: ${code}`},
+    ],
   }
 }
 

@@ -1,7 +1,12 @@
-import {findingWithExcerpt, storedAgentDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
+import {
+  deterministicFindingsDocument,
+  findingWithExcerpt,
+  storedAgentDocument,
+} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {
   missingSuppressionPaths,
   parseSuppressionFlags,
+  planReattachment,
   planSuppression,
   readAppSecuritySuppressions,
   saveAppSecuritySuppressions,
@@ -18,7 +23,6 @@ import {
   type DeterministicFindingsDocument,
   type StoredFinding,
 } from './app-security-engine/index.js'
-import {deterministicFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
   chmod,
@@ -680,22 +684,22 @@ describe('parseSuppressionFlags', () => {
     expect(parseSuppressionFlags({kind: 'false-positive', reason: 'A test fixture.'})).toStrictEqual({
       ok: true,
       decision: {kind: 'false-positive', reason: 'A test fixture.'},
+      missing: [],
     })
     expect(parseSuppressionFlags({kind: 'accepted-risk', reason: ' Kept for now. '})).toStrictEqual({
       ok: true,
       decision: {kind: 'accepted-risk', reason: ' Kept for now. '},
+      missing: [],
     })
   })
 
   test.each([
-    ['a missing kind', {kind: undefined, reason: 'r'}, ['--kind: required (false-positive or accepted-risk)']],
     ['an unknown kind', {kind: 'wont_fix', reason: 'r'}, ['--kind: must be false-positive or accepted-risk']],
     [
       'a kind spelled with an underscore',
       {kind: 'false_positive', reason: 'r'},
       ['--kind: must be false-positive or accepted-risk'],
     ],
-    ['a missing reason', {kind: 'false-positive', reason: undefined}, ['--reason: required']],
     ['an empty reason', {kind: 'false-positive', reason: ''}, ['--reason: must not be empty']],
     ['a reason of only spaces', {kind: 'false-positive', reason: '  '}, ['--reason: must not be empty']],
     [
@@ -703,14 +707,31 @@ describe('parseSuppressionFlags', () => {
       {kind: 'false-positive', reason: 'x'.repeat(4_001)},
       ['--reason: must be at most 4000 characters'],
     ],
-    [
-      'both flags missing',
-      {kind: undefined, reason: undefined},
-      ['--kind: required (false-positive or accepted-risk)', '--reason: required'],
-    ],
+    ['an empty reason without a kind', {kind: undefined, reason: ''}, ['--reason: must not be empty']],
   ])('rejects %s with the words of the file validation', (_name, flags, errors) => {
     expect(parseSuppressionFlags(flags)).toStrictEqual({ok: false, errors})
   })
+
+  test.each([
+    [
+      'a missing kind',
+      {kind: undefined, reason: 'r'},
+      {reason: 'r'},
+      ['--kind: required (false-positive or accepted-risk)'],
+    ],
+    ['a missing reason', {kind: 'false-positive', reason: undefined}, {kind: 'false-positive'}, ['--reason: required']],
+    [
+      'both flags missing',
+      {kind: undefined, reason: undefined},
+      {},
+      ['--kind: required (false-positive or accepted-risk)', '--reason: required'],
+    ],
+  ])(
+    'leaves out %s, with the words of the file validation for a new entry, which needs it',
+    (_name, flags, decision, missing) => {
+      expect(parseSuppressionFlags(flags)).toStrictEqual({ok: true, decision, missing})
+    },
+  )
 })
 
 describe('suppressionConfiguration', () => {
@@ -1122,6 +1143,85 @@ describe('planSuppression', () => {
   })
 })
 
+describe('planReattachment', () => {
+  // The finding after a rename of `session` on its flagged line, and the stale entry that named the line before.
+  const renamedLines = routeLines.map((line) => line.replace('console.log(session.', 'console.log(currentSession.'))
+  const staleEntry = {
+    source: 'agent',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'accepted-risk',
+    path: 'app/routes/orders.tsx',
+    code: 'console.log(session.accessToken)',
+    reason: 'The logger redacts tokens in production.',
+    configurations: ['shopify.app.staging.toml', 'shopify.app.toml'],
+  } as const satisfies AppSecuritySuppression
+  const kept = {kind: staleEntry.kind, reason: staleEntry.reason}
+
+  test('gives the entry the code of a new entry for the finding, and keeps its kind, reason and configurations', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, renamedLines.slice(0, 5), 'The access token reaches a log.'),
+    ])
+    const newEntry = planSuppression(targetOf(document, 0), decision, resultsOf(document), [staleEntry])
+
+    const plan = planReattachment(targetOf(document, 0), 0, kept, resultsOf(document), [staleEntry])
+
+    expect(newEntry).toMatchObject({change: {type: 'add', entry: {code: 'console.log(currentSession.accessToken)'}}})
+    expect(plan).toStrictEqual({
+      status: 'change',
+      change: {
+        type: 'replace-code',
+        index: 0,
+        code: 'console.log(currentSession.accessToken)',
+        kind: 'accepted-risk',
+        reason: 'The logger redacts tokens in production.',
+      },
+    })
+  })
+
+  test('widens the code as for a new entry when the flagged line also names another finding', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, renamedLines, 'The access token reaches a log.'),
+      agentFinding('app/routes/orders.tsx', 11, renamedLines, 'The access token reaches a log.'),
+    ])
+
+    const plan = planReattachment(targetOf(document, 1), 0, kept, resultsOf(document), [staleEntry])
+
+    expect(plan).toMatchObject({
+      status: 'change',
+      change: {
+        type: 'replace-code',
+        code: 'session.accessToken, ) console.log(currentSession.accessToken) return null',
+      },
+    })
+  })
+
+  test("sets the kind and reason that replace the entry's own", () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, renamedLines.slice(0, 5), 'The access token reaches a log.'),
+    ])
+
+    expect(planReattachment(targetOf(document, 0), 0, decision, resultsOf(document), [staleEntry])).toMatchObject({
+      change: {type: 'replace-code', kind: 'false-positive', reason: 'The logger redacts tokens.'},
+    })
+  })
+
+  test('refuses a finding that no code names alone, as for a new entry, and changes nothing', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, renamedLines.slice(0, 5), 'The access token reaches a log.'),
+      agentFinding('app/routes/orders.tsx', 3, renamedLines.slice(0, 5), 'The access token reaches a log.'),
+    ])
+    const refusal = {
+      status: 'refused',
+      problem:
+        'every automatic code candidate also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx',
+      withoutCode: {findingCount: 2},
+    }
+
+    expect(planReattachment(targetOf(document, 0), 0, kept, resultsOf(document), [staleEntry])).toStrictEqual(refusal)
+    expect(planSuppression(targetOf(document, 0), kept, resultsOf(document), [staleEntry])).toStrictEqual(refusal)
+  })
+})
+
 describe('saveAppSecuritySuppressions', () => {
   const newEntry: AppSecuritySuppression = {
     source: 'deterministic',
@@ -1192,6 +1292,74 @@ describe('saveAppSecuritySuppressions', () => {
         },
         {index: 2, change: 'added', entry: newEntry},
       ])
+    })
+  })
+
+  test('re-attaches an entry by replacing its code in place, and leaves every other byte of the file as it is', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      // The file can't hold unknown keys, so `$schema` and an entry with its keys in another order stand for them.
+      const original = {
+        $schema: './shopify.app-security.schema.json',
+        schema_version: 1,
+        suppressions: [agentEntry, Object.fromEntries(Object.entries(deterministicEntry).reverse())],
+      }
+      const originalText = `${JSON.stringify(original, null, 2)}\n`
+      await writeSuppressionsFile(directory, originalText)
+      const code = 'const accessToken = "shpa[REDACTED:38]"'
+      const {kind, reason} = deterministicEntry
+
+      const {saved} = await saveAppSecuritySuppressions(
+        directory,
+        [{type: 'replace-code', index: 1, code, kind, reason}],
+        [agentEntry, deterministicEntry],
+      )
+
+      const text = await readFile(appSecuritySuppressionsPath(directory))
+      const oldCode = JSON.stringify(deterministicEntry.code)
+      expect(originalText.split(oldCode)).toHaveLength(2)
+      expect(text).toBe(originalText.replace(oldCode, JSON.stringify(code)))
+      expect(saved).toStrictEqual([
+        {
+          index: 1,
+          change: 'code-replaced',
+          entry: {...deterministicEntry, code},
+          previous: {code: deterministicEntry.code, kind, reason},
+        },
+      ])
+      await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([
+        agentEntry,
+        {...deterministicEntry, code},
+      ])
+    })
+  })
+
+  test('re-attaches an entry with the kind and reason that replace its own, in place', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const originalText = suppressionsJson([deterministicEntry])
+      await writeSuppressionsFile(directory, originalText)
+      const code = 'const accessToken = "shpa[REDACTED:38]"'
+
+      const {saved} = await saveAppSecuritySuppressions(
+        directory,
+        [{type: 'replace-code', index: 0, code, kind: 'accepted-risk', reason: 'Rotated every week.'}],
+        [deterministicEntry],
+      )
+
+      await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(
+        `${JSON.stringify(
+          {
+            schema_version: 1,
+            suppressions: [{...deterministicEntry, kind: 'accepted-risk', code, reason: 'Rotated every week.'}],
+          },
+          null,
+          2,
+        )}\n`,
+      )
+      expect(saved[0]).toMatchObject({
+        change: 'code-replaced',
+        entry: {kind: 'accepted-risk', code, reason: 'Rotated every week.'},
+        previous: {code: deterministicEntry.code, kind: deterministicEntry.kind, reason: deterministicEntry.reason},
+      })
     })
   })
 
@@ -1316,6 +1484,26 @@ describe('saveAppSecuritySuppressions', () => {
       }
       await expect(firstResult).resolves.toMatchObject({saved: [{entry: newEntry}]})
       await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([newEntry])
+      await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
+    })
+  })
+
+  test.each(['reorder', 'delete'] as const)('refuses a stale replacement index after %s', async (change) => {
+    await inTemporaryDirectory(async (directory) => {
+      const expected = [deterministicEntry, agentEntry]
+      const changed = change === 'reorder' ? [...expected].reverse() : [agentEntry]
+      const text = suppressionsJson(changed)
+      await writeSuppressionsFile(directory, text)
+
+      await expect(
+        saveAppSecuritySuppressions(
+          directory,
+          [{type: 'replace-code', index: 0, code: 'replacement', kind: 'accepted-risk', reason: 'Approved'}],
+          expected,
+        ),
+      ).rejects.toMatchObject({code: 'suppressions-file-changed'})
+
+      await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(text)
       await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
     })
   })

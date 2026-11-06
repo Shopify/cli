@@ -16,6 +16,7 @@ import {
   type FindingSuppressionResult,
   type InteractiveReviewSession,
   type InteractiveSuppressionRequest,
+  type ReattachmentOffer,
 } from './security-review.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
@@ -37,7 +38,7 @@ import type {
   RenderTextPromptOptions,
 } from '@shopify/cli-kit/node/ui'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
-import type {AppSecuritySuppression} from './app-security-suppressions.js'
+import type {AppSecuritySuppression, SavedSuppression} from './app-security-suppressions.js'
 import type {
   AgentFindingsDocument,
   DeterministicFindingsDocument,
@@ -677,6 +678,59 @@ describe('buildSecurityReviewAlerts', () => {
       expect(withoutResult?.options.headline).toBe('1 entry in shopify.app-security.json not evaluated.')
     })
 
+    test('names the likely finding of a stale entry by its number, with the --suppress command that re-attaches it', () => {
+      // An edit of the api_version line made the entry stale: its code is now on no line, but most of its words are.
+      const edited: Sources = {
+        ...both,
+        deterministic: {
+          ...deterministicFindingsDocument,
+          checks: deterministicFindingsDocument.checks.map((check) =>
+            check.id === 'EOL_API_VERSION'
+              ? {
+                  ...check,
+                  findings: check.findings.map((finding) => ({
+                    ...finding,
+                    message: 'api_version 2024-04 is past its support window.',
+                    code_excerpt: [{line: 8, text: 'api_version = "2024-04"'}],
+                  })),
+                }
+              : check,
+          ),
+        },
+      }
+      const staleEntry: SuppressionEntry = {
+        source: 'deterministic',
+        check: 'EOL_API_VERSION',
+        kind: 'accepted-risk',
+        path: 'shopify.app.toml',
+        code: 'api_version = "2024-01"',
+        reason: 'The upgrade ships with the next release.',
+        configurations: ['shopify.app.toml'],
+      }
+      const input = presenterInput(edited, {entries: [staleEntry]})
+      const reattach = formatAppSecurityCommand({
+        ...commands.review,
+        args: [...commands.review.args, '--suppress', '6', '--results-digest', input.result.resultsDigest!],
+      })
+
+      const box = entriesBox(input)
+
+      expect(reattach).toMatch(/ --suppress 6 --results-digest [0-9a-f]{12}$/)
+      expect(box?.options.customSections?.[0]).toMatchObject({
+        body: {
+          list: {
+            items: [
+              expect.arrayContaining([
+                '\nLikely now finding 6, at',
+                {filePath: 'shopify.app.toml:8'},
+                {command: reattach},
+              ]),
+            ],
+          },
+        },
+      })
+    })
+
     test('is left out without a file, and when every entry matched', () => {
       expect(entriesBox(inputWithEntries([]))).toBeUndefined()
       expect(entriesBox(inputWithEntries([entryResult(0, 'matched')]))).toBeUndefined()
@@ -1157,6 +1211,49 @@ describe('renderSecurityReview', () => {
     expect(rendered).not.toContain('The agent result supersedes')
   })
 
+  test('renders a re-attached entry with its old and new code, and the kind and reason it kept or replaced', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const entry: AppSecuritySuppression = {
+      source: 'deterministic',
+      check: 'EOL_API_VERSION',
+      kind: 'accepted-risk',
+      path: 'shopify.app.toml',
+      code: 'api_version = "2024-04"',
+      reason: 'The upgrade ships with the next release.',
+      configurations: ['shopify.app.toml'],
+    }
+    const savedSuppressions = (previous: NonNullable<SavedSuppression['previous']>) => ({
+      path: `${appRoot}/shopify.app-security.json`,
+      saved: [{index: 0, change: 'code-replaced' as const, entry, previous, findingNumber: 6}],
+      companionNumbers: [],
+    })
+
+    renderSecurityReview({
+      ...presenterInput(both),
+      savedSuppressions: savedSuppressions({code: 'api_version = "2024-01"', kind: entry.kind, reason: entry.reason}),
+    })
+    const kept = unstyled(output.info()).replace(/[│\s]+/g, ' ')
+    output.clear()
+    renderSecurityReview({
+      ...presenterInput(both),
+      savedSuppressions: savedSuppressions({
+        code: 'api_version = "2024-01"',
+        kind: 'false-positive',
+        reason: 'Not a real app.',
+      }),
+    })
+    const replaced = unstyled(output.info()).replace(/[│\s]+/g, ' ')
+
+    expect(kept).toContain(
+      'Saved 1 suppression to shopify.app-security.json. suppressions[0] · finding 6 · re-attached deterministic EOL_API_VERSION in shopify.app.toml Kind: accepted risk (kept) Old code: api_version = "2024-01" New code: api_version = "2024-04" Reason (kept): The upgrade ships with the next release. Configurations: shopify.app.toml',
+    )
+    expect(replaced).toContain(
+      'Kind: accepted risk (replaced, it was false positive) Old code: api_version = "2024-01" New code: api_version = "2024-04" Reason (replaced): The upgrade ships with the next release. Old reason: Not a real app. Configurations: shopify.app.toml',
+    )
+    expect(kept).toContain('Next steps • Review and commit shopify.app-security.json.')
+  })
+
   test('says that check --blocking counts a saved superseded finding, which is why it has an entry', () => {
     const output = mockAndCaptureOutput()
     output.clear()
@@ -1339,10 +1436,18 @@ const resultsChanged: FindingSuppressionResult = {
  * findings that check --blocking counts are 1 and 3 (both high, CREDENTIAL_LOG_LEAKAGE). `suppress` answers each request
  * with the next of `answers`.
  */
-function interactiveSession(answers: FindingSuppressionResult[] = []) {
+function interactiveSession(
+  answers: FindingSuppressionResult[] = [],
+  options: {reattachments?: ReadonlyMap<number, ReattachmentOffer>} = {},
+) {
   const {result} = presenterInput(both)
   const numbered = numberFindings(result.allChecks)
   const queue = [...answers]
+  const nextAnswer = () => {
+    const answer = queue.shift()
+    if (!answer) throw new Error('Unexpected save')
+    return answer
+  }
   return {
     result,
     configuration: 'shopify.app.toml',
@@ -1350,11 +1455,9 @@ function interactiveSession(answers: FindingSuppressionResult[] = []) {
     supersededFindings: numbered.filter(
       ({finding}) => finding.disposition === 'superseded' && finding.suppressed_by === undefined,
     ),
-    suppress: vi.fn(async (_request: InteractiveSuppressionRequest) => {
-      const answer = queue.shift()
-      if (!answer) throw new Error('Unexpected save')
-      return answer
-    }),
+    suppress: vi.fn(async (_request: InteractiveSuppressionRequest) => nextAnswer()),
+    reattachments: options.reattachments ?? new Map(),
+    reattach: vi.fn(async (_findingNumber: number) => nextAnswer()),
   } satisfies InteractiveReviewSession
 }
 
@@ -1510,6 +1613,75 @@ describe('interactiveSecurityReview', () => {
     expect(rendered).toContain(
       'Saved 1 suppression to shopify.app-security.json. suppressions[0] · finding 6 · added deterministic EOL_API_VERSION in shopify.app.toml Kind: accepted risk Code: api_version = "2024-01" Reason: The upgrade ships with the next release. Configurations: shopify.app.toml',
     )
+  })
+
+  test('offers Re-attach for the likely finding of a stale entry, and re-attaches it with its kind and reason', async () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const staleEntry = {...eolApiVersionEntry, code: 'api_version = "2023-10"'}
+    const reattached = {
+      status: 'saved',
+      savedSuppressions: {
+        path: `${appRoot}/shopify.app-security.json`,
+        saved: [
+          {
+            index: 0,
+            change: 'code-replaced',
+            entry: eolApiVersionEntry,
+            previous: {code: 'api_version = "2023-10"', kind: staleEntry.kind, reason: staleEntry.reason},
+            findingNumber: 6,
+          },
+        ],
+        companionNumbers: [],
+      },
+    } as const satisfies FindingSuppressionResult
+    const session = interactiveSession([reattached], {
+      reattachments: new Map([[6, {entryIndex: 0, entry: staleEntry, code: 'api_version = "2024-01"'}]]),
+    })
+    const prompts = scriptedPrompts({actions: ['continue', 'continue', 'reattach', 'quit']})
+
+    const outcome = await interactiveSecurityReview(prompts)(session)
+
+    expect(session.reattach).toHaveBeenCalledExactlyOnceWith(6)
+    expect(session.suppress).not.toHaveBeenCalled()
+    expect(prompts.selectKind).not.toHaveBeenCalled()
+    expect(prompts.enterReason).not.toHaveBeenCalled()
+    expect(outcome).toStrictEqual({saved: reattached.savedSuppressions.saved, declinedCompanions: [], ending: 'quit'})
+    const choices = prompts.selectAction.mock.calls.map(([prompt]) => prompt.choices.map(({label}) => label))
+    expect(choices[0]).toStrictEqual(['Suppress', 'Continue', 'Quit'])
+    expect(choices[2]).toStrictEqual(['Re-attach suppressions[0]', 'Suppress', 'Continue', 'Quit'])
+    expect(prompts.selectAction.mock.calls[2]![0].choices[0]).toMatchObject({value: 'reattach', key: 'r'})
+    const rendered = unstyled(output.info()).replace(/[│\s]+/g, ' ')
+    const findingBox = unstyled(output.warn()).replace(/[│\s]+/g, ' ')
+    expect(rendered).toContain('you can also choose Re-attach')
+    expect(findingBox).toContain(
+      'Stale entry suppressions[0] · accepted risk Its code matches no finding, and the code of this finding is similar. Re-attach gives the entry this finding\'s code, and keeps its kind and reason. Reason: The upgrade ships with the next release. Old code: api_version = "2023-10" New code: api_version = "2024-01"',
+    )
+    expect(rendered).toContain(
+      'suppressions[0] · finding 6 · re-attached deterministic EOL_API_VERSION in shopify.app.toml Kind: accepted risk (kept) Old code: api_version = "2023-10" New code: api_version = "2024-01" Reason (kept): The upgrade ships with the next release.',
+    )
+  })
+
+  test('re-attaches an agent entry, then asks for its companions with the kind and reason the entry kept', async () => {
+    mockAndCaptureOutput()
+    const staleEntry = {...credentialEntry, code: 'console.log(session.idToken)'}
+    const session = interactiveSession(
+      [
+        savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}], [1]),
+        savedResult([{index: 1, entry: companionEntry, findingNumber: 1}]),
+      ],
+      {reattachments: new Map([[2, {entryIndex: 0, entry: staleEntry, code: 'console.log(session.accessToken)'}]])},
+    )
+    const prompts = scriptedPrompts({actions: ['reattach', 'quit'], companions: [true]})
+
+    await interactiveSecurityReview(prompts)(session)
+
+    expect(session.reattach).toHaveBeenCalledExactlyOnceWith(2)
+    expect(session.suppress).toHaveBeenCalledExactlyOnceWith({
+      findingNumber: 2,
+      decision: {kind: 'false-positive', reason: 'The logger redacts tokens.'},
+      includeSuperseded: true,
+    })
   })
 
   test('requires a reason: the reason prompt refuses an empty one, and one that is too long', async () => {
@@ -1804,11 +1976,11 @@ describe('interactiveSecurityReview in a terminal', () => {
    * The real cli-kit prompts, drawn on a fake terminal: `type` waits until the last frame shows `text`, then types
    * `keys` on stdin.
    */
-  function terminal() {
+  function terminal(columns = 120) {
     const stdin = new Stdin()
     const frames: string[] = []
     const stdout = Object.assign(new EventEmitter(), {
-      columns: 120,
+      columns,
       rows: 40,
       write: (frame: string) => frames.push(frame) > 0,
     })
@@ -1832,7 +2004,7 @@ describe('interactiveSecurityReview in a terminal', () => {
       await waitForInputsToBeReady()
       keys.forEach((key) => stdin.write(key))
     }
-    return {prompts, type}
+    return {prompts, type, frames}
   }
 
   test('suppresses a finding after it refuses an empty reason, then quits', async () => {
@@ -1858,6 +2030,54 @@ describe('interactiveSecurityReview in a terminal', () => {
       decision: {kind: 'false-positive', reason: 'The logger redacts tokens.'},
       includeSuperseded: false,
     })
+  })
+
+  test('fits each choice on one row of an 80-column terminal with a 500-character reason, so Down and Up draw the question once', async () => {
+    mockAndCaptureOutput()
+    const {prompts, type, frames} = terminal(80)
+    const longEntry = {...credentialEntry, reason: 'The logger redacts tokens. '.repeat(19).slice(0, 500)}
+    const session = interactiveSession([savedResult([{index: 0, entry: longEntry, findingNumber: 2}])], {
+      reattachments: new Map([[2, {entryIndex: 0, entry: longEntry, code: 'console.log(session.accessToken)'}]]),
+    })
+
+    const review = interactiveSecurityReview(prompts)(session)
+    await type('> (r) Re-attach suppressions[0] (s) Suppress', '\u001B[B')
+    await type('(r) Re-attach suppressions[0] > (s) Suppress', '\u001B[A')
+    await type('> (r) Re-attach suppressions[0] (s) Suppress', 'q')
+    await review
+
+    // The prompt erases one row for each line it drew, so a line wider than the terminal leaves a row behind.
+    const promptFrames = frames.map((frame) => unstyled(frame)).filter((frame) => frame.includes('finding #2?'))
+    const afterUp = promptFrames.findLast((frame) => frame.includes('>  (r)'))!
+    const choiceRows = afterUp.split('\n').filter((row) => /\((?:r|s|c|q)\)/.test(row))
+    expect(promptFrames.length).toBeGreaterThanOrEqual(3)
+    expect(promptFrames.flatMap((frame) => frame.split('\n')).filter((row) => row.length > 80)).toStrictEqual([])
+    expect(
+      new Set(promptFrames.map((frame) => frame.split('What do you want to do with finding #2?').length)),
+    ).toStrictEqual(new Set([2]))
+    expect(choiceRows).toStrictEqual([
+      '>  (r) Re-attach suppressions[0]',
+      '   (s) Suppress',
+      '   (c) Continue',
+      '   (q) Quit',
+    ])
+  })
+
+  test('re-attaches a stale entry with the r key, asks for no kind or reason, then quits', async () => {
+    mockAndCaptureOutput()
+    const {prompts, type} = terminal()
+    const staleEntry = {...credentialEntry, code: 'console.log(session.idToken)'}
+    const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}])], {
+      reattachments: new Map([[2, {entryIndex: 0, entry: staleEntry, code: 'console.log(session.accessToken)'}]]),
+    })
+
+    const review = interactiveSecurityReview(prompts)(session)
+    await type('> (r) Re-attach suppressions[0] (s) Suppress', 'r')
+    await type('What do you want to do with finding #5?', 'q')
+
+    await expect(review).resolves.toMatchObject({saved: [{index: 0, findingNumber: 2}], ending: 'quit'})
+    expect(session.reattach).toHaveBeenCalledExactlyOnceWith(2)
+    expect(session.suppress).not.toHaveBeenCalled()
   })
 
   test('leaves the companion when the question is answered with Enter, which is no', async () => {
