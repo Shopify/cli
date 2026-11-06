@@ -179,6 +179,15 @@ describe('code excerpts never hold a secret', () => {
   const databasePassword = compose('FAKE-db-', 'password-1234')
   const fineGrainedGitHubToken = compose('github_', `pat_11FAKEFAKE0${ALNUM}`)
 
+  test('redacts a value assigned to a secret-like name whole when it holds a line separator', () => {
+    const lines = [`password: ${databasePassword}\u2028more`, `token: "${databasePassword}\u2028more"`]
+
+    expect(redactLines(lines.join('\n'))).toEqual([
+      `password: [REDACTED:${databasePassword.length + 5}]`,
+      `token: "[REDACTED:${databasePassword.length + 5}]"`,
+    ])
+  })
+
   test('stores only the flagged line of a committed secret, so a private key next to it is left out', async () => {
     const dir = removeAfterTest(
       makeApp({

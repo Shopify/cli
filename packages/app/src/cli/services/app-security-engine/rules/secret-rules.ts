@@ -140,11 +140,14 @@ export function redactText(text: string): string {
 const SECRET_NAME_ASSIGNMENT_PATTERN =
   /(?:secret|passw(?:or)?d|pwd|token|api[_-]?key|private[_-]?key|credential|auth)\w*["']?\s*(?::=|[:=](?![=>]))\s*/gi
 
-/** The text of a quoted value, up to its closing quote or, when it continues on the next line, the end of the line. */
-const QUOTED_VALUE_PATTERN = /^(["'`])((?:\\.|(?!\1).)*)/
+/**
+ * The text of a quoted value, up to its closing quote or, when it continues on the next line, the end of the line. A
+ * line can hold a separator that isn't a line feed, such as U+2028, which is part of the value.
+ */
+const QUOTED_VALUE_PATTERN = /^(["'`])((?:\\[^\r\n]|(?!\1)[^\r\n])*)/
 
-/** An unquoted value, up to the end of the line. */
-const UNQUOTED_VALUE_PATTERN = /^(.*?)\s*$/
+/** An unquoted value, up to the end of the line, however the line ends. */
+const UNQUOTED_VALUE_PATTERN = /^([\s\S]*?)\s*$/
 
 /** The password in a URL's user information, as in `postgres://user:password@host`. */
 const URL_PASSWORD_PATTERN = /(:\/\/[^\s:/?#@]*:)([^\s/?#]+)@/g
