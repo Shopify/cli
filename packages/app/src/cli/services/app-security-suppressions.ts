@@ -227,11 +227,16 @@ function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
   return {ok: true, suppressions: parsed.data.suppressions}
 }
 
+/** A file of up to 5 MB can have tens of thousands of problems, so the error lists only this many. */
+const MAX_LISTED_PROBLEMS = 50
+
 /**
- * Aborts with one error that lists every problem under the file's path. `details` repeats the absolute path and the
- * problems for JSON output.
+ * Aborts with one error that lists the first 50 problems under the file's path, then the count of the others.
+ * `details` repeats the absolute path and the same list for JSON output.
  */
-function abortInvalidSuppressionsFile(path: string, errors: string[]): never {
+function abortInvalidSuppressionsFile(path: string, problems: string[]): never {
+  const unlisted = problems.length - MAX_LISTED_PROBLEMS
+  const errors = unlisted > 0 ? [...problems.slice(0, MAX_LISTED_PROBLEMS), `\u2026and ${unlisted} more`] : problems
   const error = new AbortError(
     `The app security suppressions could not be loaded because ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} is invalid.`,
     null,
@@ -245,8 +250,8 @@ function abortInvalidSuppressionsFile(path: string, errors: string[]): never {
 
 /**
  * Reads `<app directory>/shopify.app-security.json`. A missing file means no suppressions. An invalid file (JSON
- * that doesn't parse, an unknown schema_version, or any invalid entry) aborts with one error that lists every
- * problem, so nothing in it applies. The entries keep the file's order, so an entry's index is its index in the file.
+ * that doesn't parse, an unknown schema_version, or any invalid entry) aborts with one error that lists its
+ * problems, so nothing in it applies. The entries keep the file's order, so an entry's index is its index in the file.
  */
 export async function readAppSecuritySuppressions(appDirectory: string): Promise<AppSecuritySuppression[]> {
   const path = appSecuritySuppressionsPath(appDirectory)

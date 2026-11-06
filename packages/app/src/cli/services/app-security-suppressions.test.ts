@@ -441,6 +441,30 @@ describe('readAppSecuritySuppressions', () => {
       })
     })
 
+    test.each([
+      [50, []],
+      [51, ['\u2026and 1 more']],
+      [60, ['\u2026and 10 more']],
+    ])('lists at most 50 of %i problems, and counts the others', async (count, rest) => {
+      await inTemporaryDirectory(async (directory) => {
+        const entries = Array.from({length: count}, (_, index) => ({
+          ...agentEntry,
+          path: `app/${index}.ts`,
+          reason: '',
+        }))
+        const path = await writeSuppressionsFile(directory, suppressionsJson(entries))
+
+        const error = await readError(directory)
+
+        const listed = [
+          ...Array.from({length: 50}, (_, index) => `suppressions[${index}].reason: must not be empty`),
+          ...rest,
+        ]
+        expect(error.customSections).toStrictEqual([{title: path, body: {list: {items: listed}}}])
+        expect((error.details as {errors: string[]}).errors).toStrictEqual(listed)
+      })
+    })
+
     test('reports every problem of every invalid entry in one error, in entry order, and applies none', async () => {
       await inTemporaryDirectory(async (directory) => {
         // Built at runtime so that the source holds no token-shaped literal for secret scanners to flag.
