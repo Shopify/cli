@@ -1,5 +1,5 @@
 import SecurityReview from './review.js'
-import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
+import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from '../../../services/app-security-artifacts.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {Config} from '@oclif/core'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -140,6 +140,31 @@ const agentFindings: AgentFindingsDocument = {
       ],
     },
   ],
+}
+
+/** Entries that suppress the active findings of both documents: a deterministic one, and an agent one. */
+const suppressionEntries = [
+  {
+    source: 'deterministic',
+    check: 'EOL_API_VERSION',
+    kind: 'accepted-risk',
+    path: 'shopify.app.toml',
+    code: 'api_version 2024-01',
+    reason: 'The upgrade ships with the next release.',
+    configurations: ['shopify.app.toml'],
+  },
+  {
+    source: 'agent',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'false-positive',
+    path: 'app/routes/orders.tsx',
+    reason: 'The logger redacts tokens.',
+    configurations: ['shopify.app.toml'],
+  },
+]
+
+async function writeSuppressions(appDirectory: string, suppressions: unknown[]): Promise<void> {
+  await writeFile(appSecuritySuppressionsPath(appDirectory), JSON.stringify({schema_version: 1, suppressions}))
 }
 
 /** The deterministic document with line 0 on its first finding, as a hand edit could leave it. */
@@ -564,6 +589,68 @@ describe('app security review command boundary', () => {
 
       expect(verbose.exitCode).toBe(0)
       expect(verbose.stdout).toBe(concise.stdout)
+    })
+  })
+
+  test('--json applies shopify.app-security.json to both sources, and suppressed findings pass --blocking', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+      await writeSuppressions(appDirectory, suppressionEntries)
+
+      const result = await runJsonCommand(['--path', directory, '--blocking', 'low'])
+
+      expect(result.exitCode).toBe(0)
+      const document = JSON.parse(result.stdout)
+      expect(document).toMatchObject({valid: true, blocking: {level: 'low', blockedCheckCount: 0}})
+      const dispositions = document.checks.map(
+        (check: {id: string; findings: {source: string; disposition: string}[]}) => [
+          check.id,
+          check.findings.map(({source, disposition}) => `${source} ${disposition}`),
+        ],
+      )
+      expect(dispositions).toStrictEqual([
+        ['CREDENTIAL_LOG_LEAKAGE', ['deterministic superseded', 'agent suppressed']],
+        ['MISSING_TENANT_ISOLATION', ['agent suppressed']],
+        ['EOL_API_VERSION', ['deterministic suppressed']],
+      ])
+      expect(result.stderr).toBe('')
+    })
+  })
+
+  test('without --json, --verbose shows the reason of the entry that suppresses a deterministic finding', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings})
+      await writeSuppressions(appDirectory, suppressionEntries)
+
+      const result = await runCommand(['--path', directory, '--verbose', '--check-id', 'EOL_API_VERSION'])
+
+      expect(result.exitCode).toBe(0)
+      const text = boxText(result.stderr)
+      expect(text).toContain('deterministic · shopify.app.toml:8 (suppressed)')
+      expect(text).toContain('Suppressed: The upgrade ships with the next release.')
+    })
+  })
+
+  test('--json with an invalid shopify.app-security.json writes its error document', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings})
+      await writeSuppressions(appDirectory, [{...suppressionEntries[0], check: 'NOT_A_CHECK'}])
+
+      const result = await runJsonCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        error: {
+          type: 'abort',
+          message: 'The app security suppressions could not be loaded because shopify.app-security.json is invalid.',
+          code: 'suppressions-file-invalid',
+          details: {
+            path: resolve(appDirectory, 'shopify.app-security.json'),
+            errors: ['suppressions[0].check: not a known check ID'],
+          },
+        },
+      })
+      expect(result.stderr).toBe('')
     })
   })
 

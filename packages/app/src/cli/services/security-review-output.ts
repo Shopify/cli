@@ -4,7 +4,6 @@ import {
   activeFindings,
   isAgentResultStale,
   isCheckPassed,
-  isSuppressed,
   skippedFileCounts,
   summarizeCombinedChecks,
   type AppSecurityScope,
@@ -503,9 +502,9 @@ function findingSection(finding: CombinedFinding, verbose: boolean, titlePrefix 
         subdued: `\nEvidence: ${formatLocation(evidence.location)}${evidence.quote ? ` — ${evidence.quote}` : ''}`,
       })),
     )
-    // Only the agent suppresses findings (`isSuppressed`); a hand-edited deterministic suppression stays silent.
-    if (isSuppressed(finding, finding.source) && finding.suppression) {
-      details.push({subdued: `\nSuppressed: ${finding.suppression.justification}`})
+    // `suppressed_by` is the entry or the agent suppression that applies, so a hand-edited one stays silent.
+    if (finding.disposition === 'suppressed' && finding.suppressed_by) {
+      details.push({subdued: `\nSuppressed: ${finding.suppressed_by.reason}`})
     }
   }
   return {title: `${titlePrefix}${finding.source} · ${formatLocation(finding.location)}${disposition}`, body: details}

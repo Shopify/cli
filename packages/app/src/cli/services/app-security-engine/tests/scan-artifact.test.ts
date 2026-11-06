@@ -231,7 +231,7 @@ describe('buildDeterministicFindings', () => {
       findings.map((finding) => `${finding.location.file}:${finding.location.line ?? '-'}`)
 
     expect(locations(document.checks[0]!.findings)).toEqual(['app/_.ts:1', 'app/a:-', 'app/a:1', 'app/a.ts:1'])
-    const [combined] = combineFindings({deterministic: document, agent: null})
+    const [combined] = combineFindings({deterministic: document, agent: null}).checks
     expect(locations(combined!.findings)).toEqual(locations(document.checks[0]!.findings))
   })
 
