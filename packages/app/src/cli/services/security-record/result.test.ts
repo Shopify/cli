@@ -56,7 +56,7 @@ describe('renderSecurityRecordResult', () => {
 
       await withCapturedStandardStreams(({stderr}) => {
         renderSecurityRecordResult(
-          {path, checks: 1, findings: 2, codeExcerptsOmitted: true},
+          {path, checks: 1, findings: 2, suppressions: null, codeExcerptsOmitted: true},
           {selection: selectionFor(appRoot), path: appRoot},
           'text',
         )
@@ -80,7 +80,7 @@ describe('renderSecurityRecordResult', () => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await runWithCommandEventsForCommand(['--json'], async () =>
           renderSecurityRecordResult(
-            {path, checks: 1, findings: 2, codeExcerptsOmitted: true},
+            {path, checks: 1, findings: 2, suppressions: null, codeExcerptsOmitted: true},
             {selection: selectionFor(appRoot), path: appRoot},
             'json',
           ),
