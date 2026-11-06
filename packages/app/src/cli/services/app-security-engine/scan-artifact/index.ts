@@ -3,6 +3,7 @@ import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {compareFindingLocations, compareStrings} from '../results/order.js'
+import type {CombinedCheck} from '../results/combine.js'
 import type {
   AppSecurityScope,
   CheckExecution,
@@ -169,4 +170,26 @@ export function buildDeterministicFindings(
     },
     checks,
   }
+}
+
+/**
+ * The scan's issues whose stored findings are active in `checks`, the checks that `combineFindings` made from the
+ * deterministic-findings.json of the same scan. An issue is compared with the stored findings in the form that the
+ * document stores it. Identical stored findings always get the same disposition, so equal issues need no pairing.
+ */
+export function activeScanIssues(issues: Issue[], checks: CombinedCheck[]): Issue[] {
+  const inactiveFindings = new Set(
+    checks.flatMap((check) =>
+      check.findings
+        .filter((finding) => finding.source === 'deterministic' && finding.disposition !== 'active')
+        .map((finding) => storedFindingKey(check.id, finding)),
+    ),
+  )
+  return issues.filter((issue) => !inactiveFindings.has(storedFindingKey(redactText(issue.id), issueToFinding(issue))))
+}
+
+/** The check ID and the fields that `issueToFinding` stores, as one comparable string. */
+function storedFindingKey(checkId: string, finding: StoredFinding): string {
+  const {location, message, evidence, snippet, code_excerpt: codeExcerpt, fix} = finding
+  return JSON.stringify([checkId, location, message, evidence, snippet, codeExcerpt, fix])
 }

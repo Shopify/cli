@@ -6,6 +6,7 @@ import {
   projectAppSecurityRelativePath,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
+  projectAppSecuritySuppressions,
 } from '../app-security/result.js'
 import {renderSecurityReview} from '../security-review-output.js'
 import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '@shopify/cli-kit/node/json-output-schema'
@@ -14,6 +15,7 @@ import type {
   CombinedCheck,
   CombinedFinding,
   DeterministicFindingsDocument,
+  FindingSuppression,
   SourceCheckResult,
   StoredCheckStatus,
   StoredEvidence,
@@ -25,6 +27,7 @@ type AppSecurityCheck = AppSecurityReviewResult['checks'][number]
 type AppSecurityFinding = AppSecurityCheck['findings'][number]
 type AppSecuritySourceResult = NonNullable<AppSecurityCheck['bySource']['deterministic']>
 type AppSecurityLocation = AppSecurityFinding['location']
+type AppSecurityFindingSuppression = AppSecurityFinding['suppression']
 type AppSecurityDetection = NonNullable<AppSecurityReviewResult['detection']>
 type AppSecurityCoverage = NonNullable<AppSecurityReviewResult['coverage']>
 type AppSecurityResultsFiles = AppSecurityReviewResult['resultsFiles']
@@ -102,6 +105,7 @@ function appSecurityReviewResult({selection, result}: ReviewedAppSecurityResults
     scopeDiffers: result.scopeDiffers,
     checks: result.checks.map((check) => projectCheck(check, appDirectory)),
     blocking: projectAppSecurityBlocking(result.blocking),
+    suppressions: projectAppSecuritySuppressions(appDirectory, result.suppressions, result.allChecks),
   }
 }
 
@@ -241,6 +245,7 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
             automated: finding.fix.automated,
           }
         : null,
+      suppression: projectFindingSuppression(finding.suppressed_by),
     }
   }
   return {
@@ -248,7 +253,22 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
     ...common,
     confidence: finding.confidence ?? null,
     reasoning: projectOptionalText(finding.reasoning),
-    suppression: finding.suppression ? {justification: finding.suppression.justification} : null,
+    suppression: projectFindingSuppression(finding.suppressed_by),
+  }
+}
+
+/**
+ * What suppresses a finding: `suppressed_by`, which the combination sets only for an entry that matched the finding or
+ * for the agent's own suppression of an agent finding. A hand-edited `suppression` on a deterministic finding has none.
+ */
+function projectFindingSuppression(suppression: FindingSuppression | undefined): AppSecurityFindingSuppression {
+  if (suppression === undefined) return null
+  if (suppression.origin === 'agent') return {justification: suppression.reason, origin: 'agent'}
+  return {
+    justification: suppression.reason,
+    origin: 'file',
+    entryIndex: suppression.entry_index,
+    kind: suppression.kind,
   }
 }
 

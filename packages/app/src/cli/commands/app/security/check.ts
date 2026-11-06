@@ -23,7 +23,7 @@ Use \`--list-files\` to check the scope before scanning: it prints the files the
 
 In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later. With \`--json\`, the command offers to include the instructions in the result, with or without copying them, and \`--print-instructions\` includes them.
 
-With \`--json\`, the result describes the scan and the files it wrote, and whether \`--blocking\` passed, but not the findings: run \`shopify app security review --json\` for those.
+With \`--json\`, the result describes the scan and the files it wrote, whether \`--blocking\` passed, and how the entries of \`shopify.app-security.json\` applied, but not the findings: run \`shopify app security review --json\` for those.
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 

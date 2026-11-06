@@ -18,6 +18,7 @@ import type {
   DeterministicFindingsDocument,
   StoredCheck,
   StoredFinding,
+  SuppressionEntry,
 } from '../app-security-engine/index.js'
 
 const originalExitCode = process.exitCode
@@ -46,12 +47,14 @@ const selection: AppSecuritySelection = {
 interface ReviewOptions {
   checkIds?: string[]
   blocking?: AppSecurityBlockingLevel
+  /** The entries of shopify.app-security.json. */
+  entries?: SuppressionEntry[]
 }
 
 function reviewed(sources: AppSecurityResultsSources, options: ReviewOptions = {}): ReviewedAppSecurityResults {
   return {
     selection,
-    result: reviewAppSecurityResults(appSecurityResultsFor(appDirectory, 'shopify.app', sources), {
+    result: reviewAppSecurityResults(appSecurityResultsFor(appDirectory, 'shopify.app', sources, options.entries), {
       resultsDirectory: appSecurityArtifactPaths(appDirectory, 'shopify.app').resultsDirectory,
       checkIds: options.checkIds ?? [],
       blocking: options.blocking ?? 'none',
@@ -152,6 +155,7 @@ describe('renderSecurityReviewResult in the terminal', () => {
     const rendered = unstyled(output.output())
     expect(rendered).toContain('3 checks with findings. 1 check unresolved.')
     expect(rendered).toContain('Next steps')
+    expect(rendered).toContain('1 finding suppressed.')
     expect(rendered).not.toContain('Suppressed:')
     expect(process.exitCode).toBeUndefined()
   })
@@ -176,6 +180,14 @@ describe('renderSecurityReviewResult in the terminal', () => {
     expect(process.exitCode).toBe(1)
   })
 })
+
+/** The top-level suppressions of a result without shopify.app-security.json. */
+const noSuppressionsFile = {
+  filePath: appPath('shopify.app-security.json'),
+  entryCount: 0,
+  suppressedFindingCount: 0,
+  entries: [],
+}
 
 describe('renderSecurityReviewResult as JSON', () => {
   test('writes one result with both sources, each finding with only its own fields', async () => {
@@ -348,6 +360,7 @@ describe('renderSecurityReviewResult as JSON', () => {
                 },
               ],
               fix: {description: 'Remove credentials from logs.', guide: 'https://shopify.dev/logs', automated: false},
+              suppression: null,
             },
             {
               source: 'agent',
@@ -392,12 +405,16 @@ describe('renderSecurityReviewResult as JSON', () => {
               evidence: [],
               confidence: null,
               reasoning: null,
-              suppression: {justification: 'An allowlist middleware restricts the route to the app owner.'},
+              suppression: {
+                justification: 'An allowlist middleware restricts the route to the app owner.',
+                origin: 'agent',
+              },
             },
           ],
         },
       ],
       blocking: {level: 'none', blockedCheckCount: 0},
+      suppressions: noSuppressionsFile,
     })
   })
 
@@ -413,6 +430,7 @@ describe('renderSecurityReviewResult as JSON', () => {
       scopeDiffers: false,
       checks: [],
       blocking: {level: 'none', blockedCheckCount: 0},
+      suppressions: noSuppressionsFile,
     })
   })
 
@@ -792,5 +810,179 @@ describe('renderSecurityReviewResult as JSON', () => {
     const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
 
     await expect(jsonResult(both, {verbose: true})).resolves.toStrictEqual(await jsonResult(both, {verbose: false}))
+  })
+})
+
+describe('renderSecurityReviewResult as JSON with shopify.app-security.json', () => {
+  const finding = (file: string, line: number, message: string, overrides: Partial<StoredFinding> = {}) => ({
+    location: {file, line},
+    message,
+    evidence: [],
+    ...overrides,
+  })
+  const deterministic = deterministicDocument({
+    checks: [
+      deterministicCheck({findings: [finding('app/routes/orders.tsx', 12, 'accessToken flows into console.log.')]}),
+    ],
+  })
+  const agent = agentDocument({
+    checks: [
+      agentCheck({
+        findings: [
+          finding('app/routes/orders.tsx', 20, 'The session token is logged.', {
+            suppression: {justification: 'The agent saw a test-only route.'},
+          }),
+          finding('app/routes/admin.tsx', 5, 'The admin token is logged.', {
+            suppression: {justification: 'Only the agent suppresses this one.'},
+          }),
+        ],
+      }),
+      agentCheck({id: 'MISSING_TENANT_ISOLATION', snapshot: {...snapshot, precedence: 'union'}}),
+    ],
+  })
+  const entry = (overrides: Partial<SuppressionEntry>): SuppressionEntry => ({
+    source: 'deterministic',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'accepted-risk',
+    path: 'app/routes/orders.tsx',
+    reason: 'The logs stay on the developer machine.',
+    configurations: ['shopify.app.toml'],
+    ...overrides,
+  })
+  const entries = [
+    entry({}),
+    entry({source: 'agent', kind: 'false-positive', reason: 'The token is a placeholder.'}),
+    entry({path: 'app/routes/deleted.tsx'}),
+    entry({configurations: ['shopify.app.staging.toml']}),
+  ]
+
+  test("fills each finding's suppression from what suppresses it, an entry first, for both sources", async () => {
+    const check = (await jsonResult({deterministic, agent}, {entries})) as {
+      checks: {findings: {source: string; disposition: string; suppression: unknown}[]}[]
+    }
+
+    expect(check.checks[0]!.findings).toMatchObject([
+      {
+        source: 'agent',
+        location: {filePath: appPath('app/routes/admin.tsx')},
+        disposition: 'suppressed',
+        suppression: {justification: 'Only the agent suppresses this one.', origin: 'agent'},
+      },
+      {
+        source: 'deterministic',
+        disposition: 'suppressed',
+        suppression: {
+          justification: 'The logs stay on the developer machine.',
+          origin: 'file',
+          entryIndex: 0,
+          kind: 'accepted-risk',
+        },
+      },
+      {
+        source: 'agent',
+        location: {filePath: appPath('app/routes/orders.tsx'), line: 20},
+        disposition: 'suppressed',
+        suppression: {
+          justification: 'The token is a placeholder.',
+          origin: 'file',
+          entryIndex: 1,
+          kind: 'false-positive',
+        },
+      },
+    ])
+    expect(check.checks[0]!.findings[0]!.suppression).toStrictEqual({
+      justification: 'Only the agent suppresses this one.',
+      origin: 'agent',
+    })
+  })
+
+  test('reports every entry with its status, whatever --check-id selects, and counts the findings that entries suppress', async () => {
+    const result = (await jsonResult({deterministic, agent}, {entries, checkIds: ['MISSING_TENANT_ISOLATION']})) as {
+      checks: unknown[]
+      suppressions: unknown
+    }
+
+    expect(result.checks).toHaveLength(1)
+    expect(result.suppressions).toStrictEqual({
+      filePath: appPath('shopify.app-security.json'),
+      entryCount: 4,
+      suppressedFindingCount: 2,
+      entries: [
+        {
+          index: 0,
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'accepted-risk',
+          path: appPath('app/routes/orders.tsx'),
+          status: 'matched',
+          matchedFindingCount: 1,
+        },
+        {
+          index: 1,
+          source: 'agent',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'false-positive',
+          path: appPath('app/routes/orders.tsx'),
+          status: 'matched',
+          matchedFindingCount: 1,
+        },
+        {
+          index: 2,
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'accepted-risk',
+          path: appPath('app/routes/deleted.tsx'),
+          status: 'stale',
+          matchedFindingCount: 0,
+        },
+        {
+          index: 3,
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'accepted-risk',
+          path: appPath('app/routes/orders.tsx'),
+          status: 'not-evaluated',
+          matchedFindingCount: 0,
+        },
+      ],
+    })
+  })
+
+  test('sets suppression on a superseded deterministic finding that an entry matched, which is not counted as suppressed', async () => {
+    const preferAgent = agentDocument({
+      checks: [agentCheck({snapshot: {...snapshot, precedence: 'prefer-agent'}})],
+    })
+
+    const result = (await jsonResult({deterministic, agent: preferAgent}, {entries: [entry({})]})) as {
+      checks: {findings: unknown[]}[]
+      suppressions: {suppressedFindingCount: number; entries: unknown[]}
+    }
+
+    expect(result.checks[0]!.findings).toMatchObject([
+      {
+        source: 'deterministic',
+        disposition: 'superseded',
+        suppression: {origin: 'file', entryIndex: 0, kind: 'accepted-risk'},
+      },
+    ])
+    expect(result.suppressions).toMatchObject({
+      suppressedFindingCount: 0,
+      entries: [{status: 'matched', matchedFindingCount: 1}],
+    })
+  })
+
+  test('only adds fields without a suppressions file: a null deterministic suppression, the agent origin and the file', async () => {
+    const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
+
+    const result = (await jsonResult(both)) as {suppressions: unknown; checks: {findings: Record<string, unknown>[]}[]}
+
+    const findings = result.checks.flatMap((check) => check.findings)
+    const suppressions = (source: string) =>
+      findings.filter((finding) => finding.source === source).map((finding) => finding.suppression)
+    expect(suppressions('deterministic').every((suppression) => suppression === null)).toBe(true)
+    expect(suppressions('agent').filter((suppression) => suppression !== null)).toStrictEqual([
+      {justification: 'The route is restricted to the app owner by an allowlist middleware.', origin: 'agent'},
+    ])
+    expect(result.suppressions).toStrictEqual(noSuppressionsFile)
   })
 })
