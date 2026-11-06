@@ -1,3 +1,4 @@
+import {codeExcerptField} from '../results/code-excerpt.js'
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -25,7 +26,7 @@ const safeLocation = (location: Location): Location => ({
 })
 
 const redactCodeExcerpt = (excerpt: CodeExcerptLine[] | undefined): {code_excerpt?: CodeExcerptLine[]} =>
-  excerpt === undefined ? {} : {code_excerpt: excerpt.map(({line, text}) => ({line, text: redactText(text)}))}
+  codeExcerptField(excerpt?.map(({line, text}) => ({line, text: redactText(text)})))
 
 const redactEvidence = (evidence: FindingEvidence[] | undefined): FindingEvidence[] =>
   (evidence ?? []).map((item) => ({

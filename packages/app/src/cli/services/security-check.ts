@@ -1,5 +1,6 @@
 import {blockedCheckCount, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
-import {writeCheckArtifacts} from './app-security-artifacts.js'
+import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeCheckArtifacts} from './app-security-artifacts.js'
+import {withoutCodeExcerpts} from './app-security-engine/index.js'
 import {resolveAppSecurityCommands, type AppSecurityCommands} from './app-security-commands.js'
 import {
   effectiveClientId,
@@ -13,6 +14,7 @@ import {
   type DeclinedAppSecuritySelection,
 } from './app-security-selection.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
 import type {
@@ -164,7 +166,7 @@ export default async function securityCheck(
     return {kind: 'listed', ...resolution, ...listing}
   }
 
-  const execution = await dependencies.execute(scanOptions)
+  const execution = withReadableFindings(await dependencies.execute(scanOptions))
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resolution.resultsKey, {
     deterministicFindings: execution.deterministicFindings,
@@ -177,5 +179,30 @@ export default async function securityCheck(
     execution,
     artifacts,
     blocking: {level: options.blocking, blockedChecks: blockedCheckCount(execution, options.blocking)},
+  }
+}
+
+/** Excerpts must not prevent a result from being read, or make live and stored results differ. */
+function withReadableFindings(execution: AppSecurityExecution): AppSecurityExecution {
+  if (encodedArtifactSize(execution.deterministicFindings) <= MAX_ARTIFACT_FILE_SIZE_BYTES) return execution
+  const deterministicFindings = withoutCodeExcerpts(execution.deterministicFindings)
+  if (encodedArtifactSize(deterministicFindings) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    throw new AbortError(
+      'The deterministic findings are larger than 5 MB, so the results were not changed.',
+      'Use --exclude or scan fewer directories, then run the command again.',
+    )
+  }
+  return {
+    ...execution,
+    deterministicFindings,
+    scan: {
+      ...execution.scan,
+      issues: execution.scan.issues.map(({code_excerpt: _excerpt, evidence, ...issue}) => ({
+        ...issue,
+        ...(evidence === undefined
+          ? {}
+          : {evidence: evidence.map(({code_excerpt: _evidenceExcerpt, ...item}) => item)}),
+      })),
+    },
   }
 }

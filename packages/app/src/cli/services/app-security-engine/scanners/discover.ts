@@ -10,6 +10,7 @@ import {
   repositoryIgnoredPaths,
 } from './path-rules.js'
 import {findRepositoryMarker} from './repository-marker.js'
+import {isSecretFile} from '../rules/secret-rules.js'
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
@@ -426,6 +427,8 @@ const MAX_REPOSITORY_FILE_SIZE_BYTES = 500_000
 
 interface RepositoryReadSuccess {
   ok: true
+  /** The canonical path used for the read, including when the requested path is a symlink. */
+  path: string
   content: Buffer
 }
 
@@ -496,7 +499,7 @@ function readBoundedFile(path: string): RepositoryReadResult {
   try {
     const size = fileSizeSync(path)
     if (size > MAX_REPOSITORY_FILE_SIZE_BYTES) return {ok: false, reason: 'too_large', sizeBytes: size}
-    return {ok: true, content: readFileSync(path)}
+    return {ok: true, path, content: readFileSync(path)}
     // Discovery records unreadable files as scan coverage gaps.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -666,10 +669,12 @@ function readRepositoryText(absolutePath: string): string | undefined {
   return result.ok ? result.content.toString() : undefined
 }
 
-/** Reads a text file with the configured reader's rules. A binary file is `undefined`, as it is for secret scanning. */
+/** Reads excerpt text, excluding binary files and secret files under either their cited or resolved name. */
 export function readRepositoryTextFile(absolutePath: string): string | undefined {
   const result = readRepositoryFile(absolutePath)
-  return result.ok && !isProbablyBinary(result.content) ? result.content.toString() : undefined
+  if (!result.ok || isSecretFile(normalizeCliPath(absolutePath)) || isSecretFile(normalizeCliPath(result.path)))
+    return undefined
+  return isProbablyBinary(result.content) ? undefined : result.content.toString()
 }
 
 const SOURCE_LANGUAGES = {

@@ -731,7 +731,9 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
   )
   const scannedContents = scannedFileContents(context)
-  const excerpts = createCodeExcerpts((file) => scannedContents.get(file))
+  const excerpts = createCodeExcerpts((file) =>
+    readRepositoryTextFile(resolvePath(input.appDirectory, file)) === undefined ? undefined : scannedContents.get(file),
+  )
   issues = issues.map((issue) =>
     redactIssue(withCodeExcerpts({...issue, rule_version: versionById.get(issue.id) ?? 1}, excerpts)),
   )

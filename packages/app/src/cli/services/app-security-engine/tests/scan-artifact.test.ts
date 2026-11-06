@@ -1,11 +1,11 @@
 import {scanDirectory as scan} from './scan-directory.js'
 import {formatJson} from '../output/format.js'
 import {combineFindings} from '../results/combine.js'
-import {MAX_EXCERPT_LINE_LENGTH} from '../results/code-excerpt.js'
+import {MAX_EXCERPT_LINE_LENGTH, withoutCodeExcerpts} from '../results/code-excerpt.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, symlink, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {BuildDeterministicFindingsOptions} from '../scan-artifact/index.js'
@@ -373,6 +373,37 @@ describe('code excerpts', () => {
     await Promise.all(Object.entries(files).map(([path, content]) => writeFile(joinPath(directory, path), content)))
     return buildDeterministicFindings(await scan(directory))
   }
+
+  test('removes both finding and evidence excerpts from deterministic documents', () => {
+    const issue = deterministicIssue()
+    const original = buildDeterministicFindings(result([issue]))
+    const excerpt = [{line: 2, text: 'console.log(token)'}]
+    const withExcerpts = buildDeterministicFindings(
+      result([
+        {...issue, code_excerpt: excerpt, evidence: issue.evidence!.map((item) => ({...item, code_excerpt: excerpt}))},
+      ]),
+      {generatedAt: original.generated_at},
+    )
+
+    expect(withoutCodeExcerpts(withExcerpts)).toEqual(original)
+    expect(withExcerpts.checks[0]!.findings[0]!.evidence[0]!.code_excerpt).toEqual(excerpt)
+  })
+
+  test.each(['.env', 'secrets.json'])('does not quote a source alias of %s', async (secretFile) => {
+    await inTemporaryDirectory(async (directory) => {
+      const secret = '0123456789abcdef'.repeat(2)
+      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "excerpts"\n')
+      await writeFile(joinPath(directory, secretFile), `SHOPIFY_API_SECRET=${secret}\nconst token = "${token}"\n`)
+      await symlink(joinPath(directory, secretFile), joinPath(directory, 'config.js'))
+
+      const document = buildDeterministicFindings(await scan(directory))
+
+      const findings = committedSecrets(document).filter((finding) => finding.location.file === 'config.js')
+      expect(findings).toHaveLength(1)
+      expect(findings[0]).not.toHaveProperty('code_excerpt')
+      expect(JSON.stringify(document)).not.toContain(secret)
+    })
+  })
 
   test('keeps the excerpts of an issue and its evidence, and translates back', () => {
     const issue = deterministicIssue({

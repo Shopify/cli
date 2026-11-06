@@ -491,6 +491,49 @@ describe('securityRecord', () => {
       })
     })
 
+    test.each([
+      ['.env', 'config.ts'],
+      ['secrets.json', 'config.ts'],
+      ['credentials.json', 'config.ts'],
+      ['source.ts', '.env'],
+      ['source.ts', 'secrets.json'],
+    ])('omits excerpts for target %s cited through %s', async (targetFile, citedFile) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const secret = '0123456789abcdef'.repeat(2)
+        await writeFile(joinPath(appRoot, targetFile), `SHOPIFY_API_SECRET=${secret}\n`)
+        await symlink(joinPath(appRoot, targetFile), joinPath(appRoot, citedFile))
+        const document = {
+          ...validDocument(),
+          findings: [finding({file: citedFile, line: 1, evidence: [{file: citedFile, line: 1}]})],
+        }
+
+        await record(appRoot, testDependencies(JSON.stringify(document)))
+
+        const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
+        expect(written).not.toContain('code_excerpt')
+        expect(written).not.toContain(secret)
+      })
+    })
+
+    test('keeps excerpts for an in-root symlink to an ordinary source file', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        await writeFile(joinPath(appRoot, 'source.ts'), `${orders.join('\n')}\n`)
+        await symlink(joinPath(appRoot, 'source.ts'), joinPath(appRoot, 'link.ts'))
+        const document = {
+          ...validDocument(),
+          findings: [finding({file: 'link.ts', evidence: [{file: 'link.ts', line: 12}]})],
+        }
+
+        await record(appRoot, testDependencies(JSON.stringify(document)))
+
+        const [stored] = (await readRecorded(appRoot)).checks[0]!.findings
+        expect(stored!.code_excerpt).toEqual(excerptOf(10, 14))
+        expect(stored!.evidence[0]!.code_excerpt).toEqual(excerptOf(12, 12))
+      })
+    })
+
     test("doesn't read a cited file outside the app directory, or through a symbolic link that leaves it", async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createNestedApp(directory)

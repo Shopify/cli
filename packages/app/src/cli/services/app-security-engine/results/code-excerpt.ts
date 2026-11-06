@@ -1,5 +1,5 @@
 import {isSecretFile, redactLines} from '../rules/secret-rules.js'
-import type {AgentFindingsDocument, CodeExcerptLine, Issue} from '../types.js'
+import type {FindingsDocument, CodeExcerptLine, Issue} from '../types.js'
 
 /** How many lines above and below a finding's line its excerpt holds. */
 const FINDING_CONTEXT_LINES = 2
@@ -76,7 +76,7 @@ export function withCodeExcerpts(issue: Issue, excerpts: CodeExcerpts): Issue {
 }
 
 /** The document as it would be if no cited file could be read. */
-export function withoutCodeExcerpts(document: AgentFindingsDocument): AgentFindingsDocument {
+export function withoutCodeExcerpts<TDocument extends FindingsDocument>(document: TDocument): TDocument {
   return {
     ...document,
     checks: document.checks.map((check) => ({
