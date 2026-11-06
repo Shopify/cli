@@ -172,8 +172,12 @@ describe('redaction never emits known secrets', () => {
 describe('code excerpts never hold a secret', () => {
   const keyBody = compose('base64-key-body-', 'must-never-leak')
   const footer = compose('-----END ', 'RSA PRIVATE KEY-----')
+  // Shaped like an API secret key without a prefix, so no redaction pattern knows it.
+  const unprefixedSecret = compose('fedcba9876543210', 'fedcba9876543210')
+  const databasePassword = compose('FAKE-db-', 'password-1234')
+  const fineGrainedGitHubToken = compose('github_', `pat_11FAKEFAKE0${ALNUM}`)
 
-  test('redacts a committed secret, and a private key next to it, in the stored deterministic excerpt', async () => {
+  test('stores only the flagged line of a committed secret, so a private key next to it is left out', async () => {
     const dir = removeAfterTest(
       makeApp({
         'config.js': [
@@ -194,16 +198,114 @@ describe('code excerpts never hold a secret', () => {
 
     const secrets = document.checks.find((check) => check.id === 'COMMITTED_SECRET')!.findings
     expect(secrets.map((finding) => finding.code_excerpt)).toEqual([
-      [
-        {line: 2, text: '[REDACTED LINE]'},
-        {line: 3, text: '[REDACTED LINE]'},
-        {line: 4, text: expect.stringMatching(/^const shopifyToken = "shpa\[REDACTED:\d+\]"$/)},
-        {line: 5, text: 'export {key, shopifyToken}'},
-      ],
+      [{line: 4, text: expect.stringMatching(/^const shopifyToken = "shpa\[REDACTED:\d+\]"$/)}],
     ])
     const serialized = JSON.stringify(document)
     expect(serialized).not.toContain(PROBES.shopifyToken)
     expect(serialized).not.toContain(keyBody)
+  })
+
+  test('keeps secrets that no redaction pattern knows, on the lines next to a committed secret, out of the excerpt', async () => {
+    const dir = removeAfterTest(
+      makeApp({
+        'config/settings.yml': [
+          'shopify:',
+          `  api_secret: "${unprefixedSecret}"`,
+          `  admin_token: "${PROBES.shopifyToken}"`,
+          `  database_url: "postgres://app:${databasePassword}@db.example.com/app"`,
+          '',
+        ].join('\n'),
+      }),
+    )
+
+    const document = buildDeterministicFindings(await scan(dir), {
+      scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+      scanDirectories: [{directory: '.', origin: 'app_directory'}],
+    })
+
+    const secrets = document.checks.find((check) => check.id === 'COMMITTED_SECRET')!.findings
+    expect(secrets.map((finding) => [finding.location, finding.code_excerpt])).toEqual([
+      [{file: 'config/settings.yml', line: 3}, [{line: 3, text: '  admin_token: "shpa[REDACTED:38]"'}]],
+    ])
+    const serialized = JSON.stringify(document)
+    expect(serialized).not.toContain(unprefixedSecret)
+    expect(serialized).not.toContain(databasePassword)
+  })
+
+  test('redacts values assigned to secret-like names, and URL passwords, in the lines around an agent finding', () => {
+    const source = [
+      "import {shopifyApp} from '@shopify/shopify-app-react-router/server'",
+      'const shopify = shopifyApp({',
+      `  apiSecretKey: '${unprefixedSecret}',`,
+      '  adminApiAccessToken: session.accessToken,',
+      `  githubToken: '${fineGrainedGitHubToken}',`,
+      `  databaseUrl: "postgres://app:${databasePassword}@db.example.com/app",`,
+      '})',
+      '',
+    ].join('\n')
+
+    const result = recordAgentFindings(
+      {
+        schema_version: 1,
+        scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+        findings: [
+          {
+            check_id: 'CREDENTIAL_BROWSER_LEAKAGE',
+            check_version: 1,
+            file: 'app/shopify.server.ts',
+            line: 4,
+            message: 'A credential reaches the browser.',
+            evidence: [{file: 'app/shopify.server.ts', line: 3}],
+          },
+        ],
+      },
+      {engineVersion: '3.99.0', readCitedFile: (file) => (file === 'app/shopify.server.ts' ? source : undefined)},
+    )
+
+    if (!result.ok) throw new Error(result.errors.join('; '))
+    const [stored] = result.document.checks[0]!.findings
+    expect(stored!.code_excerpt).toEqual([
+      {line: 2, text: 'const shopify = shopifyApp({'},
+      {line: 3, text: "  apiSecretKey: '[REDACTED:32]',"},
+      {line: 4, text: '  adminApiAccessToken: session.accessToken,'},
+      {line: 5, text: `  githubToken: '[REDACTED:${fineGrainedGitHubToken.length}]',`},
+      {line: 6, text: '  databaseUrl: "postgres://app:[REDACTED:21]@db.example.com/app",'},
+    ])
+    expect(stored!.evidence[0]!.code_excerpt).toEqual([{line: 3, text: "  apiSecretKey: '[REDACTED:32]',"}])
+    const serialized = JSON.stringify(result.document)
+    expect(serialized).not.toContain(unprefixedSecret)
+    expect(serialized).not.toContain(fineGrainedGitHubToken)
+    expect(serialized).not.toContain(databasePassword)
+  })
+
+  test('redacts quoted values assigned to secret-like names, unquoted ones too outside source code', () => {
+    const lines = [
+      `password: ${databasePassword}`,
+      `export SHOPIFY_API_TOKEN=${unprefixedSecret}`,
+      `"apiKey": "${unprefixedSecret}", "private_key": 'x'`,
+      `url = https://deploy:${databasePassword}@git.example.com/app.git`,
+      `token: "${PROBES.shopifyToken}"`,
+      'password: ""',
+      'if (token === expected) return',
+      'const credentials = session.accessToken',
+    ]
+
+    expect(redactLines(lines.join('\n'))).toEqual([
+      'password: [REDACTED:21]',
+      'export SHOPIFY_API_TOKEN=[REDACTED:32]',
+      '"apiKey": "[REDACTED:32]", "private_key": \'[REDACTED:1]\'',
+      'url = https://deploy:[REDACTED:21]@git.example.com/app.git',
+      'token: "shpa[REDACTED:38]"',
+      'password: ""',
+      'if (token === expected) return',
+      'const credentials = [REDACTED:19]',
+    ])
+    expect(redactLines(lines.join('\n'), {sourceCode: true}).slice(-2)).toEqual([
+      'if (token === expected) return',
+      'const credentials = session.accessToken',
+    ])
+    // Only excerpts are redacted this way: snippets and other stored text keep what no pattern knows.
+    expect(redactText(lines[0]!)).toBe(lines[0])
   })
 
   test('redacts every line of a secret that spans lines, wherever an excerpt starts', () => {

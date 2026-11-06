@@ -395,7 +395,7 @@ const redactFinding = (finding: AgentFinding, excerpts: CodeExcerpts): StoredFin
     ...codeExcerptField(excerpts.evidence(normalizePath(item.file), item.line)),
   })),
   ...(finding.snippet === undefined ? {} : {snippet: redactText(finding.snippet)}),
-  ...codeExcerptField(excerpts.finding(normalizePath(finding.file), finding.line)),
+  ...codeExcerptField(excerpts.finding(normalizePath(finding.file), finding.line, finding.check_id)),
   ...(finding.confidence === undefined ? {} : {confidence: finding.confidence}),
   ...(finding.reasoning === undefined ? {} : {reasoning: redactText(finding.reasoning)}),
   ...(finding.suppression === undefined

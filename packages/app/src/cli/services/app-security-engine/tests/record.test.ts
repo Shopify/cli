@@ -465,6 +465,25 @@ describe('recordAgentFindings code excerpts', () => {
     expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
 
+  test('stores only the cited line of a file that may hold secrets and is not source code', () => {
+    const {findings} = recordWithFiles(
+      [
+        finding({file: 'config/settings.yml', line: 5}),
+        finding({file: 'Dockerfile', line: 5}),
+        finding({file: 'scripts/deploy.sh', line: 5}),
+        finding({file: 'app/routes/orders.tsx', line: 5}),
+      ],
+      {
+        'config/settings.yml': ordersSource,
+        Dockerfile: ordersSource,
+        'scripts/deploy.sh': ordersSource,
+        'app/routes/orders.tsx': ordersSource,
+      },
+    )
+
+    expect(findings.map((stored) => stored.code_excerpt)).toEqual([lines(5, 5), lines(5, 5), lines(5, 5), lines(3, 7)])
+  })
+
   test('keeps the excerpt inside the file, without the empty line after its final newline', () => {
     const {findings} = recordWithFiles([finding({line: 1}), finding({line: 20})], {
       'app/routes/orders.tsx': ordersSource,

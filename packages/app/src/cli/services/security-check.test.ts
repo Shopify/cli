@@ -323,7 +323,8 @@ describe('securityCheck', () => {
         {length: 600},
         (_, index) => `const token${index} = "${token}"; // ${'a'.repeat(430)}`,
       ).join('\n')
-      await Promise.all([0, 1, 2].map((index) => writeFile(joinPath(appRoot, `file${index}.js`), source)))
+      // A committed secret's excerpt is its line alone, so it takes this many to pass the limit.
+      await Promise.all(Array.from({length: 8}, (_, index) => writeFile(joinPath(appRoot, `file${index}.js`), source)))
       const selection = {
         ...configSelection,
         appDirectory: appRoot,

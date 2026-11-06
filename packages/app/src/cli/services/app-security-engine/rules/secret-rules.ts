@@ -134,11 +134,67 @@ export function redactText(text: string): string {
 }
 
 /**
+ * A name that holds a secret, then the assignment, but not a comparison or an arrow function. Excerpts redact the value
+ * that follows, which no pattern may know.
+ */
+const SECRET_NAME_ASSIGNMENT_PATTERN =
+  /(?:secret|passw(?:or)?d|pwd|token|api[_-]?key|private[_-]?key|credential|auth)\w*["']?\s*(?::=|[:=](?![=>]))\s*/gi
+
+/** The text of a quoted value, up to its closing quote or, when it continues on the next line, the end of the line. */
+const QUOTED_VALUE_PATTERN = /^(["'`])((?:\\.|(?!\1).)*)/
+
+/** An unquoted value, up to the end of the line. */
+const UNQUOTED_VALUE_PATTERN = /^(.*?)\s*$/
+
+/** The password in a URL's user information, as in `postgres://user:password@host`. */
+const URL_PASSWORD_PATTERN = /(:\/\/[^\s:/?#@]*:)([^\s/?#]+)@/g
+
+const redactedValue = (value: string) => `[REDACTED:${value.length}]`
+
+/**
+ * Where the value assigned after `offset` starts, and its text. In source code, an unquoted value is an expression, such
+ * as a variable, so only a quoted value counts there. A value that's empty or already redacted needs nothing.
+ */
+function assignedValue(line: string, offset: number, sourceCode: boolean): {start: number; text: string} | undefined {
+  const rest = line.slice(offset)
+  const quoted = QUOTED_VALUE_PATTERN.exec(rest)
+  let value: {start: number; text: string} | undefined
+  if (quoted) value = {start: offset + 1, text: quoted[2]!}
+  else if (!sourceCode) value = {start: offset, text: UNQUOTED_VALUE_PATTERN.exec(rest)![1]!}
+  return value && value.text !== '' && !value.text.includes('[REDACTED') ? value : undefined
+}
+
+/**
+ * Redact the secrets that excerpts never quote, though no redaction pattern knows them: URL passwords, and the values
+ * assigned to names such as `password`, `api_key` or `apiSecretKey`. Only excerpts are redacted this way, because they
+ * quote lines that no one chose.
+ */
+function redactUnrecognizedSecrets(line: string, sourceCode: boolean): string {
+  const withoutUrlPasswords = line.replace(
+    URL_PASSWORD_PATTERN,
+    (_match, prefix: string, password: string) => `${prefix}${redactedValue(password)}@`,
+  )
+  let redacted = ''
+  let position = 0
+  for (const name of withoutUrlPasswords.matchAll(SECRET_NAME_ASSIGNMENT_PATTERN)) {
+    // A name inside a value that's already redacted is part of that value.
+    if (name.index < position) continue
+    const value = assignedValue(withoutUrlPasswords, name.index + name[0].length, sourceCode)
+    if (value === undefined) continue
+    redacted += `${withoutUrlPasswords.slice(position, value.start)}${redactedValue(value.text)}`
+    position = value.start + value.text.length
+  }
+  return `${redacted}${withoutUrlPasswords.slice(position)}`
+}
+
+/**
  * Redact a text line by line, for excerpts that quote only some of its lines. A secret can span lines, so a line that
  * holds part of a match that spans lines becomes `[REDACTED LINE]`, even when the excerpt leaves out the line where the
- * match starts. So does every line from a private key header without its footer to the end of the text.
+ * match starts. So does every line from a private key header without its footer to the end of the text. Each other
+ * line is redacted with every pattern, and so are the values that look secret on it: quoted values only, in
+ * `sourceCode`.
  */
-export function redactLines(text: string): string[] {
+export function redactLines(text: string, {sourceCode = false}: {sourceCode?: boolean} = {}): string[] {
   const lines = text.split('\n')
   let nextLineStart = 0
   const lineStarts = lines.map((line) => {
@@ -168,7 +224,9 @@ export function redactLines(text: string): string[] {
       redactLineRange(lineAt(start), lineAt(end - 1))
     }
   }
-  return lines.map((line, index) => (redactedLines.has(index) ? '[REDACTED LINE]' : redactText(line)))
+  return lines.map((line, index) =>
+    redactedLines.has(index) ? '[REDACTED LINE]' : redactUnrecognizedSecrets(redactText(line), sourceCode),
+  )
 }
 
 /**

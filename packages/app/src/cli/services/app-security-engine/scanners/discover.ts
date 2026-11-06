@@ -789,6 +789,16 @@ function isSensitiveFile(path: string): boolean {
   )
 }
 
+/** Source code, by its extension in any case. A value assigned in it is an expression unless it's quoted. */
+export function isSourceCodeFile(path: string): boolean {
+  return extname(path).toLowerCase() in SOURCE_LANGUAGES
+}
+
+/** A file that the secret scan reads and that isn't source code, such as configuration, where any line can hold one. */
+export function isSensitiveConfigFile(path: string): boolean {
+  return !isSourceCodeFile(path) && (isSensitiveFile(path) || SECRET_TEXT_EXTENSIONS.has(extname(path).toLowerCase()))
+}
+
 function isProbablyBinary(content: Buffer): boolean {
   const sample = content.subarray(0, Math.min(content.length, 8_000))
   if (sample.includes(0)) return true

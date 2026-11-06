@@ -1,7 +1,8 @@
 import {isSecretFile, redactLines} from '../rules/secret-rules.js'
+import {isSensitiveConfigFile, isSourceCodeFile} from '../scanners/discover.js'
 import type {FindingsDocument, CodeExcerptLine, Issue} from '../types.js'
 
-/** How many lines above and below a finding's line its excerpt holds. */
+/** How many lines above and below a finding's line its excerpt holds, when it holds more than the line. */
 const FINDING_CONTEXT_LINES = 2
 
 /** A longer line is cut, so a minified file can't make a results file too large to read. */
@@ -16,8 +17,11 @@ export type SourceTextReader = (file: string) => string | undefined
  * file), or doesn't have the line.
  */
 export interface CodeExcerpts {
-  /** A finding's line and up to two lines above and below it. */
-  finding(file: string, line: number | undefined): CodeExcerptLine[] | undefined
+  /**
+   * A finding's line and up to two lines above and below it. Only its line for a committed secret, whose neighbours
+   * are often secrets too, and in a file that isn't source code and may hold secrets on any line, such as configuration.
+   */
+  finding(file: string, line: number | undefined, checkId: string): CodeExcerptLine[] | undefined
   /** An evidence line alone. */
   evidence(file: string, line: number | undefined): CodeExcerptLine[] | undefined
 }
@@ -28,7 +32,7 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
   const redactedLinesOf = (file: string): string[] | undefined => {
     if (!linesByFile.has(file)) {
       const text = isSecretFile(file) ? undefined : readSourceText(file)
-      linesByFile.set(file, text === undefined ? undefined : excerptLines(text))
+      linesByFile.set(file, text === undefined ? undefined : excerptLines(text, isSourceCodeFile(file)))
     }
     return linesByFile.get(file)
   }
@@ -40,14 +44,15 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
     return lines.slice(firstLine - 1, line + context).map((text, index) => ({line: firstLine + index, text}))
   }
   return {
-    finding: (file, line) => excerpt(file, line, FINDING_CONTEXT_LINES),
+    finding: (file, line, checkId) =>
+      excerpt(file, line, checkId === 'COMMITTED_SECRET' || isSensitiveConfigFile(file) ? 0 : FINDING_CONTEXT_LINES),
     evidence: (file, line) => excerpt(file, line, 0),
   }
 }
 
 /** The redacted lines, without line endings or the empty line after a final newline, each cut to length. */
-function excerptLines(text: string): string[] {
-  const lines = redactLines(text).map((line) => {
+function excerptLines(text: string, sourceCode: boolean): string[] {
+  const lines = redactLines(text, {sourceCode}).map((line) => {
     const content = line.replace(/\r$/, '')
     return content.length > MAX_EXCERPT_LINE_LENGTH ? `${content.slice(0, MAX_EXCERPT_LINE_LENGTH)}…` : content
   })
@@ -63,7 +68,7 @@ export function codeExcerptField(excerpt: CodeExcerptLine[] | undefined): {code_
 export function withCodeExcerpts(issue: Issue, excerpts: CodeExcerpts): Issue {
   return {
     ...issue,
-    ...codeExcerptField(excerpts.finding(issue.location.file, issue.location.line)),
+    ...codeExcerptField(excerpts.finding(issue.location.file, issue.location.line, issue.id)),
     ...(issue.evidence === undefined
       ? {}
       : {
