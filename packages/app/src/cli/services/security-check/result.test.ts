@@ -302,6 +302,22 @@ describe('renderSecurityCheckResult for a scan', () => {
     expect(process.exitCode).toBeUndefined()
   })
 
+  test('warns before the report when deterministic-findings.json was written without code excerpts', async () => {
+    const {stderr} = await present(scanned({codeExcerptsOmitted: true}))
+
+    const output = boxText(stderr)
+    const warning =
+      'deterministic-findings.json was written without code excerpts, because with them it would be larger than 5 MB. Use `--exclude` or scan fewer directories to keep them.'
+    expect(output).toContain(warning)
+    expect(output.indexOf(warning)).toBeLessThan(output.indexOf('No security issues found.'))
+  })
+
+  test("doesn't warn about code excerpts when the results file holds them", async () => {
+    const {stderr} = await present(scanned())
+
+    expect(stderr).not.toContain('code excerpts')
+  })
+
   test('shows every occurrence with --verbose', async () => {
     const execution = {
       ...scanExecution,
@@ -702,6 +718,20 @@ describe('renderSecurityCheckResult --json for a scan', () => {
       expect(process.exitCode).toBe(exitCode)
     },
   )
+
+  test('reports code excerpts left out of deterministic-findings.json as an event on stderr', async () => {
+    const {events} = await presentJson(scanned({codeExcerptsOmitted: true}))
+
+    expect(events).toEqual([
+      {
+        type: 'diagnostic',
+        timestamp: expect.any(String),
+        level: 'warning',
+        message:
+          'deterministic-findings.json was written without code excerpts, because with them it would be larger than 5 MB.\n\nUse --exclude or scan fewer directories to keep them.',
+      },
+    ])
+  })
 
   test('reports gathering warnings as events on stderr', async () => {
     await inTemporaryDirectory(async (directory) => {

@@ -1,10 +1,11 @@
-import {isSecretFile, redactLines} from '../rules/secret-rules.js'
+import {isExcerptBlockedFile, redactLines} from '../rules/secret-rules.js'
+import {isSensitiveConfigFile, isSourceCodeFile} from '../scanners/discover.js'
 import type {FindingsDocument, CodeExcerptLine, Issue} from '../types.js'
 
-/** How many lines above and below a finding's line its excerpt holds. */
+/** How many lines above and below a finding's line its excerpt holds, when it holds more than the line. */
 const FINDING_CONTEXT_LINES = 2
 
-/** A longer line is cut, so a minified file can't make a results file too large to read. */
+/** A line with more characters is cut, so a minified file can't make a results file too large to read. */
 export const MAX_EXCERPT_LINE_LENGTH = 500
 
 /** Reads a file by its project-relative path. `undefined` when the file can't be read. */
@@ -16,8 +17,11 @@ export type SourceTextReader = (file: string) => string | undefined
  * file), or doesn't have the line.
  */
 export interface CodeExcerpts {
-  /** A finding's line and up to two lines above and below it. */
-  finding(file: string, line: number | undefined): CodeExcerptLine[] | undefined
+  /**
+   * A finding's line and up to two lines above and below it. Only its line for a committed secret, whose neighbours
+   * are often secrets too, and in a file that isn't source code and may hold secrets on any line, such as configuration.
+   */
+  finding(file: string, line: number | undefined, checkId: string): CodeExcerptLine[] | undefined
   /** An evidence line alone. */
   evidence(file: string, line: number | undefined): CodeExcerptLine[] | undefined
 }
@@ -27,8 +31,8 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
   const linesByFile = new Map<string, string[] | undefined>()
   const redactedLinesOf = (file: string): string[] | undefined => {
     if (!linesByFile.has(file)) {
-      const text = isSecretFile(file) ? undefined : readSourceText(file)
-      linesByFile.set(file, text === undefined ? undefined : excerptLines(text))
+      const text = isExcerptBlockedFile(file) ? undefined : readSourceText(file)
+      linesByFile.set(file, text === undefined ? undefined : excerptLines(text, isSourceCodeFile(file)))
     }
     return linesByFile.get(file)
   }
@@ -40,18 +44,29 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
     return lines.slice(firstLine - 1, line + context).map((text, index) => ({line: firstLine + index, text}))
   }
   return {
-    finding: (file, line) => excerpt(file, line, FINDING_CONTEXT_LINES),
+    finding: (file, line, checkId) =>
+      excerpt(file, line, checkId === 'COMMITTED_SECRET' || isSensitiveConfigFile(file) ? 0 : FINDING_CONTEXT_LINES),
     evidence: (file, line) => excerpt(file, line, 0),
   }
 }
 
-/** The redacted lines, without line endings or the empty line after a final newline, each cut to length. */
-function excerptLines(text: string): string[] {
-  const lines = redactLines(text).map((line) => {
-    const content = line.replace(/\r$/, '')
-    return content.length > MAX_EXCERPT_LINE_LENGTH ? `${content.slice(0, MAX_EXCERPT_LINE_LENGTH)}…` : content
-  })
+/**
+ * The redacted lines, without line endings or the empty line after a final newline, each cut to length. An empty file
+ * has no lines.
+ */
+function excerptLines(text: string, sourceCode: boolean): string[] {
+  if (text === '') return []
+  const lines = redactLines(text, {sourceCode}).map((line) => cutToLength(line.replace(/\r$/, '')))
   return text.endsWith('\n') ? lines.slice(0, -1) : lines
+}
+
+/** The line, cut after `MAX_EXCERPT_LINE_LENGTH` characters, which are code points, so a cut never splits one. */
+function cutToLength(line: string): string {
+  if (line.length <= MAX_EXCERPT_LINE_LENGTH) return line
+  const characters = Array.from(line)
+  return characters.length > MAX_EXCERPT_LINE_LENGTH
+    ? `${characters.slice(0, MAX_EXCERPT_LINE_LENGTH).join('')}…`
+    : line
 }
 
 /** The `code_excerpt` property when there is an excerpt, so the property is never written as `undefined`. */
@@ -63,7 +78,7 @@ export function codeExcerptField(excerpt: CodeExcerptLine[] | undefined): {code_
 export function withCodeExcerpts(issue: Issue, excerpts: CodeExcerpts): Issue {
   return {
     ...issue,
-    ...codeExcerptField(excerpts.finding(issue.location.file, issue.location.line)),
+    ...codeExcerptField(excerpts.finding(issue.location.file, issue.location.line, issue.id)),
     ...(issue.evidence === undefined
       ? {}
       : {
