@@ -6,7 +6,7 @@ import {
   type FindingsDocument,
   type FindingsSource,
 } from './app-security-engine/index.js'
-import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -18,6 +18,12 @@ import type {Stats} from 'node:fs'
 export const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 
 const APP_SECURITY_DIRECTORY_COMPONENTS = ['.shopify', 'app-security']
+
+/**
+ * The suppressions file. It sits in the app directory beside the app configurations, never under `.shopify/`, so it
+ * can be committed and `clean` never removes it.
+ */
+export const APP_SECURITY_SUPPRESSIONS_FILE_NAME = 'shopify.app-security.json'
 
 export interface AppSecurityArtifactPaths {
   /** `<app directory>/.shopify/app-security/<results key>`. */
@@ -36,6 +42,10 @@ export type ReadArtifactResult<T> =
 /** The directory that holds one results directory per results key. */
 export function appSecurityDirectory(appDirectory: string): string {
   return joinPath(appDirectory, ...APP_SECURITY_DIRECTORY_COMPONENTS)
+}
+
+export function appSecuritySuppressionsPath(appDirectory: string): string {
+  return joinPath(appDirectory, APP_SECURITY_SUPPRESSIONS_FILE_NAME)
 }
 
 export function appSecurityArtifactPaths(appDirectory: string, resultsKey: string): AppSecurityArtifactPaths {
@@ -156,12 +166,23 @@ function hasSource<TSource extends FindingsSource>(
   return document.source === source
 }
 
-async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
-  if (!(await fileExists(path))) return {status: 'missing'}
-
+/**
+ * Reads and parses a regular JSON file of at most 5 MB. A missing file is `missing`; any other failure is `invalid`.
+ * The path itself must be a regular file: a symbolic link could lead out of the app, and a pipe or a device could
+ * block the read or never end.
+ */
+export async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
   let content: string
   try {
-    if ((await fileSize(path)) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    const stats = await lstatIfExists(path)
+    if (!stats) return {status: 'missing'}
+    if (!stats.isFile()) {
+      return {
+        status: 'invalid',
+        errors: ['The file must be a regular file, not a symbolic link, a directory, or a special file.'],
+      }
+    }
+    if (stats.size > MAX_ARTIFACT_FILE_SIZE_BYTES) {
       return {status: 'invalid', errors: ['The file is larger than 5 MB.']}
     }
     content = await readFile(path)
@@ -172,12 +193,22 @@ async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknow
   }
 
   try {
-    return {status: 'ok', value: JSON.parse(content)}
+    // Editors and Windows PowerShell 5.1 can start a UTF-8 file with a byte order mark, which JSON.parse rejects.
+    return {status: 'ok', value: JSON.parse(content.replace(/^\uFEFF/, ''))}
     // JSON is an untrusted artifact boundary.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'invalid', errors: [`Could not parse JSON: ${errorMessage(error)}`]}
+    return {status: 'invalid', errors: [`Could not parse JSON: ${withoutJsonExcerpt(errorMessage(error))}`]}
   }
+}
+
+/**
+ * V8's JSON.parse messages quote the text around the error, such as
+ * `Unexpected token 's', ..."code": shpat_"... is not valid JSON`. The file can hold secrets, and the message reaches
+ * terminals and CI logs, so the excerpt is cut.
+ */
+function withoutJsonExcerpt(message: string): string {
+  return message.replace(/, (\.\.\.)?".*"(\.\.\.)? is not valid JSON$/s, ' is not valid JSON')
 }
 
 /** The size in bytes of `value` once it's written as an artifact. */
@@ -223,11 +254,13 @@ async function removeResultsDirectory(path: string): Promise<void> {
   }
 }
 
+/** The path's own stats, or undefined when nothing is there, including when a parent isn't a directory. */
 async function lstatIfExists(path: string): Promise<Stats | undefined> {
   try {
     return await lstat(path)
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+    const code = (error as NodeJS.ErrnoException).code
+    if (code === 'ENOENT' || code === 'ENOTDIR') return undefined
     throw error
   }
 }

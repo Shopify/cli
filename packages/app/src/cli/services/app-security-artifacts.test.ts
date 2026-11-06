@@ -1,6 +1,7 @@
 import {
   appSecurityArtifactPaths,
   appSecurityDirectory,
+  appSecuritySuppressionsPath,
   cleanAllResultsDirectories,
   cleanResultsDirectory,
   readFindingsDocument,
@@ -13,10 +14,13 @@ import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findin
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {exec} from '@shopify/cli-kit/node/system'
 import {describe, expect, test} from 'vitest'
 import {symlink} from 'node:fs/promises'
 
 const RESULTS_KEY = 'shopify.app'
+
+const NOT_A_REGULAR_FILE = 'The file must be a regular file, not a symbolic link, a directory, or a special file.'
 
 async function scanTestApp(directory: string) {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
@@ -49,6 +53,14 @@ describe('appSecurityArtifactPaths', () => {
       expect(() => appSecurityArtifactPaths('/tmp/example-app', resultsKey)).toThrow(AbortError)
     },
   )
+})
+
+describe('appSecuritySuppressionsPath', () => {
+  test('is shopify.app-security.json in the app directory, beside shopify.app.toml and outside .shopify', () => {
+    expect(appSecuritySuppressionsPath('/tmp/example-app')).toBe(
+      joinPath('/tmp/example-app', 'shopify.app-security.json'),
+    )
+  })
 })
 
 describe('readFindingsDocument', () => {
@@ -113,6 +125,15 @@ describe('readFindingsDocument', () => {
     })
   })
 
+  test('returns missing when a parent of the path is a file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, RESULTS_KEY), '')
+      const path = joinPath(directory, RESULTS_KEY, 'deterministic-findings.json')
+
+      await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({status: 'missing'})
+    })
+  })
+
   test('returns invalid for malformed JSON', async () => {
     await inTemporaryDirectory(async (directory) => {
       const path = joinPath(directory, 'agent-findings.json')
@@ -122,6 +143,25 @@ describe('readFindingsDocument', () => {
         status: 'invalid',
         errors: [expect.stringContaining('Could not parse JSON')],
       })
+    })
+  })
+
+  // Built at runtime so that the source holds no token-shaped literal for secret scanners to flag.
+  const fakeToken = ['fake', 'token', '0'.repeat(16)].join('_')
+
+  test.each([
+    ['an unquoted value', `{"checks": [{"quote": ${fakeToken}}]}`],
+    ['an unquoted value between line breaks', `{\n"checks":\n${fakeToken}\n}`],
+    ['text that is not JSON', `${fakeToken}=1\n`],
+  ])('returns invalid for %s without quoting the file', async (_name, content) => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      await writeFile(path, content)
+
+      const result = await readFindingsDocument(path, 'agent')
+
+      expect(result).toEqual({status: 'invalid', errors: [expect.stringMatching(/^Could not parse JSON: /)]})
+      expect(JSON.stringify(result)).not.toContain(fakeToken.slice(0, 6))
     })
   })
 
@@ -171,14 +211,40 @@ describe('readFindingsDocument', () => {
     })
   })
 
-  test('returns invalid for an unreadable path', async () => {
+  test('returns invalid for a directory', async () => {
     await inTemporaryDirectory(async (directory) => {
       const path = joinPath(directory, 'deterministic-findings.json')
       await mkdir(path)
 
       await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({
         status: 'invalid',
-        errors: [expect.stringContaining('Could not read the file')],
+        errors: [NOT_A_REGULAR_FILE],
+      })
+    })
+  })
+
+  test('returns invalid for a symbolic link, even to a valid document', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const targetPath = joinPath(directory, 'elsewhere.json')
+      await writeFile(targetPath, JSON.stringify(agentFindingsDocument))
+      const path = joinPath(directory, 'agent-findings.json')
+      await symlink(targetPath, path, 'file')
+
+      await expect(readFindingsDocument(path, 'agent')).resolves.toEqual({
+        status: 'invalid',
+        errors: [NOT_A_REGULAR_FILE],
+      })
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('returns invalid for a named pipe without waiting on it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      await exec('mkfifo', [path])
+
+      await expect(readFindingsDocument(path, 'agent')).resolves.toEqual({
+        status: 'invalid',
+        errors: [NOT_A_REGULAR_FILE],
       })
     })
   })

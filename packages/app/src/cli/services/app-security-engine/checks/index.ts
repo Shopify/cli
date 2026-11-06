@@ -1,4 +1,5 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
+import {MAX_JUSTIFICATION_LENGTH, MAX_PATH_LENGTH, MAX_SNIPPET_LENGTH} from '../limits.js'
 import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {
@@ -213,13 +214,10 @@ interface AgentCheckReport {
 /** Caps on agent-supplied text, so a malformed findings document cannot produce an
  *  unbounded artifact. Generous enough for real findings. */
 const MAX_MESSAGE_LENGTH = 4_000
-const MAX_SNIPPET_LENGTH = 4_000
 const MAX_REASONING_LENGTH = 8_000
-const MAX_JUSTIFICATION_LENGTH = 4_000
 const MAX_REASON_CODE_LENGTH = 100
 const MAX_EVIDENCE = 50
 const MAX_QUOTE_LENGTH = 4_000
-const MAX_PATH_LENGTH = 1_024
 const MAX_FINDINGS = 1_000
 
 const AGENT_CHECK_STATUSES: ReadonlyArray<string> = ['executed', 'not_applicable', 'unresolved']
