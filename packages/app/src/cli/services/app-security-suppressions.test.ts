@@ -87,14 +87,56 @@ describe('readAppSecuritySuppressions', () => {
     })
   })
 
-  test('drops keys it does not know, so a later CLI can add optional fields', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await writeSuppressionsFile(
-        directory,
-        JSON.stringify({schema_version: 1, generator: 'later-cli', suppressions: [{...agentEntry, added: true}]}),
-      )
+  describe('unknown keys', () => {
+    test('rejects every key it does not know, so a field that a newer CLI adds is never dropped', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await writeSuppressionsFile(
+          directory,
+          JSON.stringify({
+            schema_version: 1,
+            generator: 'later-cli',
+            suppressions: [{...agentEntry, expires: '2030-01-01', line: 12}],
+          }),
+        )
 
-      await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([agentEntry])
+        await expect(readProblems(directory)).resolves.toStrictEqual([
+          'unknown key "generator"',
+          'suppressions[0]: unknown key "expires"',
+          'suppressions[0]: unknown key "line"',
+        ])
+      })
+    })
+
+    // Read without its `code`, the entry would cover every finding of the check in the file.
+    test('rejects a known key in another case and names the key it means', async () => {
+      await expect(entryProblems({code: undefined, Code: deterministicEntry.code})).resolves.toStrictEqual([
+        'suppressions[0]: unknown key "Code". Did you mean "code"?',
+      ])
+    })
+
+    test('shortens a long unknown key', async () => {
+      await expect(entryProblems({['k'.repeat(41)]: true})).resolves.toStrictEqual([
+        `suppressions[0]: unknown key "${'k'.repeat(40)}…"`,
+      ])
+    })
+
+    test('accepts a $schema string at the top level, for editors', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await writeSuppressionsFile(
+          directory,
+          JSON.stringify({$schema: './app-security.schema.json', schema_version: 1, suppressions: [agentEntry]}),
+        )
+
+        await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([agentEntry])
+      })
+    })
+
+    test('rejects a $schema that is not a string', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await writeSuppressionsFile(directory, JSON.stringify({$schema: 1, schema_version: 1, suppressions: []}))
+
+        await expect(readProblems(directory)).resolves.toStrictEqual(['$schema: must be a string'])
+      })
     })
   })
 

@@ -19,7 +19,8 @@ const SUPPRESSIONS_SCHEMA_VERSION = 1
 const FINDINGS_SOURCES = ['deterministic', 'agent'] as const satisfies ReadonlyArray<FindingsSource>
 const SUPPRESSION_KINDS = ['false-positive', 'accepted-risk'] as const
 
-// The schema's messages quote no value from the file, which can hold code from the app.
+// The schema's messages quote no value from the file, which can hold code from the app. Only unknown keys are named,
+// shortened.
 const requiredString = () => zod.string({required_error: 'required', invalid_type_error: 'must be a string'})
 
 const choice = <TValues extends Readonly<[string, ...string[]]>>(values: TValues) =>
@@ -58,7 +59,7 @@ function pathProblem(path: string): string | undefined {
 const isConfigurationName = (name: string): boolean =>
   name !== '' && name !== '.' && name !== '..' && !/[\\/]/.test(name)
 
-const suppressionSchema = zod.object(
+const suppressionSchema = zod.strictObject(
   {
     source: choice(FINDINGS_SOURCES),
     check: requiredString().min(1, 'must not be empty'),
@@ -84,11 +85,14 @@ const suppressionSchema = zod.object(
 )
 
 /**
- * The Zod schema for schema_version 1 of shopify.app-security.json. Unknown keys are stripped, as in the results
- * files, so a later CLI can add optional fields that this one ignores. Whether `check` is a check ID that `source`
- * can report depends on the registry, so `parseSuppressionsFile` checks that separately.
+ * The Zod schema for schema_version 1 of shopify.app-security.json. Unknown keys are rejected, not stripped: dropping
+ * a misspelled `code`, or a field that a later CLI adds to narrow an entry, would make the entry cover more findings
+ * than its author wrote. A later field bumps schema_version instead, which this CLI rejects. `$schema` is allowed for
+ * editors. Whether `check` is a check ID that `source` can report depends on the registry, so `parseSuppressionsFile`
+ * checks that separately.
  */
-const suppressionsFileSchema = zod.object({
+const suppressionsFileSchema = zod.strictObject({
+  $schema: zod.string({invalid_type_error: 'must be a string'}).optional(),
   schema_version: zod.literal(SUPPRESSIONS_SCHEMA_VERSION),
   suppressions: zod.array(suppressionSchema, {required_error: 'required', invalid_type_error: 'must be an array'}),
 })
@@ -116,8 +120,22 @@ function describeJsonType(value: unknown): string {
   return typeof value
 }
 
-/** Renders a Zod issue as `path: message`, such as `suppressions[2].reason: must not be empty`. */
-function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem {
+/** Unknown keys are quoted in messages, so each is cut to this many characters. */
+const MAX_QUOTED_KEY_LENGTH = 40
+
+/** Names an unknown key, and the known key it differs from only in case, as in `Code` for `code`. */
+function describeUnknownKey(key: string, knownKeys: string[]): string {
+  const shortKey = key.length > MAX_QUOTED_KEY_LENGTH ? `${key.slice(0, MAX_QUOTED_KEY_LENGTH)}\u2026` : key
+  const knownKey = knownKeys.find((candidate) => candidate.toLowerCase() === key.toLowerCase())
+  const hint = knownKey === undefined ? '' : `. Did you mean ${JSON.stringify(knownKey)}?`
+  return `unknown key ${JSON.stringify(shortKey)}${hint}`
+}
+
+/**
+ * Renders a Zod issue as `path: message`, such as `suppressions[2].reason: must not be empty`. Unknown keys get one
+ * problem each.
+ */
+function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem[] {
   const path = issue.path
     .map((segment, index) => {
       if (typeof segment === 'number') return `[${segment}]`
@@ -125,10 +143,16 @@ function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem {
     })
     .join('')
   const [field, entryIndex] = issue.path
-  return {
+  const problem = (message: string): SuppressionsFileProblem => ({
     entryIndex: field === 'suppressions' && typeof entryIndex === 'number' ? entryIndex : -1,
-    message: path === '' ? issue.message : `${path}: ${issue.message}`,
+    message: path === '' ? message : `${path}: ${message}`,
+  })
+  if (issue.code === zod.ZodIssueCode.unrecognized_keys) {
+    // The file and its entries are the only objects, and the file's own issues have an empty path.
+    const knownKeys = Object.keys(path === '' ? suppressionsFileSchema.shape : suppressionSchema.shape)
+    return issue.keys.map((key) => problem(describeUnknownKey(key, knownKeys)))
   }
+  return [problem(issue.message)]
 }
 
 /**
@@ -165,7 +189,7 @@ function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
 
   const parsed = suppressionsFileSchema.safeParse(value)
   const problems = [
-    ...(parsed.success ? [] : parsed.error.issues.map(describeIssue)),
+    ...(parsed.success ? [] : parsed.error.issues.flatMap(describeIssue)),
     ...checkIdProblems(value.suppressions),
   ].sort((left, right) => left.entryIndex - right.entryIndex)
   if (!parsed.success || problems.length > 0) {
