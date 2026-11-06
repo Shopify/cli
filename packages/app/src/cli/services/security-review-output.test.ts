@@ -1153,6 +1153,31 @@ describe('renderSecurityReview', () => {
       'Not suppressed Finding 1 is a superseded deterministic finding of the same check in the same file, so check --blocking, which reads no agent results, still counts it. To suppress it with the same kind and reason, run the command again with --include-superseded.',
     )
     expect(rendered).toContain('Next steps • Review and commit shopify.app-security.json.')
+    // Finding 2 is active, so its entry needs no word about check --blocking.
+    expect(rendered).not.toContain('The agent result supersedes')
+  })
+
+  test('says that check --blocking counts a saved superseded finding, which is why it has an entry', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const input: SecurityReviewPresenterInput = {
+      ...presenterInput(both),
+      savedSuppressions: {
+        path: `${appRoot}/shopify.app-security.json`,
+        saved: [{index: 0, change: 'added', entry: serverLogEntry, findingNumber: 3}],
+        companionNumbers: [],
+      },
+    }
+
+    renderSecurityReview(input)
+
+    const [entrySection] = buildSecurityReviewAlerts(input).at(-1)!.options.customSections!
+    expect(entrySection!.body).toContainEqual(
+      '\nThe agent result supersedes finding 3 in the review, but check --blocking, which reads no agent results, counts it. This entry suppresses it for check --blocking.',
+    )
+    expect(unstyled(output.info()).replace(/[│\s]+/g, ' ')).toContain(
+      'suppressions[0] · finding 3 · added deterministic CREDENTIAL_LOG_LEAKAGE in app/shopify.server.ts Kind: accepted risk Code: logger.info(apiSecretKey) Reason: The logger drops secrets. Configurations: shopify.app.toml The agent result supersedes finding 3 in the review, but check --blocking, which reads no agent results, counts it. This entry suppresses it for check --blocking.',
+    )
   })
 
   test('names several companions and an entry that got a configuration', () => {
@@ -1253,6 +1278,16 @@ const credentialEntry: AppSecuritySuppression = {
 }
 /** The entry for finding 1, its superseded deterministic companion. */
 const companionEntry: AppSecuritySuppression = {...credentialEntry, source: 'deterministic'}
+/** An entry for finding 3, a superseded deterministic finding in a file where the agent result has no finding. */
+const serverLogEntry: AppSecuritySuppression = {
+  source: 'deterministic',
+  check: 'CREDENTIAL_LOG_LEAKAGE',
+  kind: 'accepted-risk',
+  path: 'app/shopify.server.ts',
+  code: 'logger.info(apiSecretKey)',
+  reason: 'The logger drops secrets.',
+  configurations: ['shopify.app.toml'],
+}
 const eolApiVersionEntry: AppSecuritySuppression = {
   source: 'deterministic',
   check: 'EOL_API_VERSION',
@@ -1300,16 +1335,21 @@ const resultsChanged: FindingSuppressionResult = {
 }
 
 /**
- * A session over the shared fixtures, whose active findings are 2 (high), 5 (high) and 6 (low). `suppress` answers
- * each request with the next of `answers`.
+ * A session over the shared fixtures, whose active findings are 2 (high), 5 (high) and 6 (low), and whose superseded
+ * findings that check --blocking counts are 1 and 3 (both high, CREDENTIAL_LOG_LEAKAGE). `suppress` answers each request
+ * with the next of `answers`.
  */
 function interactiveSession(answers: FindingSuppressionResult[] = []) {
   const {result} = presenterInput(both)
+  const numbered = numberFindings(result.allChecks)
   const queue = [...answers]
   return {
     result,
     configuration: 'shopify.app.toml',
-    findings: numberFindings(result.allChecks).filter(({finding}) => finding.disposition === 'active'),
+    findings: numbered.filter(({finding}) => finding.disposition === 'active'),
+    supersededFindings: numbered.filter(
+      ({finding}) => finding.disposition === 'superseded' && finding.suppressed_by === undefined,
+    ),
     suppress: vi.fn(async (_request: InteractiveSuppressionRequest) => {
       const answer = queue.shift()
       if (!answer) throw new Error('Unexpected save')
@@ -1409,7 +1449,7 @@ describe('interactiveSecurityReview', () => {
   test('shows each active finding in full with its number, most severe first, and offers Suppress, Continue and Quit', async () => {
     const output = mockAndCaptureOutput()
     output.clear()
-    const session = interactiveSession()
+    const session = {...interactiveSession(), supersededFindings: []}
     const prompts = scriptedPrompts({actions: ['continue', 'continue', 'continue']})
 
     const outcome = await interactiveSecurityReview(prompts)(session)
@@ -1443,7 +1483,7 @@ describe('interactiveSecurityReview', () => {
     output.clear()
     const session = interactiveSession([savedResult([{index: 0, entry: eolApiVersionEntry, findingNumber: 6}])])
     const prompts = scriptedPrompts({
-      actions: ['continue', 'continue', 'suppress'],
+      actions: ['continue', 'continue', 'suppress', 'continue', 'continue'],
       kinds: ['accepted-risk'],
       reasons: ['The upgrade ships with the next release.'],
     })
@@ -1577,7 +1617,7 @@ describe('interactiveSecurityReview', () => {
     mockAndCaptureOutput()
     const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}], [1])])
     const prompts = scriptedPrompts({
-      actions: ['suppress', 'continue', 'continue'],
+      actions: ['suppress', 'continue', 'continue', 'continue'],
       kinds: ['false-positive'],
       reasons: ['The logger redacts tokens.'],
       companions: [false],
@@ -1586,6 +1626,8 @@ describe('interactiveSecurityReview', () => {
     const outcome = await interactiveSecurityReview(prompts)(session)
 
     expect(session.suppress).toHaveBeenCalledOnce()
+    // The session asked about finding 1 as a companion already, so it offers only finding 3 after the active findings.
+    expect(promptMessages(prompts.selectAction).slice(3)).toStrictEqual(['What do you want to do with finding #3?'])
     expect(outcome).toStrictEqual({
       saved: [{index: 0, change: 'added', entry: credentialEntry, findingNumber: 2}],
       declinedCompanions: [{findingNumber: 2, companionNumbers: [1]}],
@@ -1596,7 +1638,7 @@ describe('interactiveSecurityReview', () => {
   test('shows a refusal, saves nothing for that finding, and goes on to the next one', async () => {
     const output = mockAndCaptureOutput()
     output.clear()
-    const session = interactiveSession([notSuppressible])
+    const session = {...interactiveSession([notSuppressible]), supersededFindings: []}
     const prompts = scriptedPrompts({
       actions: ['continue', 'suppress', 'continue'],
       kinds: ['accepted-risk'],
@@ -1631,17 +1673,129 @@ describe('interactiveSecurityReview', () => {
     )
   })
 
+  test('after the active findings, offers the superseded findings that check --blocking still counts, and says why', async () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const session = interactiveSession()
+    const prompts = scriptedPrompts({actions: ['continue', 'continue', 'continue', 'continue', 'continue']})
+
+    const outcome = await interactiveSecurityReview(prompts)(session)
+
+    expect(outcome).toStrictEqual({saved: [], declinedCompanions: [], ending: 'finished'})
+    expect(promptMessages(prompts.selectAction)).toStrictEqual(
+      [2, 5, 6, 1, 3].map((number) => `What do you want to do with finding #${number}?`),
+    )
+    expect(session.suppress).not.toHaveBeenCalled()
+    const info = unstyled(output.info()).replace(/[│\s]+/g, ' ')
+    expect(info).toContain(
+      "Reviewing 2 superseded findings that check --blocking still counts. An agent result supersedes these deterministic findings, so the review doesn't count them. But check --blocking, which reads no agent results, still counts them, so a CI gate that runs it can fail. Choose Suppress, Continue or Quit for each finding, as before.",
+    )
+    expect(info.indexOf('Reviewing 2 superseded findings')).toBeGreaterThan(info.indexOf('Reviewing 3 active findings'))
+    expect(unstyled(output.error()).replace(/[│\s]+/g, ' ')).toContain(
+      'High · CREDENTIAL_LOG_LEAKAGE · Credential reaches a log sink Superseded finding 1 of 2 #1 · deterministic · app/routes/orders.tsx:12 (superseded) accessToken flows into console.log.',
+    )
+  })
+
+  test('suppresses a superseded finding with its kind and reason, and says that check --blocking counts it', async () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const session = interactiveSession([savedResult([{index: 0, entry: serverLogEntry, findingNumber: 3}])])
+    const prompts = scriptedPrompts({
+      actions: ['continue', 'continue', 'continue', 'continue', 'suppress'],
+      kinds: ['accepted-risk'],
+      reasons: ['The logger drops secrets.'],
+    })
+
+    const outcome = await interactiveSecurityReview(prompts)(session)
+
+    expect(session.suppress).toHaveBeenCalledExactlyOnceWith({
+      findingNumber: 3,
+      decision: {kind: 'accepted-risk', reason: 'The logger drops secrets.'},
+      includeSuperseded: false,
+    })
+    expect(outcome).toStrictEqual({
+      saved: [{index: 0, change: 'added', entry: serverLogEntry, findingNumber: 3}],
+      declinedCompanions: [],
+      ending: 'finished',
+    })
+    expect(promptMessages(prompts.selectKind)).toStrictEqual(['Is finding #3 a false positive or an accepted risk?'])
+    expect(prompts.confirmCompanions).not.toHaveBeenCalled()
+    expect(unstyled(output.info()).replace(/[│\s]+/g, ' ')).toContain(
+      'Saved 1 suppression to shopify.app-security.json. suppressions[0] · finding 3 · added deterministic CREDENTIAL_LOG_LEAKAGE in app/shopify.server.ts Kind: accepted risk Code: logger.info(apiSecretKey) Reason: The logger drops secrets. Configurations: shopify.app.toml The agent result supersedes finding 3 in the review, but check --blocking, which reads no agent results, counts it.',
+    )
+  })
+
+  test('does not offer a superseded finding again that the session saved as a companion', async () => {
+    mockAndCaptureOutput()
+    const session = interactiveSession([
+      savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}], [1]),
+      savedResult([{index: 1, entry: companionEntry, findingNumber: 1}]),
+    ])
+    const prompts = scriptedPrompts({
+      actions: ['suppress', 'continue', 'continue', 'continue'],
+      kinds: ['false-positive'],
+      reasons: ['The logger redacts tokens.'],
+      companions: [true],
+    })
+
+    const outcome = await interactiveSecurityReview(prompts)(session)
+
+    expect(promptMessages(prompts.selectAction)).toStrictEqual(
+      [2, 5, 6, 3].map((number) => `What do you want to do with finding #${number}?`),
+    )
+    expect(outcome.ending).toBe('finished')
+  })
+
+  test('does not offer a superseded finding again that the session declined as a companion', async () => {
+    mockAndCaptureOutput()
+    const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}], [1])])
+    const prompts = scriptedPrompts({
+      actions: ['suppress', 'continue', 'continue', 'continue'],
+      kinds: ['false-positive'],
+      reasons: ['The logger redacts tokens.'],
+      companions: [false],
+    })
+
+    const outcome = await interactiveSecurityReview(prompts)(session)
+
+    expect(promptMessages(prompts.selectAction)).toStrictEqual(
+      [2, 5, 6, 3].map((number) => `What do you want to do with finding #${number}?`),
+    )
+    expect(session.suppress).toHaveBeenCalledTimes(1)
+    expect(outcome.declinedCompanions).toStrictEqual([{findingNumber: 2, companionNumbers: [1]}])
+    expect(outcome.ending).toBe('finished')
+  })
+
+  test('offers the superseded findings when no finding is active', async () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const full = interactiveSession()
+    const session = {...full, findings: [], supersededFindings: full.supersededFindings.slice(1)}
+    const prompts = scriptedPrompts({actions: ['quit']})
+
+    const outcome = await interactiveSecurityReview(prompts)(session)
+
+    expect(outcome).toStrictEqual({saved: [], declinedCompanions: [], ending: 'quit'})
+    expect(promptMessages(prompts.selectAction)).toStrictEqual(['What do you want to do with finding #3?'])
+    const info = unstyled(output.info()).replace(/[│\s]+/g, ' ')
+    expect(info).toContain('No active findings to review for shopify.app.toml.')
+    expect(info).toContain(
+      "Reviewing 1 superseded finding that check --blocking still counts. An agent result supersedes this deterministic finding, so the review doesn't count it. But check --blocking, which reads no agent results, still counts it,",
+    )
+  })
+
   test('prompts nothing when no finding is active', async () => {
     const output = mockAndCaptureOutput()
     output.clear()
     const prompts = scriptedPrompts({actions: []})
-    const session = {...interactiveSession(), findings: []}
+    const session = {...interactiveSession(), findings: [], supersededFindings: []}
 
     const outcome = await interactiveSecurityReview(prompts)(session)
 
     expect(outcome).toStrictEqual({saved: [], declinedCompanions: [], ending: 'finished'})
     expect(prompts.selectAction).not.toHaveBeenCalled()
     expect(unstyled(output.info())).toContain('No active findings to review for shopify.app.toml.')
+    expect(unstyled(output.info())).not.toContain('superseded')
   })
 })
 
@@ -1721,6 +1875,33 @@ describe('interactiveSecurityReview in a terminal', () => {
 
     await expect(review).resolves.toMatchObject({declinedCompanions: [{findingNumber: 2, companionNumbers: [1]}]})
     expect(session.suppress).toHaveBeenCalledOnce()
+  })
+
+  test('suppresses a superseded finding after the active ones, and continues past the next one', async () => {
+    mockAndCaptureOutput()
+    const {prompts, type} = terminal()
+    const session = interactiveSession([savedResult([{index: 0, entry: companionEntry, findingNumber: 1}])])
+
+    const review = interactiveSecurityReview(prompts)(session)
+    await type('What do you want to do with finding #2?', 'c')
+    await type('What do you want to do with finding #5?', 'c')
+    await type('What do you want to do with finding #6?', 'c')
+    await type('What do you want to do with finding #1?', 's')
+    await type('Is finding #1 a false positive or an accepted risk?', '\r')
+    await type('Why should finding #1 be suppressed?', 'The logger redacts tokens.')
+    await type('The logger redacts tokens.', '\r')
+    await type('What do you want to do with finding #3?', 'c')
+
+    await expect(review).resolves.toStrictEqual({
+      saved: [{index: 0, change: 'added', entry: companionEntry, findingNumber: 1}],
+      declinedCompanions: [],
+      ending: 'finished',
+    })
+    expect(session.suppress).toHaveBeenCalledExactlyOnceWith({
+      findingNumber: 1,
+      decision: {kind: 'false-positive', reason: 'The logger redacts tokens.'},
+      includeSuperseded: false,
+    })
   })
 })
 

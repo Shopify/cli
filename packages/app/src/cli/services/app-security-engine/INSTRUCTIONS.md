@@ -167,6 +167,8 @@ When the user suppresses an agent finding, its companions are the superseded det
 
 Ask the user whether to suppress those companions too. Only if the user approves, add `--include-superseded` to the command for the agent finding: it saves an entry for each companion with the same kind and reason. For an already suppressed agent finding, this works only when its suppression has `origin: "file"`. If `record` could not save the suppression and its origin is `agent`, this command cannot save its companions. Report that limit and the reason in `notSaved`; do not retry the command or edit the suppression file by hand.
 
+A `superseded` deterministic finding can also be suppressed by its own `number` with `review --suppress`, for example when the agent result has no finding in its file, so no agent finding has it as a companion. `check --blocking` still counts it. As for any finding, suppress it only when the user explicitly asks you to.
+
 After a suppression is saved, tell the user to review and commit `shopify.app-security.json`. When a suppression isn't saved, tell the user why. The user can add an entry by hand; don't edit the file yourself.
 
 ## Removing local artifacts
