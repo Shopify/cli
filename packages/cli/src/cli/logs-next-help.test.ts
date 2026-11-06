@@ -25,10 +25,12 @@ test('registers hidden retrieval alongside the legacy logs migration command', a
   expect(next.flags['event-handle']).toMatchObject({env: 'SHOPIFY_FLAG_EVENT_HANDLE'})
   expect(next.flags.method).toMatchObject({env: 'SHOPIFY_FLAG_METHOD'})
   expect(next.flags['request-path']).toMatchObject({env: 'SHOPIFY_FLAG_REQUEST_PATH'})
-  expect(next.flags['request-id'].description).toBe('Exact GraphQL or REST request ID; excludes other record types.')
-  expect(next.flags['status-code'].description).toBe(
-    'Exact webhook or REST HTTP status code (100–599); no status classes.',
-  )
+  expect(next.flags['request-id']).toMatchObject({
+    description: 'Exact GraphQL or REST request ID; excludes other record types.',
+  })
+  expect(next.flags['status-code']).toMatchObject({
+    description: 'Exact webhook or REST HTTP status code (100–599); no status classes.',
+  })
   expect(next.flags).not.toHaveProperty('source')
   expect(logs.hidden).toBe(true)
   expect(sources).toBeUndefined()
