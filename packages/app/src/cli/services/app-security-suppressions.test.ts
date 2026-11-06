@@ -358,6 +358,70 @@ describe('readAppSecuritySuppressions', () => {
     })
   })
 
+  describe('duplicates', () => {
+    test('rejects an entry with the same source, check, path, code, and configurations as an earlier one', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await writeSuppressionsFile(
+          directory,
+          suppressionsJson([
+            deterministicEntry,
+            agentEntry,
+            {...deterministicEntry},
+            {
+              ...agentEntry,
+              kind: 'false-positive',
+              reason: 'Another reason.',
+              configurations: [...agentEntry.configurations].reverse(),
+            },
+            {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.toml']},
+          ]),
+        )
+
+        await expect(readProblems(directory)).resolves.toStrictEqual([
+          'suppressions[2]: duplicates suppressions[0]',
+          'suppressions[3]: duplicates suppressions[1]',
+          'suppressions[4]: duplicates suppressions[0]',
+        ])
+      })
+    })
+
+    test('accepts entries that differ in source, check, path, code, or configurations', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const entries = [
+          deterministicEntry,
+          {...deterministicEntry, source: 'agent'},
+          {...deterministicEntry, check: 'UNSAFE_INNERHTML'},
+          {...deterministicEntry, path: 'test/fixtures/other-session.ts'},
+          {...deterministicEntry, code: 'refreshToken: "shpa[REDACTED:38]"'},
+          {
+            source: deterministicEntry.source,
+            check: deterministicEntry.check,
+            kind: deterministicEntry.kind,
+            path: deterministicEntry.path,
+            reason: deterministicEntry.reason,
+            configurations: deterministicEntry.configurations,
+          },
+          {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.production.toml']},
+        ]
+        await writeSuppressionsFile(directory, suppressionsJson(entries))
+
+        await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual(entries)
+      })
+    })
+
+    test('compares only entries that are valid on their own', async () => {
+      await expect(
+        inTemporaryDirectory(async (directory) => {
+          await writeSuppressionsFile(
+            directory,
+            suppressionsJson([deterministicEntry, {...deterministicEntry, reason: ''}]),
+          )
+          return readProblems(directory)
+        }),
+      ).resolves.toStrictEqual(['suppressions[1].reason: must not be empty'])
+    })
+  })
+
   describe('the file', () => {
     test('rejects a symbolic link without reading the file it points to', async () => {
       await inTemporaryDirectory(async (directory) => {

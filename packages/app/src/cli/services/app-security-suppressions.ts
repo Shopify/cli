@@ -198,6 +198,28 @@ function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
   })
 }
 
+/**
+ * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code), and the
+ * same set of app configurations. Only one of them could apply, so a duplicate is a problem even when its kind or
+ * reason differs. Only entries that are valid on their own are compared; the schema reports the others.
+ */
+function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
+  if (!Array.isArray(entries)) return []
+  const firstIndexByMatch = new Map<string, number>()
+  return entries.flatMap((entry: unknown, entryIndex): SuppressionsFileProblem[] => {
+    const parsed = suppressionSchema.safeParse(entry)
+    if (!parsed.success) return []
+    const {source, check, path, code, configurations} = parsed.data
+    const match = JSON.stringify([source, check, path, code ?? null, [...new Set(configurations)].sort()])
+    const firstIndex = firstIndexByMatch.get(match)
+    if (firstIndex === undefined) {
+      firstIndexByMatch.set(match, entryIndex)
+      return []
+    }
+    return [{entryIndex, message: `suppressions[${entryIndex}]: duplicates suppressions[${firstIndex}]`}]
+  })
+}
+
 /** Validates the parsed JSON of a suppressions file. All or nothing: any problem rejects the whole file. */
 function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
   if (!isJsonObject(value)) {
@@ -220,6 +242,7 @@ function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
   const problems = [
     ...(parsed.success ? [] : parsed.error.issues.flatMap(describeIssue)),
     ...checkIdProblems(value.suppressions),
+    ...duplicateProblems(value.suppressions),
   ].sort((left, right) => left.entryIndex - right.entryIndex)
   if (!parsed.success || problems.length > 0) {
     return {ok: false, errors: problems.map((problem) => problem.message)}
