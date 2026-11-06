@@ -34,6 +34,7 @@ const savedEntry = {
   code: 'const orders = await prisma.order.findMany()',
   reason: 'Every order table holds one shop.',
   configurations: ['shopify.app.toml'],
+  previous: null,
 }
 const suppressions = {
   filePath: suppressionsFile,

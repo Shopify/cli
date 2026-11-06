@@ -87,11 +87,14 @@ export function projectAppSecurityBlocking(blocking: {
 /**
  * Projects shopify.app-security.json and how its entries applied to `checks`, the combined checks that the entries
  * were applied to. A finding that both an entry and the agent suppress counts for the entry, which comes first.
+ * `likelyFindingNumbers` gives the number of each stale entry's likely finding, by the entry's index, in `review`,
+ * which numbers findings.
  */
 export function projectAppSecuritySuppressions(
   appDirectory: string,
   suppressions: SuppressionEntryResult[],
   checks: CombinedCheck[],
+  likelyFindingNumbers: ReadonlyMap<number, number> = new Map(),
 ): AppSecuritySuppressions {
   const suppressedFindings = checks
     .flatMap((check) => check.findings)
@@ -115,6 +118,14 @@ export function projectAppSecuritySuppressions(
       likelyPath:
         result.likely_path === undefined ? null : projectAppSecurityRelativePath(appDirectory, result.likely_path),
       candidateFindingCount: result.candidate_locations?.length ?? null,
+      likelyFinding:
+        result.likely_finding === undefined
+          ? null
+          : {
+              filePath: projectAppSecurityRelativePath(appDirectory, result.likely_finding.file),
+              line: result.likely_finding.line,
+              findingNumber: likelyFindingNumbers.get(result.index) ?? null,
+            },
     })),
   }
 }
@@ -122,7 +133,7 @@ export function projectAppSecuritySuppressions(
 /** Projects an entry that a command saved to shopify.app-security.json. */
 export function projectAppSecuritySavedSuppression(
   appDirectory: string,
-  {index, change, entry}: SavedSuppression,
+  {index, change, entry, previous}: SavedSuppression,
 ): AppSecuritySavedSuppression {
   return {
     index,
@@ -134,5 +145,7 @@ export function projectAppSecuritySavedSuppression(
     code: entry.code ?? null,
     reason: entry.reason,
     configurations: entry.configurations,
+    previous:
+      previous === undefined ? null : {code: previous.code ?? null, kind: previous.kind, reason: previous.reason},
   }
 }

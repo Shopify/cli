@@ -932,6 +932,7 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           matchedFindingCount: 1,
           likelyPath: null,
           candidateFindingCount: null,
+          likelyFinding: null,
         },
         {
           index: 1,
@@ -943,6 +944,7 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           matchedFindingCount: 1,
           likelyPath: null,
           candidateFindingCount: null,
+          likelyFinding: null,
         },
         {
           index: 2,
@@ -954,6 +956,7 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           matchedFindingCount: 0,
           likelyPath: null,
           candidateFindingCount: null,
+          likelyFinding: null,
         },
         {
           index: 3,
@@ -965,6 +968,7 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
           matchedFindingCount: 0,
           likelyPath: null,
           candidateFindingCount: null,
+          likelyFinding: null,
         },
       ],
     })
@@ -1007,6 +1011,104 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
         {status: 'ambiguous', matchedFindingCount: 0, likelyPath: null, candidateFindingCount: 2},
       ],
     })
+  })
+
+  test('reports the likely finding of a stale entry after an edit of its code, with its path, line and number', async () => {
+    const renamed = deterministicDocument({
+      checks: [
+        deterministicCheck({
+          findings: [
+            finding('app/routes/orders.tsx', 12, 'accessToken flows into console.log.', {
+              code_excerpt: [{line: 12, text: '  console.log(currentSession.accessToken)'}],
+            }),
+          ],
+        }),
+      ],
+    })
+    const staleEntry = entry({code: 'console.log(session.accessToken)'})
+
+    const result = (await jsonResult({deterministic: renamed, agent: null}, {entries: [staleEntry, entry({})]})) as {
+      suppressions: {entries: unknown[]}
+    }
+    const unchanged = (await jsonResult({deterministic: renamed, agent: null}, {entries: [entry({})]})) as {
+      suppressions: {entries: unknown[]}
+    }
+
+    // The entry without code matches the finding, so the stale entry's similar finding is suppressed: no likely finding.
+    expect(result.suppressions.entries).toMatchObject([{status: 'stale', likelyFinding: null}, {status: 'matched'}])
+    const alone = (await jsonResult({deterministic: renamed, agent: null}, {entries: [staleEntry]})) as {
+      suppressions: {entries: unknown[]}
+    }
+    expect(alone.suppressions.entries).toStrictEqual([
+      {
+        index: 0,
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: appPath('app/routes/orders.tsx'),
+        status: 'stale',
+        matchedFindingCount: 0,
+        likelyPath: null,
+        candidateFindingCount: null,
+        likelyFinding: {filePath: appPath('app/routes/orders.tsx'), line: 12, findingNumber: 1},
+      },
+    ])
+    expect(unchanged.suppressions.entries).toMatchObject([{status: 'matched', likelyFinding: null}])
+  })
+
+  test('reports a re-attached entry with its previous code, kind and reason, and keeps the fields of the other entries', async () => {
+    const savedEntry = entry({code: 'console.log(currentSession.accessToken)'})
+    const review: ReviewedAppSecurityResults = {
+      ...reviewed({deterministic, agent: null}, {entries: [savedEntry]}),
+      savedSuppressions: {
+        path: `${appDirectory}/shopify.app-security.json`,
+        saved: [
+          {
+            index: 0,
+            change: 'code-replaced',
+            entry: savedEntry,
+            previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason: 'Old reason.'},
+            findingNumber: 1,
+          },
+          {index: 1, change: 'added', entry: entry({path: 'app/routes/admin.tsx'}), findingNumber: 2},
+        ],
+        companionNumbers: [],
+      },
+    }
+
+    const result = await withCapturedStandardStreams(({stdout}) => {
+      renderSecurityReviewResult(review, {verbose: false}, 'json')
+      return JSON.parse(stdout()) as {savedSuppressions: {entries: unknown[]}}
+    })
+
+    expect(result.savedSuppressions.entries).toStrictEqual([
+      {
+        index: 0,
+        change: 'code-replaced',
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: appPath('app/routes/orders.tsx'),
+        code: 'console.log(currentSession.accessToken)',
+        reason: 'The logs stay on the developer machine.',
+        configurations: ['shopify.app.toml'],
+        previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason: 'Old reason.'},
+        findingNumber: 1,
+      },
+      {
+        index: 1,
+        change: 'added',
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: appPath('app/routes/admin.tsx'),
+        code: null,
+        reason: 'The logs stay on the developer machine.',
+        configurations: ['shopify.app.toml'],
+        previous: null,
+        findingNumber: 2,
+      },
+    ])
   })
 
   test('sets suppression on a superseded deterministic finding that an entry matched, which is not counted as suppressed', async () => {

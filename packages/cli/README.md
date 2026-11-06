@@ -5810,10 +5810,13 @@ DESCRIPTION
   Findings that an entry of `shopify.app-security.json` in the app directory matches are suppressed: they don't count
   for `--blocking`, and the output lists each one with its kind and reason. An entry that matches no finding is stale,
   and an entry whose code matches more than one finding is ambiguous. Neither suppresses anything, and the output lists
-  both, so you can remove or update them. Agent entries aren't evaluated, because the check reads no agent results. An
-  invalid file makes the check fail with every problem. To add entries, run `shopify app security review --interactive`
-  or `shopify app security review --suppress`, or have your coding agent record a suppression that you approved. Then
-  review and commit the file.
+  both, so you can remove or update them. When an edit to the flagged code, such as a rename, makes an entry stale, the
+  output names the location of its likely finding: run `shopify app security review` to see that finding's number, and
+  `shopify app security review --suppress` with it to re-attach the entry. It names none when the entry's code or the
+  finding's line holds a redacted secret, because redaction hides the only text that tells two credentials apart. Agent
+  entries aren't evaluated, because the check reads no agent results. An invalid file makes the check fail with every
+  problem. To add entries, run `shopify app security review --interactive` or `shopify app security review --suppress`,
+  or have your coding agent record a suppression that you approved. Then review and commit the file.
 
   With `--json`, the result describes the scan and the files it wrote, whether `--blocking` passed, and how the entries
   of `shopify.app-security.json` applied, but not the findings: run `shopify app security review --json` for those.
@@ -6149,6 +6152,46 @@ DESCRIPTION
               }
             ],
             "description": "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null."
+          },
+          "likelyFinding": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "filePath": {
+                    "type": "string",
+                    "description": "The absolute path of the finding's file, the entry's file."
+                  },
+                  "line": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "description": "The finding's one-based line."
+                  },
+                  "findingNumber": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "With review, the finding's number, which review --suppress takes to re-attach the entry. Null with check, which doesn't number findings."
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "line",
+                  "findingNumber"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null."
           }
         },
         "required": [
@@ -6160,7 +6203,8 @@ DESCRIPTION
           "status",
           "matchedFindingCount",
           "likelyPath",
-          "candidateFindingCount"
+          "candidateFindingCount",
+          "likelyFinding"
         ],
         "additionalProperties": false,
         "description": "One entry of shopify.app-security.json, and how it applied to the results."
@@ -6859,9 +6903,10 @@ DESCRIPTION
             "type": "string",
             "enum": [
               "added",
-              "configuration-added"
+              "configuration-added",
+              "code-replaced"
             ],
-            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding."
+            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced."
           },
           "source": {
             "type": "string",
@@ -6909,6 +6954,49 @@ DESCRIPTION
               "type": "string"
             },
             "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The entry's code before the change, redacted."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "false-positive",
+                      "accepted-risk"
+                    ],
+                    "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The entry's reason before the change."
+                  }
+                },
+                "required": [
+                  "code",
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For code-replaced: the code, kind and reason that the entry had before the change. Otherwise null."
           }
         },
         "required": [
@@ -6920,7 +7008,8 @@ DESCRIPTION
           "path",
           "code",
           "reason",
-          "configurations"
+          "configurations",
+          "previous"
         ],
         "additionalProperties": false,
         "description": "An entry of shopify.app-security.json that the command saved, as the file now holds it."
@@ -6972,7 +7061,8 @@ FLAGS
 
   --interactive
       Go through the active findings one at a time, most severe first, then the superseded findings that check --blocking
-      still counts, and choose Suppress, Continue or Quit for each. Needs an interactive terminal.
+      still counts, and choose Suppress, Continue or Quit for each, or Re-attach for the likely finding of a stale entry.
+      Needs an interactive terminal.
       [env: SHOPIFY_FLAG_APP_SECURITY_INTERACTIVE]
 
   --json-schema
@@ -6980,7 +7070,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --kind=<value>
-      Why the finding is suppressed, with --suppress: false-positive or accepted-risk.
+      Why the finding is suppressed, with --suppress: false-positive or accepted-risk. Optional when --suppress
+      re-attaches a stale entry, which then keeps its kind unless you pass this flag.
       [env: SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_KIND]
 
   --no-color
@@ -6996,7 +7087,8 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --reason=<value>
-      The reason for the suppression, with --suppress. It is saved in shopify.app-security.json.
+      The reason for the suppression, with --suppress. It is saved in shopify.app-security.json. Optional when --suppress
+      re-attaches a stale entry, which then keeps its reason unless you pass this flag.
       [env: SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_REASON]
 
   --results-digest=<value>
@@ -7006,7 +7098,7 @@ FLAGS
 
   --suppress=<value>
       Suppress the finding with this number: save an entry for it to shopify.app-security.json. Requires --kind and
-      --reason.
+      --reason, unless the finding is the likely finding of a stale entry: then the command re-attaches that entry to it.
       [env: SHOPIFY_FLAG_APP_SECURITY_SUPPRESS]
 
   --verbose
@@ -7040,31 +7132,40 @@ DESCRIPTION
   app configurations it applies to. A finding that an entry matches is suppressed: it doesn't count for `--blocking`,
   and it's always listed with its kind and reason. An entry that matches no finding is stale, and an entry whose code
   matches more than one finding is ambiguous. Neither suppresses anything, and the review lists both, so you can remove
-  or update them. Entries for checks without a result, or for other app configurations, aren't evaluated. An invalid
-  file makes the command fail with every problem.
+  or update them. When an edit to the flagged code, such as a rename, makes an entry stale, the review names the entry's
+  likely finding: the one finding of its source and check in its file that nothing suppresses and whose flagged line
+  holds at least two thirds of the words of the entry's code. It names none when the entry's code or that line holds a
+  redacted secret, such as `shpa[REDACTED:38]`: redaction hides the only text that tells two credentials apart, so
+  suppress that finding again with `--kind` and `--reason`. Entries for checks without a result, or for other app
+  configurations, aren't evaluated. An invalid file makes the command fail with every problem.
 
   Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
   every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
   and a number names the same finding until the results files change. To suppress a finding, pass its number to
   `--suppress` with `--kind` and `--reason`, and the digest to `--results-digest` to refuse the suppression if the
   results changed since you read the number. The command saves an entry to `shopify.app-security.json` that matches only
-  that finding, then shows the review with the finding suppressed. Review and commit the file. When the finding is an
-  agent finding that supersedes a deterministic finding of the same check in the same file, `check --blocking` still
-  counts the deterministic finding, because it reads no agent results: the output names it, and `--include-superseded`
-  suppresses it too, with the same kind and reason. A superseded deterministic finding can also be suppressed by its own
-  number, for example when the agent result has no finding in its file: the review doesn't count it, but `check
-  --blocking` does, and the output says so.
+  that finding, then shows the review with the finding suppressed. Review and commit the file. When the finding is the
+  likely finding of a stale entry, `--suppress` re-attaches that entry instead of adding one: the entry gets the code
+  that names the finding alone, and keeps its kind, reason and configurations, so `--kind` and `--reason` are optional,
+  and replace the entry's kind and reason when you pass them. The output shows the old and the new code. Nothing
+  re-attaches an entry on its own: only `--suppress` and the Re-attach choice of `--interactive` change the file. When
+  the finding is an agent finding that supersedes a deterministic finding of the same check in the same file, `check
+  --blocking` still counts the deterministic finding, because it reads no agent results: the output names it, and
+  `--include-superseded` suppresses it too, with the same kind and reason. A superseded deterministic finding can also
+  be suppressed by its own number, for example when the agent result has no finding in its file: the review doesn't
+  count it, but `check --blocking` does, and the output says so.
 
   Use `--interactive` in a terminal to go through the active findings one at a time, most severe first, each shown in
-  full with its number. For each finding, choose Suppress, Continue or Quit. Suppress asks whether the finding is a
-  false positive or an accepted risk, and for a reason, which is required. Then it saves the entry at once, as
-  `--suppress` does. When the finding has superseded deterministic findings that `check --blocking` still counts, it
-  asks separately whether to suppress them too. Continue leaves the finding active. Quit stops the review and keeps what
-  you saved. After the active findings, the review offers in the same way each superseded deterministic finding that
-  `check --blocking` still counts, when there are any, apart from the ones it already asked about. At the end, the
-  command shows the review with the findings you suppressed, and lists the entries it saved. `--interactive` never
-  prompts in CI, without a terminal, or with `--no-input`: it fails before it reads anything. It can't be combined with
-  `--json` or `--suppress`.
+  full with its number. For each finding, choose Suppress, Continue or Quit, or Re-attach when the finding is the likely
+  finding of a stale entry: it shows the entry's old code and the new one, and re-attaches the entry with its kind and
+  reason. Suppress asks whether the finding is a false positive or an accepted risk, and for a reason, which is
+  required. Then it saves the entry at once, as `--suppress` does. When the finding has superseded deterministic
+  findings that `check --blocking` still counts, it asks separately whether to suppress them too. Continue leaves the
+  finding active. Quit stops the review and keeps what you saved. After the active findings, the review offers in the
+  same way each superseded deterministic finding that `check --blocking` still counts, when there are any, apart from
+  the ones it already asked about. At the end, the command shows the review with the findings you suppressed, and lists
+  the entries it saved. `--interactive` never prompts in CI, without a terminal, or with `--no-input`: it fails before
+  it reads anything. It can't be combined with `--json` or `--suppress`.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -7440,6 +7541,46 @@ DESCRIPTION
               }
             ],
             "description": "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null."
+          },
+          "likelyFinding": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "filePath": {
+                    "type": "string",
+                    "description": "The absolute path of the finding's file, the entry's file."
+                  },
+                  "line": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "description": "The finding's one-based line."
+                  },
+                  "findingNumber": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "With review, the finding's number, which review --suppress takes to re-attach the entry. Null with check, which doesn't number findings."
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "line",
+                  "findingNumber"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null."
           }
         },
         "required": [
@@ -7451,7 +7592,8 @@ DESCRIPTION
           "status",
           "matchedFindingCount",
           "likelyPath",
-          "candidateFindingCount"
+          "candidateFindingCount",
+          "likelyFinding"
         ],
         "additionalProperties": false,
         "description": "One entry of shopify.app-security.json, and how it applied to the results."
@@ -8348,9 +8490,10 @@ DESCRIPTION
             "type": "string",
             "enum": [
               "added",
-              "configuration-added"
+              "configuration-added",
+              "code-replaced"
             ],
-            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding."
+            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced."
           },
           "source": {
             "type": "string",
@@ -8399,6 +8542,49 @@ DESCRIPTION
             },
             "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
           },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The entry's code before the change, redacted."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "false-positive",
+                      "accepted-risk"
+                    ],
+                    "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The entry's reason before the change."
+                  }
+                },
+                "required": [
+                  "code",
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For code-replaced: the code, kind and reason that the entry had before the change. Otherwise null."
+          },
           "findingNumber": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -8415,6 +8601,7 @@ DESCRIPTION
           "code",
           "reason",
           "configurations",
+          "previous",
           "findingNumber"
         ],
         "additionalProperties": false,

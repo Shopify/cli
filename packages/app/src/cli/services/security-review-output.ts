@@ -1,11 +1,12 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel, listedNumbers} from './app-security-format.js'
 import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
-import {suppressionReasonProblem, type SavedSuppression} from './app-security-suppressions.js'
+import {suppressionReasonProblem, type SavedSuppression, type SuppressionDecision} from './app-security-suppressions.js'
 import {
   SUPPRESSION_KIND_LABEL,
   suppressedFindingsView,
   unappliedEntriesView,
+  type LikelyFindingCommands,
   type SuppressedFindingsView,
   type UnappliedEntriesView,
 } from './security-suppressions-output.js'
@@ -51,10 +52,12 @@ import type {
   TokenItem,
 } from '@shopify/cli-kit/node/ui'
 import type {
+  FindingSuppressionResult,
   InteractiveReviewOutcome,
   InteractiveReviewSession,
   InteractiveSecurityReview,
   NumberedFinding,
+  ReattachmentOffer,
   SavedReviewSuppressions,
   SecurityReviewResult,
   SuppressionRefusal,
@@ -183,6 +186,7 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
   // Not every entry's check is in the results, so the entries are narrowed by the selected IDs, not by the checks.
   const unappliedEntries = unappliedEntriesView(
     filter ? suppressions.filter((result) => filter.checkIds.includes(result.entry.check)) : suppressions,
+    likelyFindingCommands(input),
   )
 
   return [
@@ -200,6 +204,31 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
 type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
 
 /**
+ * The review command, and the `--suppress` command, with the results digest, that re-attaches a stale entry to its
+ * likely finding: the finding's number is all that it needs.
+ */
+function likelyFindingCommands({result, commands}: SecurityReviewPresenterInput): LikelyFindingCommands {
+  const digestArgs = result.resultsDigest === null ? [] : ['--results-digest', result.resultsDigest]
+  return {
+    review: formatAppSecurityCommand(commands.review),
+    reattach: {
+      findingNumbers: result.likelyFindingNumbers,
+      command: (findingNumber) =>
+        formatAppSecurityCommand({
+          ...commands.review,
+          args: [...commands.review.args, '--suppress', String(findingNumber), ...digestArgs],
+        }),
+    },
+  }
+}
+
+const SAVED_CHANGE_LABEL: Record<SavedSuppression['change'], string> = {
+  added: 'added',
+  'configuration-added': 'configuration added',
+  'code-replaced': 're-attached',
+}
+
+/**
  * The numbers of the superseded findings of every check. An entry doesn't change a finding's disposition, so a
  * superseded finding stays superseded after its entry is saved.
  */
@@ -214,21 +243,43 @@ function supersededFindingNumbers(result: SecurityReviewResult): ReadonlySet<num
  * finding, a last line says why it needs an entry.
  */
 function savedEntrySection(
-  {index, change, entry, findingNumber}: NumberedSavedSuppression,
+  {index, change, entry, previous, findingNumber}: NumberedSavedSuppression,
   supersededNumbers: ReadonlySet<number>,
 ): AlertCustomSection {
   return {
-    title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
+    title: `suppressions[${index}] · finding ${findingNumber} · ${SAVED_CHANGE_LABEL[change]}`,
     body: [
       `${entry.source} ${entry.check} in`,
       {filePath: entry.path},
-      {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
-      ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
-      {subdued: `\nReason: ${entry.reason}`},
+      ...(previous ? reattachedEntryLines(entry, previous) : savedEntryLines(entry)),
       {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
       ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
     ],
   }
+}
+
+function savedEntryLines(entry: SavedSuppression['entry']): Token[] {
+  return [
+    {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
+    ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
+    {subdued: `\nReason: ${entry.reason}`},
+  ]
+}
+
+/** What re-attaching changed: the old and new code, and whether the kind and the reason were kept or replaced. */
+function reattachedEntryLines(
+  entry: SavedSuppression['entry'],
+  previous: NonNullable<SavedSuppression['previous']>,
+): Token[] {
+  const kindChange = entry.kind === previous.kind ? 'kept' : `replaced, it was ${SUPPRESSION_KIND_LABEL[previous.kind]}`
+  const reasonKept = entry.reason === previous.reason
+  return [
+    {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]} (${kindChange})`},
+    ...(previous.code === undefined ? [] : [{subdued: `\nOld code: ${previous.code}`}]),
+    ...(entry.code === undefined ? [] : [{subdued: `\nNew code: ${entry.code}`}]),
+    {subdued: `\nReason (${reasonKept ? 'kept' : 'replaced'}): ${entry.reason}`},
+    ...(reasonKept ? [] : [{subdued: `\nOld reason: ${previous.reason}`}]),
+  ]
 }
 
 function supersededEntryLine(findingNumber: number): string {
@@ -273,8 +324,8 @@ function savedSuppressionsAlert(
   }
 }
 
-/** What a person chooses for each finding of `review --interactive`. */
-export type InteractiveReviewAction = 'suppress' | 'continue' | 'quit'
+/** What a person chooses for each finding of `review --interactive`. `reattach` is offered for a stale entry's likely finding. */
+export type InteractiveReviewAction = 'reattach' | 'suppress' | 'continue' | 'quit'
 
 /** Whether `review --interactive` can prompt, and its prompts. Tests pass their own. */
 export interface InteractiveReviewDependencies {
@@ -382,10 +433,11 @@ async function reviewFindingsFrom(
   const numbered = round.findings[position]
   if (!numbered) return outcome
 
-  renderAlert(interactiveFindingAlert(numbered, round.progress(position + 1)))
-  const action = await dependencies.selectAction(interactiveActionPrompt(numbered))
+  const offer = session.reattachments.get(numbered.number)
+  renderAlert(interactiveFindingAlert(numbered, round.progress(position + 1), offer))
+  const action = await dependencies.selectAction(interactiveActionPrompt(numbered, offer))
   if (action === 'quit') return {...outcome, ending: 'quit'}
-  const decision = action === 'suppress' ? await suppressInteractively(session, dependencies, numbered) : NO_DECISION
+  const decision = await decideFinding(session, dependencies, numbered, action, offer)
   const next: InteractiveReviewOutcome = {
     saved: [...outcome.saved, ...decision.saved],
     declinedCompanions:
@@ -399,6 +451,25 @@ async function reviewFindingsFrom(
   }
   if (decision.resultsChanged) return next
   return reviewFindingsFrom(session, dependencies, round, position + 1, next)
+}
+
+/** Saves what the person chose for the finding: a new entry, a re-attached stale entry, or nothing. */
+async function decideFinding(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+  action: Exclude<InteractiveReviewAction, 'quit'>,
+  offer: ReattachmentOffer | undefined,
+): Promise<FindingDecision> {
+  if (action === 'suppress') return suppressInteractively(session, dependencies, numbered)
+  if (action === 'reattach' && offer) {
+    const finding = await session.reattach(numbered.number)
+    return savedWithCompanions(session, dependencies, numbered, finding, {
+      kind: offer.entry.kind,
+      reason: offer.entry.reason,
+    })
+  }
+  return NO_DECISION
 }
 
 /**
@@ -416,6 +487,20 @@ async function suppressInteractively(
   const decision = {kind, reason}
 
   const finding = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: false})
+  return savedWithCompanions(session, dependencies, numbered, finding, decision)
+}
+
+/**
+ * Shows what the save for the finding did. Then, when the finding has companions that `check --blocking` still counts,
+ * asks whether to suppress them with the decision's kind and reason, and saves them only on yes.
+ */
+async function savedWithCompanions(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+  finding: FindingSuppressionResult,
+  decision: SuppressionDecision,
+): Promise<FindingDecision> {
   if (finding.status === 'refused') return showRefusal(finding.refusal)
   const {saved, companionNumbers} = finding.savedSuppressions
   const supersededNumbers = supersededFindingNumbers(session.result)
@@ -445,15 +530,23 @@ function showRefusal(refusal: SuppressionRefusal): FindingDecision {
   return {...NO_DECISION, resultsChanged}
 }
 
-function interactiveReviewIntroAlert({findings, configuration}: InteractiveReviewSession): SecurityReviewAlert {
+function interactiveReviewIntroAlert({
+  findings,
+  configuration,
+  reattachments,
+}: InteractiveReviewSession): SecurityReviewAlert {
   if (findings.length === 0) {
     return {type: 'info', options: {headline: `No active findings to review for ${configuration}.`}}
   }
+  const reattach =
+    reattachments.size === 0
+      ? ''
+      : ` When a stale entry of ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} likely names a finding because its code was edited, you can also choose Re-attach: the entry gets the finding's code, and keeps its kind and reason.`
   return {
     type: 'info',
     options: {
       headline: `Reviewing ${countLabel(findings.length, 'active finding')} for ${configuration}, most severe first.`,
-      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop. The suppressions you save are kept when you quit.`,
+      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop.${reattach} The suppressions you save are kept when you quit.`,
     },
   }
 }
@@ -475,23 +568,57 @@ function supersededFindingsIntroAlert(findings: NumberedFinding[]): SecurityRevi
   }
 }
 
-/** The finding in full, with its evidence and reasoning, in the box of its check. */
-function interactiveFindingAlert({number, check, finding}: NumberedFinding, progress: string): SecurityReviewAlert {
+/**
+ * The finding in full, with its evidence and reasoning, in the box of its check. When a stale entry likely names it,
+ * a last section shows that entry, with its old code and the code that Re-attach gives it.
+ */
+function interactiveFindingAlert(
+  {number, check, finding}: NumberedFinding,
+  progress: string,
+  offer: ReattachmentOffer | undefined,
+): SecurityReviewAlert {
   return {
     type: check.severity === 'high' ? 'error' : 'warning',
     options: {
       headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
       body: {subdued: progress},
       ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
-      customSections: [findingSection(finding, number, true)],
+      customSections: [findingSection(finding, number, true), ...(offer ? [reattachmentSection(offer)] : [])],
     },
   }
 }
 
-function interactiveActionPrompt({number}: NumberedFinding): RenderSelectPromptOptions<InteractiveReviewAction> {
+function reattachmentSection({entryIndex, entry, code}: ReattachmentOffer): AlertCustomSection {
+  return {
+    title: `Stale entry suppressions[${entryIndex}] · ${SUPPRESSION_KIND_LABEL[entry.kind]}`,
+    body: [
+      `Its code matches no finding, and the code of this finding is similar. Re-attach gives the entry this finding's code, and keeps its kind and reason.`,
+      {subdued: `\nReason: ${entry.reason}`},
+      ...(entry.code === undefined ? [] : [{subdued: `\nOld code: ${entry.code}`}]),
+      {subdued: `\nNew code: ${code}`},
+    ],
+  }
+}
+
+function interactiveActionPrompt(
+  {number}: NumberedFinding,
+  offer: ReattachmentOffer | undefined,
+): RenderSelectPromptOptions<InteractiveReviewAction> {
+  const reattach = offer
+    ? [
+        {
+          // The finding's box shows the entry's kind, reason and code. A reason can be wider than the terminal, and the
+          // prompt redraws a row that the terminal wrapped as one line.
+          label: `Re-attach suppressions[${offer.entryIndex}]`,
+          value: 'reattach' as const,
+          key: 'r',
+        },
+      ]
+    : []
   return {
     message: `What do you want to do with finding #${number}?`,
     choices: [
+      ...reattach,
       {label: 'Suppress', value: 'suppress', key: 's'},
       {label: 'Continue', value: 'continue', key: 'c'},
       {label: 'Quit', value: 'quit', key: 'q'},

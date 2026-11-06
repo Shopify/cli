@@ -27,6 +27,7 @@ const suppressionEntry = {
   matchedFindingCount: 2,
   likelyPath: null,
   candidateFindingCount: null,
+  likelyFinding: null,
 }
 const suppressions = {
   filePath: onWindows ? 'C:\\apps\\my-app\\shopify.app-security.json' : '/apps/my-app/shopify.app-security.json',
@@ -75,6 +76,23 @@ describe('appSecurityCheckJsonOutputSchema', () => {
     ['a scan without instructions', scan],
     ['a scan with instructions', {...scan, instructions: {content: '# Instructions', copied: true}}],
     ['a scan that fails --blocking', {...scan, valid: false, blocking: {level: 'high', blockedCheckCount: 2}}],
+    [
+      "a stale entry's likely finding, without a number",
+      {
+        ...scan,
+        suppressions: {
+          ...suppressions,
+          entries: [
+            {
+              ...suppressionEntry,
+              status: 'stale',
+              matchedFindingCount: 0,
+              likelyFinding: {filePath: suppressionEntry.path, line: 3, findingNumber: null},
+            },
+          ],
+        },
+      },
+    ],
     [
       'a scan without app configuration',
       {...scan, app: {directory: appDirectory, configurationPath: null, clientId: 'a'}},
@@ -170,6 +188,16 @@ describe('appSecurityCheckJsonOutputSchema', () => {
     [
       'a negative candidate finding count',
       {...scan, suppressions: {...suppressions, entries: [{...suppressionEntry, candidateFindingCount: -1}]}},
+    ],
+    [
+      'a likely finding without its line',
+      {
+        ...scan,
+        suppressions: {
+          ...suppressions,
+          entries: [{...suppressionEntry, likelyFinding: {filePath: suppressionEntry.path, findingNumber: null}}],
+        },
+      },
     ],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityCheckJsonOutputSchema.validate(value)).toThrow()

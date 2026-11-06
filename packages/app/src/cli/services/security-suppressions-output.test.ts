@@ -171,7 +171,7 @@ describe('unappliedEntriesView', () => {
       agent: null,
       suppressions: {entries, resultsKey: 'shopify.app', missingPaths},
     })
-    return unappliedEntriesView(suppressions)
+    return unappliedEntriesView(suppressions, {review: 'shopify app security review'})
   }
 
   test('lists the stale entries, then the ambiguous ones, then counts the not-evaluated ones with their reasons', () => {
@@ -272,6 +272,82 @@ describe('unappliedEntriesView', () => {
       },
       {body: 'This entry matches no finding. Remove it, or update it to match the code.'},
     ])
+  })
+
+  describe('the likely finding of a stale entry', () => {
+    // A rename of the logged session on line 3, so the entry's code names nothing, but the line is similar to it.
+    const renamedCheck = check({
+      id: 'CREDENTIAL_LOG_LEAKAGE',
+      snapshot: {...snapshot, severity: 'high'},
+      findings: [
+        {
+          location: {file: 'app/routes/session.ts', line: 3},
+          message: 'accessToken flows into console.log.',
+          evidence: [],
+          code_excerpt: [{line: 3, text: '  console.log(currentSession.accessToken)'}],
+        },
+      ],
+    })
+    const staleEntry: SuppressionEntry = {
+      ...secretEntry,
+      check: 'CREDENTIAL_LOG_LEAKAGE',
+      code: 'console.log(session.accessToken)',
+      reason: 'Only logged in local development.',
+    }
+
+    function staleItem(likelyFindingCommands: Parameters<typeof unappliedEntriesView>[1]) {
+      const {suppressions} = combineFindings({
+        deterministic: deterministic([renamedCheck]),
+        agent: null,
+        suppressions: {entries: [staleEntry], resultsKey: 'shopify.app'},
+      })
+      const view = unappliedEntriesView(suppressions, likelyFindingCommands)
+      const [stale] = view?.sections ?? []
+      const body = stale?.body
+      return body && typeof body === 'object' && 'list' in body ? body.list.items[0] : undefined
+    }
+
+    test('names its number and the command that re-attaches the entry, in review', () => {
+      const item = staleItem({
+        review: 'shopify app security review',
+        reattach: {
+          findingNumbers: new Map([[0, 3]]),
+          command: (findingNumber) => `shopify app security review --suppress ${findingNumber} --results-digest abc`,
+        },
+      })
+
+      expect(item).toEqual([
+        {subdued: 'suppressions[0]:'},
+        'deterministic CREDENTIAL_LOG_LEAKAGE in',
+        {filePath: 'app/routes/session.ts'},
+        {subdued: '· false positive'},
+        '\nOnly logged in local development.',
+        '\nLikely now finding 3, at',
+        {filePath: 'app/routes/session.ts:3'},
+        {char: '.'},
+        'To re-attach the entry to it, with its kind and reason, run',
+        {command: 'shopify app security review --suppress 3 --results-digest abc'},
+      ])
+    })
+
+    test('names its location and the review command, in check, which numbers no finding', () => {
+      const item = staleItem({review: 'shopify app security review'})
+
+      expect(item).toEqual([
+        {subdued: 'suppressions[0]:'},
+        'deterministic CREDENTIAL_LOG_LEAKAGE in',
+        {filePath: 'app/routes/session.ts'},
+        {subdued: '· false positive'},
+        '\nOnly logged in local development.',
+        '\nLikely now the finding at',
+        {filePath: 'app/routes/session.ts:3'},
+        {char: '.'},
+        'To re-attach the entry to it, with its kind and reason, run',
+        {command: 'shopify app security review'},
+        {char: ','},
+        "and pass the finding's number to --suppress.",
+      ])
+    })
   })
 
   test('is an info view with only the count when every entry that applies to nothing is not evaluated', () => {

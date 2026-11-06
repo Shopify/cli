@@ -801,10 +801,13 @@ describe('securityReview --suppress', () => {
   })
 
   test.each([
-    ['a missing reason', {reason: undefined}, ['--reason: required']],
     ['an empty reason', {reason: ''}, ['--reason: must not be empty']],
     ['an unknown kind', {kind: 'wont-fix'}, ['--kind: must be false-positive or accepted-risk']],
-    ['a missing kind', {kind: undefined}, ['--kind: required (false-positive or accepted-risk)']],
+    [
+      'an unknown kind without a reason',
+      {kind: 'wont-fix', reason: undefined},
+      ['--kind: must be false-positive or accepted-risk'],
+    ],
   ])('refuses %s before it reads anything', async (_name, flags, errors) => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, bothWithExcerpts)
@@ -836,6 +839,41 @@ describe('securityReview --suppress', () => {
       expect(dependencies.loadResults).not.toHaveBeenCalled()
     })
   })
+
+  test.each([
+    ['a missing reason', 6, {reason: undefined}, ['--reason: required']],
+    ['a missing kind', 6, {kind: undefined}, ['--kind: required (false-positive or accepted-risk)']],
+    [
+      'both flags missing',
+      6,
+      {kind: undefined, reason: undefined},
+      ['--kind: required (false-positive or accepted-risk)', '--reason: required'],
+    ],
+    [
+      'both flags missing, for a number that no finding has',
+      7,
+      {kind: undefined, reason: undefined},
+      ['--kind: required (false-positive or accepted-risk)', '--reason: required'],
+    ],
+  ])(
+    'refuses %s with the same error as before, once the results show that no stale entry likely names the finding',
+    async (_name, findingNumber, flags, errors) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory, bothWithExcerpts)
+
+        const error = await captureError(() => suppress(appRoot, {findingNumber, ...flags}))
+
+        expect(error.message).toBe('The suppression could not be saved because a flag is invalid.')
+        expect(error.tryMessage).toBe(
+          'Pass --kind false-positive or --kind accepted-risk, and a --reason that explains the decision.',
+        )
+        expect(error.code).toBe('suppression-flags-invalid')
+        expect(error.details).toStrictEqual({errors})
+        expect(error.customSections).toStrictEqual([{title: 'Errors', body: {list: {items: errors}}}])
+        await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+      })
+    },
+  )
 
   test.each([
     [
@@ -1012,6 +1050,303 @@ describe('securityReview --suppress', () => {
         code: 'finding-not-found',
         tryMessage: 'The results have no findings.',
       })
+    })
+  })
+})
+
+/**
+ * deterministic-findings.json after a scan of app/routes/session.ts, whose line 2 assigns a Shopify token to `name`, with
+ * the line redacted as `check` captures it. Finding 1 is that token. The app has no other COMMITTED_SECRET finding.
+ */
+function committedTokenResults(name: string): Files {
+  const lines = ['// Session fixtures.', `export const ${name} = "shpa[REDACTED:38]"`, 'export const shop = "example"']
+  return {
+    deterministic: {
+      ...deterministicFindingsDocument,
+      checks: [
+        {
+          ...committedSecrets.deterministic!.checks[0]!,
+          findings: [
+            withExcerpt(
+              {
+                location: {file: 'app/routes/session.ts', line: 2},
+                message: 'A Shopify token pattern was found in repository text.',
+                evidence: [],
+              },
+              lines,
+            ),
+          ],
+        },
+      ],
+    },
+  }
+}
+
+/** A deterministic CREDENTIAL_LOG_LEAKAGE finding in `app/routes/session.ts`, whose line 2 logs `<name>.accessToken`. */
+function loggedTokenResults(name: string): Files {
+  const lines = ['export function logSession(session) {', `  console.log(${name}.accessToken)`, '}']
+  return {
+    deterministic: {
+      ...deterministicFindingsDocument,
+      checks: [
+        {
+          ...deterministicFindingsDocument.checks.find(({id}) => id === 'CREDENTIAL_LOG_LEAKAGE')!,
+          findings: [
+            withExcerpt(
+              {
+                location: {file: 'app/routes/session.ts', line: 2},
+                message: 'accessToken flows into console.log.',
+                evidence: [],
+              },
+              lines,
+            ),
+          ],
+        },
+      ],
+    },
+  }
+}
+
+/** Writes the results of `files` again, as a new `check` or `record` does. */
+async function writeResults(appRoot: string, files: Files): Promise<void> {
+  const paths = appSecurityArtifactPaths(appRoot, RESULTS_KEY)
+  if (files.deterministic) await writeFile(paths.deterministicFindingsPath, JSON.stringify(files.deterministic))
+  if (files.agent) await writeFile(paths.agentFindingsPath, JSON.stringify(files.agent))
+}
+
+/** An app with the source file that the results above name, so an entry for it isn't for a file that is gone. */
+async function createSessionApp(directory: string, files: Files): Promise<string> {
+  const appRoot = await createApp(directory, files)
+  await mkdir(joinPath(appRoot, 'app', 'routes'))
+  await writeFile(joinPath(appRoot, 'app', 'routes', 'session.ts'), 'export const shop = "example"\n')
+  return appRoot
+}
+
+describe('securityReview --suppress, for the likely finding of a stale entry', () => {
+  function suppress(appRoot: string, flags: Partial<SecurityReviewSuppressOptions> & {findingNumber: number}) {
+    return securityReview(
+      {
+        directory: appRoot,
+        checkIds: [],
+        blocking: 'high',
+        suppress: {kind: undefined, reason: undefined, resultsDigest: undefined, includeSuperseded: false, ...flags},
+      },
+      testDependencies(),
+    )
+  }
+
+  async function reviewOf(appRoot: string) {
+    return securityReview({directory: appRoot, checkIds: [], blocking: 'high'}, testDependencies())
+  }
+
+  async function readFileEntries(appRoot: string): Promise<unknown> {
+    return (JSON.parse(await readFile(appSecuritySuppressionsPath(appRoot))) as {suppressions: unknown}).suppressions
+  }
+
+  const reason = 'Only logged in local development.'
+
+  test('reproduction: after a rename on the flagged line, re-attaches the entry without --kind and --reason, so nothing is stale', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createSessionApp(directory, loggedTokenResults('session'))
+      await suppress(appRoot, {findingNumber: 1, kind: 'false-positive', reason})
+      await writeResults(appRoot, loggedTokenResults('currentSession'))
+
+      const stale = await reviewOf(appRoot)
+      const reattached = await suppress(appRoot, {findingNumber: 1, resultsDigest: stale.result.resultsDigest!})
+
+      expect(stale.result.suppressions).toMatchObject([
+        {status: 'stale', likely_finding: {index: 0, file: 'app/routes/session.ts', line: 2}},
+      ])
+      expect([...stale.result.likelyFindingNumbers]).toStrictEqual([[0, 1]])
+      expect(stale.result.blocking.blockedChecks).toBe(1)
+      const entry = {
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'false-positive',
+        path: 'app/routes/session.ts',
+        code: 'console.log(currentSession.accessToken)',
+        reason,
+        configurations: ['shopify.app.toml'],
+      }
+      expect(reattached.savedSuppressions).toStrictEqual({
+        path: appSecuritySuppressionsPath(appRoot),
+        saved: [
+          {
+            index: 0,
+            change: 'code-replaced',
+            entry,
+            previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason},
+            findingNumber: 1,
+          },
+        ],
+        companionNumbers: [],
+      })
+      await expect(readFileEntries(appRoot)).resolves.toStrictEqual([entry])
+      expect(dispositionsOf(reattached.result.checks, 'CREDENTIAL_LOG_LEAKAGE')).toEqual([
+        {source: 'deterministic', disposition: 'suppressed'},
+      ])
+      expect(reattached.result.checks[0]!.findings[0]!.suppressed_by).toMatchObject({entry_index: 0, reason})
+      expect(reattached.result.suppressions.map(({status}) => status)).toEqual(['matched'])
+      expect(reattached.result.likelyFindingNumbers.size).toBe(0)
+      expect(reattached.result.blocking.blockedChecks).toBe(0)
+    })
+  })
+
+  test('replaces the kind and the reason with --kind and --reason, and still updates the entry in place', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createSessionApp(directory, loggedTokenResults('session'))
+      await suppress(appRoot, {findingNumber: 1, kind: 'false-positive', reason})
+      await writeResults(appRoot, loggedTokenResults('currentSession'))
+
+      const onlyKind = await suppress(appRoot, {findingNumber: 1, kind: 'accepted-risk'})
+      await writeResults(appRoot, loggedTokenResults('offlineSession'))
+      const onlyReason = await suppress(appRoot, {findingNumber: 1, reason: 'Rotated every week.'})
+
+      expect(onlyKind.savedSuppressions?.saved).toMatchObject([
+        {index: 0, change: 'code-replaced', entry: {kind: 'accepted-risk', reason}},
+      ])
+      expect(onlyReason.savedSuppressions?.saved).toMatchObject([
+        {
+          index: 0,
+          change: 'code-replaced',
+          entry: {
+            kind: 'accepted-risk',
+            code: 'console.log(offlineSession.accessToken)',
+            reason: 'Rotated every week.',
+          },
+          previous: {code: 'console.log(currentSession.accessToken)', kind: 'accepted-risk', reason},
+        },
+      ])
+      await expect(readFileEntries(appRoot)).resolves.toMatchObject([
+        {kind: 'accepted-risk', code: 'console.log(offlineSession.accessToken)', reason: 'Rotated every week.'},
+      ])
+    })
+  })
+
+  test('names no likely finding after a rename on a line with a redacted secret, so --suppress needs --kind and --reason, and appends an entry as before', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createSessionApp(directory, committedTokenResults('KEY'))
+      const tokenReason = 'A fake token in the session fixtures.'
+      await suppress(appRoot, {findingNumber: 1, kind: 'false-positive', reason: tokenReason})
+      await writeResults(appRoot, committedTokenResults('KEY2'))
+      const fileText = await readFile(appSecuritySuppressionsPath(appRoot))
+
+      const stale = await reviewOf(appRoot)
+      const error = await captureError(() => suppress(appRoot, {findingNumber: 1}))
+      const suppressed = await suppress(appRoot, {findingNumber: 1, kind: 'false-positive', reason: tokenReason})
+
+      expect(stale.result.suppressions).toMatchObject([{status: 'stale'}])
+      expect(stale.result.suppressions[0]).not.toHaveProperty('likely_finding')
+      expect(stale.result.likelyFindingNumbers.size).toBe(0)
+      expect(error).toMatchObject({
+        code: 'suppression-flags-invalid',
+        message: 'The suppression could not be saved because a flag is invalid.',
+        details: {errors: ['--kind: required (false-positive or accepted-risk)', '--reason: required']},
+      })
+      expect(suppressed.savedSuppressions?.saved).toMatchObject([
+        {index: 1, change: 'added', entry: {code: 'export const KEY2 = "shpa[REDACTED:38]"', reason: tokenReason}},
+      ])
+      expect(fileText).toContain('export const KEY = ')
+      expect(suppressed.result.suppressions.map(({status}) => status)).toEqual(['stale', 'matched'])
+    })
+  })
+
+  test('re-attaches an agent entry, and suppresses the companions with its kind and reason with --include-superseded', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      // Finding 2, the agent CREDENTIAL_LOG_LEAKAGE finding, logs `session.accessToken`. Finding 1 is its companion.
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      const agentEntry = {
+        source: 'agent',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: 'app/routes/orders.tsx',
+        code: 'console.log(session.idToken)',
+        reason: 'The logger redacts tokens.',
+        configurations: ['shopify.app.toml'],
+      }
+      await writeFile(
+        appSecuritySuppressionsPath(appRoot),
+        JSON.stringify({schema_version: 1, suppressions: [agentEntry]}),
+      )
+      await mkdir(joinPath(appRoot, 'app', 'routes'))
+      await writeFile(joinPath(appRoot, 'app', 'routes', 'orders.tsx'), 'export {}\n')
+
+      const reattached = await suppress(appRoot, {findingNumber: 2, includeSuperseded: true})
+
+      expect(reattached.savedSuppressions?.saved).toStrictEqual([
+        {
+          index: 0,
+          change: 'code-replaced',
+          entry: {...agentEntry, code: 'console.log(session.accessToken)'},
+          previous: {code: 'console.log(session.idToken)', kind: 'accepted-risk', reason: 'The logger redacts tokens.'},
+          findingNumber: 2,
+        },
+        {
+          index: 1,
+          change: 'added',
+          entry: {...agentEntry, source: 'deterministic', code: 'console.log(session.accessToken)'},
+          findingNumber: 1,
+        },
+      ])
+      expect(reattached.result.suppressions.map(({status}) => status)).toEqual(['matched', 'matched'])
+    })
+  })
+
+  test('refuses a likely finding that no code names alone, as for a new entry, and leaves the stale entry as it is', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const renamedLine = '  console.log(currentSession.accessToken)'
+      // Finding 2 logs an order, but its evidence is the renamed line, so every code of finding 1 names finding 2 too.
+      const agent: AgentFindingsDocument = {
+        ...agentFindingsDocument,
+        checks: [
+          {
+            ...agentFindingsDocument.checks.find(({id}) => id === 'CREDENTIAL_LOG_LEAKAGE')!,
+            snapshot: {...agentFindingsDocument.checks[0]!.snapshot, precedence: 'union'},
+            findings: [
+              {
+                location: {file: 'app/routes/orders.tsx', line: 12},
+                message: 'The session token reaches a log.',
+                evidence: [],
+                code_excerpt: [{line: 12, text: renamedLine}],
+              },
+              {
+                location: {file: 'app/routes/orders.tsx', line: 20},
+                message: 'An order reaches a log.',
+                evidence: [
+                  {location: {file: 'app/routes/orders.tsx', line: 12}, code_excerpt: [{line: 12, text: renamedLine}]},
+                ],
+                code_excerpt: [{line: 20, text: '  logger.info(order)'}],
+              },
+            ],
+          },
+        ],
+      }
+      const appRoot = await createApp(directory, {agent})
+      const agentEntry = {
+        source: 'agent',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: 'app/routes/orders.tsx',
+        code: 'console.log(session.accessToken)',
+        reason: 'The logger redacts tokens.',
+        configurations: ['shopify.app.toml'],
+      }
+      const fileText = JSON.stringify({schema_version: 1, suppressions: [agentEntry]})
+      await writeFile(appSecuritySuppressionsPath(appRoot), fileText)
+      await mkdir(joinPath(appRoot, 'app', 'routes'))
+      await writeFile(joinPath(appRoot, 'app', 'routes', 'orders.tsx'), 'export {}\n')
+
+      const stale = await reviewOf(appRoot)
+      const error = await captureError(() => suppress(appRoot, {findingNumber: 1}))
+
+      expect([...stale.result.likelyFindingNumbers]).toStrictEqual([[0, 1]])
+      expect(error).toMatchObject({
+        code: 'finding-not-suppressible',
+        message:
+          "Finding 1 can't be suppressed: every code from its lines also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx. Nothing was saved.",
+        tryMessage: 'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
+      })
+      await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(fileText)
     })
   })
 })
@@ -1280,6 +1615,128 @@ describe('securityReview --interactive', () => {
 
       await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
       expect(reviewed.result.resultsDigest).not.toBe(startDigest)
+    })
+  })
+})
+
+describe('securityReview --interactive, for the likely finding of a stale entry', () => {
+  const reason = 'Only logged in local development.'
+  const staleEntry = {
+    source: 'deterministic',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'false-positive',
+    path: 'app/routes/session.ts',
+    code: 'console.log(session.accessToken)',
+    reason,
+    configurations: ['shopify.app.toml'],
+  } as const
+
+  async function createRenamedApp(
+    directory: string,
+    {files = loggedTokenResults('currentSession'), entry = staleEntry}: {files?: Files; entry?: object} = {},
+  ): Promise<string> {
+    const appRoot = await createSessionApp(directory, files)
+    await writeFile(appSecuritySuppressionsPath(appRoot), JSON.stringify({schema_version: 1, suppressions: [entry]}))
+    return appRoot
+  }
+
+  /** The re-attach offers of `review --interactive` on the app. */
+  async function offersOf(appRoot: string) {
+    let offers: InteractiveReviewSession['reattachments'] | undefined
+    await securityReview(
+      {
+        directory: appRoot,
+        checkIds: [],
+        blocking: 'high',
+        interactive: async (session) => {
+          offers = session.reattachments
+          return {saved: [], declinedCompanions: [], ending: 'finished'}
+        },
+      },
+      testDependencies(),
+    )
+    return [...(offers ?? [])]
+  }
+
+  test('offers to re-attach the stale entry with the code it would get, and re-attaches it with its kind and reason', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createRenamedApp(directory)
+      let offers: InteractiveReviewSession['reattachments'] | undefined
+
+      const reviewed = await securityReview(
+        {
+          directory: appRoot,
+          checkIds: [],
+          blocking: 'high',
+          interactive: async (session) => {
+            offers = session.reattachments
+            const result = await session.reattach(1)
+            if (result.status !== 'saved') throw new Error('The re-attach was refused.')
+            return {saved: result.savedSuppressions.saved, declinedCompanions: [], ending: 'finished'}
+          },
+        },
+        testDependencies(),
+      )
+
+      expect([...(offers ?? [])]).toStrictEqual([
+        [1, {entryIndex: 0, entry: staleEntry, code: 'console.log(currentSession.accessToken)'}],
+      ])
+      expect(reviewed.interactiveReview?.saved).toMatchObject([
+        {index: 0, change: 'code-replaced', entry: {kind: 'false-positive', reason}, findingNumber: 1},
+      ])
+      expect(reviewed.result.suppressions.map(({status}) => status)).toEqual(['matched'])
+    })
+  })
+
+  test('refuses to re-attach a finding that is no longer the likely finding of a stale entry, and saves nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createRenamedApp(directory)
+      const fileText = await readFile(appSecuritySuppressionsPath(appRoot))
+
+      await securityReview(
+        {
+          directory: appRoot,
+          checkIds: [],
+          blocking: 'high',
+          interactive: async (session) => {
+            // The file changes during the session: the entry is gone.
+            await writeFile(appSecuritySuppressionsPath(appRoot), JSON.stringify({schema_version: 1, suppressions: []}))
+            const result = await session.reattach(1)
+            await writeFile(appSecuritySuppressionsPath(appRoot), fileText)
+            expect(result).toStrictEqual({
+              status: 'refused',
+              refusal: {
+                code: 'finding-not-suppressible',
+                message: 'Finding 1 is no longer the likely finding of a stale entry. Nothing was saved.',
+                tryMessage:
+                  'Choose Suppress to save a new entry for it, or run the review again to see the stale entries of shopify.app-security.json.',
+                details: {findingNumber: 1},
+              },
+            })
+            return {saved: [], declinedCompanions: [], ending: 'finished'}
+          },
+        },
+        testDependencies(),
+      )
+
+      await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(fileText)
+    })
+  })
+
+  test('offers no re-attach after a rename on a line with a redacted secret', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const secretEntry = {...staleEntry, check: 'COMMITTED_SECRET', code: 'export const KEY = "shpa[REDACTED:38]"'}
+      const appRoot = await createRenamedApp(directory, {files: committedTokenResults('KEY2'), entry: secretEntry})
+
+      await expect(offersOf(appRoot)).resolves.toStrictEqual([])
+    })
+  })
+
+  test('offers no re-attach without a stale entry that likely names a finding', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+
+      await expect(offersOf(appRoot)).resolves.toStrictEqual([])
     })
   })
 })

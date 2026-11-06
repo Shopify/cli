@@ -655,6 +655,7 @@ describe('app security check --json command boundary', () => {
             matchedFindingCount: 1,
             likelyPath: null,
             candidateFindingCount: null,
+            likelyFinding: null,
           },
         ],
       })
@@ -846,6 +847,187 @@ describe('app security check --json command boundary', () => {
           suppressions: {entries: [{status: 'matched', matchedFindingCount: 1}]},
         })
       }
+    })
+  })
+
+  test('reproduction: after a rename on the flagged line, names the likely finding, and review --suppress re-attaches the entry in one step', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const routeFile = joinPath(directory, 'app', 'routes', 'index.ts')
+      await writeFile(routeFile, 'export function logSession(session) {\n  console.log(session.accessToken)\n}\n')
+      const reason = 'Only logged in local development.'
+      const loggedNumber = (review: {checks: {id: string; findings: {number: number; source: string}[]}[]}) =>
+        review.checks
+          .find((check) => check.id === 'CREDENTIAL_LOG_LEAKAGE')!
+          .findings.find((finding) => finding.source === 'deterministic')!.number
+      await runJsonCommand(['--path', directory])
+      const first = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      const suppressArgs = ['--path', directory, '--suppress', String(loggedNumber(first))]
+      await runJsonCommand([...suppressArgs, '--kind', 'false-positive', '--reason', reason], SecurityReview)
+      const appDirectory = await fileRealPath(directory)
+
+      // The rename makes the entry stale: its code is the line before the rename.
+      await writeFile(routeFile, (await readFile(routeFile, 'utf8')).replaceAll('(session', '(currentSession'))
+      const staleScan = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const staleScanText = await runCommand(['--path', directory, '--skip-instructions'])
+      const staleReview = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      const staleReviewText = await runCommand(['--path', directory], SecurityReview)
+      const number = loggedNumber(staleReview)
+      // Without --kind and --reason, a finding that no stale entry likely names fails as before.
+      const otherNumber = staleReview.checks
+        .filter((check: {id: string}) => check.id !== 'CREDENTIAL_LOG_LEAKAGE')
+        .flatMap((check: {findings: {number: number}[]}) => check.findings)[0].number
+      const withoutFlags = await runJsonCommand(
+        ['--path', directory, '--suppress', String(otherNumber)],
+        SecurityReview,
+      )
+      const reattached = await runJsonCommand(
+        ['--path', directory, '--suppress', String(number), '--results-digest', staleReview.resultsDigest],
+        SecurityReview,
+      )
+      const passed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      const likelyFinding = {filePath: resolve(appDirectory, 'app', 'routes', 'index.ts'), line: 2}
+      expect(staleScan.exitCode).toBe(1)
+      expect(JSON.parse(staleScan.stdout).suppressions).toMatchObject({
+        staleEntryCount: 1,
+        entries: [{status: 'stale', likelyPath: null, likelyFinding: {...likelyFinding, findingNumber: null}}],
+      })
+      expect(boxText(staleScanText.stderr)).toContain(
+        'Likely now the finding at app/routes/index.ts:2. To re-attach the entry to it, with its kind and reason, run',
+      )
+      expect(staleReview.suppressions.entries).toMatchObject([
+        {status: 'stale', likelyFinding: {...likelyFinding, findingNumber: number}},
+      ])
+      expect(boxText(staleReviewText.stderr)).toContain(
+        `Likely now finding ${number}, at app/routes/index.ts:2. To re-attach the entry to it, with its kind and reason, run`,
+      )
+      expect(boxText(staleReviewText.stderr)).toContain(
+        `--suppress ${number} --results-digest ${staleReview.resultsDigest}`,
+      )
+      expect(withoutFlags.exitCode).toBe(1)
+      expect(JSON.parse(withoutFlags.stdout)).toMatchObject({
+        error: {
+          code: 'suppression-flags-invalid',
+          details: {errors: ['--kind: required (false-positive or accepted-risk)', '--reason: required']},
+        },
+      })
+      expect(reattached.exitCode).toBe(0)
+      const document = JSON.parse(reattached.stdout)
+      expect(document.savedSuppressions.entries).toStrictEqual([
+        {
+          index: 0,
+          change: 'code-replaced',
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'false-positive',
+          path: resolve(appDirectory, 'app', 'routes', 'index.ts'),
+          code: 'console.log(currentSession.accessToken)',
+          reason,
+          configurations: ['shopify.app.toml'],
+          previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason},
+          findingNumber: number,
+        },
+      ])
+      expect(document.suppressions).toMatchObject({
+        staleEntryCount: 0,
+        entries: [{status: 'matched', likelyFinding: null}],
+      })
+      expect(
+        document.checks
+          .find((check: {id: string}) => check.id === 'CREDENTIAL_LOG_LEAKAGE')
+          .findings.filter((finding: {source: string}) => finding.source === 'deterministic'),
+      ).toMatchObject([
+        {disposition: 'suppressed', suppression: {origin: 'file', entryIndex: 0, justification: reason}},
+      ])
+      await expect(readFile(appSecuritySuppressionsPath(directory), 'utf8')).resolves.toBe(
+        `${JSON.stringify(
+          {
+            schema_version: 1,
+            suppressions: [
+              {
+                source: 'deterministic',
+                check: 'CREDENTIAL_LOG_LEAKAGE',
+                kind: 'false-positive',
+                path: 'app/routes/index.ts',
+                code: 'console.log(currentSession.accessToken)',
+                reason,
+                configurations: ['shopify.app.toml'],
+              },
+            ],
+          },
+          null,
+          2,
+        )}\n`,
+      )
+      expect(passed.exitCode).toBe(0)
+      expect(JSON.parse(passed.stdout)).toMatchObject({valid: true, suppressions: {staleEntryCount: 0}})
+    })
+  })
+
+  test('names no likely finding for a token line, after a rename or when another credential takes its place, so --suppress needs --kind and --reason', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const routeFile = joinPath(directory, 'app', 'routes', 'index.ts')
+      const reason = 'A fake token for the session tests.'
+      const secretNumber = (review: {checks: {id: string; findings: {number: number}[]}[]}) =>
+        review.checks.find((check) => check.id === 'COMMITTED_SECRET')!.findings[0]!.number
+      const likelyFindings = async () => {
+        const scan = JSON.parse((await runJsonCommand(['--path', directory])).stdout)
+        const review = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+        return {scan: scan.suppressions.entries, review: review.suppressions.entries, number: secretNumber(review)}
+      }
+      await runJsonCommand(['--path', directory])
+      const first = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      await runJsonCommand(
+        [
+          '--path',
+          directory,
+          '--suppress',
+          String(secretNumber(first)),
+          '--kind',
+          'false-positive',
+          '--reason',
+          reason,
+        ],
+        SecurityReview,
+      )
+      const fileText = await readFile(appSecuritySuppressionsPath(directory), 'utf8')
+
+      await writeFile(routeFile, (await readFile(routeFile, 'utf8')).replace('access_token =', 'access_token2 ='))
+      const renamed = await likelyFindings()
+      const renamedText = await runCommand(['--path', directory, '--skip-instructions'])
+      const withoutFlags = await runJsonCommand(
+        ['--path', directory, '--suppress', String(renamed.number)],
+        SecurityReview,
+      )
+      const unchangedFile = await readFile(appSecuritySuppressionsPath(directory), 'utf8')
+      // The token line is deleted, and another session object with its own token takes its place.
+      const otherToken = ['shpat', 'fedcba9876543210fedcba9876543210'].join('_')
+      await writeFile(routeFile, `export const otherSession = {\n  access_token: "${otherToken}",\n}\n`)
+      const replaced = await likelyFindings()
+      const withFlags = await runJsonCommand(
+        ['--path', directory, '--suppress', String(replaced.number), '--kind', 'accepted-risk', '--reason', 'Rotated.'],
+        SecurityReview,
+      )
+
+      const staleWithoutSuggestion = [{status: 'stale', likelyFinding: null}]
+      expect(renamed).toMatchObject({scan: staleWithoutSuggestion, review: staleWithoutSuggestion})
+      expect(boxText(renamedText.stderr)).not.toContain('Likely now')
+      expect(withoutFlags.exitCode).toBe(1)
+      expect(JSON.parse(withoutFlags.stdout)).toMatchObject({
+        error: {
+          code: 'suppression-flags-invalid',
+          details: {errors: ['--kind: required (false-positive or accepted-risk)', '--reason: required']},
+        },
+      })
+      expect(unchangedFile).toBe(fileText)
+      expect(replaced).toMatchObject({scan: staleWithoutSuggestion, review: staleWithoutSuggestion})
+      expect(withFlags.exitCode).toBe(0)
+      expect(JSON.parse(withFlags.stdout).savedSuppressions.entries).toMatchObject([
+        {index: 1, change: 'added', code: 'access_token: "shpa[REDACTED:38]",', reason: 'Rotated.', previous: null},
+      ])
+      await expect(readFile(appSecuritySuppressionsPath(directory), 'utf8')).resolves.not.toContain(otherToken)
     })
   })
 

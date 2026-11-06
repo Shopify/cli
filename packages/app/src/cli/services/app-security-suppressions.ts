@@ -232,22 +232,25 @@ export async function missingSuppressionPaths(
 }
 
 /**
- * Parses `--kind` and `--reason`, which give the kind and reason of a new entry. A problem is worded as the file's
- * validation words it, after the flag's name, such as `--reason: must not be empty`.
+ * Parses `--kind` and `--reason`, which give the kind and reason of a new entry, or replace those of an entry that
+ * `review --suppress` re-attaches. A problem is worded as the file's validation words it, after the flag's name, such
+ * as `--reason: must not be empty`. A flag that isn't given is left out of the decision, and `missing` holds its
+ * problem, such as `--reason: required`: only a re-attached entry, which keeps its own kind and reason, does without it.
  */
 export function parseSuppressionFlags(flags: {
   kind: string | undefined
   reason: string | undefined
-}): {ok: true; decision: SuppressionDecision} | {ok: false; errors: string[]} {
+}): {ok: true; decision: Partial<SuppressionDecision>; missing: string[]} | {ok: false; errors: string[]} {
   const kind = choice(SUPPRESSION_KINDS).safeParse(flags.kind)
   const reason = nonBlankText(MAX_JUSTIFICATION_LENGTH).safeParse(flags.reason)
-  if (kind.success && reason.success) return {ok: true, decision: {kind: kind.data, reason: reason.data}}
+  const kindErrors = kind.success ? [] : kind.error.issues.map((issue) => `--kind: ${issue.message}`)
+  const reasonErrors = reason.success ? [] : reason.error.issues.map((issue) => `--reason: ${issue.message}`)
+  const invalid = [...(flags.kind === undefined ? [] : kindErrors), ...(flags.reason === undefined ? [] : reasonErrors)]
+  if (invalid.length > 0) return {ok: false, errors: invalid}
   return {
-    ok: false,
-    errors: [
-      ...(kind.success ? [] : kind.error.issues.map((issue) => `--kind: ${issue.message}`)),
-      ...(reason.success ? [] : reason.error.issues.map((issue) => `--reason: ${issue.message}`)),
-    ],
+    ok: true,
+    decision: {...(kind.success ? {kind: kind.data} : {}), ...(reason.success ? {reason: reason.data} : {})},
+    missing: [...(flags.kind === undefined ? kindErrors : []), ...(flags.reason === undefined ? reasonErrors : [])],
   }
 }
 
@@ -289,10 +292,15 @@ export interface SuppressionDecision {
   reason: string
 }
 
-/** A change to shopify.app-security.json: append an entry, or add the run's configuration to an existing entry. */
+/**
+ * A change to shopify.app-security.json: append an entry, add the run's configuration to an existing entry, or
+ * re-attach a stale entry to its likely finding: replace its `code`, and set its kind and reason, which are its own
+ * unless the person replaced them.
+ */
 export type SuppressionChange =
   | {type: 'add'; entry: AppSecuritySuppression}
   | {type: 'add-configuration'; index: number; configuration: string}
+  | {type: 'replace-code'; index: number; code: string; kind: SuppressionKind; reason: string}
 
 /**
  * - `saved`: an entry of the file already suppresses the finding, so nothing changes.
@@ -383,8 +391,54 @@ export function planSuppression(
     }
   }
 
-  // A refusal says whether an entry written by hand needs a code that the plan doesn't try, or must leave it out.
-  const refusedPlan = (problem: string): SuppressionPlan => {
+  const named = codeNamingTarget(target, results, codeCandidates(target.finding), entryWithCode, base)
+  if (named.status === 'refused') return named
+  return {status: 'change', change: {type: 'add', entry: named.entry}}
+}
+
+/**
+ * Plans how to re-attach a stale entry to its likely finding (`likely_finding`), the target: the entry gets the `code`
+ * that a new entry for the target would get, the shortest of `planSuppression`'s candidates that names the target
+ * alone, and the decision's kind and reason. Its source, check, path, configurations and every other key stay. When no
+ * code names the target alone, the plan is refused as `planSuppression` refuses it, and the entry stays as it is.
+ */
+export function planReattachment(
+  target: SuppressionTarget,
+  entryIndex: number,
+  decision: SuppressionDecision,
+  results: SuppressionResults,
+  entries: AppSecuritySuppression[],
+): SuppressionPlan {
+  const {code: _code, ...entry} = entries[entryIndex]!
+  const reattached = (code: string | undefined): AppSecuritySuppression => ({
+    ...entry,
+    kind: decision.kind,
+    ...(code === undefined ? {} : {code}),
+    reason: decision.reason,
+  })
+  const codes = codeCandidates(target.finding).filter((code): code is string => code !== undefined)
+  const named = codeNamingTarget(target, results, codes, reattached, reattached(undefined))
+  if (named.status === 'refused') return named
+  return {
+    status: 'change',
+    change: {type: 'replace-code', index: entryIndex, code: named.code, kind: decision.kind, reason: decision.reason},
+  }
+}
+
+/**
+ * The first of the codes whose entry (`entryWithCode`) names the target alone, or the refusal when none does. A refusal
+ * says whether an entry written by hand needs a code that the plan doesn't try, or must leave it out: then `base`, the
+ * entry without code, says how many findings it would suppress.
+ */
+function codeNamingTarget<TCode extends string | undefined>(
+  target: SuppressionTarget,
+  results: SuppressionResults,
+  codes: TCode[],
+  entryWithCode: (code: string | undefined) => AppSecuritySuppression,
+  base: AppSecuritySuppression,
+): {status: 'named'; code: TCode; entry: AppSecuritySuppression} | Extract<SuppressionPlan, {status: 'refused'}> {
+  const {path} = base
+  const refusedPlan = (problem: string): Extract<SuppressionPlan, {status: 'refused'}> => {
     const namedByHand = handWrittenCodes(target.finding, path).some((code) =>
       matchesOnly(entryWithCode(code), target, results),
     )
@@ -396,16 +450,17 @@ export function planSuppression(
     return {status: 'refused', problem, withoutCode: {findingCount: withoutCode?.matched_finding_count ?? 0}}
   }
 
-  const codes = codeCandidates(target.finding)
   if (codes.length === 0) {
     return refusedPlan('the results hold no code for its line, so no entry can name it alone')
   }
-  const entry = codes.map(entryWithCode).find((candidate) => matchesOnly(candidate, target, results))
-  if (entry) return {status: 'change', change: {type: 'add', entry}}
+  const named = codes
+    .map((code) => ({code, entry: entryWithCode(code)}))
+    .find(({entry}) => matchesOnly(entry, target, results))
+  if (named) return {status: 'named', ...named}
   return refusedPlan(
-    hasLine
-      ? `every code from its lines also names another finding of ${target.checkId} in ${path}`
-      : `it has no line, so its entry would cover every finding of ${target.checkId} in ${path}, and there are several`,
+    target.finding.location.line === undefined
+      ? `it has no line, so its entry would cover every finding of ${target.checkId} in ${path}, and there are several`
+      : `every code from its lines also names another finding of ${target.checkId} in ${path}`,
   )
 }
 
@@ -502,16 +557,22 @@ function entryProblems(entry: AppSecuritySuppression): {field: string; message: 
 export interface SavedSuppression {
   /** The entry's index in the file, from 0. */
   index: number
-  /** `added` for a new entry, `configuration-added` for an existing entry that got the run's configuration. */
-  change: 'added' | 'configuration-added'
+  /**
+   * `added` for a new entry, `configuration-added` for an existing entry that got the run's configuration, and
+   * `code-replaced` for a stale entry that was re-attached to its likely finding.
+   */
+  change: 'added' | 'configuration-added' | 'code-replaced'
   entry: AppSecuritySuppression
+  /** For `code-replaced` only: the entry's code, kind and reason before the change. */
+  previous?: Pick<AppSecuritySuppression, 'code' | 'kind' | 'reason'>
 }
 
 /**
  * Applies the changes to `<app directory>/shopify.app-security.json` in one atomic write, creating the file with
  * schema_version 1 when it doesn't exist. Refuses an invalid file with the error of `readAppSecuritySuppressions`, and
- * writes nothing. New entries go at the end. Every other key, value and order stays as the file has them, in two-space
- * JSON with a trailing newline, so a file in that format changes only where an entry is added or extended.
+ * writes nothing. New entries go at the end. A re-attached entry gets its new `code`, kind and reason in place, where
+ * the file has those keys. Every other key, value and order stays as the file has them, in two-space JSON with a
+ * trailing newline, so a file in that format changes only where an entry is added, extended or re-attached.
  */
 export async function saveAppSecuritySuppressions(
   appDirectory: string,
@@ -535,10 +596,24 @@ export async function saveAppSecuritySuppressions(
       return {index: fileEntries.length - 1, change: 'added', entry: change.entry}
     }
     const fileEntry = fileEntries[change.index]
+    const entry = parsed.suppressions[change.index]!
+    if (change.type === 'replace-code') {
+      if (isJsonObject(fileEntry)) {
+        fileEntry.code = change.code
+        fileEntry.kind = change.kind
+        fileEntry.reason = change.reason
+      }
+      const {code, kind, reason} = change
+      return {
+        index: change.index,
+        change: 'code-replaced',
+        entry: {...entry, code, kind, reason},
+        previous: {...(entry.code === undefined ? {} : {code: entry.code}), kind: entry.kind, reason: entry.reason},
+      }
+    }
     if (isJsonObject(fileEntry) && Array.isArray(fileEntry.configurations)) {
       fileEntry.configurations.push(change.configuration)
     }
-    const entry = parsed.suppressions[change.index]!
     return {
       index: change.index,
       change: 'configuration-added',
