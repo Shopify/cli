@@ -330,7 +330,8 @@ describe('securityCheck', () => {
         {length: 600},
         (_, index) => `const token${index} = "${token}"; // ${'a'.repeat(430)}`,
       ).join('\n')
-      await Promise.all([0, 1, 2].map((index) => writeFile(joinPath(appRoot, `file${index}.js`), source)))
+      // A committed secret's excerpt is its line alone, so it takes this many to pass the limit.
+      await Promise.all(Array.from({length: 8}, (_, index) => writeFile(joinPath(appRoot, `file${index}.js`), source)))
       const selection = {
         ...configSelection,
         appDirectory: appRoot,
@@ -346,6 +347,7 @@ describe('securityCheck', () => {
       expect(encodedArtifactSize(original.deterministicFindings)).toBeGreaterThan(MAX_ARTIFACT_FILE_SIZE_BYTES)
       expect(original.scan.issues.some((issue) => issue.code_excerpt !== undefined)).toBe(true)
       expect(JSON.stringify(check.execution)).not.toContain('code_excerpt')
+      expect(check.codeExcerptsOmitted).toBe(true)
       expect(check.execution.scan.issues).toHaveLength(original.scan.issues.length)
       await expect(readFindingsDocument(check.artifacts.deterministicFindingsPath, 'deterministic')).resolves.toEqual({
         status: 'ok',
