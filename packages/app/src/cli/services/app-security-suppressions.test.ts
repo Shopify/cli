@@ -217,8 +217,16 @@ describe('readAppSecuritySuppressions', () => {
 
   describe('check', () => {
     test.each([
-      ['an unknown check ID', {check: 'COMMITED_SECRET'}, 'suppressions[0].check: not a known check ID'],
-      ['a check ID in lowercase', {check: 'committed_secret'}, 'suppressions[0].check: not a known check ID'],
+      [
+        'a misspelled check ID',
+        {check: 'COMMITED_SECRET'},
+        'suppressions[0].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
+      ],
+      [
+        'a check ID in lowercase',
+        {check: 'committed_secret'},
+        'suppressions[0].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
+      ],
       ['a missing check ID', {check: undefined}, 'suppressions[0].check: required'],
       ['an empty check ID', {check: ''}, 'suppressions[0].check: must not be empty'],
     ])('rejects %s', async (_name, changes, problem) => {
@@ -229,12 +237,12 @@ describe('readAppSecuritySuppressions', () => {
       [
         'deterministic',
         'SQL_INJECTION',
-        'suppressions[0].check: deterministic checks don\'t report SQL_INJECTION. Use "source": "agent".',
+        'suppressions[0].check: deterministic checks in this version of Shopify CLI don\'t report SQL_INJECTION. Use "source": "agent", or upgrade Shopify CLI.',
       ],
       [
         'agent',
         'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
-        'suppressions[0].check: agent checks don\'t report MISSING_DEPENDENCY_SECURITY_AUTOMATION. Use "source": "deterministic".',
+        'suppressions[0].check: agent checks in this version of Shopify CLI don\'t report MISSING_DEPENDENCY_SECURITY_AUTOMATION. Use "source": "deterministic", or upgrade Shopify CLI.',
       ],
     ])('rejects the source %s for %s, which only the other source reports', async (source, check, problem) => {
       await expect(entryProblems({source, check})).resolves.toStrictEqual([problem])
@@ -310,7 +318,19 @@ describe('readAppSecuritySuppressions', () => {
     })
 
     test.each([
-      ['an unknown schema_version', {schema_version: 2, suppressions: []}],
+      ['a later schema_version', 2, 'schema_version 2 needs a newer version of Shopify CLI'],
+      ['a much later schema_version', 10, 'schema_version 10 needs a newer version of Shopify CLI'],
+    ])('rejects %s and names the upgrade', async (_name, schemaVersion, problem) => {
+      await inTemporaryDirectory(async (directory) => {
+        await writeSuppressionsFile(directory, JSON.stringify({schema_version: schemaVersion, suppressions: []}))
+
+        await expect(readProblems(directory)).resolves.toStrictEqual([problem])
+      })
+    })
+
+    test.each([
+      ['a schema_version of 0', {schema_version: 0, suppressions: []}],
+      ['a schema_version that is not an integer', {schema_version: 1.5, suppressions: []}],
       ['a schema_version that is a string', {schema_version: '1', suppressions: []}],
       ['a missing schema_version', {suppressions: [deterministicEntry]}],
     ])('rejects %s', async (_name, document) => {
@@ -360,10 +380,10 @@ describe('readAppSecuritySuppressions', () => {
 
         expect((error.details as {errors: string[]}).errors).toStrictEqual([
           "suppressions[0].path: can't contain wildcards: name one file",
-          'suppressions[0].check: deterministic checks don\'t report SQL_INJECTION. Use "source": "agent".',
+          'suppressions[0].check: deterministic checks in this version of Shopify CLI don\'t report SQL_INJECTION. Use "source": "agent", or upgrade Shopify CLI.',
           'suppressions[2].kind: required (false-positive or accepted-risk)',
           'suppressions[2].reason: must not be empty',
-          'suppressions[3].check: not a known check ID',
+          'suppressions[3].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
         ])
         expect(JSON.stringify(error.customSections)).not.toContain(secretLikeValue)
       })

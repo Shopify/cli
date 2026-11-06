@@ -158,6 +158,7 @@ function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem[] {
 /**
  * The problems with each entry's `check`: it must be a check ID in the registry, and the entry's `source` must be
  * able to report it. Only entries whose `check` is a non-empty string are checked; the schema reports the others.
+ * A newer CLI can add a check, or a source for one, so the messages name upgrading as well as fixing the entry.
  */
 function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
   if (!Array.isArray(entries)) return []
@@ -166,13 +167,16 @@ function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
     if (!isJsonObject(entry) || typeof entry.check !== 'string' || entry.check === '') return []
     const label = `suppressions[${entryIndex}].check`
     const sources = reportingSources.get(entry.check)
-    if (!sources) return [{entryIndex, message: `${label}: not a known check ID`}]
+    if (!sources) {
+      const message = `${label}: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.`
+      return [{entryIndex, message}]
+    }
     if (!isFindingsSource(entry.source) || sources.has(entry.source)) return []
     const otherSources = [...sources].join(' or ')
     return [
       {
         entryIndex,
-        message: `${label}: ${entry.source} checks don't report ${entry.check}. Use "source": "${otherSources}".`,
+        message: `${label}: ${entry.source} checks in this version of Shopify CLI don't report ${entry.check}. Use "source": "${otherSources}", or upgrade Shopify CLI.`,
       },
     ]
   })
@@ -183,8 +187,17 @@ function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
   if (!isJsonObject(value)) {
     return {ok: false, errors: [`expected a JSON object, received ${describeJsonType(value)}`]}
   }
-  if (value.schema_version !== SUPPRESSIONS_SCHEMA_VERSION) {
-    return {ok: false, errors: [`schema_version must be ${SUPPRESSIONS_SCHEMA_VERSION}`]}
+  const schemaVersion = value.schema_version
+  if (schemaVersion !== SUPPRESSIONS_SCHEMA_VERSION) {
+    // A later schema_version comes from a newer CLI; any other value is a mistake in the file.
+    const isLater =
+      typeof schemaVersion === 'number' &&
+      Number.isSafeInteger(schemaVersion) &&
+      schemaVersion > SUPPRESSIONS_SCHEMA_VERSION
+    const error = isLater
+      ? `schema_version ${schemaVersion} needs a newer version of Shopify CLI`
+      : `schema_version must be ${SUPPRESSIONS_SCHEMA_VERSION}`
+    return {ok: false, errors: [error]}
   }
 
   const parsed = suppressionsFileSchema.safeParse(value)
