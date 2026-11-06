@@ -233,6 +233,7 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
     message: finding.message,
     snippet: projectOptionalText(finding.snippet),
     evidence: finding.evidence.map((evidence) => projectEvidence(evidence, appDirectory)),
+    suppression: projectFindingSuppression(finding.suppressed_by),
   }
   if (finding.source === 'deterministic') {
     return {
@@ -245,7 +246,6 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
             automated: finding.fix.automated,
           }
         : null,
-      suppression: projectFindingSuppression(finding.suppressed_by),
     }
   }
   return {
@@ -253,7 +253,6 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
     ...common,
     confidence: finding.confidence ?? null,
     reasoning: projectOptionalText(finding.reasoning),
-    suppression: projectFindingSuppression(finding.suppressed_by),
   }
 }
 
