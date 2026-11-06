@@ -1,3 +1,4 @@
+import {codeExcerptField} from '../results/code-excerpt.js'
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -7,6 +8,7 @@ import type {
   CheckExecution,
   CoverageScanDirectory,
   CheckSnapshot,
+  CodeExcerptLine,
   DeterministicFindingsDocument,
   FindingEvidence,
   Issue,
@@ -23,10 +25,14 @@ const safeLocation = (location: Location): Location => ({
   ...(location.column === undefined ? {} : {column: location.column}),
 })
 
+const redactCodeExcerpt = (excerpt: CodeExcerptLine[] | undefined): {code_excerpt?: CodeExcerptLine[]} =>
+  codeExcerptField(excerpt?.map(({line, text}) => ({line, text: redactText(text)})))
+
 const redactEvidence = (evidence: FindingEvidence[] | undefined): FindingEvidence[] =>
   (evidence ?? []).map((item) => ({
     location: safeLocation(item.location),
     ...(item.quote === undefined ? {} : {quote: redactText(item.quote)}),
+    ...redactCodeExcerpt(item.code_excerpt),
   }))
 
 export function redactIssue(issue: Issue): Issue {
@@ -37,6 +43,7 @@ export function redactIssue(issue: Issue): Issue {
     message: redactText(issue.message),
     location: safeLocation(issue.location),
     ...(issue.snippet === undefined ? {} : {snippet: redactText(issue.snippet)}),
+    ...redactCodeExcerpt(issue.code_excerpt),
     ...(issue.detection_evidence === undefined ? {} : {detection_evidence: issue.detection_evidence.map(redactText)}),
     ...(issue.evidence === undefined ? {} : {evidence: redactEvidence(issue.evidence)}),
     fix: {
@@ -56,6 +63,7 @@ function issueToFinding(issueInput: Issue): StoredFinding {
     message: issue.message,
     evidence: issue.evidence ?? [],
     ...(issue.snippet === undefined ? {} : {snippet: issue.snippet}),
+    ...(issue.code_excerpt === undefined ? {} : {code_excerpt: issue.code_excerpt}),
     fix: issue.fix,
   }
 }

@@ -1,6 +1,13 @@
 import securityCheck from './security-check.js'
+import {executeAppSecurity} from './app-security-api.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
-import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
+import {
+  appSecurityArtifactPaths,
+  encodedArtifactSize,
+  MAX_ARTIFACT_FILE_SIZE_BYTES,
+  readFindingsDocument,
+  writeCheckArtifacts,
+} from './app-security-artifacts.js'
 import {resolveAppSecuritySelection} from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {
@@ -305,6 +312,69 @@ describe('securityCheck', () => {
         artifacts: {deterministicFindingsPath: paths.deterministicFindingsPath, agentChecksPath: paths.agentChecksPath},
         blocking: {level: 'none', blockedChecks: 0},
       })
+    })
+  })
+
+  test('drops deterministic excerpts that exceed the artifact limit and returns the stored findings', async () => {
+    await inTemporaryDirectory(async (appRoot) => {
+      await writeFile(joinPath(appRoot, 'shopify.app.toml'), 'name = "excerpts"\n')
+      const token = ['shpat', '_', '0123456789abcdef'.repeat(2)].join('')
+      const source = Array.from(
+        {length: 600},
+        (_, index) => `const token${index} = "${token}"; // ${'a'.repeat(430)}`,
+      ).join('\n')
+      // A committed secret's excerpt is its line alone, so it takes this many to pass the limit.
+      await Promise.all(Array.from({length: 8}, (_, index) => writeFile(joinPath(appRoot, `file${index}.js`), source)))
+      const selection = {
+        ...configSelection,
+        appDirectory: appRoot,
+        appConfigFilePath: joinPath(appRoot, 'shopify.app.toml'),
+      }
+      const execute = vi.fn(executeAppSecurity)
+      const dependencies = {...testDependencies(scanExecution, selection), execute, writeArtifacts: writeCheckArtifacts}
+
+      const check = await securityCheck({...testOptions(), directory: appRoot}, dependencies)
+
+      if (check.kind !== 'scanned') throw new Error('Expected a completed scan')
+      const original: AppSecurityExecution = await execute.mock.results[0]!.value
+      expect(encodedArtifactSize(original.deterministicFindings)).toBeGreaterThan(MAX_ARTIFACT_FILE_SIZE_BYTES)
+      expect(original.scan.issues.some((issue) => issue.code_excerpt !== undefined)).toBe(true)
+      expect(JSON.stringify(check.execution)).not.toContain('code_excerpt')
+      expect(check.codeExcerptsOmitted).toBe(true)
+      expect(check.execution.scan.issues).toHaveLength(original.scan.issues.length)
+      await expect(readFindingsDocument(check.artifacts.deterministicFindingsPath, 'deterministic')).resolves.toEqual({
+        status: 'ok',
+        value: check.execution.deterministicFindings,
+      })
+    })
+  })
+
+  test('keeps previous artifacts when deterministic findings exceed the limit without excerpts', async () => {
+    await inTemporaryDirectory(async (appRoot) => {
+      const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
+      await mkdir(paths.resultsDirectory)
+      await writeFile(paths.deterministicFindingsPath, 'previous findings')
+      await writeFile(paths.agentChecksPath, 'previous checks')
+      const oversized = {
+        ...deterministicFindings,
+        engine: {...deterministicFindings.engine, version: 'x'.repeat(MAX_ARTIFACT_FILE_SIZE_BYTES)},
+      }
+      const selection = {
+        ...configSelection,
+        appDirectory: appRoot,
+        appConfigFilePath: joinPath(appRoot, 'shopify.app.toml'),
+      }
+      const dependencies = {
+        ...testDependencies({...scanExecution, deterministicFindings: oversized}, selection),
+        writeArtifacts: writeCheckArtifacts,
+      }
+
+      await expect(securityCheck({...testOptions(), directory: appRoot}, dependencies)).rejects.toThrow(
+        'The deterministic findings are larger than 5 MB',
+      )
+
+      await expect(readFile(paths.deterministicFindingsPath)).resolves.toBe('previous findings')
+      await expect(readFile(paths.agentChecksPath)).resolves.toBe('previous checks')
     })
   })
 

@@ -1,8 +1,9 @@
 import {loadChecks, recordAgentFindings, type RecordAgentFindingsOptions} from '../checks/index.js'
+import {MAX_EXCERPT_LINE_LENGTH} from '../results/code-excerpt.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {AgentFindingsDocument, AppSecurityScope} from '../types.js'
 
 const options: RecordAgentFindingsOptions = {
@@ -414,5 +415,169 @@ describe('recordAgentFindings', () => {
       evidence: [{location: {file: 'app/a.ts', line: 1}}],
     })
     expect(JSON.stringify(document)).not.toMatch(/source_scan_id|prompt_hash|inspected_files|notes|extra/)
+  })
+})
+
+describe('recordAgentFindings code excerpts', () => {
+  /** Twenty lines, `line 1` to `line 20`, with a final newline. */
+  const ordersSource = `${Array.from({length: 20}, (_, index) => `line ${index + 1}`).join('\n')}\n`
+  const lines = (first: number, last: number) =>
+    Array.from({length: last - first + 1}, (_, index) => ({line: first + index, text: `line ${first + index}`}))
+
+  function recordWithFiles(findings: Record<string, unknown>[], files: Record<string, string>) {
+    const readCitedFile = vi.fn((file: string) => files[file])
+    const result = recordAgentFindings(withScope({schema_version: 1, findings}), {...options, readCitedFile})
+    if (!result.ok) throw new Error(`Expected the document to be accepted: ${result.errors.join('; ')}`)
+    return {document: result.document, findings: result.document.checks[0]!.findings, readCitedFile}
+  }
+
+  test("stores the finding's line with two lines either side, and each evidence line", () => {
+    const {document, findings} = recordWithFiles(
+      [
+        finding({
+          evidence: [
+            {file: 'app/routes/orders.tsx', line: 12, quote: 'prisma.order.findMany()'},
+            {file: 'app/db.server.ts', line: 2},
+          ],
+        }),
+      ],
+      {
+        'app/routes/orders.tsx': ordersSource,
+        'app/db.server.ts': 'import {PrismaClient} from "@prisma/client"\nexport const db = new PrismaClient()',
+      },
+    )
+
+    expect(findings[0]).toEqual({
+      location: {file: 'app/routes/orders.tsx', line: 12},
+      message: 'Orders are loaded without a shop filter',
+      code_excerpt: lines(10, 14),
+      evidence: [
+        {
+          location: {file: 'app/routes/orders.tsx', line: 12},
+          quote: 'prisma.order.findMany()',
+          code_excerpt: [{line: 12, text: 'line 12'}],
+        },
+        {
+          location: {file: 'app/db.server.ts', line: 2},
+          code_excerpt: [{line: 2, text: 'export const db = new PrismaClient()'}],
+        },
+      ],
+    })
+    expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
+  })
+
+  test('stores only the cited line of a file that may hold secrets and is not source code', () => {
+    const {findings} = recordWithFiles(
+      [
+        finding({file: 'config/settings.yml', line: 5}),
+        finding({file: 'Dockerfile', line: 5}),
+        finding({file: 'scripts/deploy.sh', line: 5}),
+        finding({file: 'app/routes/orders.tsx', line: 5}),
+      ],
+      {
+        'config/settings.yml': ordersSource,
+        Dockerfile: ordersSource,
+        'scripts/deploy.sh': ordersSource,
+        'app/routes/orders.tsx': ordersSource,
+      },
+    )
+
+    expect(findings.map((stored) => stored.code_excerpt)).toEqual([lines(5, 5), lines(5, 5), lines(5, 5), lines(3, 7)])
+  })
+
+  test('keeps the excerpt inside the file, without the empty line after its final newline', () => {
+    const {findings} = recordWithFiles([finding({line: 1}), finding({line: 20})], {
+      'app/routes/orders.tsx': ordersSource,
+    })
+
+    expect(findings.map((stored) => stored.code_excerpt)).toEqual([lines(1, 3), lines(18, 20)])
+  })
+
+  test('stores no excerpt for an empty file, and an empty line for a file of one empty line', () => {
+    const {findings} = recordWithFiles(
+      [
+        finding({file: 'app/empty.ts', line: 1, evidence: [{file: 'app/empty.ts', line: 1}]}),
+        finding({file: 'app/newline.ts', line: 1, evidence: [{file: 'app/newline.ts', line: 2}]}),
+      ],
+      {'app/empty.ts': '', 'app/newline.ts': '\n'},
+    )
+
+    expect(findings.map((stored) => [stored.code_excerpt, stored.evidence[0]!.code_excerpt])).toEqual([
+      [undefined, undefined],
+      [[{line: 1, text: ''}], undefined],
+    ])
+  })
+
+  test("stores no excerpt for a line the file doesn't have, a file it can't read, or evidence without a line", () => {
+    const {findings} = recordWithFiles(
+      [
+        finding({line: 21, evidence: [{file: 'app/routes/orders.tsx'}, {file: 'app/missing.ts', line: 1}]}),
+        finding({file: 'app/missing.ts', line: 1}),
+      ],
+      {'app/routes/orders.tsx': ordersSource},
+    )
+
+    expect(findings).toEqual([
+      {
+        location: {file: 'app/routes/orders.tsx', line: 21},
+        message: 'Orders are loaded without a shop filter',
+        evidence: [{location: {file: 'app/routes/orders.tsx'}}, {location: {file: 'app/missing.ts', line: 1}}],
+      },
+      {
+        location: {file: 'app/missing.ts', line: 1},
+        message: 'Orders are loaded without a shop filter',
+        evidence: [
+          {
+            location: {file: 'app/routes/orders.tsx', line: 12},
+            quote: 'prisma.order.findMany()',
+            code_excerpt: [{line: 12, text: 'line 12'}],
+          },
+        ],
+      },
+    ])
+  })
+
+  test(`cuts a line after ${MAX_EXCERPT_LINE_LENGTH} characters, never inside one`, () => {
+    // Each is two UTF-16 code units.
+    const lock = '\u{1F512}'
+    const padding = 'x'.repeat(MAX_EXCERPT_LINE_LENGTH - 1)
+    const {findings} = recordWithFiles([finding({file: 'app/long.ts', line: 1})], {
+      'app/long.ts': `${padding}${lock}${lock}tail\n${padding}${lock}\n`,
+    })
+
+    expect(findings[0]!.code_excerpt).toEqual([
+      {line: 1, text: `${padding}${lock}…`},
+      {line: 2, text: `${padding}${lock}`},
+    ])
+  })
+
+  test('reads each cited file once, by its path with forward slashes', () => {
+    const {findings, readCitedFile} = recordWithFiles(
+      [
+        finding({file: 'app\\routes\\orders.tsx', line: 3}),
+        finding({
+          evidence: [
+            {file: 'app/routes/orders.tsx', line: 5},
+            {file: 'app/other.ts', line: 1},
+          ],
+        }),
+      ],
+      {'app/routes/orders.tsx': ordersSource},
+    )
+
+    expect(findings[0]!.code_excerpt).toEqual(lines(1, 5))
+    expect(readCitedFile.mock.calls).toEqual([['app/routes/orders.tsx'], ['app/other.ts']])
+  })
+
+  test('never takes an excerpt from the agent', () => {
+    const forged = [{line: 12, text: 'not what the file says'}]
+    const document = recordAccepted({
+      schema_version: 1,
+      findings: [
+        finding({code_excerpt: forged, evidence: [{file: 'app/routes/orders.tsx', line: 12, code_excerpt: forged}]}),
+      ],
+    })
+
+    expect(JSON.stringify(document)).not.toContain('code_excerpt')
   })
 })

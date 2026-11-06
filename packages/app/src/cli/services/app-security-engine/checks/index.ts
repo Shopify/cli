@@ -2,6 +2,12 @@ import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
 import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {
+  codeExcerptField,
+  createCodeExcerpts,
+  type CodeExcerpts,
+  type SourceTextReader,
+} from '../results/code-excerpt.js'
+import {
   AGENT_CHECKS_SCHEMA_VERSION,
   ENGINE_NAME,
   FINDINGS_SCHEMA_VERSION,
@@ -373,17 +379,23 @@ export function validateAgentChecksExecuted(
   return {reports, errors}
 }
 
-const redactPath = (path: string): string => redactText(path.replace(/\\/g, '/'))
+const normalizePath = (path: string): string => path.replace(/\\/g, '/')
+const redactPath = (path: string): string => redactText(normalizePath(path))
 
-/** Copy only the known fields of a validated finding into the stored shape, redacting all agent text. */
-const redactFinding = (finding: AgentFinding): StoredFinding => ({
+/**
+ * Copy only the known fields of a validated finding into the stored shape, redacting all agent text. The excerpts are
+ * read from the cited files, never taken from the agent.
+ */
+const redactFinding = (finding: AgentFinding, excerpts: CodeExcerpts): StoredFinding => ({
   location: {file: redactPath(finding.file), line: finding.line},
   message: redactText(finding.message),
   evidence: finding.evidence.map((item) => ({
     location: {file: redactPath(item.file), ...(item.line === undefined ? {} : {line: item.line})},
     ...(item.quote === undefined ? {} : {quote: redactText(item.quote)}),
+    ...codeExcerptField(excerpts.evidence(normalizePath(item.file), item.line)),
   })),
   ...(finding.snippet === undefined ? {} : {snippet: redactText(finding.snippet)}),
+  ...codeExcerptField(excerpts.finding(normalizePath(finding.file), finding.line, finding.check_id)),
   ...(finding.confidence === undefined ? {} : {confidence: finding.confidence}),
   ...(finding.reasoning === undefined ? {} : {reasoning: redactText(finding.reasoning)}),
   ...(finding.suppression === undefined
@@ -481,6 +493,8 @@ export interface RecordAgentFindingsOptions {
   engineVersion: string
   /** Defaults to now. */
   generatedAt?: string
+  /** Reads a file that a finding cites, by its project-relative path, for the excerpts. Without it there are none. */
+  readCitedFile?: SourceTextReader
 }
 
 export type RecordAgentFindingsResult = {ok: true; document: AgentFindingsDocument} | {ok: false; errors: string[]}
@@ -531,6 +545,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   // terminal, so they're redacted like everything that's stored.
   if (errors.length > 0 || 'error' in scope) return {ok: false, errors: errors.map(redactText)}
 
+  const excerpts = createCodeExcerpts(options.readCitedFile ?? (() => undefined))
   const storedChecks = grouped.groups
     .map(
       ({report, findings: checkFindings}): StoredCheck => ({
@@ -539,7 +554,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
         status: report.status,
         ...(report.reason ? {reason: report.reason} : {}),
         snapshot: snapshotCheck(checks.get(report.check_id)!),
-        findings: checkFindings.map(redactFinding),
+        findings: checkFindings.map((finding) => redactFinding(finding, excerpts)),
       }),
     )
     .sort((left, right) => left.id.localeCompare(right.id))
