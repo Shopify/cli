@@ -466,6 +466,41 @@ function committedSecretsAdvice(): string {
   return `The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: 1 and 2. Add either entry to shopify.app-security.json by hand. Omit code only if you intend to suppress all of these findings.`
 }
 
+/**
+ * The document with only the check `checkId`, renamed to `renamedId`, a check ID that this CLI doesn't know, as in results
+ * that another version of the CLI wrote.
+ */
+function withRenamedCheck<TDocument extends FindingsDocument>(
+  document: TDocument,
+  checkId: string,
+  renamedId: string,
+): TDocument {
+  return {
+    ...document,
+    checks: document.checks.filter(({id}) => id === checkId).map((check) => ({...check, id: renamedId})),
+  }
+}
+
+/** A COMMITTED_SECRET finding in a file whose name has a `*`, which no entry of shopify.app-security.json can name. */
+const wildcardPathSecret: Files = {
+  deterministic: {
+    ...committedSecrets.deterministic!,
+    checks: committedSecrets.deterministic!.checks.map((check) => ({
+      ...check,
+      findings: [
+        findingWithExcerpt(
+          {
+            location: {file: 'app/routes/*.tsx', line: 1},
+            message: 'A Shopify token pattern was found in repository text.',
+            evidence: [],
+          },
+          ["export const accessToken = 'shpa[REDACTED:38]'"],
+        ),
+      ],
+    })),
+  },
+}
+
 describe('securityReview --suppress', () => {
   /** Runs `review --suppress` on the app with these flags; the kind and reason default to valid ones. */
   function suppress(appRoot: string, flags: Partial<SecurityReviewSuppressOptions> & {findingNumber: number}) {
@@ -894,6 +929,99 @@ describe('securityReview --suppress', () => {
     })
   })
 
+  test.each([
+    {
+      source: 'deterministic',
+      files: {deterministic: withRenamedCheck(bothWithExcerpts.deterministic!, 'EOL_API_VERSION', 'API_VERSION_EOL')},
+      checkId: 'API_VERSION_EOL',
+      path: 'shopify.app.toml',
+      update: 'run check again',
+    },
+    {
+      source: 'agent',
+      files: {agent: withRenamedCheck(bothWithExcerpts.agent!, 'CREDENTIAL_LOG_LEAKAGE', 'CREDENTIAL_LOGGING')},
+      checkId: 'CREDENTIAL_LOGGING',
+      path: 'app/routes/orders.tsx',
+      update: 'have your coding agent run check and record its findings again',
+    },
+  ])(
+    'refuses a $source finding of a check that this CLI does not know, and advises new results, not an entry by hand',
+    async ({source, files, checkId, path, update}) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory, files)
+
+        const error = await captureError(() => suppress(appRoot, {findingNumber: 1}))
+
+        expect(error).toMatchObject({
+          code: 'finding-not-suppressible',
+          message:
+            "Finding 1 can't be suppressed: its entry would be invalid: check: not a known check ID. Nothing was saved.",
+          tryMessage: `This version of the CLI has no ${source} check ${checkId}, so an entry for it by hand would make shopify.app-security.json invalid too. The results may be from another version of the CLI. To update them, ${update}.`,
+          details: {findingNumber: 1},
+        })
+        await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+        // An entry for the finding, added by hand, makes the file invalid, so review can't run.
+        await writeFile(
+          appSecuritySuppressionsPath(appRoot),
+          JSON.stringify({
+            schema_version: 1,
+            suppressions: [
+              {
+                source,
+                check: checkId,
+                kind: 'accepted-risk',
+                path,
+                reason: 'The results are old.',
+                configurations: ['shopify.app.toml'],
+              },
+            ],
+          }),
+        )
+        await expect(
+          securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies()),
+        ).rejects.toMatchObject({
+          code: 'suppressions-file-invalid',
+          details: {errors: ['suppressions[0].check: not a known check ID']},
+        })
+      })
+    },
+  )
+
+  test('advises new results first when both the check and path are invalid', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, {
+        deterministic: withRenamedCheck(wildcardPathSecret.deterministic!, 'COMMITTED_SECRET', 'RENAMED_SECRET'),
+      })
+
+      const error = await captureError(() => suppress(appRoot, {findingNumber: 1}))
+
+      expect(error).toMatchObject({
+        code: 'finding-not-suppressible',
+        tryMessage:
+          'This version of the CLI has no deterministic check RENAMED_SECRET, so an entry for it by hand would make shopify.app-security.json invalid too. The results may be from another version of the CLI. To update them, run check again.',
+      })
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+    })
+  })
+
+  test('refuses a finding whose path no entry can name, and says so instead of advising an entry by hand', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, wildcardPathSecret)
+
+      const error = await captureError(() => suppress(appRoot, {findingNumber: 1}))
+
+      expect(error).toMatchObject({
+        code: 'finding-not-suppressible',
+        message:
+          "Finding 1 can't be suppressed: its entry would be invalid: path: can't contain wildcards: name one file. Nothing was saved.",
+        tryMessage:
+          "shopify.app-security.json can't name the path app/routes/*.tsx, so no entry can suppress this finding. An entry for it by hand would make the file invalid too.",
+        details: {findingNumber: 1},
+      })
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+    })
+  })
+
   test('refuses every number when there are no results files', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {})
@@ -1089,6 +1217,54 @@ describe('securityReview --interactive', () => {
         await expect(session.suppress({findingNumber: 1, decision, includeSuperseded: false})).resolves.toMatchObject({
           status: 'refused',
           refusal: {code: 'finding-not-suppressible', tryMessage: committedSecretsAdvice()},
+        })
+        return outcomeOf()
+      })
+
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+    })
+  })
+
+  test('returns advice without an entry by hand for a finding whose entry would be invalid', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, {
+        deterministic: withRenamedCheck(bothWithExcerpts.deterministic!, 'EOL_API_VERSION', 'API_VERSION_EOL'),
+      })
+
+      await reviewInteractively(appRoot, async (session) => {
+        await expect(session.suppress({findingNumber: 1, decision, includeSuperseded: false})).resolves.toMatchObject({
+          status: 'refused',
+          refusal: {
+            code: 'finding-not-suppressible',
+            tryMessage:
+              'This version of the CLI has no deterministic check API_VERSION_EOL, so an entry for it by hand would make shopify.app-security.json invalid too. The results may be from another version of the CLI. To update them, run check again.',
+          },
+        })
+        return outcomeOf()
+      })
+
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+    })
+  })
+
+  test('returns the same refusal when the reason would make the entry invalid, without an entry by hand', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+
+      // The session asks for a reason that the file accepts, but `suppress` itself plans with the reason it gets.
+      await reviewInteractively(appRoot, async (session) => {
+        await expect(
+          session.suppress({findingNumber: 6, decision: {...decision, reason: ' '}, includeSuperseded: false}),
+        ).resolves.toStrictEqual({
+          status: 'refused',
+          refusal: {
+            code: 'finding-not-suppressible',
+            message:
+              "Finding 6 can't be suppressed: its entry would be invalid: reason: must not be empty. Nothing was saved.",
+            tryMessage:
+              'An entry for it by hand with the same values would make shopify.app-security.json invalid too.',
+            details: {findingNumber: 6},
+          },
         })
         return outcomeOf()
       })

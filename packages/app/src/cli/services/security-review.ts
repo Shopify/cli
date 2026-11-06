@@ -522,17 +522,48 @@ function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal
 /** Refuses an automatic suppression and explains the selective and broader manual options. */
 function noUniqueEntry(
   target: NumberedFinding,
-  {problem, withoutCode}: Extract<SuppressionPlan, {status: 'refused'}>,
+  plan: Extract<SuppressionPlan, {status: 'refused'}>,
   numbered: NumberedFinding[],
 ): SuppressionRefusal {
   return {
     code: 'finding-not-suppressible',
-    message: `Finding ${target.number} can't be suppressed: ${problem}. Nothing was saved.`,
-    tryMessage: withoutCode
-      ? entryWithoutCodeAdvice(target, numbered)
-      : `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`,
+    message: `Finding ${target.number} can't be suppressed: ${plan.problem}. Nothing was saved.`,
+    tryMessage: noUniqueEntryAdvice(target, plan, numbered),
     details: {findingNumber: target.number},
   }
+}
+
+function noUniqueEntryAdvice(
+  target: NumberedFinding,
+  {withoutCode, invalidFields}: Extract<SuppressionPlan, {status: 'refused'}>,
+  numbered: NumberedFinding[],
+): string {
+  if (invalidFields) return invalidEntryAdvice(target, invalidFields)
+  if (withoutCode) return entryWithoutCodeAdvice(target, numbered)
+  return `Add an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand, with a code that names it alone.`
+}
+
+/**
+ * "This version of the CLI has no deterministic check X, …. To update them, run check again." An entry by hand names
+ * the same check and path as the refused one, so the advice never asks for one.
+ */
+function invalidEntryAdvice({check, finding}: NumberedFinding, invalidFields: string[]): string {
+  if (invalidFields.includes('check')) {
+    // `check` rewrites deterministic-findings.json, and only the coding agent rewrites agent-findings.json.
+    const update =
+      finding.source === 'agent' ? 'have your coding agent run check and record its findings again' : 'run check again'
+    return [
+      `This version of the CLI has no ${finding.source} check ${check.id}, so an entry for it by hand would make ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} invalid too.`,
+      `The results may be from another version of the CLI. To update them, ${update}.`,
+    ].join(' ')
+  }
+  if (invalidFields.includes('path')) {
+    return [
+      `${APP_SECURITY_SUPPRESSIONS_FILE_NAME} can't name the path ${normalizePath(finding.location.file)}, so no entry can suppress this finding.`,
+      'An entry for it by hand would make the file invalid too.',
+    ].join(' ')
+  }
+  return `An entry for it by hand with the same values would make ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} invalid too.`
 }
 
 /** Explain the scope of an entry without code without ruling out a selective manual entry. */

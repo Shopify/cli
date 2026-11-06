@@ -312,11 +312,13 @@ export type SuppressionChange =
  * - `refused`: no automatic candidate selected the finding alone. `problem` says why, as the end of a sentence.
  *   `withoutCode` describes the broader entry that suppresses every finding of this source and check in the file.
  *   It does not establish whether a manual code selector can select the finding alone.
+ *   `invalidFields` lists fields rejected by file validation. An entry written by hand with the same values would
+ *   also be invalid.
  */
 export type SuppressionPlan =
   | {status: 'saved'; entryIndex: number}
   | {status: 'change'; change: SuppressionChange}
-  | {status: 'refused'; problem: string; withoutCode?: {findingCount: number}}
+  | {status: 'refused'; problem: string; withoutCode?: {findingCount: number}; invalidFields?: string[]}
 
 /**
  * Lines before and after the flagged line that a candidate `code` covers, in the order the candidates widen: the line
@@ -369,7 +371,11 @@ export function planSuppression(
   const base = entryWithCode(undefined)
   const problems = entryProblems(base)
   if (problems.length > 0) {
-    return {status: 'refused', problem: `its entry would be invalid: ${problems.join('; ')}`}
+    return {
+      status: 'refused',
+      problem: `its entry would be invalid: ${problems.map(({message}) => message).join('; ')}`,
+      invalidFields: [...new Set(problems.map(({field}) => field))],
+    }
   }
 
   const hasLine = target.finding.location.line !== undefined
@@ -461,12 +467,20 @@ function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, r
   )
 }
 
-/** The problems that the file's validation would report for this entry, without the `suppressions[n].` prefix. */
-function entryProblems(entry: AppSecuritySuppression): string[] {
+/**
+ * The problems that the file's validation would report for this entry, without the `suppressions[n].` prefix, each with
+ * the field it belongs to.
+ */
+function entryProblems(entry: AppSecuritySuppression): {field: string; message: string}[] {
   const parsed = suppressionSchema.safeParse(entry)
   return [
-    ...(parsed.success ? [] : parsed.error.issues.map((issue) => describeIssue(issue).message)),
-    ...checkIdProblems([entry]).map((problem) => problem.message.replace(/^suppressions\[0\]\./, '')),
+    ...(parsed.success
+      ? []
+      : parsed.error.issues.map((issue) => ({field: String(issue.path[0]), message: describeIssue(issue).message}))),
+    ...checkIdProblems([entry]).map((problem) => ({
+      field: 'check',
+      message: problem.message.replace(/^suppressions\[0\]\./, ''),
+    })),
   ]
 }
 
