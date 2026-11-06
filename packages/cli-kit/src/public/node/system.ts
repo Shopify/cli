@@ -146,18 +146,37 @@ export async function captureOutputWithExitCode(
   args: string[],
   options?: ExecOptions,
 ): Promise<CaptureOutputResult> {
-  const result = await buildExec(command, args, options, {reject: false})
-  if (result.exitCode === undefined) {
-    throw new ExternalError(
-      result instanceof Error ? result.message : 'Command terminated without an exit code.',
-      command,
-      args,
-    )
+  const signal = options?.signal
+  if (signal?.aborted) throw new ExternalError('Command was cancelled.', command, args)
+
+  const commandProcess = buildExec(command, args, options, {reject: false})
+  let aborted = false
+  const onAbort = () => {
+    if (aborted) return
+    aborted = true
+    commandProcess.kill()
   }
-  return {
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode,
+
+  try {
+    signal?.addEventListener('abort', onAbort, {once: true})
+    if (signal?.aborted) onAbort()
+
+    const result = await commandProcess
+    if (aborted) throw new ExternalError('Command was cancelled.', command, args)
+    if (result.exitCode === undefined) {
+      throw new ExternalError(
+        result instanceof Error ? result.message : 'Command terminated without an exit code.',
+        command,
+        args,
+      )
+    }
+    return {
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+    }
+  } finally {
+    signal?.removeEventListener('abort', onAbort)
   }
 }
 
@@ -254,6 +273,8 @@ export async function execCommand(command: string, options?: ExecOptions): Promi
  * @param options - Optional settings for how to run the command.
  */
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
+  if (options?.signal?.aborted) return
+
   if (options) {
     // Windows opens a new console window when running a command in the background, so we disable it.
     const runningOnWindows = platformAndArch().platform === 'windows'
@@ -267,14 +288,15 @@ export async function exec(command: string, args: string[], options?: ExecOption
   }
 
   let aborted = false
-  options?.signal?.addEventListener('abort', () => {
+  const onAbort = () => {
     const pid = commandProcess.pid
     if (pid) {
       outputDebug(`Killing process ${pid}: ${command} ${args.join(' ')}`)
       aborted = true
       treeKill(pid, 'SIGTERM')
     }
-  })
+  }
+  options?.signal?.addEventListener('abort', onAbort)
   try {
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -289,6 +311,8 @@ export async function exec(command: string, args: string[], options?: ExecOption
       abortError.stack = processError.stack
       throw abortError
     }
+  } finally {
+    options?.signal?.removeEventListener('abort', onAbort)
   }
 }
 

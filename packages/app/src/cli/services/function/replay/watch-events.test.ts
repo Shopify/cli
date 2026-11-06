@@ -18,6 +18,7 @@ async function fixture() {
   const extension = await testFunctionExtension()
   const events: ReplayWatchEvent[] = []
   const startWatcher = vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue(undefined)
+  const stopWatcher = vi.spyOn(AppEventWatcher.prototype, 'stop')
   vi.mocked(captureFunctionRun).mockResolvedValue(execution())
   const options: WatchReplayOptions = {
     app: testAppLinked(),
@@ -31,6 +32,7 @@ async function fixture() {
     options.abortController.abort()
     await running
     startWatcher.mockRestore()
+    stopWatcher.mockRestore()
   })
   const emit = (extensionEvents: ExtensionEvent[]) =>
     (startWatcher.mock.instances[0] as AppEventWatcher).emit('all', {extensionEvents})
@@ -38,6 +40,7 @@ async function fixture() {
     options,
     events,
     startWatcher,
+    stopWatcher,
     emit,
     start: () => (running = watchReplay(options)),
     update: (error?: string) =>
@@ -52,7 +55,7 @@ async function fixture() {
 }
 
 test('reports build output, runner diagnostics, and execution events without writing output', async () => {
-  const {options, events, startWatcher, start} = await fixture()
+  const {options, events, startWatcher, stopWatcher, start} = await fixture()
   startWatcher.mockImplementation(async (context) => {
     context?.stdout?.write('Build output')
     context?.stderr?.write('Build warning')
@@ -69,6 +72,7 @@ test('reports build output, runner diagnostics, and execution events without wri
       input: '{"value":1}',
       export: 'run',
       json: true,
+      signal: options.abortController.signal,
     })
     expect(events).toEqual([
       {type: 'diagnostic', message: 'Build output'},
@@ -81,6 +85,8 @@ test('reports build output, runner diagnostics, and execution events without wri
     ])
     expect(stdout()).toBe('')
     expect(stderr()).toBe('')
+    expect(stopWatcher).toHaveBeenCalledOnce()
+    expect((stopWatcher.mock.instances[0] as AppEventWatcher).listenerCount('all')).toBe(0)
   })
 })
 
@@ -138,7 +144,7 @@ test('recovers from build and completed Function failures', async () => {
 test.each(['completed', 'rejected'])(
   'waits for the %s execution and skips queued runs after cancellation',
   async (state) => {
-    const {options, events, update, start} = await fixture()
+    const {options, events, update, stopWatcher, start} = await fixture()
     let finishExecution!: () => void
     vi.mocked(captureFunctionRun).mockReturnValueOnce(
       new Promise((resolve, reject) => {
@@ -155,8 +161,10 @@ test.each(['completed', 'rejected'])(
       options.abortController.abort()
       await flushPromises()
       expect(settled).toBe(false)
+      expect(captureFunctionRun).toHaveBeenCalledWith(expect.objectContaining({signal: options.abortController.signal}))
       finishExecution()
       await running
+      expect(stopWatcher).toHaveBeenCalledOnce()
       expect(captureFunctionRun).toHaveBeenCalledOnce()
       expect(events.filter(({type}) => type === 'execution')).toEqual([])
       expect(events.at(-1)).toEqual({type: 'status', status: 'cancelled'})
@@ -277,7 +285,7 @@ test.each(['watching', 'running', 'diagnostic'])(
 )
 
 test.each(['startup', 'watcher', 'runner', 'invalid-result'])('propagates a fatal %s failure', async (source) => {
-  const {options, events, startWatcher} = await fixture()
+  const {options, events, startWatcher, stopWatcher} = await fixture()
   const error = new Error('Watch failed')
   if (source === 'startup') startWatcher.mockRejectedValue(error)
   if (source === 'runner') vi.mocked(captureFunctionRun).mockRejectedValue(error)
@@ -297,6 +305,7 @@ test.each(['startup', 'watcher', 'runner', 'invalid-result'])('propagates a fata
     ;(startWatcher.mock.instances[0] as AppEventWatcher).emit('error', error)
   }
   await rejected
+  expect(stopWatcher).toHaveBeenCalledOnce()
   expect(options.abortController.signal.aborted).toBe(true)
   expect(events).not.toContainEqual({type: 'status', status: 'cancelled'})
   if (source === 'startup') {
