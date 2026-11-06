@@ -15,7 +15,8 @@ import {
 } from '../app-security-commands.js'
 import {appSecurityInstructions} from '../app-security-instructions.js'
 import {validAppConfiguration} from '../app-security-selection.test-data.js'
-import {committedSecretIssue, scan, scanExecution} from '../security-check.test-data.js'
+import {committedSecretExecution, committedSecretIssue, scan, scanExecution} from '../security-check.test-data.js'
+import {combineFindings} from '../app-security-engine/index.js'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {fileRealPath, inTemporaryDirectory, matchGlob, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -25,7 +26,7 @@ import clipboard from 'clipboardy'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
 import type {AppSecuritySelection} from '../app-security-selection.js'
-import type {AppSecurityScope} from '../app-security-engine/index.js'
+import type {AppSecurityScope, SuppressionEntry} from '../app-security-engine/index.js'
 import type {SecurityCheckOutcome} from '../security-check.js'
 
 // Tests must not replace the clipboard of the machine that runs them.
@@ -69,6 +70,28 @@ function scanned(overrides: Partial<ScannedSecurityCheck> = {}): ScannedSecurity
     blocking: {level: 'none', blockedChecks: 0},
     ...overrides,
   }
+}
+
+const fixtureEntry: SuppressionEntry = {
+  source: 'deterministic',
+  check: 'COMMITTED_SECRET',
+  kind: 'false-positive',
+  path: 'app/routes/index.ts',
+  reason: 'A fake token for the route tests.',
+  configurations: ['shopify.app.toml'],
+}
+
+/** A scan that reports `committedSecretIssue`, after `check` applied these entries of shopify.app-security.json. */
+function scannedWithSuppressions(
+  entries: SuppressionEntry[],
+  overrides: Partial<ScannedSecurityCheck> = {},
+): ScannedSecurityCheck {
+  const {checks, suppressions} = combineFindings({
+    deterministic: committedSecretExecution.deterministicFindings,
+    agent: null,
+    suppressions: {entries, resultsKey: 'shopify.app'},
+  })
+  return scanned({execution: committedSecretExecution, checks, suppressions, ...overrides})
 }
 
 function listed(overrides: Partial<ListedSecurityCheck> = {}): ListedSecurityCheck {
@@ -480,6 +503,24 @@ describe('renderSecurityCheckResult for a scan', () => {
     expect(stdout).toContain('### 1. Use the existing scan results')
     expect(process.exitCode).toBe(1)
   })
+
+  test('shows the counts and each suppressed finding with its kind and reason, without --verbose', async () => {
+    process.exitCode = undefined
+
+    const {stderr} = await present(scannedWithSuppressions([fixtureEntry]))
+
+    const report = boxText(stderr)
+    expect(report).toContain('No active security issues found.')
+    expect(report).toContain('Suppressed findings 0 active · 1 suppressed')
+    expect(report).toContain(
+      'High · COMMITTED_SECRET · 0 active · 1 suppressed • app/routes/index.ts · deterministic · false positive · suppressions[0] A fake token for the route tests.',
+    )
+    expect(report).toContain(
+      'Entries in shopify.app-security.json • suppressions[0]: deterministic COMMITTED_SECRET in app/routes/index.ts · matches 1 finding',
+    )
+    expect(report).not.toContain('1 security issue found.')
+    expect(process.exitCode).toBeUndefined()
+  })
 })
 
 describe('renderSecurityCheckResult for --list-files', () => {
@@ -558,6 +599,12 @@ const scanResult = {
   scanDirectories: [{directory: nativeAppDirectory, origin: 'app-directory'}],
   agentCheckCount: 31,
   blocking: {level: 'none', blockedCheckCount: 0},
+  suppressions: {
+    filePath: nativePath('my-app/shopify.app-security.json'),
+    entryCount: 0,
+    suppressedFindingCount: 0,
+    entries: [],
+  },
 }
 
 describe('renderSecurityCheckResult --json for a scan', () => {
@@ -631,6 +678,54 @@ describe('renderSecurityCheckResult --json for a scan', () => {
 
     expect(result).toMatchObject({valid: true, blocking: {level: 'none', blockedCheckCount: 0}})
     expect(process.exitCode).toBeUndefined()
+  })
+
+  test('reports every entry of shopify.app-security.json with its status, and the findings that entries suppress', async () => {
+    const entries: SuppressionEntry[] = [
+      fixtureEntry,
+      {...fixtureEntry, kind: 'accepted-risk', path: 'app/routes/deleted.ts', reason: 'The file is gone.'},
+      {...fixtureEntry, source: 'agent', check: 'MISSING_TENANT_ISOLATION', reason: 'check reads no agent results.'},
+    ]
+
+    const {result} = await presentJson(scannedWithSuppressions(entries, {selection: nativeSelection}))
+
+    expect(result).toMatchObject({
+      valid: true,
+      suppressions: {
+        filePath: nativePath('my-app/shopify.app-security.json'),
+        entryCount: 3,
+        suppressedFindingCount: 1,
+        entries: [
+          {
+            index: 0,
+            source: 'deterministic',
+            check: 'COMMITTED_SECRET',
+            kind: 'false-positive',
+            path: nativePath('my-app/app/routes/index.ts'),
+            status: 'matched',
+            matchedFindingCount: 1,
+          },
+          {
+            index: 1,
+            source: 'deterministic',
+            check: 'COMMITTED_SECRET',
+            kind: 'accepted-risk',
+            path: nativePath('my-app/app/routes/deleted.ts'),
+            status: 'stale',
+            matchedFindingCount: 0,
+          },
+          {
+            index: 2,
+            source: 'agent',
+            check: 'MISSING_TENANT_ISOLATION',
+            kind: 'false-positive',
+            path: nativePath('my-app/app/routes/index.ts'),
+            status: 'not-evaluated',
+            matchedFindingCount: 0,
+          },
+        ],
+      },
+    })
   })
 
   test('--print-instructions includes the instructions in the result, without prompting or copying', async () => {

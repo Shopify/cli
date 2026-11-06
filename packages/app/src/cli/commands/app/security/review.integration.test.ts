@@ -274,8 +274,19 @@ function eolApiVersionJson(appDirectory: string) {
           guide: 'https://shopify.dev/docs/api/usage/versioning',
           automated: false,
         },
+        suppression: null,
       },
     ],
+  }
+}
+
+/** The top-level suppressions of a result without shopify.app-security.json. */
+function noSuppressionsFileJson(appDirectory: string) {
+  return {
+    filePath: resolve(appDirectory, 'shopify.app-security.json'),
+    entryCount: 0,
+    suppressedFindingCount: 0,
+    entries: [],
   }
 }
 
@@ -372,12 +383,14 @@ describe('app security review command boundary', () => {
                   },
                 ],
                 fix: {description: 'Remove credentials from logs.', guide: null, automated: false},
+                suppression: null,
               },
             ],
           },
           eolApiVersionJson(appDirectory),
         ],
         blocking: {level: 'none', blockedCheckCount: 0},
+        suppressions: noSuppressionsFileJson(appDirectory),
       })
       expect(result.stderr).toBe('')
     })
@@ -448,6 +461,7 @@ describe('app security review command boundary', () => {
                   },
                 ],
                 fix: {description: 'Remove credentials from logs.', guide: null, automated: false},
+                suppression: null,
               },
               {
                 source: 'agent',
@@ -502,13 +516,14 @@ describe('app security review command boundary', () => {
                 ],
                 confidence: null,
                 reasoning: null,
-                suppression: {justification: 'The configuration holds no shop data.'},
+                suppression: {justification: 'The configuration holds no shop data.', origin: 'agent'},
               },
             ],
           },
           eolApiVersionJson(appDirectory),
         ],
         blocking: {level: 'none', blockedCheckCount: 0},
+        suppressions: noSuppressionsFileJson(appDirectory),
       })
       expect(result.stderr).toBe('')
     })
@@ -532,6 +547,7 @@ describe('app security review command boundary', () => {
         scopeDiffers: false,
         checks: [],
         blocking: {level: 'high', blockedCheckCount: 0},
+        suppressions: noSuppressionsFileJson(appDirectory),
       })
       expect(result.stderr).toBe('')
     })
@@ -610,6 +626,35 @@ describe('app security review command boundary', () => {
         ['MISSING_TENANT_ISOLATION', ['agent suppressed']],
         ['EOL_API_VERSION', ['deterministic suppressed']],
       ])
+      const suppressions = document.checks.map((check: {findings: {suppression: unknown}[]}) =>
+        check.findings.map(({suppression}) => suppression),
+      )
+      expect(suppressions).toStrictEqual([
+        [null, {justification: 'The logger redacts tokens.', origin: 'file', entryIndex: 1, kind: 'false-positive'}],
+        [{justification: 'The configuration holds no shop data.', origin: 'agent'}],
+        [
+          {
+            justification: 'The upgrade ships with the next release.',
+            origin: 'file',
+            entryIndex: 0,
+            kind: 'accepted-risk',
+          },
+        ],
+      ])
+      expect(document.suppressions).toMatchObject({
+        entryCount: 2,
+        suppressedFindingCount: 2,
+        entries: [
+          {index: 0, check: 'EOL_API_VERSION', kind: 'accepted-risk', status: 'matched', matchedFindingCount: 1},
+          {
+            index: 1,
+            check: 'CREDENTIAL_LOG_LEAKAGE',
+            kind: 'false-positive',
+            status: 'matched',
+            matchedFindingCount: 1,
+          },
+        ],
+      })
       expect(result.stderr).toBe('')
     })
   })
@@ -625,6 +670,27 @@ describe('app security review command boundary', () => {
       const text = boxText(result.stderr)
       expect(text).toContain('deterministic · shopify.app.toml:8 (suppressed)')
       expect(text).toContain('Suppressed: The upgrade ships with the next release.')
+    })
+  })
+
+  test('without --verbose, lists each suppressed finding with its kind and reason', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+      await writeAppSecuritySuppressionsFixture(appDirectory, suppressionEntries)
+
+      const result = await runCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(0)
+      const text = boxText(result.stderr)
+      expect(text).toContain('3 findings suppressed. 0 active · 3 suppressed')
+      expect(text).toContain(
+        'app/routes/orders.tsx:5 · agent · false positive · suppressions[1] The logger redacts tokens.',
+      )
+      expect(text).toContain('app/shopify.server.ts:3 · agent · suppressed by the agent')
+      expect(text).toContain(
+        'shopify.app.toml:8 · deterministic · accepted risk · suppressions[0] The upgrade ships with the next release.',
+      )
+      expect(text).not.toContain('Suppressed:')
     })
   })
 

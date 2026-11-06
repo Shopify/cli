@@ -17,7 +17,11 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
-import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {
+  AgentFindingsDocument,
+  DeterministicFindingsDocument,
+  SuppressionEntry,
+} from './app-security-engine/index.js'
 
 const appRoot = '/tmp/review-app'
 const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
@@ -33,9 +37,15 @@ type Sources = AppSecurityResultsSources
 
 function presenterInput(
   sources: Sources,
-  options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel; verbose?: boolean} = {},
+  options: {
+    checkIds?: string[]
+    blocking?: AppSecurityBlockingLevel
+    verbose?: boolean
+    /** The entries of shopify.app-security.json. */
+    entries?: SuppressionEntry[]
+  } = {},
 ): SecurityReviewPresenterInput {
-  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, 'shopify.app', sources), {
+  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, 'shopify.app', sources, options.entries), {
     resultsDirectory: paths.resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
@@ -481,8 +491,63 @@ describe('buildSecurityReviewAlerts', () => {
       ['error', 'High · CREDENTIAL_LOG_LEAKAGE · Credential reaches a log sink'],
       ['error', 'High · MISSING_TENANT_ISOLATION · Database query may not be scoped by shop'],
       ['warning', 'Low · EOL_API_VERSION · End-of-life API version'],
+      ['info', '1 finding suppressed.'],
       ['error', '3 checks with findings. 1 check unresolved.'],
     ])
+  })
+
+  describe('suppressed findings', () => {
+    const eolEntry: SuppressionEntry = {
+      source: 'deterministic',
+      check: 'EOL_API_VERSION',
+      kind: 'accepted-risk',
+      path: 'shopify.app.toml',
+      reason: 'The upgrade ships with the next release.',
+      configurations: ['shopify.app.toml'],
+    }
+    const suppressedBox = (input: SecurityReviewPresenterInput) =>
+      buildSecurityReviewAlerts(input).find((alert) => String(alert.options.headline).endsWith('suppressed.'))
+
+    test('places suppressed findings before the summary, with severity order and counts, without --verbose', () => {
+      const alerts = buildSecurityReviewAlerts(presenterInput(both, {entries: [eolEntry]}))
+
+      expect(alerts.map((alert) => alert.options.headline).slice(-3)).toEqual([
+        'High · MISSING_TENANT_ISOLATION · Database query may not be scoped by shop',
+        '2 findings suppressed.',
+        '2 checks with findings. 1 check unresolved.',
+      ])
+      const suppressed = alerts.at(-2)!
+      expect(suppressed.type).toBe('info')
+      expect(suppressed.options.customSections?.map((section) => section.title)).toEqual([
+        undefined,
+        'High · MISSING_TENANT_ISOLATION · 1 active · 1 suppressed',
+        'Low · EOL_API_VERSION · 0 active · 1 suppressed',
+        'Entries in shopify.app-security.json',
+      ])
+      expect(suppressed.options.customSections?.[0]?.body).toBe('2 active · 2 suppressed')
+    })
+
+    test('lists only the suppressed findings and the entries of the checks that --check-id selects', () => {
+      const box = suppressedBox(presenterInput(both, {entries: [eolEntry], checkIds: ['MISSING_TENANT_ISOLATION']}))
+
+      expect(box?.options.headline).toBe('1 finding suppressed.')
+      expect(box?.options.customSections?.map((section) => section.title)).toEqual([
+        undefined,
+        'High · MISSING_TENANT_ISOLATION · 1 active · 1 suppressed',
+      ])
+    })
+
+    test('is left out when no shown finding is suppressed, also with entries that match nothing', () => {
+      const staleEntry = {...eolEntry, path: 'shopify.app.staging.toml'}
+
+      expect(suppressedBox(presenterInput(bothWithoutFindings))).toBeUndefined()
+      expect(
+        suppressedBox(presenterInput(both, {checkIds: ['EOL_API_VERSION'], entries: [staleEntry]})),
+      ).toBeUndefined()
+      expect(buildSecurityReviewAlerts(presenterInput(deterministicOnly, {entries: [staleEntry]}))).toEqual(
+        buildSecurityReviewAlerts(presenterInput(deterministicOnly)),
+      )
+    })
   })
 
   test('renders only the summary when no file is present', () => {
@@ -897,6 +962,21 @@ describe('renderSecurityReview', () => {
     expect(summaryBox).toContain('agent-findings.json          1 hour ago   3.99.0')
     expect(summaryBox).toContain('Next steps')
     expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check`')
+  })
+
+  test('renders each suppressed finding with its kind and reason without --verbose', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+
+    renderSecurityReview(presenterInput(both))
+
+    const rendered = unstyled(output.info())
+      .replaceAll(/[│╭╮╰╯─]/g, ' ')
+      .replace(/\s+/g, ' ')
+    expect(rendered).toContain('1 finding suppressed. 3 active · 1 suppressed')
+    expect(rendered).toContain(
+      'High · MISSING_TENANT_ISOLATION · 1 active · 1 suppressed • app/routes/admin.settings.tsx:55 · agent · suppressed by the agent The route is restricted to the app owner by an allowlist middleware.',
+    )
   })
 
   test('renders an info box with not found rows when no file is present', () => {

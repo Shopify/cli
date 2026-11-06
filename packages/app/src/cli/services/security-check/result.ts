@@ -14,6 +14,7 @@ import {
   projectAppSecurityRelativePath,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
+  projectAppSecuritySuppressions,
 } from '../app-security/result.js'
 import {
   formatAppSecurityCommand,
@@ -237,6 +238,7 @@ function appSecurityCheckScanResult(
     scanDirectories: check.scanDirectories.map((directory) => projectAppSecurityScanDirectory(appDirectory, directory)),
     agentCheckCount: check.execution.agentChecks.checks.length,
     blocking: projectAppSecurityBlocking(check.blocking),
+    suppressions: projectAppSecuritySuppressions(appDirectory, check.suppressions, check.checks),
     ...(instructions === undefined ? {} : {instructions}),
   }
 }
@@ -266,6 +268,8 @@ function securityReportInput(check: ScannedSecurityCheck, verbose: boolean): Sec
     deterministicFindingsPath: artifacts.deterministicFindingsPath,
     agentChecksPath: artifacts.agentChecksPath,
     agentCheckCount: execution.agentChecks.checks.length,
+    checks: check.checks,
+    suppressions: check.suppressions,
   }
 }
 

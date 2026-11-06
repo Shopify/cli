@@ -75,10 +75,72 @@ export const appSecurityBlockingSchema = zod
       .int()
       .nonnegative()
       .describe(
-        'The number of checks with an active finding and a severity at or above that level. Always 0 for none.',
+        "The number of checks with an active finding and a severity at or above that level. Suppressed and superseded findings don't count. Always 0 for none.",
       ),
   })
   .strict()
   .describe('The --blocking policy and the checks that fail it.')
 
 export type AppSecurityBlocking = zod.infer<typeof appSecurityBlockingSchema>
+
+/**
+ * The kind of an entry of shopify.app-security.json, spelled as in the file, so that the file and the JSON output use
+ * the same values. A function, so each field gets its own instance.
+ */
+export const createAppSecuritySuppressionKindSchema = () =>
+  zod
+    .enum(['false-positive', 'accepted-risk'])
+    .describe(
+      "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk.",
+    )
+
+export const appSecuritySuppressionEntrySchema = zod
+  .object({
+    index: zod.number().int().nonnegative().describe("The entry's index in the file's suppressions array, from 0."),
+    source: zod.enum(['deterministic', 'agent']).describe('The source whose findings the entry suppresses.'),
+    check: zod.string().describe('The check ID that the entry names.'),
+    kind: createAppSecuritySuppressionKindSchema(),
+    path: createAbsolutePathSchema().describe('The absolute path of the file that the entry names.'),
+    status: zod
+      .enum(['matched', 'stale', 'ambiguous', 'not-evaluated'])
+      .describe(
+        "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check.",
+      ),
+    matchedFindingCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe(
+        'The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes.',
+      ),
+  })
+  .strict()
+  .describe('One entry of shopify.app-security.json, and how it applied to the results.')
+
+export const appSecuritySuppressionsSchema = zod
+  .object({
+    filePath: createAbsolutePathSchema().describe(
+      'The absolute path of shopify.app-security.json in the app directory, whether or not the file exists.',
+    ),
+    entryCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe('The number of entries in the file, or 0 when the file does not exist.'),
+    suppressedFindingCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe(
+        'The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted.',
+      ),
+    entries: zod
+      .array(appSecuritySuppressionEntrySchema)
+      .describe('One result for each entry, in file order. Empty when the file does not exist.'),
+  })
+  .strict()
+  .describe(
+    'The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the count cover every check, whatever --check-id selects.',
+  )
+
+export type AppSecuritySuppressions = zod.infer<typeof appSecuritySuppressionsSchema>

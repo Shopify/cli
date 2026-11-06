@@ -5807,8 +5807,8 @@ DESCRIPTION
   write them later. With `--json`, the command offers to include the instructions in the result, with or without copying
   them, and `--print-instructions` includes them.
 
-  With `--json`, the result describes the scan and the files it wrote, and whether `--blocking` passed, but not the
-  findings: run `shopify app security review --json` for those.
+  With `--json`, the result describes the scan and the files it wrote, whether `--blocking` passed, and how the entries
+  of `shopify.app-security.json` applied, but not the findings: run `shopify app security review --json` for those.
 
   Findings that an entry of `shopify.app-security.json` in the app directory suppresses don't count for `--blocking`.
   The results files still hold every finding. An entry applies to the results that its `configurations` name: an app
@@ -5838,7 +5838,7 @@ DESCRIPTION
           },
           "valid": {
             "type": "boolean",
-            "description": "Whether --blocking passed: no check of the scan has an active finding and a severity at or above the level. A finding that an entry of shopify.app-security.json suppresses is not active. blocking.blockedCheckCount counts the checks that fail, and --blocking none always passes. Run review --json for the findings."
+            "description": "Whether --blocking passed: no check of the scan has an active finding and a severity at or above the level. Findings that shopify.app-security.json suppresses don't count. blocking.blockedCheckCount counts the checks that fail, and --blocking none always passes. Run review --json for the findings."
           },
           "app": {
             "$ref": "#/definitions/AppSecurityApp"
@@ -5873,6 +5873,9 @@ DESCRIPTION
           "blocking": {
             "$ref": "#/definitions/AppSecurityBlocking"
           },
+          "suppressions": {
+            "$ref": "#/definitions/AppSecuritySuppressions"
+          },
           "instructions": {
             "$ref": "#/definitions/AppSecurityInstructions",
             "description": "The coding-agent instructions for this scan, with --print-instructions or when chosen at the prompt. Left out otherwise."
@@ -5888,7 +5891,8 @@ DESCRIPTION
           "scope",
           "scanDirectories",
           "agentCheckCount",
-          "blocking"
+          "blocking",
+          "suppressions"
         ],
         "additionalProperties": false
       },
@@ -6021,7 +6025,7 @@ DESCRIPTION
           "blockedCheckCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "The number of checks with an active finding and a severity at or above that level. Always 0 for none."
+            "description": "The number of checks with an active finding and a severity at or above that level. Suppressed and superseded findings don't count. Always 0 for none."
           }
         },
         "required": [
@@ -6030,6 +6034,100 @@ DESCRIPTION
         ],
         "additionalProperties": false,
         "description": "The --blocking policy and the checks that fail it."
+      },
+      "AppSecuritySuppressions": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute path of shopify.app-security.json in the app directory, whether or not the file exists."
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of entries in the file, or 0 when the file does not exist."
+          },
+          "suppressedFindingCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecuritySuppressionEntry"
+            },
+            "description": "One result for each entry, in file order. Empty when the file does not exist."
+          }
+        },
+        "required": [
+          "filePath",
+          "entryCount",
+          "suppressedFindingCount",
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the count cover every check, whatever --check-id selects."
+      },
+      "AppSecuritySuppressionEntry": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The entry's index in the file's suppressions array, from 0."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "agent"
+            ],
+            "description": "The source whose findings the entry suppresses."
+          },
+          "check": {
+            "type": "string",
+            "description": "The check ID that the entry names."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "false-positive",
+              "accepted-risk"
+            ],
+            "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the file that the entry names."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "matched",
+              "stale",
+              "ambiguous",
+              "not-evaluated"
+            ],
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check."
+          },
+          "matchedFindingCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes."
+          }
+        },
+        "required": [
+          "index",
+          "source",
+          "check",
+          "kind",
+          "path",
+          "status",
+          "matchedFindingCount"
+        ],
+        "additionalProperties": false,
+        "description": "One entry of shopify.app-security.json, and how it applied to the results."
       },
       "AppSecurityInstructions": {
         "type": "object",
@@ -6693,17 +6791,19 @@ DESCRIPTION
   when the agent findings were recorded for a different scope than the latest scan; that doesn't change the exit code.
 
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
-  reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with active findings is
-  at or above a severity. With `--json`, the result always includes every finding in full.
+  reasoning and evidence, and for suppressed and superseded findings in full, and `--blocking` to exit with code 1 when
+  a check with active findings is at or above a severity. Suppressed findings are always listed with their kind and
+  reason. With `--json`, the result always includes every finding in full, and how the entries of
+  `shopify.app-security.json` applied.
 
   Suppressed findings don't count for `--blocking`: those the agent suppressed, and those that an entry of
-  `shopify.app-security.json` in the app directory suppresses. `--verbose` shows them with the reason. An entry applies
-  to the results that its `configurations` name: an app configuration file name without `--client-id`, or a client ID
-  passed with `--client-id`. An entry's `code` matches the code excerpt that the results file saved with the finding. A
-  results file that would be larger than 5 MB with excerpts is saved without them, and results written before excerpts
-  existed have none; then an entry with `code` matches only the finding's message, so it can go stale and leave the
-  finding active. Superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count
-  either. An invalid `shopify.app-security.json` stops the command.
+  `shopify.app-security.json` in the app directory suppresses. An entry applies to the results that its `configurations`
+  name: an app configuration file name without `--client-id`, or a client ID passed with `--client-id`. An entry's
+  `code` matches the code excerpt that the results file saved with the finding. A results file that would be larger than
+  5 MB with excerpts is saved without them, and results written before excerpts existed have none; then an entry with
+  `code` matches only the finding's message, so it can go stale and leave the finding active. Superseded deterministic
+  findings, which a check's prefer-agent agent result replaces, don't count either. An invalid
+  `shopify.app-security.json` stops the command.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6722,7 +6822,7 @@ DESCRIPTION
       },
       "valid": {
         "type": "boolean",
-        "description": "Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes."
+        "description": "Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Suppressed and superseded findings don't count, unresolved checks never fail it, and --blocking none always passes."
       },
       "app": {
         "$ref": "#/definitions/AppSecurityApp"
@@ -6799,6 +6899,9 @@ DESCRIPTION
       },
       "blocking": {
         "$ref": "#/definitions/AppSecurityBlocking"
+      },
+      "suppressions": {
+        "$ref": "#/definitions/AppSecuritySuppressions"
       }
     },
     "required": [
@@ -6811,7 +6914,8 @@ DESCRIPTION
       "coverage",
       "scopeDiffers",
       "checks",
-      "blocking"
+      "blocking",
+      "suppressions"
     ],
     "additionalProperties": false,
     "description": "The combined results of the app security check.",
@@ -6925,7 +7029,7 @@ DESCRIPTION
           "blockedCheckCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "The number of checks with an active finding and a severity at or above that level. Always 0 for none."
+            "description": "The number of checks with an active finding and a severity at or above that level. Suppressed and superseded findings don't count. Always 0 for none."
           }
         },
         "required": [
@@ -6934,6 +7038,100 @@ DESCRIPTION
         ],
         "additionalProperties": false,
         "description": "The --blocking policy and the checks that fail it."
+      },
+      "AppSecuritySuppressions": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute path of shopify.app-security.json in the app directory, whether or not the file exists."
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of entries in the file, or 0 when the file does not exist."
+          },
+          "suppressedFindingCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecuritySuppressionEntry"
+            },
+            "description": "One result for each entry, in file order. Empty when the file does not exist."
+          }
+        },
+        "required": [
+          "filePath",
+          "entryCount",
+          "suppressedFindingCount",
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the count cover every check, whatever --check-id selects."
+      },
+      "AppSecuritySuppressionEntry": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The entry's index in the file's suppressions array, from 0."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "agent"
+            ],
+            "description": "The source whose findings the entry suppresses."
+          },
+          "check": {
+            "type": "string",
+            "description": "The check ID that the entry names."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "false-positive",
+              "accepted-risk"
+            ],
+            "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the file that the entry names."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "matched",
+              "stale",
+              "ambiguous",
+              "not-evaluated"
+            ],
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check."
+          },
+          "matchedFindingCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes."
+          }
+        },
+        "required": [
+          "index",
+          "source",
+          "check",
+          "kind",
+          "path",
+          "status",
+          "matchedFindingCount"
+        ],
+        "additionalProperties": false,
+        "description": "One entry of shopify.app-security.json, and how it applied to the results."
       },
       "AppSecurityDeterministicResultsFile": {
         "type": "object",
@@ -7463,7 +7661,7 @@ DESCRIPTION
               "suppressed",
               "superseded"
             ],
-            "description": "Whether the finding counts: active; suppressed, by the agent or by an entry of shopify.app-security.json, which can suppress deterministic findings too; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+            "description": "Whether the finding counts: active; suppressed, by an entry of shopify.app-security.json or by the agent, so it doesn't count for valid or blocking; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
           },
           "location": {
             "$ref": "#/definitions/AppSecurityLocation"
@@ -7527,6 +7725,17 @@ DESCRIPTION
               }
             ],
             "description": "How to fix the finding, or null when none is recorded."
+          },
+          "suppression": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityFindingSuppression"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The entry of shopify.app-security.json that suppresses the finding. Also set on a superseded finding that an entry matched. Null otherwise."
           }
         },
         "required": [
@@ -7536,7 +7745,8 @@ DESCRIPTION
           "message",
           "snippet",
           "evidence",
-          "fix"
+          "fix",
+          "suppression"
         ],
         "additionalProperties": false,
         "description": "A finding from deterministic-findings.json."
@@ -7555,7 +7765,7 @@ DESCRIPTION
               "suppressed",
               "superseded"
             ],
-            "description": "Whether the finding counts: active; suppressed, by the agent or by an entry of shopify.app-security.json, which can suppress deterministic findings too; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+            "description": "Whether the finding counts: active; suppressed, by an entry of shopify.app-security.json or by the agent, so it doesn't count for valid or blocking; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
           },
           "location": {
             "$ref": "#/definitions/AppSecurityLocation"
@@ -7613,22 +7823,13 @@ DESCRIPTION
           "suppression": {
             "anyOf": [
               {
-                "type": "object",
-                "properties": {
-                  "justification": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "justification"
-                ],
-                "additionalProperties": false
+                "$ref": "#/definitions/AppSecurityFindingSuppression"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Why the agent suppressed the finding, or null when the agent didn't suppress it. An entry of shopify.app-security.json can suppress the finding too, so a suppressed finding can have null here."
+            "description": "What suppresses the finding: an entry of shopify.app-security.json, which comes first, or the agent's own suppression. Null when the finding is not suppressed."
           }
         },
         "required": [
@@ -7710,6 +7911,64 @@ DESCRIPTION
         ],
         "additionalProperties": false,
         "description": "Source that supports a finding."
+      },
+      "AppSecurityFindingSuppression": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "justification": {
+                "type": "string",
+                "description": "The entry's reason."
+              },
+              "origin": {
+                "type": "string",
+                "const": "file",
+                "description": "An entry of shopify.app-security.json suppresses the finding."
+              },
+              "entryIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The entry's index in the file, from 0, as in suppressions.entries."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "false-positive",
+                  "accepted-risk"
+                ],
+                "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+              }
+            },
+            "required": [
+              "justification",
+              "origin",
+              "entryIndex",
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "justification": {
+                "type": "string",
+                "description": "The agent's justification."
+              },
+              "origin": {
+                "type": "string",
+                "const": "agent",
+                "description": "The agent suppressed the finding when it recorded it."
+              }
+            },
+            "required": [
+              "justification",
+              "origin"
+            ],
+            "additionalProperties": false
+          }
+        ],
+        "description": "What suppresses a finding, and why."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"

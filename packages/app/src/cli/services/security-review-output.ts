@@ -1,5 +1,6 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
+import {suppressedFindingsView, type SuppressedFindingsView} from './security-suppressions-output.js'
 import {
   activeFindings,
   isAgentResultStale,
@@ -111,7 +112,10 @@ export function renderSecurityReview(input: SecurityReviewPresenterInput): void 
   }
 }
 
-/** Every box in order: unresolved checks, passed checks, one per check with findings, then the summary. */
+/**
+ * Every box in order: unresolved checks, passed checks, one per check with findings, the suppressed findings, then the
+ * summary. The suppressed findings box is shown whatever `--verbose`, whenever a shown check has one.
+ */
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
   const {checks} = input.result
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
@@ -119,13 +123,19 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
   )
   const withFindings = checks.filter((check) => activeFindings(check).length > 0)
+  const suppressed = suppressedFindingsView(checks, input.result.suppressions)
 
   return [
     ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose)] : []),
     ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose)] : []),
     ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now)),
+    ...(suppressed ? [suppressedFindingsAlert(suppressed)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
   ]
+}
+
+function suppressedFindingsAlert({headline, counts, sections}: SuppressedFindingsView): SecurityReviewAlert {
+  return {type: 'info', options: {headline, customSections: [{body: counts}, ...sections]}}
 }
 
 export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput): SecurityReviewSummary {
