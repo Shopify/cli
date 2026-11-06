@@ -109,6 +109,64 @@ describe('suppressedFindingsView', () => {
     })
   })
 
+  test('lists multiple findings of one entry with line locations, plural counts and both kinds', () => {
+    const secretEntry: SuppressionEntry = {
+      ...entry,
+      check: 'COMMITTED_SECRET',
+      kind: 'false-positive',
+      path: 'test/session.ts',
+      reason: 'Fake tokens.',
+    }
+    const secrets = check({
+      id: 'COMMITTED_SECRET',
+      snapshot: {...snapshot, severity: 'high'},
+      findings: [3, 8].map((line) => ({location: {file: 'test/session.ts', line}, message: 'Token.', evidence: []})),
+    })
+    const result = view({deterministic: deterministic([check(), secrets])}, [entry, secretEntry])
+
+    expect(result?.headline).toBe('3 findings suppressed.')
+    expect(result?.counts).toBe('0 active · 3 suppressed')
+    expect(result?.sections.map((section) => section.title)).toEqual([
+      'High · COMMITTED_SECRET · 0 active · 2 suppressed',
+      'Medium · MISSING_COMPLIANCE_WEBHOOKS · 0 active · 1 suppressed',
+      'Entries in shopify.app-security.json',
+    ])
+    expect(result?.sections[0]?.body).toEqual({
+      list: {
+        items: [
+          [
+            {filePath: 'test/session.ts:3'},
+            {subdued: '· deterministic · false positive · suppressions[1]'},
+            '\nFake tokens.',
+          ],
+          [
+            {filePath: 'test/session.ts:8'},
+            {subdued: '· deterministic · false positive · suppressions[1]'},
+            '\nFake tokens.',
+          ],
+        ],
+      },
+    })
+    expect(result?.sections[2]?.body).toEqual({
+      list: {
+        items: [
+          [
+            {subdued: 'suppressions[0]:'},
+            'deterministic MISSING_COMPLIANCE_WEBHOOKS in',
+            {filePath: 'shopify.app.toml'},
+            {subdued: '· matches 1 finding'},
+          ],
+          [
+            {subdued: 'suppressions[1]:'},
+            'deterministic COMMITTED_SECRET in',
+            {filePath: 'test/session.ts'},
+            {subdued: '· matches 2 findings'},
+          ],
+        ],
+      },
+    })
+  })
+
   test('is undefined when no finding is suppressed', () => {
     expect(view({deterministic: deterministic([check()])}, [])).toBeUndefined()
     expect(view({deterministic: deterministic([check({findings: []})])})).toBeUndefined()
@@ -139,7 +197,17 @@ describe('suppressedFindingsView', () => {
       'High · CREDENTIAL_LOG_LEAKAGE · 0 active · 1 suppressed',
       'Entries in shopify.app-security.json',
     ])
-    expect(JSON.stringify(result?.sections[0])).toContain('· agent · suppressed by the agent')
+    expect(result?.sections[0]?.body).toEqual({
+      list: {
+        items: [
+          [
+            {filePath: 'app/routes/orders.tsx:4'},
+            {subdued: '· agent · suppressed by the agent'},
+            '\nA placeholder token.',
+          ],
+        ],
+      },
+    })
     expect(JSON.stringify(result?.sections[1])).toContain('· matches 1 finding')
   })
 })

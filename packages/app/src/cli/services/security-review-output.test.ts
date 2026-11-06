@@ -508,7 +508,7 @@ describe('buildSecurityReviewAlerts', () => {
     const suppressedBox = (input: SecurityReviewPresenterInput) =>
       buildSecurityReviewAlerts(input).find((alert) => String(alert.options.headline).endsWith('suppressed.'))
 
-    test('lists every suppressed finding, high first, with its kind and reason, before the summary and without --verbose', () => {
+    test('places suppressed findings before the summary, with severity order and counts, without --verbose', () => {
       const alerts = buildSecurityReviewAlerts(presenterInput(both, {entries: [eolEntry]}))
 
       expect(alerts.map((alert) => alert.options.headline).slice(-3)).toEqual([
@@ -516,58 +516,15 @@ describe('buildSecurityReviewAlerts', () => {
         '2 findings suppressed.',
         '2 checks with findings. 1 check unresolved.',
       ])
-      expect(alerts.at(-2)).toEqual({
-        type: 'info',
-        options: {
-          headline: '2 findings suppressed.',
-          customSections: [
-            {body: '2 active · 2 suppressed'},
-            {
-              title: 'High · MISSING_TENANT_ISOLATION · 1 active · 1 suppressed',
-              body: {
-                list: {
-                  items: [
-                    [
-                      {filePath: 'app/routes/admin.settings.tsx:55'},
-                      {subdued: '· agent · suppressed by the agent'},
-                      '\nThe route is restricted to the app owner by an allowlist middleware.',
-                    ],
-                  ],
-                },
-              },
-            },
-            {
-              title: 'Low · EOL_API_VERSION · 0 active · 1 suppressed',
-              body: {
-                list: {
-                  items: [
-                    [
-                      {filePath: 'shopify.app.toml:8'},
-                      {subdued: '· deterministic · accepted risk · suppressions[0]'},
-                      '\nThe upgrade ships with the next release.',
-                    ],
-                  ],
-                },
-              },
-            },
-            {
-              title: 'Entries in shopify.app-security.json',
-              body: {
-                list: {
-                  items: [
-                    [
-                      {subdued: 'suppressions[0]:'},
-                      'deterministic EOL_API_VERSION in',
-                      {filePath: 'shopify.app.toml'},
-                      {subdued: '· matches 1 finding'},
-                    ],
-                  ],
-                },
-              },
-            },
-          ],
-        },
-      })
+      const suppressed = alerts.at(-2)!
+      expect(suppressed.type).toBe('info')
+      expect(suppressed.options.customSections?.map((section) => section.title)).toEqual([
+        undefined,
+        'High · MISSING_TENANT_ISOLATION · 1 active · 1 suppressed',
+        'Low · EOL_API_VERSION · 0 active · 1 suppressed',
+        'Entries in shopify.app-security.json',
+      ])
+      expect(suppressed.options.customSections?.[0]?.body).toBe('2 active · 2 suppressed')
     })
 
     test('lists only the suppressed findings and the entries of the checks that --check-id selects', () => {
