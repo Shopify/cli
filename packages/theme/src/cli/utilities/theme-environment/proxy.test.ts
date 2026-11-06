@@ -721,6 +721,62 @@ describe('dev proxy', () => {
     })
   })
 
+  describe('proxyStorefrontRequest — dev session cookie', () => {
+    const responseSettingEssential = () =>
+      new Response('OK', {
+        headers: [
+          ['set-cookie', '_shopify_essential=:ROTATED:; path=/; secure; HttpOnly; SameSite=Lax'],
+          ['set-cookie', 'cart_currency=USD; path=/; SameSite=Lax'],
+        ],
+      })
+
+    const createSessionCtx = () =>
+      ({
+        ...ctx,
+        type: 'theme',
+        session: {
+          storeFqdn: 'my-store.myshopify.com',
+          sessionCookies: {_shopify_essential: ':DEV-THEME-BOUND:'},
+          storefrontToken: 'sfr-devtools-token',
+        },
+      }) as unknown as DevServerContext
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockImplementation(async () => responseSettingEssential()),
+      )
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    test.each([
+      ['GET', '/cart.js'],
+      ['POST', '/cart/add.js'],
+      ['POST', '/cart/change.js?sections=cart-drawer'],
+      ['GET', '/cart'],
+      ['GET', '/checkouts/xyz'],
+      ['GET', '/account/logout'],
+      ['POST', '/api/2025-01/graphql.json'],
+    ])('keeps the dev session cookie when %s %s rotates _shopify_essential', async (method, path) => {
+      const sessionCtx = createSessionCtx()
+      const response = await proxyStorefrontRequest(createH3Event(method, path), sessionCtx)
+
+      expect(sessionCtx.session.sessionCookies).toHaveProperty('_shopify_essential', ':DEV-THEME-BOUND:')
+      // The browser still receives the cookie for its own jar:
+      expect(response.headers.getSetCookie().join(',')).toContain('_shopify_essential=:ROTATED:')
+    })
+
+    test('stores _shopify_essential from requests sent with the dev session', async () => {
+      const sessionCtx = createSessionCtx()
+      await proxyStorefrontRequest(createH3Event('GET', '/products/some-product.js'), sessionCtx)
+
+      expect(sessionCtx.session.sessionCookies).toHaveProperty('_shopify_essential', ':ROTATED:')
+    })
+  })
+
   describe('proxyStorefrontRequest — Storefront API passthrough', () => {
     const passthroughCtx = {
       ...ctx,
