@@ -12,7 +12,10 @@ function parseScopes(scopes: string): string[] {
 }
 
 /** Locates a value of an app configuration by its TOML key. The location has no line when the key isn't found. */
-function configurationLocator(appRoot: string, configuration: AppTomlContent): (key: string | undefined) => Location {
+export function configurationLocator(
+  appRoot: string,
+  configuration: AppTomlContent,
+): (key: string | undefined) => Location {
   const file = relativePath(appRoot, configuration.path).replace(/\\/g, '/')
   const lines = locateTomlValues(configuration.content ?? '')
   return (key) => {
