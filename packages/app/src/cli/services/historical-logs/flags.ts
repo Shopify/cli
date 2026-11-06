@@ -7,7 +7,7 @@ export const historicalLogFlags = {
   'client-id': appFlags['client-id'],
   type: Flags.string({
     description: 'Log type; repeat to select multiple. Defaults to all supported types.',
-    options: ['webhook', 'graphql', 'function'],
+    options: ['webhook', 'graphql', 'function', 'app-event'],
     multiple: true,
     multipleNonGreedy: true,
     env: 'SHOPIFY_FLAG_TYPE',
@@ -49,6 +49,10 @@ export const historicalLogFlags = {
   target: Flags.string({
     description: 'Exact Function execution target; excludes non-Function records.',
     env: 'SHOPIFY_FLAG_TARGET',
+  }),
+  'event-handle': Flags.string({
+    description: 'Exact app event handle; excludes non-app-event records.',
+    env: 'SHOPIFY_FLAG_EVENT_HANDLE',
   }),
   since: Flags.string({
     description: 'Inclusive start: positive duration (s/m/h/d) or whole-second RFC 3339 timestamp.',
