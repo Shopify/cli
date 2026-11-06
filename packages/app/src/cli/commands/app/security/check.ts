@@ -25,6 +25,8 @@ In interactive terminals, the command offers to copy the coding-agent instructio
 
 With \`--json\`, the result describes the scan and the files it wrote, and whether \`--blocking\` passed, but not the findings: run \`shopify app security review --json\` for those.
 
+Findings that an entry of \`shopify.app-security.json\` in the app directory suppresses don't count for \`--blocking\`. The results files still hold every finding. An entry applies to the results that its \`configurations\` name: an app configuration file name, such as \`shopify.app.toml\`, names the results of that configuration without \`--client-id\`, and a client ID names the results of a run with that \`--client-id\`. An entry's \`code\` matches the code excerpt that the results file saves with the finding. A results file that would be larger than 5 MB with excerpts is saved without them; then an entry with \`code\` matches only the finding's message, so it can go stale and leave the finding active. The check reads \`shopify.app-security.json\` before it scans, so an invalid file stops the command before any results file is replaced.
+
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
   static jsonOutputSchema = appSecurityCheckJsonOutputSchema

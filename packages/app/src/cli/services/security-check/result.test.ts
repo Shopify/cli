@@ -64,6 +64,8 @@ function scanned(overrides: Partial<ScannedSecurityCheck> = {}): ScannedSecurity
     scanDirectories: [{directory: checkSelection.appDirectory, origin: 'app_directory'}],
     execution: scanExecution,
     artifacts: {deterministicFindingsPath: paths.deterministicFindingsPath, agentChecksPath: paths.agentChecksPath},
+    checks: [],
+    suppressions: [],
     blocking: {level: 'none', blockedChecks: 0},
     ...overrides,
   }

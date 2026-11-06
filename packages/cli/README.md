@@ -5709,8 +5709,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum check severity that causes a non-zero exit code when the check has findings: high,
+      medium, or low. Suppressed and superseded findings don't count. Defaults to none, which never fails on findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -5810,6 +5810,15 @@ DESCRIPTION
   With `--json`, the result describes the scan and the files it wrote, and whether `--blocking` passed, but not the
   findings: run `shopify app security review --json` for those.
 
+  Findings that an entry of `shopify.app-security.json` in the app directory suppresses don't count for `--blocking`.
+  The results files still hold every finding. An entry applies to the results that its `configurations` name: an app
+  configuration file name, such as `shopify.app.toml`, names the results of that configuration without `--client-id`,
+  and a client ID names the results of a run with that `--client-id`. An entry's `code` matches the code excerpt that
+  the results file saves with the finding. A results file that would be larger than 5 MB with excerpts is saved without
+  them; then an entry with `code` matches only the finding's message, so it can go stale and leave the finding active.
+  The check reads `shopify.app-security.json` before it scans, so an invalid file stops the command before any results
+  file is replaced.
+
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 
@@ -5829,7 +5838,7 @@ DESCRIPTION
           },
           "valid": {
             "type": "boolean",
-            "description": "Whether --blocking passed: no finding of the scan has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings."
+            "description": "Whether --blocking passed: no check of the scan has an active finding and a severity at or above the level. A finding that an entry of shopify.app-security.json suppresses is not active. blocking.blockedCheckCount counts the checks that fail, and --blocking none always passes. Run review --json for the findings."
           },
           "app": {
             "$ref": "#/definitions/AppSecurityApp"
@@ -6012,7 +6021,7 @@ DESCRIPTION
           "blockedCheckCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "The number of checks with findings at or above that severity. Always 0 for none."
+            "description": "The number of checks with an active finding and a severity at or above that level. Always 0 for none."
           }
         },
         "required": [
@@ -6634,8 +6643,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum check severity that causes a non-zero exit code when the check has findings: high,
+      medium, or low. Suppressed and superseded findings don't count. Defaults to none, which never fails on findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -6684,8 +6693,17 @@ DESCRIPTION
   when the agent findings were recorded for a different scope than the latest scan; that doesn't change the exit code.
 
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
-  reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
-  above a severity. With `--json`, the result always includes every finding in full.
+  reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with active findings is
+  at or above a severity. With `--json`, the result always includes every finding in full.
+
+  Suppressed findings don't count for `--blocking`: those the agent suppressed, and those that an entry of
+  `shopify.app-security.json` in the app directory suppresses. `--verbose` shows them with the reason. An entry applies
+  to the results that its `configurations` name: an app configuration file name without `--client-id`, or a client ID
+  passed with `--client-id`. An entry's `code` matches the code excerpt that the results file saved with the finding. A
+  results file that would be larger than 5 MB with excerpts is saved without them, and results written before excerpts
+  existed have none; then an entry with `code` matches only the finding's message, so it can go stale and leave the
+  finding active. Superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count
+  either. An invalid `shopify.app-security.json` stops the command.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6907,7 +6925,7 @@ DESCRIPTION
           "blockedCheckCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "The number of checks with findings at or above that severity. Always 0 for none."
+            "description": "The number of checks with an active finding and a severity at or above that level. Always 0 for none."
           }
         },
         "required": [
@@ -7445,7 +7463,7 @@ DESCRIPTION
               "suppressed",
               "superseded"
             ],
-            "description": "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+            "description": "Whether the finding counts: active; suppressed, by the agent or by an entry of shopify.app-security.json, which can suppress deterministic findings too; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
           },
           "location": {
             "$ref": "#/definitions/AppSecurityLocation"
@@ -7537,7 +7555,7 @@ DESCRIPTION
               "suppressed",
               "superseded"
             ],
-            "description": "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+            "description": "Whether the finding counts: active; suppressed, by the agent or by an entry of shopify.app-security.json, which can suppress deterministic findings too; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
           },
           "location": {
             "$ref": "#/definitions/AppSecurityLocation"
@@ -7610,7 +7628,7 @@ DESCRIPTION
                 "type": "null"
               }
             ],
-            "description": "Why the agent suppressed the finding, or null when it is not suppressed."
+            "description": "Why the agent suppressed the finding, or null when the agent didn't suppress it. An entry of shopify.app-security.json can suppress the finding too, so a suppressed finding can have null here."
           }
         },
         "required": [

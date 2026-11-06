@@ -1,5 +1,7 @@
 import SecurityCheck from './check.js'
-import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
+import SecurityReview from './review.js'
+import {writeAppSecuritySuppressionsFixture} from '../../../services/app-security-suppressions.test-data.js'
+import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from '../../../services/app-security-artifacts.js'
 import {deterministicFindingsDocumentSchema} from '../../../services/app-security-engine/results/schema.js'
 import {appFromIdentifiers} from '../../../services/context.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
@@ -12,7 +14,7 @@ import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/nod
 import clipboard from 'clipboardy'
 import {describe, expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
+import {mkdir, readFile, rm, stat, writeFile} from 'node:fs/promises'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
 import {resolve} from 'node:path'
 
@@ -79,7 +81,7 @@ function expectMentionsPath(message: string, path: string): void {
   expect(message.replaceAll(' ', '')).toContain(path)
 }
 
-async function runCommand(argv: string[]) {
+async function runCommand(argv: string[], command: typeof SecurityCheck | typeof SecurityReview = SecurityCheck) {
   const previousExitCode = process.exitCode
   process.exitCode = 0
   // Observe the real Oclif error handler's requested exit without terminating the test worker.
@@ -92,7 +94,7 @@ async function runCommand(argv: string[]) {
       const config = await Config.load(import.meta.url)
       // This test invokes the app command directly, not as a separately installed CLI plugin.
       config.plugins.clear()
-      await SecurityCheck.run(argv, config)
+      await command.run(argv, config)
       return {stdout: stdout(), stderr: stderr()}
     })
     return {...output, exitCode: process.exitCode}
@@ -106,13 +108,24 @@ async function runCommand(argv: string[]) {
  * Runs the command with --json. CLI Kit's error handler reads --json from the process arguments, not from the
  * arguments given to `run`, so the environment sets it as well.
  */
-async function runJsonCommand(argv: string[]) {
+async function runJsonCommand(argv: string[], command: typeof SecurityCheck | typeof SecurityReview = SecurityCheck) {
   vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
   try {
-    return await runCommand([...argv, '--json'])
+    return await runCommand([...argv, '--json'], command)
   } finally {
     vi.unstubAllEnvs()
   }
+}
+
+/** An entry for the access token that `createAppWithSecret` commits, with its code as the results file holds it. */
+const committedSecretEntry = {
+  source: 'deterministic',
+  check: 'COMMITTED_SECRET',
+  kind: 'false-positive',
+  path: 'app/routes/index.ts',
+  code: 'const access_token = "shpa[REDACTED:38]"',
+  reason: 'A fake token for the session tests.',
+  configurations: ['shopify.app.toml'],
 }
 
 /**
@@ -559,6 +572,177 @@ describe('app security check --json command boundary', () => {
 
       expect(result.exitCode).toBe(0)
       expect(JSON.parse(result.stdout)).toMatchObject({valid: true, blocking: {level: 'none', blockedCheckCount: 0}})
+    })
+  })
+
+  test('passes --blocking when shopify.app-security.json suppresses the finding, also after lines move it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const blocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      await writeAppSecuritySuppressionsFixture(directory, [committedSecretEntry])
+
+      const suppressed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const source = await readFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'utf8')
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        `// Session fixtures.\nimport {session} from './session'\n\n${source}`,
+      )
+      const moved = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const review = await runJsonCommand(['--path', directory, '--check-id', 'COMMITTED_SECRET'], SecurityReview)
+
+      expect(blocked.exitCode).toBe(1)
+      expect(JSON.parse(blocked.stdout)).toMatchObject({valid: false, blocking: {level: 'high', blockedCheckCount: 1}})
+      for (const result of [suppressed, moved]) {
+        expect(result.exitCode).toBe(0)
+        expect(JSON.parse(result.stdout)).toMatchObject({valid: true, blocking: {level: 'high', blockedCheckCount: 0}})
+      }
+      expect(JSON.parse(review.stdout)).toMatchObject({
+        checks: [
+          {
+            id: 'COMMITTED_SECRET',
+            findings: [{source: 'deterministic', disposition: 'suppressed', location: {line: 4}}],
+          },
+        ],
+      })
+    })
+  })
+
+  test('passes --blocking when an entry suppresses the deterministic finding of a prefer-agent check', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        'export async function loader({request}) {\n  const {session} = await authenticate.admin(request)\n  console.log(session.accessToken)\n  return null\n}\n',
+      )
+      const blocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      await writeAppSecuritySuppressionsFixture(directory, [
+        {
+          ...committedSecretEntry,
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'accepted-risk',
+          code: 'console.log(session.accessToken)',
+          reason: 'Logged only in local development.',
+        },
+      ])
+
+      const suppressed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(JSON.parse(blocked.stdout)).toMatchObject({valid: false, blocking: {blockedCheckCount: 1}})
+      expect(suppressed.exitCode).toBe(0)
+      expect(JSON.parse(suppressed.stdout)).toMatchObject({valid: true, blocking: {blockedCheckCount: 0}})
+    })
+  })
+
+  test('an entry naming the configuration file applies without --client-id, one naming a client ID only with it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      // The client ID that shopify.app.toml holds: a plain run still doesn't match it.
+      const byClientId = {...committedSecretEntry, configurations: ['test-client-id']}
+      const exitCode = async (entry: typeof committedSecretEntry, flags: string[] = []) => {
+        await writeAppSecuritySuppressionsFixture(directory, [entry])
+        return (await runJsonCommand(['--path', directory, '--blocking', 'high', ...flags])).exitCode
+      }
+      const withClientId = ['--client-id', 'test-client-id']
+
+      await expect(exitCode(committedSecretEntry)).resolves.toBe(0)
+      await expect(exitCode(committedSecretEntry, withClientId)).resolves.toBe(1)
+      await expect(exitCode(byClientId)).resolves.toBe(1)
+      await expect(exitCode(byClientId, withClientId)).resolves.toBe(0)
+    })
+  })
+
+  test('rejects an entry whose code key is misspelled, instead of suppressing every finding of the check in the file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const otherToken = ['shpat', 'fedcba9876543210fedcba9876543210'].join('_')
+      const source = await readFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'utf8')
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        `${source}const other_token = "${otherToken}"\n`,
+      )
+      const {code, ...withoutCode} = committedSecretEntry
+      const run = async (entry: object) => {
+        await writeAppSecuritySuppressionsFixture(directory, [entry])
+        const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+        return {exitCode: result.exitCode, output: JSON.parse(result.stdout)}
+      }
+
+      // The entry suppresses one of the two tokens, so --blocking still fails on the other.
+      const intended = await run(committedSecretEntry)
+      const misspelled = await run({...withoutCode, cdoe: code})
+      const wrongCase = await run({...withoutCode, Code: code})
+
+      expect(intended).toMatchObject({exitCode: 1, output: {valid: false, blocking: {blockedCheckCount: 1}}})
+      expect(misspelled).toMatchObject({
+        exitCode: 1,
+        output: {
+          error: {code: 'suppressions-file-invalid', details: {errors: ['suppressions[0]: unknown key "cdoe"']}},
+        },
+      })
+      expect(wrongCase).toMatchObject({
+        exitCode: 1,
+        output: {
+          error: {
+            code: 'suppressions-file-invalid',
+            details: {errors: ['suppressions[0]: unknown key "Code". Did you mean "code"?']},
+          },
+        },
+      })
+    })
+  })
+
+  test('aborts with one error document when shopify.app-security.json is invalid, and writes no results', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      await writeFile(
+        appSecuritySuppressionsPath(directory),
+        JSON.stringify({schema_version: 1, suppressions: [{...committedSecretEntry, reason: undefined}]}),
+      )
+
+      const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        error: {
+          type: 'abort',
+          message: 'The app security suppressions could not be loaded because shopify.app-security.json is invalid.',
+          code: 'suppressions-file-invalid',
+          details: {
+            path: resolve(await fileRealPath(directory), 'shopify.app-security.json'),
+            errors: ['suppressions[0].reason: required'],
+          },
+        },
+      })
+      await expect(fileExists(appSecurityArtifactPaths(directory, 'shopify.app').resultsDirectory)).resolves.toBe(false)
+    })
+  })
+
+  test('leaves the existing results files unchanged when shopify.app-security.json is invalid', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const {deterministicFindingsPath, agentChecksPath} = appSecurityArtifactPaths(directory, 'shopify.app')
+      const resultsFiles = () =>
+        Promise.all(
+          [deterministicFindingsPath, agentChecksPath].map(async (path) => ({
+            path,
+            content: await readFile(path, 'utf8'),
+            modified: (await stat(path)).mtimeMs,
+          })),
+        )
+      await runJsonCommand(['--path', directory])
+      const before = await resultsFiles()
+      // A scan of the changed source would write other findings.
+      await writeFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'export const loader = () => null\n')
+      await writeFile(
+        appSecuritySuppressionsPath(directory),
+        JSON.stringify({schema_version: 1, suppressions: [{...committedSecretEntry, reason: undefined}]}),
+      )
+
+      const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({error: {code: 'suppressions-file-invalid'}})
+      await expect(resultsFiles()).resolves.toEqual(before)
     })
   })
 

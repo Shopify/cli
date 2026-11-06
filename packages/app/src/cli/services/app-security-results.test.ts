@@ -1,8 +1,14 @@
+import {writeAppSecuritySuppressionsFixture} from './app-security-suppressions.test-data.js'
 import {
   loadAppSecurityResults as loadResults,
   requireResultsDirectory as requireResults,
 } from './app-security-results.js'
-import {appSecurityArtifactPaths, writeAgentFindings, writeCheckArtifacts} from './app-security-artifacts.js'
+import {
+  appSecurityArtifactPaths,
+  appSecuritySuppressionsPath,
+  writeAgentFindings,
+  writeCheckArtifacts,
+} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {combineFindings} from './app-security-engine/index.js'
 import {scanAppDirectory} from './app-security-engine/tests/scan-directory.js'
@@ -14,7 +20,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON error details.
 import {resolve} from 'node:path'
-import type {DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {DeterministicFindingsDocument, SuppressionEntry} from './app-security-engine/index.js'
 
 type FileState = 'present' | 'missing' | 'invalid'
 
@@ -136,6 +142,7 @@ describe('loadAppSecurityResults', () => {
       await expect(loadAppSecurityResults(selection)).resolves.toEqual({
         sources: {deterministic: null, agent: null},
         checks: [],
+        suppressions: [],
       })
     })
   })
@@ -151,7 +158,7 @@ describe('loadAppSecurityResults', () => {
         deterministic: {path: artifactPathsFor(selection).deterministicFindingsPath, document: deterministic},
         agent: null,
       })
-      expect(results.checks).toEqual(combineFindings({deterministic, agent: null}))
+      expect(results.checks).toEqual(combineFindings({deterministic, agent: null}).checks)
       expect(results.checks.length).toBeGreaterThan(0)
     })
   })
@@ -164,7 +171,7 @@ describe('loadAppSecurityResults', () => {
       const results = await loadAppSecurityResults(selection)
 
       expect(results.sources).toEqual({deterministic: null, agent: {path, document: agentFindingsDocument}})
-      expect(results.checks).toEqual(combineFindings({deterministic: null, agent: agentFindingsDocument}))
+      expect(results.checks).toEqual(combineFindings({deterministic: null, agent: agentFindingsDocument}).checks)
       expect(results.checks.map((check) => check.id)).toEqual([
         'CREDENTIAL_LOG_LEAKAGE',
         'MISSING_TENANT_ISOLATION',
@@ -186,7 +193,7 @@ describe('loadAppSecurityResults', () => {
         deterministic: {path: artifactPathsFor(selection).deterministicFindingsPath, document: deterministic},
         agent: {path: agentPath, document: agentFindingsDocument},
       })
-      expect(results.checks).toEqual(combineFindings({deterministic, agent: agentFindingsDocument}))
+      expect(results.checks).toEqual(combineFindings({deterministic, agent: agentFindingsDocument}).checks)
       const credentialLeak = results.checks.find((check) => check.id === 'CREDENTIAL_LOG_LEAKAGE')
       expect(credentialLeak?.by_source.agent).not.toBeNull()
     })
@@ -203,6 +210,80 @@ describe('loadAppSecurityResults', () => {
 
       expect(results.sources.deterministic).toBeNull()
       expect(results.sources.agent?.document).toEqual(agentFindingsDocument)
+    })
+  })
+
+  describe('suppressions', () => {
+    const tenantIsolationEntry: SuppressionEntry = {
+      source: 'agent',
+      check: 'MISSING_TENANT_ISOLATION',
+      kind: 'false-positive',
+      path: 'app/routes/orders.tsx',
+      // The fixture's finding has no excerpt, so the entry matches its message.
+      code: 'the query has no shop filter',
+      reason: 'Every order table holds one shop.',
+      configurations: ['shopify.app.toml', 'other-client-id'],
+    }
+
+    test('applies the entries of shopify.app-security.json to the results of the selected configuration', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const selection = await createApp(directory)
+        await writeAgentFindings(selection.appDirectory, resultsKey(selection), agentFindingsDocument)
+        await writeAgentFindings(selection.appDirectory, 'third-client-id', agentFindingsDocument)
+        await writeAppSecuritySuppressionsFixture(selection.appDirectory, [tenantIsolationEntry])
+
+        const thirdSelection = {...selection, clientIdOverride: 'third-client-id'}
+
+        const results = await loadAppSecurityResults(selection)
+        const other = await loadAppSecurityResults(thirdSelection)
+
+        const tenantFinding = (checks: typeof results.checks) =>
+          checks.find(({id}) => id === 'MISSING_TENANT_ISOLATION')?.findings.find(({location}) => location.line === 31)
+        expect(tenantFinding(results.checks)).toMatchObject({
+          source: 'agent',
+          disposition: 'suppressed',
+          suppressed_by: {origin: 'file', entry_index: 0},
+        })
+        expect(tenantFinding(other.checks)).toMatchObject({source: 'agent', disposition: 'active'})
+        expect(results.suppressions).toMatchObject([{index: 0, status: 'matched', matched_finding_count: 1}])
+        expect(other.suppressions).toMatchObject([{index: 0, status: 'not-evaluated', matched_finding_count: 0}])
+      })
+    })
+
+    test('aborts on an invalid shopify.app-security.json, with nothing in it applied', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const selection = await createApp(directory)
+        await writeAgentFindings(selection.appDirectory, resultsKey(selection), agentFindingsDocument)
+        await writeFile(
+          appSecuritySuppressionsPath(selection.appDirectory),
+          JSON.stringify({
+            schema_version: 1,
+            suppressions: [tenantIsolationEntry, {...tenantIsolationEntry, check: 'NOT_A_CHECK'}],
+          }),
+        )
+
+        const error = await loadError(selection)
+
+        expect(error.code).toBe('suppressions-file-invalid')
+        expect(error.details).toStrictEqual({
+          path: resolve(appSecuritySuppressionsPath(selection.appDirectory)),
+          errors: [
+            'suppressions[1].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
+          ],
+        })
+      })
+    })
+
+    test('reports an invalid results file before an invalid shopify.app-security.json', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const selection = await createApp(directory)
+        await writeInvalidFile(artifactPathsFor(selection).agentFindingsPath, '{invalid')
+        await writeFile(appSecuritySuppressionsPath(selection.appDirectory), '{invalid')
+
+        const error = await loadError(selection)
+
+        expect(error.code).toBe('results-file-invalid')
+      })
     })
   })
 

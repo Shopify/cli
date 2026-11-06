@@ -1,5 +1,6 @@
+import {writeAppSecuritySuppressionsFixture} from './app-security-suppressions.test-data.js'
 import securityReview, {reviewAppSecurityResults, type SecurityReviewDependencies} from './security-review.js'
-import {appSecurityArtifactPaths} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {resolveAppSecuritySelection, type AppSecuritySelectionOptions} from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {loadAppSecurityResults} from './app-security-results.js'
@@ -13,7 +14,12 @@ import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli
 import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
-import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {
+  AgentFindingsDocument,
+  CombinedCheck,
+  DeterministicFindingsDocument,
+  SuppressionEntry,
+} from './app-security-engine/index.js'
 
 // The results key of `createApp`'s shopify.app.toml.
 const RESULTS_KEY = 'shopify.app'
@@ -46,11 +52,16 @@ function testDependencies() {
   return dependencies
 }
 
-function review(files: Files, options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel} = {}) {
-  const results = appSecurityResultsFor('/tmp/review-app', RESULTS_KEY, {
-    deterministic: files.deterministic ?? null,
-    agent: files.agent ?? null,
-  })
+function review(
+  files: Files,
+  options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel; suppressions?: SuppressionEntry[]} = {},
+) {
+  const results = appSecurityResultsFor(
+    '/tmp/review-app',
+    RESULTS_KEY,
+    {deterministic: files.deterministic ?? null, agent: files.agent ?? null},
+    options.suppressions,
+  )
   return reviewAppSecurityResults(results, {
     resultsDirectory: appSecurityArtifactPaths('/tmp/review-app', RESULTS_KEY).resultsDirectory,
     checkIds: options.checkIds ?? [],
@@ -59,6 +70,29 @@ function review(files: Files, options: {checkIds?: string[]; blocking?: AppSecur
 }
 
 const both: Files = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
+
+/** Entries for findings of the shared fixtures: the deterministic EOL_API_VERSION one, and an agent one that its message names. */
+const eolApiVersionEntry: SuppressionEntry = {
+  source: 'deterministic',
+  check: 'EOL_API_VERSION',
+  kind: 'accepted-risk',
+  path: 'shopify.app.toml',
+  reason: 'The upgrade ships with the next release.',
+  configurations: ['shopify.app.toml'],
+}
+const tenantIsolationEntry: SuppressionEntry = {
+  source: 'agent',
+  check: 'MISSING_TENANT_ISOLATION',
+  kind: 'false-positive',
+  path: 'app/routes/orders.tsx',
+  code: 'the query has no shop filter',
+  reason: 'Every order table holds one shop.',
+  configurations: ['shopify.app.toml'],
+}
+
+function dispositionsOf(checks: CombinedCheck[], id: string) {
+  return checks.find((check) => check.id === id)?.findings.map(({source, disposition}) => ({source, disposition}))
+}
 
 /** Runs `action`, which is expected to abort, and returns the AbortError it threw. */
 async function captureError(action: () => unknown): Promise<AbortError> {
@@ -168,6 +202,27 @@ describe('reviewAppSecurityResults', () => {
     })
   })
 
+  describe('suppressions', () => {
+    test("returns each entry's result in file order, whatever --check-id selects", () => {
+      const result = review(both, {
+        checkIds: ['OPEN_REDIRECT'],
+        suppressions: [tenantIsolationEntry, eolApiVersionEntry, {...eolApiVersionEntry, path: 'shopify.app.dev.toml'}],
+      })
+
+      expect(
+        result.suppressions.map(({index, status, matched_finding_count: count}) => ({index, status, count})),
+      ).toEqual([
+        {index: 0, status: 'matched', count: 1},
+        {index: 1, status: 'matched', count: 1},
+        {index: 2, status: 'stale', count: 0},
+      ])
+    })
+
+    test('has no results without entries', () => {
+      expect(review(both).suppressions).toEqual([])
+    })
+  })
+
   describe('--blocking', () => {
     test('never breaches at none', () => {
       expect(review(both, {blocking: 'none'}).blocking).toEqual({level: 'none', blockedChecks: 0})
@@ -198,6 +253,20 @@ describe('reviewAppSecurityResults', () => {
       }
       const superseded = review({deterministic: deterministicFindingsDocument, agent}, {blocking: 'high'})
       expect(superseded.blocking.blockedChecks).toBe(1)
+    })
+
+    test('ignores findings that an entry of shopify.app-security.json suppresses, from either source', () => {
+      const suppressions = [eolApiVersionEntry, tenantIsolationEntry]
+
+      // Active without the entries: CREDENTIAL_LOG_LEAKAGE and MISSING_TENANT_ISOLATION (high), EOL_API_VERSION (low).
+      expect(review(both, {blocking: 'high', suppressions}).blocking).toEqual({level: 'high', blockedChecks: 1})
+      expect(review(both, {blocking: 'low', suppressions}).blocking).toEqual({level: 'low', blockedChecks: 1})
+      const {checks} = review(both, {suppressions})
+      expect(dispositionsOf(checks, 'EOL_API_VERSION')).toEqual([{source: 'deterministic', disposition: 'suppressed'}])
+      expect(dispositionsOf(checks, 'MISSING_TENANT_ISOLATION')).toEqual([
+        {source: 'agent', disposition: 'suppressed'},
+        {source: 'agent', disposition: 'suppressed'},
+      ])
     })
 
     test('blocks on the deterministic findings of a prefer-agent check when the agent result is stale', () => {
@@ -337,6 +406,43 @@ describe('securityReview', () => {
       await expect(
         securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies()),
       ).rejects.toThrow('The app security check results could not be loaded because a results file is invalid.')
+    })
+  })
+
+  test('applies the entries of shopify.app-security.json, so a suppressed finding no longer fails --blocking', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, both)
+      const blocked = await securityReview({directory: appRoot, checkIds: [], blocking: 'high'}, testDependencies())
+      await writeAppSecuritySuppressionsFixture(appRoot, [eolApiVersionEntry, tenantIsolationEntry])
+      const dependencies = testDependencies()
+
+      const review = await securityReview({directory: appRoot, checkIds: [], blocking: 'high'}, dependencies)
+
+      expect(blocked.result.blocking).toEqual({level: 'high', blockedChecks: 2})
+      expect(review.result.blocking).toEqual({level: 'high', blockedChecks: 1})
+      expect(dispositionsOf(review.result.checks, 'EOL_API_VERSION')).toEqual([
+        {source: 'deterministic', disposition: 'suppressed'},
+      ])
+      expect(review.result.suppressions.map(({status}) => status)).toEqual(['matched', 'matched'])
+      // Only CREDENTIAL_LOG_LEAKAGE's agent finding stays active.
+      expect(dependencies.recordMetadata).toHaveBeenCalledWith({num_security_findings: 1})
+    })
+  })
+
+  test('aborts on an invalid shopify.app-security.json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, both)
+      await writeFile(
+        appSecuritySuppressionsPath(appRoot),
+        JSON.stringify({schema_version: 1, suppressions: [{...eolApiVersionEntry, kind: undefined}]}),
+      )
+
+      await expect(
+        securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies()),
+      ).rejects.toMatchObject({
+        code: 'suppressions-file-invalid',
+        details: {errors: ['suppressions[0].kind: required (false-positive or accepted-risk)']},
+      })
     })
   })
 

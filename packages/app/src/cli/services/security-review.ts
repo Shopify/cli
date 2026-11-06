@@ -8,9 +8,9 @@ import {
 } from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
+import {activeFindings, type CombinedCheck, type SuppressionEntryResult} from './app-security-engine/index.js'
+import {blockedCheckCount, type AppSecurityBlockingLevel} from './app-security-api.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {AppSecurityBlockingLevel} from './app-security-api.js'
 
 interface SecurityReviewOptions {
   directory: string
@@ -33,6 +33,8 @@ export interface SecurityReviewResult {
   filter: {checkIds: string[]} | null
   /** The agent recorded its findings for a different scope than the latest scan. False unless both results exist. */
   scopeDiffers: boolean
+  /** One result per entry of shopify.app-security.json, in file order, whatever `--check-id` selects. */
+  suppressions: SuppressionEntryResult[]
   blocking: {
     level: AppSecurityBlockingLevel
     /** Filtered checks with an active finding at or above the level. Zero for `none`. */
@@ -81,7 +83,8 @@ export function reviewAppSecurityResults(
     checks,
     filter,
     scopeDiffers: scopeDiffers(results.sources),
-    blocking: {level: options.blocking, blockedChecks: countBlockedChecks(checks, options.blocking)},
+    suppressions: results.suppressions,
+    blocking: {level: options.blocking, blockedChecks: blockedCheckCount(checks, options.blocking)},
   }
 }
 
@@ -89,17 +92,6 @@ export function reviewAppSecurityResults(
 function scopeDiffers({deterministic, agent}: AppSecurityResults['sources']): boolean {
   if (!deterministic || !agent) return false
   return JSON.stringify(deterministic.document.coverage.scope) !== JSON.stringify(agent.document.scope)
-}
-
-/**
- * A check blocks when it has an active finding and its severity is at or above the level, whatever its status.
- * Unresolved status alone never blocks: an unresolved check without active findings passes the gate.
- */
-function countBlockedChecks(checks: CombinedCheck[], level: AppSecurityBlockingLevel): number {
-  if (level === 'none') return 0
-  return checks.filter(
-    (check) => activeFindings(check).length > 0 && SEVERITY_RANK[check.severity] >= SEVERITY_RANK[level],
-  ).length
 }
 
 function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void {
