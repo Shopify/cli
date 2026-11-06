@@ -542,12 +542,17 @@ function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, r
   )
 }
 
-/** The problems that the file's validation would report for this entry, without the `suppressions[n].` prefix. */
+/**
+ * The problems that the file's validation would report for this entry, without the `suppressions[n].` prefix or a final
+ * period, since a refusal's problem ends a sentence.
+ */
 function entryProblems(entry: AppSecuritySuppression): string[] {
   const parsed = suppressionSchema.safeParse(entry)
   return [
     ...(parsed.success ? [] : parsed.error.issues.flatMap((issue) => describeIssue(issue).map(({message}) => message))),
-    ...checkIdProblems([entry]).map((problem) => problem.message.replace(/^suppressions\[0\]\./, '')),
+    ...checkIdProblems([entry]).map((problem) =>
+      problem.message.replace(/^suppressions\[0\]\./, '').replace(/\.$/, ''),
+    ),
   ]
 }
 
