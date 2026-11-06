@@ -116,7 +116,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   },
   {
     id: 'EOL_API_VERSION',
-    version: 2,
+    version: 3,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'config_and_source',
@@ -124,7 +124,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => scanEolApiVersions(context),
   },
   {
-    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 2),
+    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 3),
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
   },
   {
