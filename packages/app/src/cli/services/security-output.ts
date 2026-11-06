@@ -6,13 +6,22 @@ import {
   type AppSecuritySelection,
 } from './app-security-selection.js'
 import {
+  suppressedFindingsView,
+  unappliedEntriesView,
+  type SuppressedFindingsView,
+  type UnappliedEntriesView,
+} from './security-suppressions-output.js'
+import {
+  activeScanIssues,
   checkDocsUrl,
   groupIssues,
   type Capabilities,
+  type CombinedCheck,
   type Issue,
   type IssueGroup,
   type ScanResult,
   type Severity,
+  type SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import {relativePath} from '@shopify/cli-kit/node/path'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -35,6 +44,21 @@ export interface SecurityReportInput {
   deterministicFindingsPath: string
   agentChecksPath: string
   agentCheckCount: number
+  /** The scan's checks, each deterministic finding active or suppressed by shopify.app-security.json. */
+  checks: CombinedCheck[]
+  /** One result per entry of shopify.app-security.json, in file order. */
+  suppressions: SuppressionEntryResult[]
+}
+
+/**
+ * The scan's issues that still count, what the entries of shopify.app-security.json suppress, and the entries that
+ * apply to nothing.
+ */
+interface SecurityReportFindings {
+  activeIssues: Issue[]
+  groups: IssueGroup[]
+  suppressed: SuppressedFindingsView | undefined
+  unappliedEntries: UnappliedEntriesView | undefined
 }
 
 type SecurityAlertType = 'success' | 'warning' | 'error'
@@ -48,14 +72,27 @@ const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium'
 const SAMPLE_FILE_COUNT = 3
 const SAMPLE_COVERAGE_GAP_COUNT = 8
 
+/**
+ * The scan report. Suppressed findings don't count for the alert type or the headline: the active issues are grouped
+ * by severity, and the suppressed ones are listed after them with their reasons, whatever `--verbose`. The entries of
+ * shopify.app-security.json that apply to nothing follow, and don't change the alert type either.
+ */
 export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
-  const type = securityAlertType(input)
-  const groups = groupIssues(input.scan.issues)
+  const activeIssues = activeScanIssues(input.scan.issues, input.checks)
+  const findings: SecurityReportFindings = {
+    activeIssues,
+    groups: groupIssues(activeIssues),
+    suppressed: suppressedFindingsView(input.checks, input.suppressions),
+    unappliedEntries: unappliedEntriesView(input.suppressions, {
+      review: formatAppSecurityCommand(input.commands.review),
+    }),
+  }
+  const {groups} = findings
 
   return {
-    type,
+    type: securityAlertType(input, activeIssues),
     options: {
-      headline: securityHeadline(input, groups),
+      headline: securityHeadline(input, findings),
       body: securityBody(input),
       reference: [
         {subdued: `Engine: ${input.engine.name} ${input.engine.version}`},
@@ -69,7 +106,7 @@ export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
             ]
           : []),
       ],
-      customSections: securityCustomSections(input, groups),
+      customSections: securityCustomSections(input, findings),
     },
   }
 }
@@ -91,20 +128,24 @@ function coverageIncomplete(input: SecurityReportInput): boolean {
   return input.scan.scan.coverage_gaps.length > 0
 }
 
-function securityAlertType(input: SecurityReportInput): SecurityAlertType {
-  if (input.scan.issues.some((issue) => issue.severity === 'high')) return 'error'
-  if (input.scan.issues.length > 0) return 'warning'
+function securityAlertType(input: SecurityReportInput, activeIssues: Issue[]): SecurityAlertType {
+  if (activeIssues.some((issue) => issue.severity === 'high')) return 'error'
+  if (activeIssues.length > 0) return 'warning'
   if (coverageIncomplete(input)) return 'warning'
   return 'success'
 }
 
-function securityHeadline(input: SecurityReportInput, groups: IssueGroup[]): string {
-  const count = input.scan.issues.length
+function securityHeadline(
+  input: SecurityReportInput,
+  {activeIssues, groups, suppressed}: SecurityReportFindings,
+): string {
+  const count = activeIssues.length
   if (groups.length < count) {
     return `${groups.length} security issue ${groups.length === 1 ? 'group' : 'groups'} found (${count} occurrences).`
   }
   if (count > 0) return `${count} security ${count === 1 ? 'issue' : 'issues'} found.`
   if (coverageIncomplete(input)) return 'Scan completed with coverage gaps.'
+  if (suppressed) return 'No active security issues found.'
   return 'No security issues found.'
 }
 
@@ -160,7 +201,10 @@ function selectionSection(input: SecurityReportInput): AlertCustomSection {
   }
 }
 
-function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]): AlertCustomSection[] {
+function securityCustomSections(
+  input: SecurityReportInput,
+  {groups, suppressed, unappliedEntries}: SecurityReportFindings,
+): AlertCustomSection[] {
   const sections: AlertCustomSection[] = [selectionSection(input)]
 
   for (const severity of ['high', 'medium', 'low'] as const) {
@@ -178,6 +222,11 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
       },
     })
   }
+
+  if (suppressed) {
+    sections.push({title: 'Suppressed findings', body: suppressed.counts}, ...suppressed.sections)
+  }
+  if (unappliedEntries) sections.push(...unappliedEntries.sections)
 
   if (input.scan.scan.coverage_gaps.length > 0) {
     const gaps = input.scan.scan.coverage_gaps

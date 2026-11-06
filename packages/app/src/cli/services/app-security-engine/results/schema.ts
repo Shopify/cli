@@ -17,6 +17,7 @@ import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocum
 export const severitySchema = zod.enum(['high', 'medium', 'low'])
 export const checkStatusSchema = zod.enum(['executed', 'not_applicable', 'unresolved'])
 export const checkPrecedenceSchema = zod.enum(['union', 'prefer-agent'])
+const suppressionKindSchema = zod.enum(['false-positive', 'accepted-risk'])
 
 /** Lines and columns count from 1. */
 const locationSchema = zod.object({
@@ -41,9 +42,13 @@ const checkSnapshotSchema = zod.object({
   precedence: checkPrecedenceSchema.optional(),
 })
 
+/** Optional everywhere, so files written before excerpts still parse. */
+const codeExcerptSchema = zod.array(zod.object({line: zod.number().int().positive(), text: zod.string()}))
+
 const storedEvidenceSchema = zod.object({
   location: locationSchema,
   quote: zod.string().optional(),
+  code_excerpt: codeExcerptSchema.optional(),
 })
 
 export const storedFindingSchema = zod.object({
@@ -51,10 +56,11 @@ export const storedFindingSchema = zod.object({
   message: zod.string(),
   evidence: zod.array(storedEvidenceSchema),
   snippet: zod.string().optional(),
+  code_excerpt: codeExcerptSchema.optional(),
   fix: fixSchema.optional(),
   confidence: zod.enum(['high', 'medium', 'low']).optional(),
   reasoning: zod.string().optional(),
-  suppression: zod.object({justification: zod.string()}).optional(),
+  suppression: zod.object({justification: zod.string(), kind: suppressionKindSchema.optional()}).optional(),
 })
 
 export const storedCheckSchema = zod.object({

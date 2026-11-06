@@ -114,6 +114,15 @@ export function redactMatch(line: string, pattern: SecretPattern): string {
   return replaced.includes(secret) ? '[REDACTED LINE]' : replaced
 }
 
+// Every marker that redaction writes in place of a secret: `[REDACTED]`, `[REDACTED:<length>]` after the short prefix
+// that `redactMatch` keeps, `[REDACTED LINE]` and `[REDACTED TEXT]`.
+const REDACTION_MARKER = /\[REDACTED(?::\d+| LINE| TEXT)?\]/
+
+/** Whether a text holds a secret that `redactMatch`, `redactText` or `redactLines` redacted. */
+export function hasRedactedSecret(text: string): boolean {
+  return REDACTION_MARKER.test(text)
+}
+
 /** Redact every known secret occurrence from arbitrary scanner or agent text. */
 export function redactText(text: string): string {
   let redacted = text
@@ -131,6 +140,44 @@ export function redactText(text: string): string {
     if (pattern.regex.test(redacted)) return '[REDACTED TEXT]'
   }
   return redacted
+}
+
+/**
+ * Redact a text line by line, for excerpts that quote only some of its lines. A secret can span lines, so a line that
+ * holds part of a match that spans lines becomes `[REDACTED LINE]`, even when the excerpt leaves out the line where the
+ * match starts. So does every line from a private key header without its footer to the end of the text.
+ */
+export function redactLines(text: string): string[] {
+  const lines = text.split('\n')
+  let nextLineStart = 0
+  const lineStarts = lines.map((line) => {
+    const start = nextLineStart
+    nextLineStart += line.length + 1
+    return start
+  })
+  const lineAt = (offset: number) => lineStarts.findLastIndex((start) => start <= offset)
+  const matches = REDACTION_PATTERNS.flatMap((pattern) =>
+    [...text.matchAll(new RegExp(pattern.regex.source, `${pattern.regex.flags}g`))].map((match) => ({
+      pattern,
+      start: match.index,
+      end: match.index + match[0].length,
+    })),
+  )
+  // A header inside a complete private key block is redacted with the block, which ends at its footer.
+  const isInsideBlock = (offset: number) =>
+    matches.some(({pattern, start, end}) => !pattern.redactEntireInput && start <= offset && offset < end)
+  const redactedLines = new Set<number>()
+  const redactLineRange = (firstLine: number, lastLine: number) => {
+    for (let line = firstLine; line <= lastLine; line++) redactedLines.add(line)
+  }
+  for (const {pattern, start, end} of matches) {
+    if (pattern.redactEntireInput) {
+      if (!isInsideBlock(start)) redactLineRange(lineAt(start), lines.length - 1)
+    } else if (text.slice(start, end).includes('\n')) {
+      redactLineRange(lineAt(start), lineAt(end - 1))
+    }
+  }
+  return lines.map((line, index) => (redactedLines.has(index) ? '[REDACTED LINE]' : redactText(line)))
 }
 
 /**
@@ -154,6 +201,11 @@ function envFileBasename(path: string): string | undefined {
 
 function isEnvFile(path: string): boolean {
   return envFileBasename(path) !== undefined
+}
+
+/** Whether every value in the file is presumed secret: an environment file or a named secret file. */
+export function isSecretFile(path: string): boolean {
+  return isEnvFile(path) || NAMED_SECRET_FILE_PATTERN.test(path)
 }
 
 /** Why a file git reports as untracked and ignored still reached this rule. */
@@ -297,7 +349,7 @@ export async function scanCommittedSecrets(
   }
 
   for (const file of secretEvidenceFiles) {
-    if (!file.content || isEnvFile(file.path) || NAMED_SECRET_FILE_PATTERN.test(file.path)) continue
+    if (!file.content || isSecretFile(file.path)) continue
 
     const lines = file.content.split('\n')
     for (const [index, line] of lines.entries()) {

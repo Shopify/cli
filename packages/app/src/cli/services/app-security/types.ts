@@ -74,9 +74,155 @@ export const appSecurityBlockingSchema = zod
       .number()
       .int()
       .nonnegative()
-      .describe('The number of checks with findings at or above that severity. Always 0 for none.'),
+      .describe(
+        "The number of checks with active findings at or above that severity. Suppressed and superseded findings don't count. Always 0 for none.",
+      ),
   })
   .strict()
   .describe('The --blocking policy and the checks that fail it.')
 
 export type AppSecurityBlocking = zod.infer<typeof appSecurityBlockingSchema>
+
+/**
+ * The kind of an entry of shopify.app-security.json, spelled as in the file, so that the file and the JSON output use
+ * the same values. A function, so each field gets its own instance.
+ */
+export const createAppSecuritySuppressionKindSchema = () =>
+  zod
+    .enum(['false-positive', 'accepted-risk'])
+    .describe(
+      "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk.",
+    )
+
+export const appSecuritySuppressionEntrySchema = zod
+  .object({
+    index: zod.number().int().nonnegative().describe("The entry's index in the file's suppressions array, from 0."),
+    source: zod.enum(['deterministic', 'agent']).describe('The source whose findings the entry suppresses.'),
+    check: zod.string().describe('The check ID that the entry names.'),
+    kind: createAppSecuritySuppressionKindSchema(),
+    path: createAbsolutePathSchema().describe('The absolute path of the file that the entry names.'),
+    status: zod
+      .enum(['matched', 'stale', 'ambiguous', 'not-evaluated'])
+      .describe(
+        "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check.",
+      ),
+    matchedFindingCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe(
+        'The number of findings that the entry matched. Each one is suppressed, apart from a deterministic finding that a prefer-agent agent result supersedes.',
+      ),
+    likelyPath: createAbsolutePathSchema()
+      .nullable()
+      .describe(
+        "For a stale entry with code whose file no longer exists: the absolute path of the one finding of the same source and check, at another path, whose code or message holds the entry's code. The code probably moved there, but the entry still suppresses nothing. Otherwise null.",
+      ),
+    candidateFindingCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .nullable()
+      .describe(
+        "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null.",
+      ),
+    likelyFinding: zod
+      .object({
+        filePath: createAbsolutePathSchema().describe("The absolute path of the finding's file, the entry's file."),
+        line: zod.number().int().positive().describe("The finding's one-based line."),
+        findingNumber: zod
+          .number()
+          .int()
+          .positive()
+          .nullable()
+          .describe(
+            "With review, the finding's number, which review --suppress takes to re-attach the entry. Null with check, which doesn't number findings.",
+          ),
+      })
+      .strict()
+      .nullable()
+      .describe(
+        "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null.",
+      ),
+  })
+  .strict()
+  .describe('One entry of shopify.app-security.json, and how it applied to the results.')
+
+export const appSecuritySuppressionsSchema = zod
+  .object({
+    filePath: createAbsolutePathSchema().describe(
+      'The absolute path of shopify.app-security.json in the app directory, whether or not the file exists.',
+    ),
+    entryCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe('The number of entries in the file, or 0 when the file does not exist.'),
+    suppressedFindingCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe(
+        'The number of findings that entries of the file suppress. Findings that only the agent suppressed are not counted.',
+      ),
+    staleEntryCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe("The number of entries with the status stale. They don't change the exit code or --blocking."),
+    ambiguousEntryCount: zod
+      .number()
+      .int()
+      .nonnegative()
+      .describe("The number of entries with the status ambiguous. They don't change the exit code or --blocking."),
+    entries: zod
+      .array(appSecuritySuppressionEntrySchema)
+      .describe('One result for each entry, in file order. Empty when the file does not exist.'),
+  })
+  .strict()
+  .describe(
+    'The suppressions file, shopify.app-security.json, and how its entries applied to the results. With review, the entries and the counts cover every check, whatever --check-id selects.',
+  )
+
+export type AppSecuritySuppressions = zod.infer<typeof appSecuritySuppressionsSchema>
+
+/** An entry of shopify.app-security.json that a command saved, as the file holds it after the save. */
+export const appSecuritySavedSuppressionSchema = zod
+  .object({
+    index: zod.number().int().nonnegative().describe("The entry's index in the file's suppressions array, from 0."),
+    change: zod
+      .enum(['added', 'configuration-added', 'code-replaced'])
+      .describe(
+        "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced.",
+      ),
+    source: zod.enum(['deterministic', 'agent']).describe('The source whose findings the entry suppresses.'),
+    check: zod.string().describe('The check ID that the entry names.'),
+    kind: createAppSecuritySuppressionKindSchema(),
+    path: createAbsolutePathSchema().describe('The absolute path of the file that the entry names.'),
+    code: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe(
+        "The entry's code, redacted, which names the finding in the file. Null for a finding without a line: the entry then covers every finding of the check in the file.",
+      ),
+    reason: zod.string().describe('Why the finding is suppressed.'),
+    configurations: zod
+      .array(zod.string())
+      .describe(
+        'The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to.',
+      ),
+    previous: zod
+      .object({
+        code: zod.string().min(1).nullable().describe("The entry's code before the change, redacted."),
+        kind: createAppSecuritySuppressionKindSchema(),
+        reason: zod.string().describe("The entry's reason before the change."),
+      })
+      .strict()
+      .nullable()
+      .describe('For code-replaced: the code, kind and reason that the entry had before the change. Otherwise null.'),
+  })
+  .strict()
+  .describe('An entry of shopify.app-security.json that the command saved, as the file now holds it.')
+
+export type AppSecuritySavedSuppression = zod.infer<typeof appSecuritySavedSuppressionSchema>

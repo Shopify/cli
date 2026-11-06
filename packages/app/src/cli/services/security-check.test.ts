@@ -1,15 +1,17 @@
 import securityCheck from './security-check.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
-import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, appSecuritySuppressionsPath, writeCheckArtifacts} from './app-security-artifacts.js'
 import {resolveAppSecuritySelection} from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {
   agentChecks,
+  committedSecretExecution,
   committedSecretIssue,
   deterministicFindings,
   scanExecution,
   scan,
 } from './security-check.test-data.js'
+import {readAppSecuritySuppressions} from './app-security-suppressions.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -20,7 +22,7 @@ import type {
   AppSecuritySelectionOptions,
   DeclinedAppSecuritySelection,
 } from './app-security-selection.js'
-import type {AppSecurityScope, DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {AppSecurityScope, DeterministicFindingsDocument, SuppressionEntry} from './app-security-engine/index.js'
 
 const artifacts = {
   deterministicFindingsPath: '/tmp/unlinked-app/.shopify/app-security/deterministic-findings.json',
@@ -69,6 +71,7 @@ function testDependencies(
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     recordMetadata: vi.fn(async () => {}),
+    readSuppressions: vi.fn(async (): Promise<SuppressionEntry[]> => []),
   }
 }
 
@@ -126,6 +129,8 @@ describe('securityCheck', () => {
       scanDirectories,
       execution: scanExecution,
       artifacts,
+      checks: [],
+      suppressions: [],
       blocking: {level: 'high', blockedChecks: 0},
     })
   })
@@ -430,7 +435,7 @@ describe('securityCheck', () => {
   })
 
   test('counts the checks that breach --blocking', async () => {
-    const dependencies = testDependencies({...scanExecution, scan: {...scan, issues: [committedSecretIssue]}})
+    const dependencies = testDependencies(committedSecretExecution)
 
     const check = await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
 
@@ -465,6 +470,116 @@ describe('securityCheck', () => {
     const check = await securityCheck({...testOptions(), blocking: 'low'}, dependencies)
 
     expect(check).toMatchObject({blocking: {level: 'low', blockedChecks: 0}})
+  })
+})
+
+describe('securityCheck suppressions', () => {
+  const secretEntry: SuppressionEntry = {
+    source: 'deterministic',
+    check: 'COMMITTED_SECRET',
+    kind: 'false-positive',
+    path: 'app/routes/index.ts',
+    reason: 'A fake token in a test fixture.',
+    configurations: ['shopify.app.toml'],
+  }
+
+  test('reads shopify.app-security.json before scanning, and a suppressed finding no longer fails --blocking', async () => {
+    const dependencies = testDependencies(committedSecretExecution)
+    dependencies.readSuppressions.mockResolvedValue([secretEntry])
+
+    const check = await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
+
+    expect(dependencies.readSuppressions).toHaveBeenCalledWith(appDirectory)
+    expect(dependencies.readSuppressions.mock.invocationCallOrder[0]).toBeLessThan(
+      dependencies.execute.mock.invocationCallOrder[0]!,
+    )
+    expect(check).toMatchObject({
+      kind: 'scanned',
+      checks: [{id: 'COMMITTED_SECRET', findings: [{disposition: 'suppressed', suppressed_by: {origin: 'file'}}]}],
+      suppressions: [{index: 0, entry: secretEntry, status: 'matched', matched_finding_count: 1}],
+      blocking: {level: 'high', blockedChecks: 0},
+    })
+  })
+
+  test('applies only the entries of the selected configuration', async () => {
+    const dependencies = testDependencies(committedSecretExecution, stagingSelection())
+    dependencies.readSuppressions.mockResolvedValue([secretEntry])
+
+    const check = await securityCheck({...testOptions(), configName: 'staging', blocking: 'high'}, dependencies)
+
+    expect(check).toMatchObject({
+      resultsKey: 'shopify.app.staging',
+      suppressions: [{status: 'not-evaluated', matched_finding_count: 0}],
+      blocking: {level: 'high', blockedChecks: 1},
+    })
+  })
+
+  test('never evaluates agent entries, because it reads no agent results', async () => {
+    const dependencies = testDependencies(committedSecretExecution)
+    dependencies.readSuppressions.mockResolvedValue([
+      {...secretEntry, source: 'agent', check: 'CREDENTIAL_LOG_LEAKAGE'},
+    ])
+
+    const check = await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
+
+    expect(check).toMatchObject({
+      suppressions: [{status: 'not-evaluated', matched_finding_count: 0}],
+      blocking: {level: 'high', blockedChecks: 1},
+    })
+  })
+
+  test('reads the real file of the app directory, and a missing file suppresses nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await fileRealPath(directory)
+      const selection = {...configSelection, appDirectory: appRoot, appConfigFilePath: `${appRoot}/shopify.app.toml`}
+      const options = {...testOptions(), directory: appRoot, blocking: 'high' as const}
+      const missing = await securityCheck(options, {
+        ...testDependencies(committedSecretExecution, selection),
+        readSuppressions: readAppSecuritySuppressions,
+      })
+      await writeFile(
+        appSecuritySuppressionsPath(appRoot),
+        JSON.stringify({schema_version: 1, suppressions: [secretEntry]}),
+      )
+
+      const present = await securityCheck(options, {
+        ...testDependencies(committedSecretExecution, selection),
+        readSuppressions: readAppSecuritySuppressions,
+      })
+
+      expect(missing).toMatchObject({suppressions: [], blocking: {blockedChecks: 1}})
+      expect(present).toMatchObject({suppressions: [{status: 'matched'}], blocking: {blockedChecks: 0}})
+    })
+  })
+
+  test('fails with the invalid file error before scanning or writing anything', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await fileRealPath(directory)
+      const selection = {...configSelection, appDirectory: appRoot, appConfigFilePath: `${appRoot}/shopify.app.toml`}
+      await writeFile(
+        appSecuritySuppressionsPath(appRoot),
+        JSON.stringify({schema_version: 1, suppressions: [{...secretEntry, reason: ' '}]}),
+      )
+      const dependencies = {
+        ...testDependencies(committedSecretExecution, selection),
+        readSuppressions: readAppSecuritySuppressions,
+      }
+
+      await expect(securityCheck({...testOptions(), directory: appRoot}, dependencies)).rejects.toMatchObject({
+        code: 'suppressions-file-invalid',
+        details: {errors: ['suppressions[0].reason: must not be empty']},
+      })
+      expect(dependencies.execute).not.toHaveBeenCalled()
+      expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+    })
+  })
+
+  test('--list-files reads no suppressions', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck({...testOptions(), listFiles: true}, dependencies)
+
+    expect(dependencies.readSuppressions).not.toHaveBeenCalled()
   })
 })
 

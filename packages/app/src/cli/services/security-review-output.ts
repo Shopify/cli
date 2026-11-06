@@ -1,10 +1,19 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
-import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
+import {checkStatusLabels, checksWithFindingsLabel, countLabel, listedNumbers} from './app-security-format.js'
+import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
+import {suppressionReasonProblem, type SavedSuppression, type SuppressionDecision} from './app-security-suppressions.js'
+import {
+  SUPPRESSION_KIND_LABEL,
+  suppressedFindingsView,
+  unappliedEntriesView,
+  type LikelyFindingCommands,
+  type SuppressedFindingsView,
+  type UnappliedEntriesView,
+} from './security-suppressions-output.js'
 import {
   activeFindings,
   isAgentResultStale,
   isCheckPassed,
-  isSuppressed,
   skippedFileCounts,
   summarizeCombinedChecks,
   type AppSecurityScope,
@@ -17,15 +26,47 @@ import {
   type Severity,
   type SourceCheckResult,
   type StoredCheckStatus,
+  type SuppressionKind,
 } from './app-security-engine/index.js'
 import {timeAgo} from '@shopify/cli-kit/common/string'
-import {renderError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
-import type {SecurityReviewResult} from './security-review.js'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {
+  renderConfirmationPrompt,
+  renderError,
+  renderInfo,
+  renderSelectPrompt,
+  renderSuccess,
+  renderTextPrompt,
+  renderWarning,
+} from '@shopify/cli-kit/node/ui'
+import type {
+  AlertCustomSection,
+  InlineToken,
+  RenderAlertOptions,
+  RenderConfirmationPromptOptions,
+  RenderSelectPromptOptions,
+  RenderTextPromptOptions,
+  Token,
+  TokenItem,
+} from '@shopify/cli-kit/node/ui'
+import type {
+  FindingSuppressionResult,
+  InteractiveReviewOutcome,
+  InteractiveReviewSession,
+  InteractiveSecurityReview,
+  NumberedFinding,
+  ReattachmentOffer,
+  SavedReviewSuppressions,
+  SecurityReviewResult,
+  SuppressionRefusal,
+} from './security-review.js'
 
 /**
- * The terminal view of `app security review` (§9.4). The view-model functions return data; only
- * `renderSecurityReview` touches the terminal, so tests assert on data plus a few rendered checks.
+ * The terminal view of `app security review` (§9.4), and the session of `review --interactive`. The view-model functions
+ * return data; only `renderSecurityReview` and the session touch the terminal, so tests assert on data plus a few
+ * rendered checks, and drive the session with their own prompts.
  */
 
 export interface SecurityReviewPresenterInput {
@@ -33,7 +74,14 @@ export interface SecurityReviewPresenterInput {
   verbose: boolean
   now: Date
   commands: AppSecurityCommands
+  /** What `--suppress` saved, shown after the review. */
+  savedSuppressions?: SavedReviewSuppressions
+  /** How the `--interactive` session ended and what it saved, shown after the review. */
+  interactiveReview?: InteractiveReviewOutcome
 }
+
+/** The number of a finding of the review, which every finding has. */
+type FindingNumberLookup = (finding: CombinedFinding) => number
 
 type SecurityReviewAlertType = 'info' | 'success' | 'warning' | 'error'
 
@@ -73,6 +121,8 @@ type SecurityReviewSummary = {
   scopeLines: string[]
   scopeNote?: string
   resultsFiles: {directory: string; rows: ResultsFileRow[]}
+  /** Present when a results file exists. */
+  resultsDigest?: string
 } & SecurityReviewSummaryClosing
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
@@ -108,25 +158,581 @@ const renderers: Record<SecurityReviewAlertType, (options: RenderAlertOptions) =
 
 export function renderSecurityReview(input: SecurityReviewPresenterInput): void {
   for (const alert of buildSecurityReviewAlerts(input)) {
-    renderers[alert.type](alert.options)
+    renderAlert(alert)
   }
 }
 
-/** Every box in order: unresolved checks, passed checks, one per check with findings, then the summary. */
+function renderAlert(alert: SecurityReviewAlert): void {
+  renderers[alert.type](alert.options)
+}
+
+/**
+ * Every box in order: unresolved checks, passed checks, one per check with findings, the suppressed findings, the
+ * entries of shopify.app-security.json that apply to nothing, the summary, then what `--suppress` or `--interactive`
+ * saved. The suppressed findings box is shown whatever `--verbose`, whenever a shown check has one. The entries box is
+ * shown whatever `--verbose`, whenever an entry of a shown check applies to nothing: `--check-id` narrows both boxes to
+ * the selected checks. Each finding's title starts with its number.
+ */
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
-  const {checks} = input.result
+  const {checks, filter, suppressions} = input.result
+  const numberOf: FindingNumberLookup = (finding) => input.result.findingNumbers.get(finding)!
+  const supersededNumbers = supersededFindingNumbers(input.result)
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
   const passedOrNotApplicable = checks.filter(
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
   )
   const withFindings = checks.filter((check) => activeFindings(check).length > 0)
+  const suppressed = suppressedFindingsView(checks, suppressions)
+  // Not every entry's check is in the results, so the entries are narrowed by the selected IDs, not by the checks.
+  const unappliedEntries = unappliedEntriesView(
+    filter ? suppressions.filter((result) => filter.checkIds.includes(result.entry.check)) : suppressions,
+    likelyFindingCommands(input),
+  )
 
   return [
-    ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose)] : []),
-    ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose)] : []),
-    ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now)),
+    ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose, numberOf)] : []),
+    ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose, numberOf)] : []),
+    ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now, numberOf)),
+    ...(suppressed ? [suppressedFindingsAlert(suppressed)] : []),
+    ...(unappliedEntries ? [unappliedEntriesAlert(unappliedEntries)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
+    ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions, supersededNumbers)] : []),
+    ...(input.interactiveReview ? [interactiveReviewOutcomeAlert(input.interactiveReview, supersededNumbers)] : []),
   ]
+}
+
+type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
+
+/**
+ * The review command, and the `--suppress` command, with the results digest, that re-attaches a stale entry to its
+ * likely finding: the finding's number is all that it needs.
+ */
+function likelyFindingCommands({result, commands}: SecurityReviewPresenterInput): LikelyFindingCommands {
+  const digestArgs = result.resultsDigest === null ? [] : ['--results-digest', result.resultsDigest]
+  return {
+    review: formatAppSecurityCommand(commands.review),
+    reattach: {
+      findingNumbers: result.likelyFindingNumbers,
+      command: (findingNumber) =>
+        formatAppSecurityCommand({
+          ...commands.review,
+          args: [...commands.review.args, '--suppress', String(findingNumber), ...digestArgs],
+        }),
+    },
+  }
+}
+
+const SAVED_CHANGE_LABEL: Record<SavedSuppression['change'], string> = {
+  added: 'added',
+  'configuration-added': 'configuration added',
+  'code-replaced': 're-attached',
+}
+
+/**
+ * The numbers of the superseded findings of every check. An entry doesn't change a finding's disposition, so a
+ * superseded finding stays superseded after its entry is saved.
+ */
+function supersededFindingNumbers(result: SecurityReviewResult): ReadonlySet<number> {
+  return new Set(
+    [...result.findingNumbers].flatMap(([finding, number]) => (finding.disposition === 'superseded' ? [number] : [])),
+  )
+}
+
+/**
+ * One saved entry: its index, the finding it was saved for and the change, then what it holds. For a superseded
+ * finding, a last line says why it needs an entry.
+ */
+function savedEntrySection(
+  {index, change, entry, previous, findingNumber}: NumberedSavedSuppression,
+  supersededNumbers: ReadonlySet<number>,
+): AlertCustomSection {
+  return {
+    title: `suppressions[${index}] · finding ${findingNumber} · ${SAVED_CHANGE_LABEL[change]}`,
+    body: [
+      `${entry.source} ${entry.check} in`,
+      {filePath: entry.path},
+      ...(previous ? reattachedEntryLines(entry, previous) : savedEntryLines(entry)),
+      {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
+      ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
+    ],
+  }
+}
+
+function savedEntryLines(entry: SavedSuppression['entry']): Token[] {
+  return [
+    {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
+    ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
+    {subdued: `\nReason: ${entry.reason}`},
+  ]
+}
+
+/** What re-attaching changed: the old and new code, and whether the kind and the reason were kept or replaced. */
+function reattachedEntryLines(
+  entry: SavedSuppression['entry'],
+  previous: NonNullable<SavedSuppression['previous']>,
+): Token[] {
+  const kindChange = entry.kind === previous.kind ? 'kept' : `replaced, it was ${SUPPRESSION_KIND_LABEL[previous.kind]}`
+  const reasonKept = entry.reason === previous.reason
+  return [
+    {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]} (${kindChange})`},
+    ...(previous.code === undefined ? [] : [{subdued: `\nOld code: ${previous.code}`}]),
+    ...(entry.code === undefined ? [] : [{subdued: `\nNew code: ${entry.code}`}]),
+    {subdued: `\nReason (${reasonKept ? 'kept' : 'replaced'}): ${entry.reason}`},
+    ...(reasonKept ? [] : [{subdued: `\nOld reason: ${previous.reason}`}]),
+  ]
+}
+
+function supersededEntryLine(findingNumber: number): string {
+  return `The agent result supersedes finding ${findingNumber} in the review, but check --blocking, which reads no agent results, counts it. This entry suppresses it for check --blocking.`
+}
+
+const COMMIT_SUPPRESSIONS_STEP: AlertCustomSection = {
+  title: 'Next steps',
+  body: {list: {items: [`Review and commit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`]}},
+}
+
+function savedHeadline(saved: SavedSuppression[]): string {
+  return `Saved ${countLabel(saved.length, 'suppression')} to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`
+}
+
+/** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
+function savedSuppressionsAlert(
+  {saved, companionNumbers}: SavedReviewSuppressions,
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
+  const entrySections = saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers))
+  const companionSections: AlertCustomSection[] =
+    companionNumbers.length === 0
+      ? []
+      : [
+          {
+            title: 'Not suppressed',
+            body: `${companionsLabel(companionNumbers)} the same check in the same file, so check --blocking, which reads no agent results, still counts ${
+              companionNumbers.length === 1 ? 'it' : 'them'
+            }. To suppress ${
+              companionNumbers.length === 1 ? 'it' : 'them'
+            } with the same kind and reason, run the command again with --include-superseded.`,
+          },
+        ]
+  return {
+    type: 'success',
+    options: {
+      headline: savedHeadline(saved),
+      // A section rather than `nextSteps`, which a box draws before its sections: the entries come first.
+      customSections: [...entrySections, ...companionSections, COMMIT_SUPPRESSIONS_STEP],
+    },
+  }
+}
+
+/** What a person chooses for each finding of `review --interactive`. `reattach` is offered for a stale entry's likely finding. */
+export type InteractiveReviewAction = 'reattach' | 'suppress' | 'continue' | 'quit'
+
+/** Whether `review --interactive` can prompt, and its prompts. Tests pass their own. */
+export interface InteractiveReviewDependencies {
+  canPrompt(): boolean
+  selectAction(prompt: RenderSelectPromptOptions<InteractiveReviewAction>): Promise<InteractiveReviewAction>
+  selectKind(prompt: RenderSelectPromptOptions<SuppressionKind>): Promise<SuppressionKind>
+  enterReason(prompt: RenderTextPromptOptions): Promise<string>
+  confirmCompanions(prompt: RenderConfirmationPromptOptions): Promise<boolean>
+}
+
+/**
+ * Whether `review --interactive` can prompt: stdin, stdout and stderr are terminals, the terminal isn't `dumb`, the
+ * command doesn't run in CI, and `--no-input` is off.
+ */
+export function canPromptInteractiveReview(): boolean {
+  return terminalSupportsPrompting() && isTerminalInteractive()
+}
+
+const defaultInteractiveReviewDependencies: InteractiveReviewDependencies = {
+  canPrompt: canPromptInteractiveReview,
+  selectAction: (prompt) => renderSelectPrompt(prompt),
+  selectKind: (prompt) => renderSelectPrompt(prompt),
+  enterReason: (prompt) => renderTextPrompt(prompt),
+  confirmCompanions: (prompt) => renderConfirmationPrompt(prompt),
+}
+
+/**
+ * The session of `review --interactive`: for each active finding, most severe first, it shows the finding in full and
+ * offers Suppress, Continue or Quit. Suppress asks for the kind and a reason and saves the entry at once; then, for an
+ * agent finding with superseded deterministic companions, it asks separately whether to suppress them too. After the
+ * active findings, when there are any, it offers in the same way the superseded deterministic findings that
+ * `check --blocking` still counts and that the session didn't already ask about as companions. Aborts at once when the
+ * terminal can't prompt, so the command fails before it reads anything, and never prompts in CI, without a terminal,
+ * or with `--no-input`.
+ */
+export function interactiveSecurityReview(
+  dependencies: InteractiveReviewDependencies = defaultInteractiveReviewDependencies,
+): InteractiveSecurityReview {
+  if (!dependencies.canPrompt()) {
+    const error = new AbortError(
+      'The interactive review needs an interactive terminal.',
+      'Run it in a terminal, outside CI and without --no-input. To suppress a finding from a script or an agent, pass its number to --suppress with --kind and --reason.',
+    )
+    error.code = 'interactive-review-unavailable'
+    throw error
+  }
+  return async (session) => {
+    renderAlert(interactiveReviewIntroAlert(session))
+    const active = await reviewFindingsFrom(session, dependencies, activeRound(session.findings), 0, {
+      saved: [],
+      declinedCompanions: [],
+      ending: 'finished',
+    })
+    if (active.ending !== 'finished') return active
+    const superseded = undecidedFindings(session.supersededFindings, active)
+    if (superseded.length === 0) return active
+    renderAlert(supersededFindingsIntroAlert(superseded))
+    return reviewFindingsFrom(session, dependencies, supersededRound(superseded), 0, active)
+  }
+}
+
+/** The findings that one part of the session offers, and how each finding's box counts them. */
+interface ReviewRound {
+  findings: NumberedFinding[]
+  /** "Active finding 2 of 5", "Superseded finding 1 of 2". */
+  progress(position: number): string
+}
+
+function activeRound(findings: NumberedFinding[]): ReviewRound {
+  return {findings, progress: (position) => `Active finding ${position} of ${findings.length}`}
+}
+
+function supersededRound(findings: NumberedFinding[]): ReviewRound {
+  return {findings, progress: (position) => `Superseded finding ${position} of ${findings.length}`}
+}
+
+/** The findings that the session didn't save or decline as the companions of an agent finding. */
+function undecidedFindings(findings: NumberedFinding[], outcome: InteractiveReviewOutcome): NumberedFinding[] {
+  const decided = new Set([
+    ...outcome.saved.map(({findingNumber}) => findingNumber),
+    ...outcome.declinedCompanions.flatMap(({companionNumbers}) => companionNumbers),
+  ])
+  return findings.filter(({number}) => !decided.has(number))
+}
+
+/** What the session did for one finding. */
+interface FindingDecision {
+  saved: NumberedSavedSuppression[]
+  /** The companions that the person chose not to suppress. */
+  declinedCompanionNumbers: number[]
+  /** A save was refused because the results changed, so the numbers may name other findings: the session stops. */
+  resultsChanged: boolean
+}
+
+const NO_DECISION: FindingDecision = {saved: [], declinedCompanionNumbers: [], resultsChanged: false}
+
+/** Offers the round's findings from `position` on, one at a time: each prompt waits for the answer to the one before. */
+async function reviewFindingsFrom(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  round: ReviewRound,
+  position: number,
+  outcome: InteractiveReviewOutcome,
+): Promise<InteractiveReviewOutcome> {
+  const numbered = round.findings[position]
+  if (!numbered) return outcome
+
+  const offer = session.reattachments.get(numbered.number)
+  renderAlert(interactiveFindingAlert(numbered, round.progress(position + 1), offer))
+  const action = await dependencies.selectAction(interactiveActionPrompt(numbered, offer))
+  if (action === 'quit') return {...outcome, ending: 'quit'}
+  const decision = await decideFinding(session, dependencies, numbered, action, offer)
+  const next: InteractiveReviewOutcome = {
+    saved: [...outcome.saved, ...decision.saved],
+    declinedCompanions:
+      decision.declinedCompanionNumbers.length === 0
+        ? outcome.declinedCompanions
+        : [
+            ...outcome.declinedCompanions,
+            {findingNumber: numbered.number, companionNumbers: decision.declinedCompanionNumbers},
+          ],
+    ending: decision.resultsChanged ? 'results-changed' : 'finished',
+  }
+  if (decision.resultsChanged) return next
+  return reviewFindingsFrom(session, dependencies, round, position + 1, next)
+}
+
+/** Saves what the person chose for the finding: a new entry, a re-attached stale entry, or nothing. */
+async function decideFinding(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+  action: Exclude<InteractiveReviewAction, 'quit'>,
+  offer: ReattachmentOffer | undefined,
+): Promise<FindingDecision> {
+  if (action === 'suppress') return suppressInteractively(session, dependencies, numbered)
+  if (action === 'reattach' && offer) {
+    const finding = await session.reattach(numbered.number)
+    return savedWithCompanions(session, dependencies, numbered, finding, {
+      kind: offer.entry.kind,
+      reason: offer.entry.reason,
+    })
+  }
+  return NO_DECISION
+}
+
+/**
+ * Asks for the kind and the reason, and saves the entry at once. Then, when the finding has companions that
+ * `check --blocking` still counts, asks whether to suppress them with the same kind and reason, and saves them only on
+ * yes.
+ */
+async function suppressInteractively(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+): Promise<FindingDecision> {
+  const kind = await dependencies.selectKind(suppressionKindPrompt(numbered))
+  const reason = await dependencies.enterReason(suppressionReasonPrompt(numbered))
+  const decision = {kind, reason}
+
+  const finding = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: false})
+  return savedWithCompanions(session, dependencies, numbered, finding, decision)
+}
+
+/**
+ * Shows what the save for the finding did. Then, when the finding has companions that `check --blocking` still counts,
+ * asks whether to suppress them with the decision's kind and reason, and saves them only on yes.
+ */
+async function savedWithCompanions(
+  session: InteractiveReviewSession,
+  dependencies: InteractiveReviewDependencies,
+  numbered: NumberedFinding,
+  finding: FindingSuppressionResult,
+  decision: SuppressionDecision,
+): Promise<FindingDecision> {
+  if (finding.status === 'refused') return showRefusal(finding.refusal)
+  const {saved, companionNumbers} = finding.savedSuppressions
+  const supersededNumbers = supersededFindingNumbers(session.result)
+  renderAlert(savedNowAlert(saved, supersededNumbers))
+  if (companionNumbers.length === 0) return {...NO_DECISION, saved}
+
+  const confirmed = await dependencies.confirmCompanions(companionsPrompt(numbered, companionNumbers))
+  if (!confirmed) return {...NO_DECISION, saved, declinedCompanionNumbers: companionNumbers}
+  const companions = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: true})
+  if (companions.status === 'refused') return {...showRefusal(companions.refusal), saved}
+  renderAlert(savedNowAlert(companions.savedSuppressions.saved, supersededNumbers))
+  return {...NO_DECISION, saved: [...saved, ...companions.savedSuppressions.saved]}
+}
+
+/** Shows why a save was refused. Nothing was saved for it; only a change of the results stops the session. */
+function showRefusal(refusal: SuppressionRefusal): FindingDecision {
+  const resultsChanged = refusal.code === 'results-digest-mismatch'
+  renderAlert({
+    type: resultsChanged ? 'error' : 'warning',
+    options: {
+      headline: refusal.message,
+      body: resultsChanged
+        ? 'The review stops here, and the suppressions you saved before are kept. Run the review again to see the current findings.'
+        : refusal.tryMessage,
+    },
+  })
+  return {...NO_DECISION, resultsChanged}
+}
+
+function interactiveReviewIntroAlert({
+  findings,
+  configuration,
+  reattachments,
+}: InteractiveReviewSession): SecurityReviewAlert {
+  if (findings.length === 0) {
+    return {type: 'info', options: {headline: `No active findings to review for ${configuration}.`}}
+  }
+  const reattach =
+    reattachments.size === 0
+      ? ''
+      : ` When a stale entry of ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} likely names a finding because its code was edited, you can also choose Re-attach: the entry gets the finding's code, and keeps its kind and reason.`
+  return {
+    type: 'info',
+    options: {
+      headline: `Reviewing ${countLabel(findings.length, 'active finding')} for ${configuration}, most severe first.`,
+      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop.${reattach} The suppressions you save are kept when you quit.`,
+    },
+  }
+}
+
+/** Why the session offers the superseded findings, before the first of them. */
+function supersededFindingsIntroAlert(findings: NumberedFinding[]): SecurityReviewAlert {
+  const one = findings.length === 1
+  const pronoun = one ? 'it' : 'them'
+  return {
+    type: 'info',
+    options: {
+      headline: `Reviewing ${countLabel(findings.length, 'superseded finding')} that check --blocking still ${
+        one ? 'counts' : 'count'
+      }.`,
+      body: `An agent result supersedes ${
+        one ? 'this deterministic finding' : 'these deterministic findings'
+      }, so the review doesn't count ${pronoun}. But check --blocking, which reads no agent results, still counts ${pronoun}, so a CI gate that runs it can fail. Choose Suppress, Continue or Quit for each finding, as before.`,
+    },
+  }
+}
+
+/**
+ * The finding in full, with its evidence and reasoning, in the box of its check. When a stale entry likely names it,
+ * a last section shows that entry, with its old code and the code that Re-attach gives it.
+ */
+function interactiveFindingAlert(
+  {number, check, finding}: NumberedFinding,
+  progress: string,
+  offer: ReattachmentOffer | undefined,
+): SecurityReviewAlert {
+  return {
+    type: check.severity === 'high' ? 'error' : 'warning',
+    options: {
+      headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
+      body: {subdued: progress},
+      ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
+      customSections: [findingSection(finding, number, true), ...(offer ? [reattachmentSection(offer)] : [])],
+    },
+  }
+}
+
+function reattachmentSection({entryIndex, entry, code}: ReattachmentOffer): AlertCustomSection {
+  return {
+    title: `Stale entry suppressions[${entryIndex}] · ${SUPPRESSION_KIND_LABEL[entry.kind]}`,
+    body: [
+      `Its code matches no finding, and the code of this finding is similar. Re-attach gives the entry this finding's code, and keeps its kind and reason.`,
+      {subdued: `\nReason: ${entry.reason}`},
+      ...(entry.code === undefined ? [] : [{subdued: `\nOld code: ${entry.code}`}]),
+      {subdued: `\nNew code: ${code}`},
+    ],
+  }
+}
+
+function interactiveActionPrompt(
+  {number}: NumberedFinding,
+  offer: ReattachmentOffer | undefined,
+): RenderSelectPromptOptions<InteractiveReviewAction> {
+  const reattach = offer
+    ? [
+        {
+          // The finding's box shows the entry's kind, reason and code. A reason can be wider than the terminal, and the
+          // prompt redraws a row that the terminal wrapped as one line.
+          label: `Re-attach suppressions[${offer.entryIndex}]`,
+          value: 'reattach' as const,
+          key: 'r',
+        },
+      ]
+    : []
+  return {
+    message: `What do you want to do with finding #${number}?`,
+    choices: [
+      ...reattach,
+      {label: 'Suppress', value: 'suppress', key: 's'},
+      {label: 'Continue', value: 'continue', key: 'c'},
+      {label: 'Quit', value: 'quit', key: 'q'},
+    ],
+  }
+}
+
+function suppressionKindPrompt({number}: NumberedFinding): RenderSelectPromptOptions<SuppressionKind> {
+  return {
+    message: `Is finding #${number} a false positive or an accepted risk?`,
+    choices: [
+      {label: 'False positive: the finding is wrong', value: 'false-positive'},
+      {label: 'Accepted risk: the finding is real, and you accept the risk', value: 'accepted-risk'},
+    ],
+  }
+}
+
+/** The reason is required: an empty one is refused, and the prompt asks again. */
+function suppressionReasonPrompt({number}: NumberedFinding): RenderTextPromptOptions {
+  return {
+    message: `Why should finding #${number} be suppressed?`,
+    validate: (reason) => {
+      const problem = suppressionReasonProblem(reason)
+      return problem === undefined ? undefined : `The reason ${problem}.`
+    },
+  }
+}
+
+/** A separate yes or no for the companions, which defaults to no: they're saved only after an explicit yes. */
+function companionsPrompt(
+  {check, finding}: NumberedFinding,
+  companionNumbers: number[],
+): RenderConfirmationPromptOptions {
+  const pronoun = companionNumbers.length === 1 ? 'it' : 'them'
+  const companions =
+    companionNumbers.length === 1
+      ? `Finding #${companionNumbers[0]} is a superseded deterministic finding`
+      : `Findings ${listedNumbers(companionNumbers.map((number) => `#${number}`))} are superseded deterministic findings`
+  return {
+    message: `${companions} of ${check.id} in ${finding.location.file}, and check --blocking, which reads no agent results, still counts ${pronoun}. Suppress ${pronoun} too, with the same kind and reason?`,
+    confirmationMessage: `Yes, suppress ${pronoun} too`,
+    cancellationMessage: 'No',
+    defaultValue: false,
+  }
+}
+
+/** What one decision saved, shown at once. */
+function savedNowAlert(saved: NumberedSavedSuppression[], supersededNumbers: ReadonlySet<number>): SecurityReviewAlert {
+  return {
+    type: 'success',
+    options: {
+      headline: savedHeadline(saved),
+      customSections: saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers)),
+    },
+  }
+}
+
+/** After the review: everything the session saved, the companions left out, how it ended, and the next step. */
+function interactiveReviewOutcomeAlert(
+  {saved, declinedCompanions, ending}: InteractiveReviewOutcome,
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
+  const endingLines = {
+    finished: undefined,
+    quit: 'You quit the review. The suppressions you saved are kept.',
+    'results-changed': 'The review stopped because the results changed. The suppressions you saved are kept.',
+  }
+  const endingLine = endingLines[ending]
+  const body = endingLine === undefined ? {} : {body: endingLine}
+  if (saved.length === 0) {
+    return {
+      type: 'info',
+      options: {headline: `No suppressions saved to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`, ...body},
+    }
+  }
+  const declinedSections: AlertCustomSection[] =
+    declinedCompanions.length === 0
+      ? []
+      : [{title: 'Not suppressed', body: {list: {items: declinedCompanions.map(declinedCompanionsItem)}}}]
+  return {
+    type: 'success',
+    options: {
+      headline: savedHeadline(saved),
+      ...body,
+      customSections: [
+        ...saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers)),
+        ...declinedSections,
+        COMMIT_SUPPRESSIONS_STEP,
+      ],
+    },
+  }
+}
+
+function declinedCompanionsItem({
+  findingNumber,
+  companionNumbers,
+}: InteractiveReviewOutcome['declinedCompanions'][number]): string {
+  const pronoun = companionNumbers.length === 1 ? 'it' : 'them'
+  return `${companionsLabel(companionNumbers)} the same check in the same file as finding ${findingNumber}, so check --blocking, which reads no agent results, still counts ${pronoun}. To suppress ${pronoun}, run the review with --suppress ${findingNumber} --include-superseded and the same --kind and --reason.`
+}
+
+/** "Finding 7 is a superseded deterministic finding of", "Findings 7 and 8 are superseded deterministic findings of". */
+function companionsLabel(numbers: number[]): string {
+  if (numbers.length === 1) return `Finding ${numbers[0]} is a superseded deterministic finding of`
+  return `Findings ${listedNumbers(numbers)} are superseded deterministic findings of`
+}
+
+function suppressedFindingsAlert({headline, counts, sections}: SuppressedFindingsView): SecurityReviewAlert {
+  return {type: 'info', options: {headline, customSections: [{body: counts}, ...sections]}}
+}
+
+/** A warning when an entry needs a change. Like every box, it doesn't change the exit code or `--blocking`. */
+function unappliedEntriesAlert({headline, needsChange, sections}: UnappliedEntriesView): SecurityReviewAlert {
+  return {type: needsChange ? 'warning' : 'info', options: {headline, customSections: sections}}
 }
 
 export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput): SecurityReviewSummary {
@@ -153,6 +759,7 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
       directory: result.resultsDirectory,
       rows: SOURCE_ORDER.map((source) => resultsFileRow(source, result.sources[source]?.document, input.now)),
     },
+    ...(result.resultsDigest === null ? {} : {resultsDigest: result.resultsDigest}),
     ...(breached
       ? {
           blocking: `${countLabel(result.blocking.blockedChecks, 'check')} at or above ${result.blocking.level} (--blocking ${
@@ -338,6 +945,11 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
       ],
     },
   })
+  if (summary.resultsDigest) {
+    sections.push({
+      body: {subdued: `Results digest: ${summary.resultsDigest} (pass it to --results-digest with --suppress)`},
+    })
+  }
   if (summary.blocking === undefined) {
     // Nothing left to suggest when both result files are present and no check has findings or is stale.
     if (summary.nextSteps.length > 0) sections.push({title: 'Next steps', body: {list: {items: summary.nextSteps}}})
@@ -357,7 +969,11 @@ function resultsFileCells(row: ResultsFileRow): InlineToken[] {
  * Unresolved checks with no active findings. With `--verbose`, each check's suppressed and superseded findings
  * follow it in full, prefixed by the check ID, as in the passed checks box.
  */
-function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityReviewAlert {
+function unresolvedChecksAlert(
+  checks: CombinedCheck[],
+  verbose: boolean,
+  numberOf: FindingNumberLookup,
+): SecurityReviewAlert {
   return {
     type: 'warning',
     options: {
@@ -367,7 +983,9 @@ function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): Secur
           title: `${check.id} · ${check.title}`,
           body: {tabularData: sourceStatusRows(check, {withDispositions: true}), firstColumnSubdued: true},
         },
-        ...(verbose ? check.findings.map((finding) => findingSection(finding, verbose, `${check.id} · `)) : []),
+        ...(verbose
+          ? check.findings.map((finding) => findingSection(finding, numberOf(finding), verbose, `${check.id} · `))
+          : []),
       ]),
     },
   }
@@ -377,7 +995,11 @@ function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): Secur
  * Passed and not applicable checks in one table. These checks have no active findings, so with
  * `--verbose` their suppressed and superseded findings are listed here in full, prefixed by the check ID.
  */
-function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityReviewAlert {
+function passedChecksAlert(
+  checks: CombinedCheck[],
+  verbose: boolean,
+  numberOf: FindingNumberLookup,
+): SecurityReviewAlert {
   const passed = checks.filter(isCheckPassed).length
   const notApplicable = checks.length - passed
   const headline = [
@@ -400,7 +1022,7 @@ function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityR
         },
         ...(verbose
           ? checks.flatMap((check) =>
-              check.findings.map((finding) => findingSection(finding, verbose, `${check.id} · `)),
+              check.findings.map((finding) => findingSection(finding, numberOf(finding), verbose, `${check.id} · `)),
             )
           : []),
       ],
@@ -425,7 +1047,12 @@ function passedCheckRow(check: CombinedCheck): InlineToken[] {
  * The statuses are shown when the sources disagree, and always for a stale check: there both results count,
  * so each comes with its age and a line says why.
  */
-function checkWithFindingsAlert(check: CombinedCheck, verbose: boolean, now: Date): SecurityReviewAlert {
+function checkWithFindingsAlert(
+  check: CombinedCheck,
+  verbose: boolean,
+  now: Date,
+  numberOf: FindingNumberLookup,
+): SecurityReviewAlert {
   const counts = checkDispositionCounts(check)
   const findings = verbose ? check.findings : activeFindings(check)
 
@@ -437,7 +1064,7 @@ function checkWithFindingsAlert(check: CombinedCheck, verbose: boolean, now: Dat
       ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
       customSections: [
         ...sourceStatusSections(check, now),
-        ...findings.map((finding) => findingSection(finding, verbose)),
+        ...findings.map((finding) => findingSection(finding, numberOf(finding), verbose)),
       ],
     },
   }
@@ -484,7 +1111,12 @@ function sourceStatusText(result: SourceCheckResult): string {
   return result.reason ? `${status} — ${result.reason.message}` : status
 }
 
-function findingSection(finding: CombinedFinding, verbose: boolean, titlePrefix = ''): AlertCustomSection {
+function findingSection(
+  finding: CombinedFinding,
+  number: number,
+  verbose: boolean,
+  titlePrefix = '',
+): AlertCustomSection {
   const disposition = finding.disposition === 'active' ? '' : ` (${finding.disposition})`
   const details: Token[] = [finding.message]
   if (finding.snippet) details.push({subdued: `\nCode: ${finding.snippet}`})
@@ -503,12 +1135,15 @@ function findingSection(finding: CombinedFinding, verbose: boolean, titlePrefix 
         subdued: `\nEvidence: ${formatLocation(evidence.location)}${evidence.quote ? ` — ${evidence.quote}` : ''}`,
       })),
     )
-    // Only the agent suppresses findings (`isSuppressed`); a hand-edited deterministic suppression stays silent.
-    if (isSuppressed(finding, finding.source) && finding.suppression) {
-      details.push({subdued: `\nSuppressed: ${finding.suppression.justification}`})
+    // `suppressed_by` is the entry or the agent suppression that applies, so a hand-edited one stays silent.
+    if (finding.disposition === 'suppressed' && finding.suppressed_by) {
+      details.push({subdued: `\nSuppressed: ${finding.suppressed_by.reason}`})
     }
   }
-  return {title: `${titlePrefix}${finding.source} · ${formatLocation(finding.location)}${disposition}`, body: details}
+  return {
+    title: `${titlePrefix}#${number} · ${finding.source} · ${formatLocation(finding.location)}${disposition}`,
+    body: details,
+  }
 }
 
 function conciseReasoning(reasoning: string): string {

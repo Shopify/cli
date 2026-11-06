@@ -1,9 +1,13 @@
 import {
   appSecurityAppSchema,
   appSecurityBlockingSchema,
+  appSecuritySavedSuppressionSchema,
   appSecurityScanDirectorySchema,
   appSecurityScopeSchema,
+  appSecuritySuppressionEntrySchema,
+  appSecuritySuppressionsSchema,
   createAbsolutePathSchema,
+  createAppSecuritySuppressionKindSchema,
 } from '../app-security/types.js'
 import {
   defineJsonOutputSchema,
@@ -38,12 +42,42 @@ const appSecurityEvidenceSchema = zod
   .strict()
   .describe('Source that supports a finding.')
 
+const appSecurityFindingSuppressionSchema = zod
+  .discriminatedUnion('origin', [
+    zod
+      .object({
+        justification: zod.string().describe("The entry's reason."),
+        origin: zod.literal('file').describe('An entry of shopify.app-security.json suppresses the finding.'),
+        entryIndex: zod
+          .number()
+          .int()
+          .nonnegative()
+          .describe("The entry's index in the file, from 0, as in suppressions.entries."),
+        kind: createAppSecuritySuppressionKindSchema(),
+      })
+      .strict(),
+    zod
+      .object({
+        justification: zod.string().describe("The agent's justification."),
+        origin: zod.literal('agent').describe('The agent suppressed the finding when it recorded it.'),
+      })
+      .strict(),
+  ])
+  .describe('What suppresses a finding, and why.')
+
 /** The fields that findings from both sources have, in a function so each source's finding gets its own instances. */
 const findingFields = () => ({
+  number: zod
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "The finding's number, from 1, which --suppress takes. Every finding of every check has one, whatever --check-id and --verbose, in the order of checks then findings. It names the same finding for the same results files, which resultsDigest identifies.",
+    ),
   disposition: zod
     .enum(['active', 'suppressed', 'superseded'])
     .describe(
-      "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces.",
+      "Whether the finding counts: active; suppressed, by an entry of shopify.app-security.json or by the agent, so it doesn't count for valid or blocking; or superseded, a deterministic finding that a check's prefer-agent agent result replaces.",
     ),
   location: appSecurityLocationSchema,
   message: zod.string().describe('What the finding is, redacted.'),
@@ -64,6 +98,11 @@ const appSecurityDeterministicFindingSchema = zod
       .strict()
       .nullable()
       .describe('How to fix the finding, or null when none is recorded.'),
+    suppression: appSecurityFindingSuppressionSchema
+      .nullable()
+      .describe(
+        'The entry of shopify.app-security.json that suppresses the finding. Also set on a superseded finding that an entry matched. Null otherwise.',
+      ),
   })
   .strict()
   .describe('A finding from deterministic-findings.json.')
@@ -81,11 +120,11 @@ const appSecurityAgentFindingSchema = zod
       .min(1)
       .nullable()
       .describe("The agent's reasoning, redacted, or null when none is recorded."),
-    suppression: zod
-      .object({justification: zod.string()})
-      .strict()
+    suppression: appSecurityFindingSuppressionSchema
       .nullable()
-      .describe('Why the agent suppressed the finding, or null when it is not suppressed.'),
+      .describe(
+        "What suppresses the finding: an entry of shopify.app-security.json, which comes first, or the agent's own suppression. Null when the finding is not suppressed.",
+      ),
   })
   .strict()
   .describe('A finding from agent-findings.json.')
@@ -214,6 +253,29 @@ const appSecurityCoverageSchema = zod
   .strict()
   .describe('What the latest check covered.')
 
+const appSecurityReviewSavedSuppressionSchema = appSecuritySavedSuppressionSchema
+  .extend({
+    findingNumber: zod.number().int().positive().describe('The number of the finding that the entry was saved for.'),
+  })
+  .describe('An entry of shopify.app-security.json that --suppress saved, as the file now holds it.')
+
+const appSecurityReviewSavedSuppressionsSchema = zod
+  .object({
+    filePath: createAbsolutePathSchema().describe('The absolute path of shopify.app-security.json.'),
+    entries: zod
+      .array(appSecurityReviewSavedSuppressionSchema)
+      .describe(
+        'The entries that were added or extended: the one for the --suppress finding, then one for each companion with --include-superseded.',
+      ),
+    companionFindingNumbers: zod
+      .array(zod.number().int().positive())
+      .describe(
+        "The numbers of the finding's companions that weren't suppressed because --include-superseded wasn't passed: superseded deterministic findings of the same check in the same file, which check --blocking still counts because it reads no agent results.",
+      ),
+  })
+  .strict()
+  .describe('What --suppress saved to shopify.app-security.json.')
+
 const appSecurityDeterministicResultsFileSchema = zod
   .object({
     path: createAbsolutePathSchema().describe('The absolute path of deterministic-findings.json.'),
@@ -246,7 +308,7 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
       valid: zod
         .boolean()
         .describe(
-          'Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes.',
+          "Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Suppressed and superseded findings don't count, unresolved checks never fail it, and --blocking none always passes.",
         ),
       app: appSecurityAppSchema,
       resultsDirectory: createAbsolutePathSchema().describe('The absolute path of the results directory.'),
@@ -271,7 +333,20 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
       checks: zod
         .array(appSecurityCheckSchema)
         .describe('The checks after --check-id, most severe first, then by ID. Empty when no results file exists.'),
+      resultsDigest: zod
+        .string()
+        .min(1)
+        .nullable()
+        .describe(
+          'A digest of the findings that the numbers name. Pass it to --results-digest with --suppress, so the suppression is refused if the results changed. Null when no results file exists.',
+        ),
       blocking: appSecurityBlockingSchema,
+      suppressions: appSecuritySuppressionsSchema,
+      savedSuppressions: appSecurityReviewSavedSuppressionsSchema
+        .nullable()
+        .describe(
+          'What --suppress saved to shopify.app-security.json, or null without --suppress. With --suppress, the rest of the result is the review after the save.',
+        ),
     })
     .strict()
     .describe('The combined results of the app security check.'),
@@ -280,6 +355,8 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
     AppSecurityScope: appSecurityScopeSchema,
     AppSecurityScanDirectory: appSecurityScanDirectorySchema,
     AppSecurityBlocking: appSecurityBlockingSchema,
+    AppSecuritySuppressions: appSecuritySuppressionsSchema,
+    AppSecuritySuppressionEntry: appSecuritySuppressionEntrySchema,
     AppSecurityDeterministicResultsFile: appSecurityDeterministicResultsFileSchema,
     AppSecurityAgentResultsFile: appSecurityAgentResultsFileSchema,
     AppSecurityDetection: appSecurityDetectionSchema,
@@ -291,6 +368,9 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
     AppSecurityAgentFinding: appSecurityAgentFindingSchema,
     AppSecurityLocation: appSecurityLocationSchema,
     AppSecurityEvidence: appSecurityEvidenceSchema,
+    AppSecurityFindingSuppression: appSecurityFindingSuppressionSchema,
+    AppSecuritySavedSuppressions: appSecurityReviewSavedSuppressionsSchema,
+    AppSecuritySavedSuppression: appSecurityReviewSavedSuppressionSchema,
   },
 })
 

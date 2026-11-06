@@ -19,6 +19,12 @@ export const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 
 const APP_SECURITY_DIRECTORY_COMPONENTS = ['.shopify', 'app-security']
 
+/**
+ * The suppressions file. It sits in the app directory beside the app configurations, never under `.shopify/`, so it
+ * can be committed and `clean` never removes it.
+ */
+export const APP_SECURITY_SUPPRESSIONS_FILE_NAME = 'shopify.app-security.json'
+
 export interface AppSecurityArtifactPaths {
   /** `<app directory>/.shopify/app-security/<results key>`. */
   resultsDirectory: string
@@ -36,6 +42,10 @@ export type ReadArtifactResult<T> =
 /** The directory that holds one results directory per results key. */
 export function appSecurityDirectory(appDirectory: string): string {
   return joinPath(appDirectory, ...APP_SECURITY_DIRECTORY_COMPONENTS)
+}
+
+export function appSecuritySuppressionsPath(appDirectory: string): string {
+  return joinPath(appDirectory, APP_SECURITY_SUPPRESSIONS_FILE_NAME)
 }
 
 export function appSecurityArtifactPaths(appDirectory: string, resultsKey: string): AppSecurityArtifactPaths {
@@ -86,6 +96,25 @@ export async function writeAgentFindings(
   await ensureResultsDirectory(appDirectory, paths.resultsDirectory)
   await writeAtomicArtifact(paths.agentFindingsPath, encodeArtifact(document))
   return paths.agentFindingsPath
+}
+
+/**
+ * Replaces shopify.app-security.json atomically with `value` as two-space JSON and a trailing newline, the format of
+ * the results files. The file is committed, so it isn't private like the results: a new file is readable by others,
+ * and an existing one keeps its permissions. Unlike the results writers, this never touches `.shopify/`.
+ */
+export async function writeAppSecuritySuppressionsFile(appDirectory: string, value: unknown): Promise<string> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const contents = encodeArtifact(value)
+  if (Buffer.byteLength(contents, 'utf8') > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    throw new AbortError(
+      `${APP_SECURITY_SUPPRESSIONS_FILE_NAME} would be larger than 5 MB, so it wasn't changed.`,
+      'Remove entries that no longer apply, then run the command again.',
+    )
+  }
+  const existing = await lstatIfExists(path)
+  await writeAtomicArtifact(path, contents, existing ? existing.mode & 0o777 : 0o644)
+  return path
 }
 
 /** Whether the results directory for the key exists. */
@@ -156,7 +185,8 @@ function hasSource<TSource extends FindingsSource>(
   return document.source === source
 }
 
-async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
+/** Reads and parses a JSON file of at most 5 MB. A missing file is `missing`; any other failure is `invalid`. */
+export async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
   if (!(await fileExists(path))) return {status: 'missing'}
 
   let content: string
@@ -284,12 +314,12 @@ function refuseArtifactPath(path: string): never {
   )
 }
 
-async function writeAtomicArtifact(path: string, contents: string | Buffer): Promise<void> {
+async function writeAtomicArtifact(path: string, contents: string | Buffer, mode = 0o600): Promise<void> {
   await assertNotSymbolicLink(path)
   const temporaryPath = `${path}.${randomBytes(8).toString('hex')}.tmp`
   await assertNotSymbolicLink(temporaryPath)
   try {
-    await writeFile(temporaryPath, contents, {encoding: 'utf8', mode: 0o600})
+    await writeFile(temporaryPath, contents, {encoding: 'utf8', mode})
     await assertNotSymbolicLink(path)
     await rename(temporaryPath, path)
   } catch (error) {

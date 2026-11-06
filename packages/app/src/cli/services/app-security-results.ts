@@ -12,24 +12,28 @@ import {
 } from './app-security-commands.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
+import {missingSuppressionPaths, readAppSecuritySuppressions} from './app-security-suppressions.js'
 import {
   combineFindings,
   type AgentFindingsDocument,
   type CombinedCheck,
   type DeterministicFindingsDocument,
   type FindingsSource,
+  type SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
 import type {AlertCustomSection, InlineToken, TokenItem} from '@shopify/cli-kit/node/ui'
 
-/** The two stored result files, loaded and combined (§6). `review` presents this. */
+/** The two stored result files, loaded and combined with shopify.app-security.json (§6). `review` presents this. */
 export interface AppSecurityResults {
   sources: {
     deterministic: {path: string; document: DeterministicFindingsDocument} | null
     agent: {path: string; document: AgentFindingsDocument} | null
   }
   checks: CombinedCheck[]
+  /** One result per entry of shopify.app-security.json, in file order. Empty without the file. */
+  suppressions: SuppressionEntryResult[]
 }
 
 /** One result file the reader rejected. */
@@ -59,15 +63,19 @@ export async function requireResultsDirectory(selection: AppSecuritySelection, p
 }
 
 /**
- * Reads both result files in parallel and combines them. A missing file is a valid state: the agent is
- * optional. An invalid file aborts with one error that lists every invalid file and how to fix it.
+ * Reads both result files in parallel, then shopify.app-security.json, and combines them. A missing file is a valid
+ * state: the agent is optional, and without shopify.app-security.json only the agent's own suppressions apply. Invalid
+ * results files abort first, with one error that lists each of them and how to fix it. An invalid
+ * shopify.app-security.json aborts next, with the error of `readAppSecuritySuppressions`. No source file is read: only
+ * whether the files that entries name still exist, for the likely new path of a stale entry.
  */
 export async function loadAppSecurityResults(
   selection: AppSecuritySelection,
   path: string,
 ): Promise<AppSecurityResults> {
   await requireResultsDirectory(selection, path)
-  const paths = appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection))
+  const key = resultsKey(selection)
+  const paths = appSecurityArtifactPaths(selection.appDirectory, key)
   const [deterministic, agent] = await Promise.all([
     loadSource(paths.deterministicFindingsPath, 'deterministic'),
     loadSource(paths.agentFindingsPath, 'agent'),
@@ -77,16 +85,20 @@ export async function loadAppSecurityResults(
     (file): file is InvalidResultsFile => file !== undefined,
   )
   if (invalidFiles.length > 0) abortInvalidResults(invalidFiles, resolveAppSecurityCommands(selection, path))
+  const suppressionEntries = await readAppSecuritySuppressions(selection.appDirectory)
 
   const deterministicSource = presentSource(deterministic)
   const agentSource = presentSource(agent)
-  return {
-    sources: {deterministic: deterministicSource, agent: agentSource},
-    checks: combineFindings({
-      deterministic: deterministicSource?.document ?? null,
-      agent: agentSource?.document ?? null,
-    }),
-  }
+  const {checks, suppressions} = combineFindings({
+    deterministic: deterministicSource?.document ?? null,
+    agent: agentSource?.document ?? null,
+    suppressions: {
+      entries: suppressionEntries,
+      resultsKey: key,
+      missingPaths: await missingSuppressionPaths(selection.appDirectory, suppressionEntries),
+    },
+  })
+  return {sources: {deterministic: deterministicSource, agent: agentSource}, checks, suppressions}
 }
 
 async function loadSource<TSource extends FindingsSource>(

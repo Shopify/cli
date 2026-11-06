@@ -1,4 +1,5 @@
 import {appSecurityReviewJsonOutputSchema} from './types.js'
+import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 import {describe, expect, test} from 'vitest'
 
 const onWindows = process.platform === 'win32'
@@ -12,15 +13,25 @@ const scope = {includeDirs: [], excludes: [], noGitIgnore: false}
 const location = {filePath: ordersPath, line: 12, column: null}
 const deterministicFinding = {
   source: 'deterministic',
+  number: 1,
   disposition: 'superseded',
   location,
   message: 'accessToken flows into console.log.',
   snippet: null,
   evidence: [{location, quote: 'console.log(session.accessToken)'}],
   fix: {description: 'Remove credentials from logs.', guide: null, automated: false},
+  suppression: null,
 }
+const fileSuppression = {
+  justification: 'The token is a fake one in a test fixture.',
+  origin: 'file',
+  entryIndex: 0,
+  kind: 'false-positive',
+}
+const agentSuppression = {justification: 'An allowlist middleware restricts the route.', origin: 'agent'}
 const agentFinding = {
   source: 'agent',
+  number: 2,
   disposition: 'active',
   location,
   message: 'The session access token is written to the server log.',
@@ -88,8 +99,83 @@ const result = {
   },
   scopeDiffers: false,
   checks: [check],
+  resultsDigest: '3f2a9c0d41be',
   blocking: {level: 'high', blockedCheckCount: 1},
+  suppressions: {
+    filePath: onWindows ? 'C:\\apps\\my-app\\shopify.app-security.json' : '/apps/my-app/shopify.app-security.json',
+    entryCount: 2,
+    suppressedFindingCount: 1,
+    staleEntryCount: 1,
+    ambiguousEntryCount: 0,
+    entries: [
+      {
+        index: 0,
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'false-positive',
+        path: ordersPath,
+        status: 'matched',
+        matchedFindingCount: 1,
+        likelyPath: null,
+        candidateFindingCount: null,
+        likelyFinding: null,
+      },
+      {
+        index: 1,
+        source: 'agent',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: onWindows ? 'C:\\apps\\my-app\\app\\routes\\orders.old.tsx' : '/apps/my-app/app/routes/orders.old.tsx',
+        status: 'stale',
+        matchedFindingCount: 0,
+        likelyPath: ordersPath,
+        candidateFindingCount: null,
+        likelyFinding: null,
+      },
+    ],
+  },
+  savedSuppressions: null,
 }
+
+const savedEntry = {
+  index: 0,
+  change: 'added',
+  source: 'agent',
+  check: 'CREDENTIAL_LOG_LEAKAGE',
+  kind: 'false-positive',
+  path: ordersPath,
+  code: 'console.log(session.accessToken)',
+  reason: 'The logger redacts tokens.',
+  configurations: ['shopify.app.toml'],
+  previous: null,
+  findingNumber: 2,
+}
+const savedSuppressions = {
+  filePath: result.suppressions.filePath,
+  entries: [savedEntry],
+  companionFindingNumbers: [1],
+}
+
+/** The suppressions of `result` with a stale entry whose code likely became finding 2 after an edit. */
+const withLikelyFinding = {
+  ...result.suppressions,
+  entries: [
+    result.suppressions.entries[0],
+    {
+      ...result.suppressions.entries[1],
+      likelyPath: null,
+      likelyFinding: {filePath: ordersPath, line: 12, findingNumber: 2},
+    },
+  ],
+}
+const reattachedEntry = {
+  ...savedEntry,
+  change: 'code-replaced',
+  previous: {code: 'console.log(session.idToken)', kind: 'accepted-risk', reason: 'Placeholder tokens.'},
+}
+
+/** The result with one check that holds these findings. */
+const withFindings = (...findings: unknown[]) => ({...result, checks: [{...check, findings}]})
 
 describe('appSecurityReviewJsonOutputSchema', () => {
   test.each([
@@ -103,12 +189,60 @@ describe('appSecurityReviewJsonOutputSchema', () => {
         detection: null,
         coverage: null,
         checks: [],
+        resultsDigest: null,
         blocking: {level: 'none', blockedCheckCount: 0},
       },
     ],
     [
       'a whole-file location',
       {...result, checks: [{...check, findings: [{...agentFinding, location: {...location, line: null}}]}]},
+    ],
+    [
+      'a deterministic finding that an entry suppresses',
+      withFindings({...deterministicFinding, disposition: 'suppressed', suppression: fileSuppression}),
+    ],
+    [
+      'an agent finding that an entry suppresses',
+      withFindings({
+        ...agentFinding,
+        disposition: 'suppressed',
+        suppression: {...fileSuppression, kind: 'accepted-risk'},
+      }),
+    ],
+    [
+      'an agent finding that the agent suppresses',
+      withFindings({...agentFinding, disposition: 'suppressed', suppression: agentSuppression}),
+    ],
+    [
+      'no suppressions file',
+      {
+        ...result,
+        suppressions: {
+          ...result.suppressions,
+          entryCount: 0,
+          suppressedFindingCount: 0,
+          staleEntryCount: 0,
+          ambiguousEntryCount: 0,
+          entries: [],
+        },
+      },
+    ],
+    ['the entries that --suppress saved, and a companion it left out', {...result, savedSuppressions}],
+    [
+      'a saved entry without code that got a configuration, and no companion',
+      {
+        ...result,
+        savedSuppressions: {
+          ...savedSuppressions,
+          entries: [{...savedEntry, change: 'configuration-added', code: null, configurations: ['a', 'b']}],
+          companionFindingNumbers: [],
+        },
+      },
+    ],
+    ['a stale entry with its likely finding', {...result, suppressions: withLikelyFinding}],
+    [
+      'an entry that --suppress re-attached, with its previous code, kind and reason',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [reattachedEntry]}},
     ],
   ])('accepts a result with %s', (_description, value) => {
     expect(appSecurityReviewJsonOutputSchema.validate(value)).toStrictEqual(value)
@@ -218,7 +352,114 @@ describe('appSecurityReviewJsonOutputSchema', () => {
     ['an unknown blocking level', {...result, blocking: {level: 'critical', blockedCheckCount: 1}}],
     ['a negative blocked check count', {...result, blocking: {level: 'high', blockedCheckCount: -1}}],
     ['another status', {...result, status: 'cancelled'}],
+    ['a deterministic finding without a suppression', withFindings({...deterministicFinding, suppression: undefined})],
+    [
+      "today's agent suppression without an origin",
+      withFindings({...agentFinding, suppression: {justification: agentSuppression.justification}}),
+    ],
+    [
+      'an agent suppression with an entry index',
+      withFindings({...agentFinding, suppression: {...agentSuppression, entryIndex: 0}}),
+    ],
+    [
+      'a file suppression without a kind',
+      withFindings({...agentFinding, suppression: {...fileSuppression, kind: undefined}}),
+    ],
+    [
+      'a file suppression kind with an underscore',
+      withFindings({...deterministicFinding, suppression: {...fileSuppression, kind: 'accepted_risk'}}),
+    ],
+    [
+      'a file suppression with a negative entry index',
+      withFindings({...deterministicFinding, suppression: {...fileSuppression, entryIndex: -1}}),
+    ],
+    [
+      'another suppression origin',
+      withFindings({...agentFinding, suppression: {...agentSuppression, origin: 'inline'}}),
+    ],
+    ['no suppressions', {...result, suppressions: undefined}],
+    ['no ambiguous entry count', {...result, suppressions: {...result.suppressions, ambiguousEntryCount: undefined}}],
+    [
+      'an entry without its candidate finding count',
+      {
+        ...result,
+        suppressions: {
+          ...result.suppressions,
+          entries: [{...result.suppressions.entries[0], candidateFindingCount: undefined}],
+        },
+      },
+    ],
+    ['a finding without a number', withFindings({...agentFinding, number: undefined})],
+    ['a finding numbered 0', withFindings({...agentFinding, number: 0})],
+    ['no results digest', {...result, resultsDigest: undefined}],
+    ['an empty results digest', {...result, resultsDigest: ''}],
+    ['no saved suppressions', {...result, savedSuppressions: undefined}],
+    [
+      'a saved entry without its finding number',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, findingNumber: undefined}]}},
+    ],
+    [
+      'a saved entry with a kind with an underscore',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, kind: 'false_positive'}]}},
+    ],
+    [
+      'a saved entry with a relative path',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, path: 'app/routes/x.tsx'}]}},
+    ],
+    ['an extra saved suppressions field', {...result, savedSuppressions: {...savedSuppressions, companions: []}}],
+    [
+      'an entry without its likely finding',
+      {
+        ...result,
+        suppressions: {...withLikelyFinding, entries: [{...withLikelyFinding.entries[1], likelyFinding: undefined}]},
+      },
+    ],
+    [
+      'a likely finding with a relative path',
+      {
+        ...result,
+        suppressions: {
+          ...withLikelyFinding,
+          entries: [
+            {...withLikelyFinding.entries[1], likelyFinding: {filePath: 'app/a.ts', line: 1, findingNumber: 1}},
+          ],
+        },
+      },
+    ],
+    [
+      'a saved entry without its previous fields',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, previous: undefined}]}},
+    ],
+    [
+      'an unknown saved change',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...reattachedEntry, change: 'code_replaced'}]}},
+    ],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityReviewJsonOutputSchema.validate(value)).toThrow()
+  })
+
+  // The whole schema has date-time formats, which the validator doesn't know, so the parts with the new fields are checked.
+  test('the --json-schema definitions accept the suppression fields and reject an entry index or kind out of place', async () => {
+    const {definitions} = await normaliseJsonSchema(JSON.stringify(appSecurityReviewJsonOutputSchema.jsonSchema))
+    const validFindings = [
+      {...deterministicFinding, disposition: 'suppressed', suppression: fileSuppression},
+      deterministicFinding,
+      {...agentFinding, disposition: 'suppressed', suppression: agentSuppression},
+      {...agentFinding, disposition: 'suppressed', suppression: fileSuppression},
+    ]
+
+    for (const finding of validFindings) {
+      expect(jsonSchemaValidate(finding, definitions.AppSecurityFinding, 'fail').state).toBe('ok')
+    }
+    expect(jsonSchemaValidate(result.suppressions, definitions.AppSecuritySuppressions, 'fail').state).toBe('ok')
+    expect(jsonSchemaValidate(savedSuppressions, definitions.AppSecuritySavedSuppressions, 'fail').state).toBe('ok')
+    expect(jsonSchemaValidate(withLikelyFinding, definitions.AppSecuritySuppressions, 'fail').state).toBe('ok')
+    const reattached = {...savedSuppressions, entries: [reattachedEntry]}
+    expect(jsonSchemaValidate(reattached, definitions.AppSecuritySavedSuppressions, 'fail').state).toBe('ok')
+    expect(jsonSchemaValidate({...agentFinding, number: 0}, definitions.AppSecurityFinding, 'fail').state).toBe('error')
+    const agentWithEntryIndex = {...agentFinding, suppression: {...agentSuppression, entryIndex: 0}}
+    expect(jsonSchemaValidate(agentWithEntryIndex, definitions.AppSecurityFinding, 'fail').state).toBe('error')
+    const underscoreKind = {...deterministicFinding, suppression: {...fileSuppression, kind: 'false_positive'}}
+    expect(jsonSchemaValidate(underscoreKind, definitions.AppSecurityFinding, 'fail').state).toBe('error')
   })
 })

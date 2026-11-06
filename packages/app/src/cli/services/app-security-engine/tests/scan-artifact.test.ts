@@ -1,14 +1,16 @@
 import {scanDirectory as scan} from './scan-directory.js'
 import {formatJson} from '../output/format.js'
 import {combineFindings} from '../results/combine.js'
+import {MAX_EXCERPT_LINE_LENGTH} from '../results/code-excerpt.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
-import {buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
+import {activeScanIssues, buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {BuildDeterministicFindingsOptions} from '../scan-artifact/index.js'
-import type {CheckExecution, Issue, ScanResult} from '../types.js'
+import type {SuppressionEntry} from '../results/suppressions.js'
+import type {CheckExecution, DeterministicFindingsDocument, Issue, ScanResult} from '../types.js'
 
 function buildDeterministicFindings(scanResult: ScanResult, options: Partial<BuildDeterministicFindingsOptions> = {}) {
   return buildFindings(scanResult, {
@@ -230,7 +232,7 @@ describe('buildDeterministicFindings', () => {
       findings.map((finding) => `${finding.location.file}:${finding.location.line ?? '-'}`)
 
     expect(locations(document.checks[0]!.findings)).toEqual(['app/_.ts:1', 'app/a:-', 'app/a:1', 'app/a.ts:1'])
-    const [combined] = combineFindings({deterministic: document, agent: null})
+    const [combined] = combineFindings({deterministic: document, agent: null}).checks
     expect(locations(combined!.findings)).toEqual(locations(document.checks[0]!.findings))
   })
 
@@ -356,6 +358,150 @@ describe('buildDeterministicFindings', () => {
       )
       expect(document.checks.length).toBeGreaterThan(0)
       expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
+    })
+  })
+})
+
+describe('activeScanIssues', () => {
+  const entry = (overrides: Partial<SuppressionEntry> = {}): SuppressionEntry => ({
+    source: 'deterministic',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'false-positive',
+    path: 'app/a.ts',
+    reason: 'A test fixture.',
+    configurations: ['shopify.app.toml'],
+    ...overrides,
+  })
+
+  /** The checks that `check` combines from the scan's deterministic-findings.json and these entries. */
+  function combinedChecks(scanResult: ScanResult, entries: SuppressionEntry[]) {
+    return combineFindings({
+      deterministic: buildDeterministicFindings(scanResult),
+      agent: null,
+      suppressions: {entries, resultsKey: 'shopify.app'},
+    }).checks
+  }
+
+  test('leaves out the issues whose stored findings an entry suppresses, compared in their stored, redacted form', () => {
+    const secret = `shpat_${'b'.repeat(24)}`
+    const suppressedIssue = deterministicIssue({snippet: `console.log("${secret}")`})
+    const otherIssue = deterministicIssue({message: 'Another token is logged', location: {file: 'app/a.ts', line: 7}})
+    const otherCheckIssue = deterministicIssue({id: 'COMMITTED_SECRET', location: {file: 'app/a.ts', line: 2}})
+    const scanResult = result(
+      [suppressedIssue, otherIssue, otherCheckIssue],
+      [execution(), execution({id: 'COMMITTED_SECRET'})],
+    )
+
+    const checks = combinedChecks(scanResult, [entry({code: 'A token is logged'})])
+
+    expect(activeScanIssues(scanResult.issues, checks)).toEqual([otherIssue, otherCheckIssue])
+  })
+
+  test('leaves out identical issues together when a path-level entry suppresses them', () => {
+    const scanResult = result([deterministicIssue(), deterministicIssue()])
+
+    expect(activeScanIssues(scanResult.issues, combinedChecks(scanResult, [entry()]))).toEqual([])
+  })
+
+  test('keeps every issue when nothing is suppressed', () => {
+    const scanResult = result([deterministicIssue(), deterministicIssue({location: {file: 'app/a.ts', line: 7}})])
+
+    expect(activeScanIssues(scanResult.issues, combinedChecks(scanResult, []))).toEqual(scanResult.issues)
+    expect(activeScanIssues(scanResult.issues, [])).toEqual(scanResult.issues)
+  })
+})
+
+describe('code excerpts', () => {
+  // Composed at runtime so the literal token never appears in the repository.
+  const token = ['shpat', '_', '0123456789abcdef'.repeat(2)].join('')
+
+  const committedSecrets = (document: DeterministicFindingsDocument) =>
+    document.checks.find((check) => check.id === 'COMMITTED_SECRET')?.findings ?? []
+
+  async function scanApp(directory: string, files: Record<string, string>) {
+    await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "excerpts"\n')
+    await Promise.all(Object.entries(files).map(([path, content]) => writeFile(joinPath(directory, path), content)))
+    return buildDeterministicFindings(await scan(directory))
+  }
+
+  test('keeps the excerpts of an issue and its evidence, and translates back', () => {
+    const issue = deterministicIssue({
+      code_excerpt: [
+        {line: 1, text: 'const token = session.accessToken'},
+        {line: 2, text: 'console.log(token)'},
+      ],
+      evidence: [
+        {
+          location: {file: 'app/a.ts', line: 1},
+          quote: 'session.accessToken',
+          code_excerpt: [{line: 1, text: 'const token = session.accessToken'}],
+        },
+      ],
+    })
+
+    const document = buildDeterministicFindings(result([issue]))
+
+    expect(document.checks[0]!.findings[0]).toMatchObject({
+      code_excerpt: issue.code_excerpt,
+      evidence: issue.evidence,
+    })
+    expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
+  })
+
+  test('redacts secrets in the excerpts of an issue and its evidence', () => {
+    const issue = deterministicIssue({
+      code_excerpt: [{line: 2, text: `const token = "${token}"`}],
+      evidence: [{location: {file: 'app/a.ts', line: 2}, code_excerpt: [{line: 2, text: token}]}],
+    })
+
+    const serialized = JSON.stringify(buildDeterministicFindings(result([issue])))
+
+    expect(serialized).not.toContain(token)
+    expect(serialized).toContain('[REDACTED:')
+  })
+
+  test('a scan stores the flagged line and up to two lines either side, as the file has them', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const document = await scanApp(directory, {
+        'config.js': ['// one', '// two', `const token = "${token}"`, '// four', '// five', '// six', ''].join('\r\n'),
+        'first.js': [`export const token = "${token}"`, '// two', ''].join('\n'),
+      })
+
+      const [config, first] = committedSecrets(document)
+      expect(config!.location).toEqual({file: 'config.js', line: 3})
+      expect(config!.code_excerpt).toEqual([
+        {line: 1, text: '// one'},
+        {line: 2, text: '// two'},
+        {line: 3, text: expect.stringMatching(/^const token = "shpa\[REDACTED:38\]"$/)},
+        {line: 4, text: '// four'},
+        {line: 5, text: '// five'},
+      ])
+      expect(first!.location).toEqual({file: 'first.js', line: 1})
+      expect(first!.code_excerpt).toEqual([
+        {line: 1, text: expect.stringContaining('[REDACTED:38]')},
+        {line: 2, text: '// two'},
+      ])
+      expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
+    })
+  })
+
+  test('a scan stores no excerpt for a finding without a line', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const document = await scanApp(directory, {'.env': `SHOPIFY_API_SECRET=${token}\n`})
+
+      const [environmentFile] = committedSecrets(document)
+      expect(environmentFile!.location).toEqual({file: '.env'})
+      expect(environmentFile).not.toHaveProperty('code_excerpt')
+    })
+  })
+
+  test(`a scan cuts an excerpt line after ${MAX_EXCERPT_LINE_LENGTH} characters, after redacting it`, async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const padding = 'x'.repeat(MAX_EXCERPT_LINE_LENGTH - 10)
+      const document = await scanApp(directory, {'long.js': `${padding}${token}\n`})
+
+      const [long] = committedSecrets(document)
+      expect(long!.code_excerpt).toEqual([{line: 1, text: `${padding}shpa[REDAC…`}])
     })
   })
 })

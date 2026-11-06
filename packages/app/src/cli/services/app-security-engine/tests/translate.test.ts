@@ -1,7 +1,9 @@
 import {agentFindingsDocument, deterministicFindingsDocument} from './fixtures/findings-documents.js'
+import {combineFindings} from '../results/combine.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {STORED_TYPES_MATCH_SCHEMA_V1} from '../results/schema.js'
 import {describe, expect, test} from 'vitest'
+import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocument} from '../types.js'
 
 /** A JSON round trip, so the input is a plain value with no shared references to the fixture. */
 const asJson = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
@@ -81,6 +83,31 @@ describe('translateFindingsDocument', () => {
       expect.stringMatching(/^checks\[2\]\.analysis_mode: .*llm/),
       expect.stringMatching(/^detection\.framework: .*remix/),
       expect.stringMatching(/^coverage\.files_skipped\[0\]\.reason: .*binary/),
+    ])
+  })
+
+  test('accepts an agent suppression with or without a kind, and rejects an unknown kind', () => {
+    const checkIndex = agentFindingsDocument.checks.findIndex((check) =>
+      check.findings.some((finding) => finding.suppression),
+    )
+    const findingIndex = agentFindingsDocument.checks[checkIndex]!.findings.findIndex((finding) => finding.suppression)
+    const withKind = (kind: unknown) => {
+      const agent = asJson(agentFindingsDocument) as Record<string, any>
+      agent.checks[checkIndex].findings[findingIndex].suppression.kind = kind
+      return agent
+    }
+    expect(agentFindingsDocument.checks[checkIndex]!.findings[findingIndex]!.suppression).not.toHaveProperty('kind')
+
+    expect(translateFindingsDocument(asJson(agentFindingsDocument))).toEqual({
+      ok: true,
+      document: agentFindingsDocument,
+    })
+    expect(translateFindingsDocument(withKind('accepted-risk'))).toEqual({
+      ok: true,
+      document: withKind('accepted-risk'),
+    })
+    expect(translateInvalid(withKind('wont_fix'))).toEqual([
+      expect.stringContaining(`checks[${checkIndex}].findings[${findingIndex}].suppression.kind: `),
     ])
   })
 
@@ -205,6 +232,64 @@ describe('translateFindingsDocument', () => {
     document.coverage.files_skipped[0].size_bytes = 0
 
     expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+  })
+
+  test('accepts code excerpts on findings and evidence', () => {
+    const document = asJson(agentFindingsDocument) as Record<string, any>
+    document.checks[0].findings[0].code_excerpt = [
+      {line: 11, text: 'const orders = await db.order.findMany()'},
+      {line: 12, text: ''},
+    ]
+    document.checks[0].findings[0].evidence[0].code_excerpt = [{line: 12, text: ''}]
+
+    expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+  })
+
+  test.each([
+    ['a zero excerpt line', 0, 'Number must be greater than 0'],
+    ['a fractional excerpt line', 1.5, 'Expected integer, received float'],
+  ])('rejects %s', (_description, line, message) => {
+    const document = asJson(deterministicFindingsDocument) as Record<string, any>
+    document.checks[0].findings[0].code_excerpt = [{line, text: 'console.log(session.accessToken)'}]
+    document.checks[0].findings[0].evidence[0].code_excerpt = [{line: 12}]
+
+    expect(translateInvalid(document)).toEqual([
+      `checks[0].findings[0].evidence[0].code_excerpt[0].text: Required`,
+      `checks[0].findings[0].code_excerpt[0].line: ${message}`,
+    ])
+  })
+
+  test('parses and combines files without code excerpts, as the current CLI writes them, as before', () => {
+    const withExcerpts = (document: FindingsDocument) => ({
+      ...document,
+      checks: document.checks.map((check) => ({
+        ...check,
+        findings: check.findings.map((finding) => ({
+          ...finding,
+          code_excerpt: [{line: finding.location.line ?? 1, text: 'an excerpt'}],
+        })),
+      })),
+    })
+    const translated = (document: unknown) => {
+      const result = translateFindingsDocument(asJson(document))
+      if (!result.ok) throw new Error(result.errors.join('; '))
+      return result.document
+    }
+    const deterministic = translated(deterministicFindingsDocument) as DeterministicFindingsDocument
+    const agent = translated(agentFindingsDocument) as AgentFindingsDocument
+
+    expect({deterministic, agent}).toEqual({deterministic: deterministicFindingsDocument, agent: agentFindingsDocument})
+    const combined = combineFindings({deterministic, agent}).checks
+    const combinedWithExcerpts = combineFindings({
+      deterministic: translated(withExcerpts(deterministic)) as DeterministicFindingsDocument,
+      agent: translated(withExcerpts(agent)) as AgentFindingsDocument,
+    }).checks
+    expect(
+      combinedWithExcerpts.map((check) => ({
+        ...check,
+        findings: check.findings.map(({code_excerpt: _excerpt, ...finding}) => finding),
+      })),
+    ).toEqual(combined)
   })
 
   test('rejects a document that records the same check id twice', () => {

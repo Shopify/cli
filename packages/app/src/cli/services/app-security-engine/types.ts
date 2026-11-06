@@ -8,6 +8,8 @@ export interface Issue {
   message: string
   location: Location
   snippet?: string
+  /** The finding's line and the lines around it, as the scan read them. */
+  code_excerpt?: CodeExcerptLine[]
   fix: Fix
   confidence?: Confidence
   rule_version?: number
@@ -200,6 +202,18 @@ export const ENGINE_NAME = 'shopify-app-security' as const
 export interface FindingEvidence {
   location: Location
   quote?: string
+  /** The evidence line, as the CLI read it. */
+  code_excerpt?: CodeExcerptLine[]
+}
+
+/**
+ * One line of source that the CLI read when it wrote a finding, so the finding can be matched later without reading
+ * the file again. The text is redacted.
+ */
+export interface CodeExcerptLine {
+  /** Counts from 1. */
+  line: number
+  text: string
 }
 
 /**
@@ -207,6 +221,8 @@ export interface FindingEvidence {
  * `check` writes a DeterministicFindingsDocument and `record` writes an AgentFindingsDocument.
  */
 export type FindingsSource = 'deterministic' | 'agent'
+/** Why a finding is suppressed: it is a false positive, or the team accepts the risk. */
+export type SuppressionKind = 'false-positive' | 'accepted-risk'
 export type StoredCheckStatus = 'executed' | 'not_applicable' | 'unresolved'
 export type CheckPrecedence = 'union' | 'prefer-agent'
 
@@ -233,14 +249,16 @@ export interface StoredFinding {
   message: string
   evidence: StoredEvidence[]
   snippet?: string
+  /** The finding's line and the lines around it, read by `check` or `record`. Absent in files written before excerpts. */
+  code_excerpt?: CodeExcerptLine[]
   /** Deterministic documents only. */
   fix?: Fix
   /** Agent documents only. */
   confidence?: 'high' | 'medium' | 'low'
   /** Agent documents only. */
   reasoning?: string
-  /** Agent documents only. */
-  suppression?: {justification: string}
+  /** Agent documents only. `kind` is absent in files written before `record` saved suppressions. */
+  suppression?: {justification: string; kind?: SuppressionKind}
 }
 
 export interface StoredCheck {

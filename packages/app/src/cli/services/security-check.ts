@@ -13,14 +13,19 @@ import {
   type DeclinedAppSecuritySelection,
 } from './app-security-selection.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
+import {missingSuppressionPaths, readAppSecuritySuppressions} from './app-security-suppressions.js'
+import {combineFindings} from './app-security-engine/index.js'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
 import type {
   AgentChecks,
   AppSecurityScope,
+  CombinedCheck,
   DeterministicFindingsDocument,
   ScanInput,
   ScanOptions,
+  SuppressionEntry,
+  SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 
@@ -62,14 +67,21 @@ interface AppSecurityGatheringNotices {
 /** The files a scan would gather, which `--list-files` lists. */
 type ListedSecurityCheck = {kind: 'listed'; paths: string[]} & SecurityCheckResolution & AppSecurityGatheringNotices
 
-/** A finished scan, with the results files it replaced and the `--blocking` outcome. */
+/**
+ * A finished scan, with the results files it replaced, its findings with shopify.app-security.json applied, and the
+ * `--blocking` outcome.
+ */
 type ScannedSecurityCheck = {
   kind: 'scanned'
   execution: AppSecurityExecution
   artifacts: CheckArtifactPaths
+  /** The scan's checks, each deterministic finding active or suppressed. `check` reads no agent results. */
+  checks: CombinedCheck[]
+  /** One result per entry of shopify.app-security.json, in file order. Agent entries are never evaluated. */
+  suppressions: SuppressionEntryResult[]
   blocking: {
     level: AppSecurityBlockingLevel
-    /** Checks with a deterministic issue at or above the level. Zero for `none`. */
+    /** Checks with an active deterministic finding at or above the level. Zero for `none`. */
     blockedChecks: number
   }
 } & SecurityCheckResolution
@@ -91,6 +103,7 @@ interface SecurityDependencies {
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
   recordMetadata(fields: AppSecurityMetadata): Promise<void>
+  readSuppressions(appDirectory: string): Promise<SuppressionEntry[]>
 }
 
 const defaultDependencies: SecurityDependencies = {
@@ -100,12 +113,14 @@ const defaultDependencies: SecurityDependencies = {
   writeArtifacts: writeCheckArtifacts,
   canPrompt: terminalSupportsPrompting,
   recordMetadata: recordAppSecurityMetadata,
+  readSuppressions: readAppSecuritySuppressions,
 }
 
 /**
  * Scans the app and replaces deterministic-findings.json and agent-checks.json. Scanning never reads or
- * changes the agent's recorded findings, so it's always safe to run again. Prints nothing: the command presents the
- * outcome.
+ * changes the agent's recorded findings, so it's always safe to run again. The entries of shopify.app-security.json
+ * suppress the scan's findings, so a suppressed finding doesn't fail `--blocking`. Prints nothing: the command presents
+ * the outcome.
  *
  * With `listFiles`, it only resolves and gathers: it returns the gathered paths and writes nothing.
  * `directory` is the `--path` value, an absolute path.
@@ -164,11 +179,22 @@ export default async function securityCheck(
     return {kind: 'listed', ...resolution, ...listing}
   }
 
+  // Read before the scan, so an invalid file fails the command before it replaces any results file.
+  const suppressionEntries = await dependencies.readSuppressions(appDirectory)
   const execution = await dependencies.execute(scanOptions)
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resolution.resultsKey, {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
+  })
+  const {checks, suppressions} = combineFindings({
+    deterministic: execution.deterministicFindings,
+    agent: null,
+    suppressions: {
+      entries: suppressionEntries,
+      resultsKey: resolution.resultsKey,
+      missingPaths: await missingSuppressionPaths(appDirectory, suppressionEntries),
+    },
   })
 
   return {
@@ -176,6 +202,8 @@ export default async function securityCheck(
     ...resolution,
     execution,
     artifacts,
-    blocking: {level: options.blocking, blockedChecks: blockedCheckCount(execution, options.blocking)},
+    checks,
+    suppressions,
+    blocking: {level: options.blocking, blockedChecks: blockedCheckCount(checks, options.blocking)},
   }
 }
