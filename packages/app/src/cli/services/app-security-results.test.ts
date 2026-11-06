@@ -267,7 +267,9 @@ describe('loadAppSecurityResults', () => {
         expect(error.code).toBe('suppressions-file-invalid')
         expect(error.details).toStrictEqual({
           path: resolve(appSecuritySuppressionsPath(selection.appDirectory)),
-          errors: ['suppressions[1].check: not a known check ID'],
+          errors: [
+            'suppressions[1].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
+          ],
         })
       })
     })
