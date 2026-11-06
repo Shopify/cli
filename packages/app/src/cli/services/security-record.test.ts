@@ -1,6 +1,12 @@
 import securityRecord from './security-record.js'
 import {git, isolateGitConfig} from './app-security-engine/tests/git-test-helpers.js'
-import {appSecurityArtifactPaths, readFindingsDocument, writeAgentFindings} from './app-security-artifacts.js'
+import {
+  appSecurityArtifactPaths,
+  readFindingsDocument,
+  writeAgentFindings,
+  writeCheckArtifacts,
+} from './app-security-artifacts.js'
+import {agentChecks, deterministicFindings} from './security-check.test-data.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {
   fileExists,
@@ -669,6 +675,65 @@ describe('securityRecord', () => {
         expect(excerpts).toEqual({'config/local.js': excerptOf(1, 3), 'app/generated/schema.ts': undefined})
       })
     })
+
+    /**
+     * An app below `directory` with a `shared` directory next to it, and the deterministic-findings.json of a check run
+     * with `--include-dir ../shared`.
+     */
+    async function createAppWithIncludeDirectory(directory: string): Promise<string> {
+      const appRoot = await createNestedApp(directory)
+      await mkdir(joinPath(directory, 'shared'))
+      await writeFile(joinPath(directory, 'shared', 'util.ts'), `${orders.join('\n')}\n`)
+      await writeCheckArtifacts(appRoot, 'shopify.app', {
+        deterministicFindings: {
+          ...deterministicFindings,
+          coverage: {
+            ...deterministicFindings.coverage,
+            scope: {include_dirs: ['../shared'], excludes: [], no_git_ignore: false},
+            scan_directories: [
+              {directory: '.', origin: 'app_directory'},
+              {directory: '../shared', origin: 'include_dir'},
+            ],
+          },
+        },
+        agentChecks,
+      })
+      return appRoot
+    }
+
+    test('reads a cited file in an --include-dir directory outside the app that the check run recorded', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createAppWithIncludeDirectory(directory)
+
+        const excerpts = await recordedExcerpts(appRoot, ['../shared/util.ts'], {
+          include_dirs: ['../shared'],
+          excludes: [],
+          no_git_ignore: false,
+        })
+
+        expect(excerpts).toEqual({'../shared/util.ts': excerptOf(1, 3)})
+      })
+    })
+
+    test.each([
+      ['the document names other include directories', ['../other']],
+      ['the document names none', []],
+    ])(
+      "doesn't read a cited file in the check run's include directories when %s",
+      async (_description, includeDirs) => {
+        await inTemporaryDirectory(async (directory) => {
+          const appRoot = await createAppWithIncludeDirectory(directory)
+
+          const excerpts = await recordedExcerpts(appRoot, ['../shared/util.ts'], {
+            include_dirs: includeDirs,
+            excludes: [],
+            no_git_ignore: false,
+          })
+
+          expect(excerpts).toEqual({'../shared/util.ts': undefined})
+        })
+      },
+    )
 
     test('stores the findings without excerpts when the excerpts would make the file too large for review', async () => {
       await inTemporaryDirectory(async (directory) => {

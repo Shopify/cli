@@ -1,4 +1,10 @@
-import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
+import {
+  appSecurityArtifactPaths,
+  encodedArtifactSize,
+  MAX_ARTIFACT_FILE_SIZE_BYTES,
+  readFindingsDocument,
+  writeAgentFindings,
+} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {
@@ -13,6 +19,8 @@ import {
 } from './app-security-engine/index.js'
 import {mergeScanDirectories, resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists, fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import type {AppSecurityCommands} from './app-security-commands.js'
 
@@ -105,15 +113,45 @@ async function readInputDocument(
 }
 
 /**
+ * The `--include-dir` directories of the `check` run that the document describes, as real paths: those that its
+ * deterministic-findings.json records, when the `include_dirs` of its scope are the document's. `check` wrote that file,
+ * so the document can't widen what's read. None when there's no such file, and a directory that's gone is left out.
+ */
+async function checkIncludeDirectories(selection: AppSecuritySelection, scope: AppSecurityScope): Promise<string[]> {
+  const {deterministicFindingsPath} = appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection))
+  const deterministic = await readFindingsDocument(deterministicFindingsPath, 'deterministic')
+  if (deterministic.status !== 'ok') return []
+  const {scope: checkScope, scan_directories: scanDirectories} = deterministic.value.coverage
+  const sameIncludeDirs =
+    checkScope.include_dirs.length === scope.include_dirs.length &&
+    checkScope.include_dirs.every((includeDir, index) => includeDir === scope.include_dirs[index])
+  if (!sameIncludeDirs) return []
+
+  const directories: string[] = []
+  for (const {directory, origin} of scanDirectories) {
+    if (origin !== 'include_dir') continue
+    const path = resolvePath(selection.appDirectory, directory)
+    // eslint-disable-next-line no-await-in-loop
+    if ((await fileExists(path)) && (await isDirectory(path))) directories.push(await fileRealPath(path))
+  }
+  return directories
+}
+
+/**
  * Reads the files that findings cite, for their excerpts, when `check` would gather them with the document's scope:
- * below the app directory, and the extension and web directories outside it, with its `excludes` and `no_git_ignore`.
+ * below the app directory, the check run's include directories, and the extension and web directories outside the app
+ * directory, with its `excludes` and `no_git_ignore`.
  */
 async function createRecordFileReader(
   selection: AppSecuritySelection,
   scope: AppSecurityScope,
 ): Promise<SourceTextReader> {
   const appConfigDirectories = selection.kind === 'config' ? (selection.appConfigDirectories ?? []) : []
-  const merged = mergeScanDirectories(selection.appDirectory, [], appConfigDirectories)
+  const merged = mergeScanDirectories(
+    selection.appDirectory,
+    await checkIncludeDirectories(selection, scope),
+    appConfigDirectories,
+  )
   const scanDirectories = merged.scanDirectories.map(({directory}) => directory)
   const {paths} = await listGatheredPaths(
     {
@@ -130,8 +168,8 @@ async function createRecordFileReader(
 /**
  * Validates the agent's findings document from stdin and, only if it is fully valid, replaces
  * agent-findings.json. Each finding gets the redacted lines it cites, read from the files that `check` would gather
- * with the document's scope. Doesn't read or require deterministic-findings.json. Prints nothing; every failure throws
- * an AbortError before anything is written.
+ * with the document's scope. Reads deterministic-findings.json only for the include directories, and doesn't require
+ * it. Prints nothing; every failure throws an AbortError before anything is written.
  */
 export default async function securityRecord(
   options: SecurityRecordOptions,
