@@ -1,4 +1,5 @@
 import SecurityReview from './review.js'
+import {writeAppSecuritySuppressionsFixture} from '../../../services/app-security-suppressions.test-data.js'
 import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from '../../../services/app-security-artifacts.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {Config} from '@oclif/core'
@@ -162,10 +163,6 @@ const suppressionEntries = [
     configurations: ['shopify.app.toml'],
   },
 ]
-
-async function writeSuppressions(appDirectory: string, suppressions: unknown[]): Promise<void> {
-  await writeFile(appSecuritySuppressionsPath(appDirectory), JSON.stringify({schema_version: 1, suppressions}))
-}
 
 /** The deterministic document with line 0 on its first finding, as a hand edit could leave it. */
 function withZeroLine(document: DeterministicFindingsDocument): DeterministicFindingsDocument {
@@ -595,7 +592,7 @@ describe('app security review command boundary', () => {
   test('--json applies shopify.app-security.json to both sources, and suppressed findings pass --blocking', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
-      await writeSuppressions(appDirectory, suppressionEntries)
+      await writeAppSecuritySuppressionsFixture(appDirectory, suppressionEntries)
 
       const result = await runJsonCommand(['--path', directory, '--blocking', 'low'])
 
@@ -620,7 +617,7 @@ describe('app security review command boundary', () => {
   test('without --json, --verbose shows the reason of the entry that suppresses a deterministic finding', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await createApp(directory, {deterministic: deterministicFindings})
-      await writeSuppressions(appDirectory, suppressionEntries)
+      await writeAppSecuritySuppressionsFixture(appDirectory, suppressionEntries)
 
       const result = await runCommand(['--path', directory, '--verbose', '--check-id', 'EOL_API_VERSION'])
 
@@ -634,7 +631,10 @@ describe('app security review command boundary', () => {
   test('--json with an invalid shopify.app-security.json writes its error document', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await createApp(directory, {deterministic: deterministicFindings})
-      await writeSuppressions(appDirectory, [{...suppressionEntries[0], check: 'NOT_A_CHECK'}])
+      await writeFile(
+        appSecuritySuppressionsPath(appDirectory),
+        JSON.stringify({schema_version: 1, suppressions: [{...suppressionEntries[0], check: 'NOT_A_CHECK'}]}),
+      )
 
       const result = await runJsonCommand(['--path', directory])
 

@@ -1,3 +1,4 @@
+import {writeAppSecuritySuppressionsFixture} from './app-security-suppressions.test-data.js'
 import {
   loadAppSecurityResults as loadResults,
   requireResultsDirectory as requireResults,
@@ -224,33 +225,26 @@ describe('loadAppSecurityResults', () => {
       configurations: ['shopify.app.toml', 'other-client-id'],
     }
 
-    async function writeSuppressions(selection: AppSecuritySelection, suppressions: unknown[]): Promise<void> {
-      await writeFile(
-        appSecuritySuppressionsPath(selection.appDirectory),
-        JSON.stringify({schema_version: 1, suppressions}),
-      )
-    }
-
     test('applies the entries of shopify.app-security.json to the results of the selected configuration', async () => {
       await inTemporaryDirectory(async (directory) => {
         const selection = await createApp(directory)
         await writeAgentFindings(selection.appDirectory, resultsKey(selection), agentFindingsDocument)
         await writeAgentFindings(selection.appDirectory, 'third-client-id', agentFindingsDocument)
-        await writeSuppressions(selection, [tenantIsolationEntry])
+        await writeAppSecuritySuppressionsFixture(selection.appDirectory, [tenantIsolationEntry])
 
         const thirdSelection = {...selection, clientIdOverride: 'third-client-id'}
 
         const results = await loadAppSecurityResults(selection)
         const other = await loadAppSecurityResults(thirdSelection)
 
-        expect(results).toEqual({
-          sources: results.sources,
-          ...combineFindings({
-            deterministic: null,
-            agent: agentFindingsDocument,
-            suppressions: {entries: [tenantIsolationEntry], resultsKey: 'shopify.app'},
-          }),
+        const tenantFinding = (checks: typeof results.checks) =>
+          checks.find(({id}) => id === 'MISSING_TENANT_ISOLATION')?.findings.find(({location}) => location.line === 31)
+        expect(tenantFinding(results.checks)).toMatchObject({
+          source: 'agent',
+          disposition: 'suppressed',
+          suppressed_by: {origin: 'file', entry_index: 0},
         })
+        expect(tenantFinding(other.checks)).toMatchObject({source: 'agent', disposition: 'active'})
         expect(results.suppressions).toMatchObject([{index: 0, status: 'matched', matched_finding_count: 1}])
         expect(other.suppressions).toMatchObject([{index: 0, status: 'not-evaluated', matched_finding_count: 0}])
       })
@@ -260,7 +254,13 @@ describe('loadAppSecurityResults', () => {
       await inTemporaryDirectory(async (directory) => {
         const selection = await createApp(directory)
         await writeAgentFindings(selection.appDirectory, resultsKey(selection), agentFindingsDocument)
-        await writeSuppressions(selection, [tenantIsolationEntry, {...tenantIsolationEntry, check: 'NOT_A_CHECK'}])
+        await writeFile(
+          appSecuritySuppressionsPath(selection.appDirectory),
+          JSON.stringify({
+            schema_version: 1,
+            suppressions: [tenantIsolationEntry, {...tenantIsolationEntry, check: 'NOT_A_CHECK'}],
+          }),
+        )
 
         const error = await loadError(selection)
 

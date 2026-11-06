@@ -1,3 +1,4 @@
+import {writeAppSecuritySuppressionsFixture} from './app-security-suppressions.test-data.js'
 import securityReview, {reviewAppSecurityResults, type SecurityReviewDependencies} from './security-review.js'
 import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {resolveAppSecuritySelection, type AppSecuritySelectionOptions} from './app-security-selection.js'
@@ -412,10 +413,7 @@ describe('securityReview', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
       const blocked = await securityReview({directory: appRoot, checkIds: [], blocking: 'high'}, testDependencies())
-      await writeFile(
-        appSecuritySuppressionsPath(appRoot),
-        JSON.stringify({schema_version: 1, suppressions: [eolApiVersionEntry, tenantIsolationEntry]}),
-      )
+      await writeAppSecuritySuppressionsFixture(appRoot, [eolApiVersionEntry, tenantIsolationEntry])
       const dependencies = testDependencies()
 
       const review = await securityReview({directory: appRoot, checkIds: [], blocking: 'high'}, dependencies)

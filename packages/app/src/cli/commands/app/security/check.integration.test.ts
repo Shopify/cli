@@ -1,5 +1,6 @@
 import SecurityCheck from './check.js'
 import SecurityReview from './review.js'
+import {writeAppSecuritySuppressionsFixture} from '../../../services/app-security-suppressions.test-data.js'
 import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from '../../../services/app-security-artifacts.js'
 import {deterministicFindingsDocumentSchema} from '../../../services/app-security-engine/results/schema.js'
 import {appFromIdentifiers} from '../../../services/context.js'
@@ -114,11 +115,6 @@ async function runJsonCommand(argv: string[], command: typeof SecurityCheck | ty
   } finally {
     vi.unstubAllEnvs()
   }
-}
-
-/** Writes shopify.app-security.json with these entries into the app directory. */
-async function writeSuppressions(directory: string, suppressions: unknown[]): Promise<void> {
-  await writeFile(appSecuritySuppressionsPath(directory), JSON.stringify({schema_version: 1, suppressions}))
 }
 
 /** An entry for the access token that `createAppWithSecret` commits, with its code as the results file holds it. */
@@ -583,7 +579,7 @@ describe('app security check --json command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
       const blocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
-      await writeSuppressions(directory, [committedSecretEntry])
+      await writeAppSecuritySuppressionsFixture(directory, [committedSecretEntry])
 
       const suppressed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
       const source = await readFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'utf8')
@@ -619,7 +615,7 @@ describe('app security check --json command boundary', () => {
         'export async function loader({request}) {\n  const {session} = await authenticate.admin(request)\n  console.log(session.accessToken)\n  return null\n}\n',
       )
       const blocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
-      await writeSuppressions(directory, [
+      await writeAppSecuritySuppressionsFixture(directory, [
         {
           ...committedSecretEntry,
           check: 'CREDENTIAL_LOG_LEAKAGE',
@@ -640,7 +636,10 @@ describe('app security check --json command boundary', () => {
   test('aborts with one error document when shopify.app-security.json is invalid, and writes no results', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
-      await writeSuppressions(directory, [{...committedSecretEntry, reason: undefined}])
+      await writeFile(
+        appSecuritySuppressionsPath(directory),
+        JSON.stringify({schema_version: 1, suppressions: [{...committedSecretEntry, reason: undefined}]}),
+      )
 
       const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
 

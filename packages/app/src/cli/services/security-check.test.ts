@@ -1,3 +1,4 @@
+import {writeAppSecuritySuppressionsFixture} from './app-security-suppressions.test-data.js'
 import securityCheck from './security-check.js'
 import {executeAppSecurity} from './app-security-api.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
@@ -606,10 +607,7 @@ describe('securityCheck suppressions', () => {
         ...testDependencies(committedSecretExecution, selection),
         readSuppressions: readAppSecuritySuppressions,
       })
-      await writeFile(
-        appSecuritySuppressionsPath(appRoot),
-        JSON.stringify({schema_version: 1, suppressions: [secretEntry]}),
-      )
+      await writeAppSecuritySuppressionsFixture(appRoot, [secretEntry])
 
       const present = await securityCheck(options, {
         ...testDependencies(committedSecretExecution, selection),
