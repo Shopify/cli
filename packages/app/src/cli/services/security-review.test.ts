@@ -1072,27 +1072,20 @@ describe('securityReview --suppress', () => {
   })
 })
 
-/**
- * deterministic-findings.json after a scan of app/routes/session.ts, whose line 2 assigns a Shopify token to `name`, with
- * the line redacted as `check` captures it. Finding 1 is that token. The app has no other COMMITTED_SECRET finding.
- */
-function committedTokenResults(name: string): Files {
-  const lines = ['// Session fixtures.', `export const ${name} = "shpa[REDACTED:38]"`, 'export const shop = "example"']
+/** Results for one finding on line 2 of the session fixture. */
+function sessionResults(
+  check: DeterministicFindingsDocument['checks'][number],
+  lines: string[],
+  message: string,
+): Files {
   return {
     deterministic: {
-      ...deterministicFindingsDocument,
+      ...structuredClone(deterministicFindingsDocument),
       checks: [
         {
-          ...committedSecrets.deterministic!.checks[0]!,
+          ...structuredClone(check),
           findings: [
-            findingWithExcerpt(
-              {
-                location: {file: 'app/routes/session.ts', line: 2},
-                message: 'A Shopify token pattern was found in repository text.',
-                evidence: [],
-              },
-              lines,
-            ),
+            findingWithExcerpt({location: {file: 'app/routes/session.ts', line: 2}, message, evidence: []}, lines),
           ],
         },
       ],
@@ -1100,29 +1093,20 @@ function committedTokenResults(name: string): Files {
   }
 }
 
-/** A deterministic CREDENTIAL_LOG_LEAKAGE finding in `app/routes/session.ts`, whose line 2 logs `<name>.accessToken`. */
+function committedTokenResults(name: string): Files {
+  return sessionResults(
+    committedSecrets.deterministic!.checks[0]!,
+    ['// Session fixtures.', `export const ${name} = "shpa[REDACTED:38]"`, 'export const shop = "example"'],
+    'A Shopify token pattern was found in repository text.',
+  )
+}
+
 function loggedTokenResults(name: string): Files {
-  const lines = ['export function logSession(session) {', `  console.log(${name}.accessToken)`, '}']
-  return {
-    deterministic: {
-      ...deterministicFindingsDocument,
-      checks: [
-        {
-          ...deterministicFindingsDocument.checks.find(({id}) => id === 'CREDENTIAL_LOG_LEAKAGE')!,
-          findings: [
-            findingWithExcerpt(
-              {
-                location: {file: 'app/routes/session.ts', line: 2},
-                message: 'accessToken flows into console.log.',
-                evidence: [],
-              },
-              lines,
-            ),
-          ],
-        },
-      ],
-    },
-  }
+  return sessionResults(
+    deterministicFindingsDocument.checks.find(({id}) => id === 'CREDENTIAL_LOG_LEAKAGE')!,
+    ['export function logSession(session) {', `  console.log(${name}.accessToken)`, '}'],
+    'accessToken flows into console.log.',
+  )
 }
 
 /** Writes the results of `files` again, as a new `check` or `record` does. */
@@ -1282,10 +1266,7 @@ describe('securityReview --suppress, for the likely finding of a stale entry', (
         reason: 'The logger redacts tokens.',
         configurations: ['shopify.app.toml'],
       }
-      await writeFile(
-        appSecuritySuppressionsPath(appRoot),
-        JSON.stringify({schema_version: 1, suppressions: [agentEntry]}),
-      )
+      await writeAppSecuritySuppressionsFixture(appRoot, [agentEntry])
       await mkdir(joinPath(appRoot, 'app', 'routes'))
       await writeFile(joinPath(appRoot, 'app', 'routes', 'orders.tsx'), 'export {}\n')
 
@@ -1655,7 +1636,7 @@ describe('securityReview --interactive, for the likely finding of a stale entry'
     {files = loggedTokenResults('currentSession'), entry = staleEntry}: {files?: Files; entry?: object} = {},
   ): Promise<string> {
     const appRoot = await createSessionApp(directory, files)
-    await writeFile(appSecuritySuppressionsPath(appRoot), JSON.stringify({schema_version: 1, suppressions: [entry]}))
+    await writeAppSecuritySuppressionsFixture(appRoot, [entry])
     return appRoot
   }
 

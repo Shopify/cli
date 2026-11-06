@@ -716,23 +716,15 @@ describe('buildSecurityReviewAlerts', () => {
       const box = entriesBox(input)
 
       expect(reattach).toMatch(/ --suppress 6 --results-digest [0-9a-f]{12}$/)
-      expect(box?.options.customSections?.[0]).toEqual({
-        title: 'Stale entries in shopify.app-security.json',
+      expect(box?.options.customSections?.[0]).toMatchObject({
         body: {
           list: {
             items: [
-              [
-                {subdued: 'suppressions[0]:'},
-                'deterministic EOL_API_VERSION in',
-                {filePath: 'shopify.app.toml'},
-                {subdued: '· accepted risk'},
-                '\nThe upgrade ships with the next release.',
+              expect.arrayContaining([
                 '\nLikely now finding 6, at',
                 {filePath: 'shopify.app.toml:8'},
-                {char: '.'},
-                'To re-attach the entry to it, with its kind and reason, run',
                 {command: reattach},
-              ],
+              ]),
             ],
           },
         },

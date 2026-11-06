@@ -1,4 +1,8 @@
-import {findingWithExcerpt, storedAgentDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
+import {
+  deterministicFindingsDocument,
+  findingWithExcerpt,
+  storedAgentDocument,
+} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {
   missingSuppressionPaths,
   parseSuppressionFlags,
@@ -19,7 +23,6 @@ import {
   type DeterministicFindingsDocument,
   type StoredFinding,
 } from './app-security-engine/index.js'
-import {deterministicFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
   chmod,

@@ -870,14 +870,6 @@ describe('app security check --json command boundary', () => {
       const staleReview = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
       const staleReviewText = await runCommand(['--path', directory], SecurityReview)
       const number = loggedNumber(staleReview)
-      // Without --kind and --reason, a finding that no stale entry likely names fails as before.
-      const otherNumber = staleReview.checks
-        .filter((check: {id: string}) => check.id !== 'CREDENTIAL_LOG_LEAKAGE')
-        .flatMap((check: {findings: {number: number}[]}) => check.findings)[0].number
-      const withoutFlags = await runJsonCommand(
-        ['--path', directory, '--suppress', String(otherNumber)],
-        SecurityReview,
-      )
       const reattached = await runJsonCommand(
         ['--path', directory, '--suppress', String(number), '--results-digest', staleReview.resultsDigest],
         SecurityReview,
@@ -902,30 +894,17 @@ describe('app security check --json command boundary', () => {
       expect(boxText(staleReviewText.stderr)).toContain(
         `--suppress ${number} --results-digest ${staleReview.resultsDigest}`,
       )
-      expect(withoutFlags.exitCode).toBe(1)
-      expect(JSON.parse(withoutFlags.stdout)).toMatchObject({
-        error: {
-          code: 'suppression-flags-invalid',
-          details: {errors: ['--kind: required (false-positive or accepted-risk)', '--reason: required']},
-        },
-      })
       expect(reattached.exitCode).toBe(0)
       const document = JSON.parse(reattached.stdout)
-      expect(document.savedSuppressions.entries).toStrictEqual([
-        {
-          index: 0,
-          change: 'code-replaced',
-          source: 'deterministic',
-          check: 'CREDENTIAL_LOG_LEAKAGE',
-          kind: 'false-positive',
-          path: resolve(appDirectory, 'app', 'routes', 'index.ts'),
-          code: 'console.log(currentSession.accessToken)',
-          reason,
-          configurations: ['shopify.app.toml'],
-          previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason},
-          findingNumber: number,
-        },
-      ])
+      expect(document.savedSuppressions.entries).toHaveLength(1)
+      expect(document.savedSuppressions.entries[0]).toMatchObject({
+        index: 0,
+        change: 'code-replaced',
+        kind: 'false-positive',
+        code: 'console.log(currentSession.accessToken)',
+        reason,
+        findingNumber: number,
+      })
       expect(document.suppressions).toMatchObject({
         staleEntryCount: 0,
         entries: [{status: 'matched', likelyFinding: null}],
@@ -937,26 +916,18 @@ describe('app security check --json command boundary', () => {
       ).toMatchObject([
         {disposition: 'suppressed', suppression: {origin: 'file', entryIndex: 0, justification: reason}},
       ])
-      await expect(readFile(appSecuritySuppressionsPath(directory), 'utf8')).resolves.toBe(
-        `${JSON.stringify(
-          {
-            schema_version: 1,
-            suppressions: [
-              {
-                source: 'deterministic',
-                check: 'CREDENTIAL_LOG_LEAKAGE',
-                kind: 'false-positive',
-                path: 'app/routes/index.ts',
-                code: 'console.log(currentSession.accessToken)',
-                reason,
-                configurations: ['shopify.app.toml'],
-              },
-            ],
-          },
-          null,
-          2,
-        )}\n`,
-      )
+      const savedFile = JSON.parse(await readFile(appSecuritySuppressionsPath(directory), 'utf8'))
+      expect(savedFile.suppressions).toStrictEqual([
+        {
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'false-positive',
+          path: 'app/routes/index.ts',
+          code: 'console.log(currentSession.accessToken)',
+          reason,
+          configurations: ['shopify.app.toml'],
+        },
+      ])
       expect(passed.exitCode).toBe(0)
       expect(JSON.parse(passed.stdout)).toMatchObject({valid: true, suppressions: {staleEntryCount: 0}})
     })

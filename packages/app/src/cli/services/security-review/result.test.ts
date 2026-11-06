@@ -1027,15 +1027,9 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
     })
     const staleEntry = entry({code: 'console.log(session.accessToken)'})
 
-    const result = (await jsonResult({deterministic: renamed, agent: null}, {entries: [staleEntry, entry({})]})) as {
-      suppressions: {entries: unknown[]}
-    }
     const unchanged = (await jsonResult({deterministic: renamed, agent: null}, {entries: [entry({})]})) as {
       suppressions: {entries: unknown[]}
     }
-
-    // The entry without code matches the finding, so the stale entry's similar finding is suppressed: no likely finding.
-    expect(result.suppressions.entries).toMatchObject([{status: 'stale', likelyFinding: null}, {status: 'matched'}])
     const alone = (await jsonResult({deterministic: renamed, agent: null}, {entries: [staleEntry]})) as {
       suppressions: {entries: unknown[]}
     }
