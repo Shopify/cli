@@ -31,6 +31,8 @@ export interface SecurityRecordResult {
   path: string
   checks: number
   findings: number
+  /** True when the document was written without code excerpts, which would have made it too large. */
+  codeExcerptsOmitted?: boolean
 }
 
 export interface SecurityRecordOptions {
@@ -190,10 +192,8 @@ export default async function securityRecord(
   if (!recorded.ok) abortRejectedDocument(recorded.errors, commands)
 
   // The excerpts are context that `record` adds, so they never make it refuse a document: it drops them instead.
-  const document =
-    encodedArtifactSize(recorded.document) > MAX_ARTIFACT_FILE_SIZE_BYTES
-      ? withoutCodeExcerpts(recorded.document)
-      : recorded.document
+  const codeExcerptsOmitted = encodedArtifactSize(recorded.document) > MAX_ARTIFACT_FILE_SIZE_BYTES
+  const document = codeExcerptsOmitted ? withoutCodeExcerpts(recorded.document) : recorded.document
 
   // The stored document adds check snapshots and indentation, so an input under the limit can still be stored
   // over it. `review` can't read a file that large, so refuse to replace the existing one with it.
@@ -208,5 +208,5 @@ export default async function securityRecord(
   const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
   const findings = document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
-  return {path, checks: document.checks.length, findings}
+  return {path, checks: document.checks.length, findings, ...(codeExcerptsOmitted ? {codeExcerptsOmitted} : {})}
 }

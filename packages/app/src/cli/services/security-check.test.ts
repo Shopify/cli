@@ -340,6 +340,7 @@ describe('securityCheck', () => {
       expect(encodedArtifactSize(original.deterministicFindings)).toBeGreaterThan(MAX_ARTIFACT_FILE_SIZE_BYTES)
       expect(original.scan.issues.some((issue) => issue.code_excerpt !== undefined)).toBe(true)
       expect(JSON.stringify(check.execution)).not.toContain('code_excerpt')
+      expect(check.codeExcerptsOmitted).toBe(true)
       expect(check.execution.scan.issues).toHaveLength(original.scan.issues.length)
       await expect(readFindingsDocument(check.artifacts.deterministicFindingsPath, 'deterministic')).resolves.toEqual({
         status: 'ok',

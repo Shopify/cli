@@ -749,11 +749,12 @@ describe('securityRecord', () => {
           ),
         })
 
-        await record(appRoot, testDependencies(document))
+        const result = await record(appRoot, testDependencies(document))
 
         const {agentFindingsPath} = artifactPaths(appRoot)
         await expect(readFindingsDocument(agentFindingsPath, 'agent')).resolves.toMatchObject({status: 'ok'})
         await expect(readFile(agentFindingsPath)).resolves.not.toContain('code_excerpt')
+        expect(result.codeExcerptsOmitted).toBe(true)
       })
     })
   })

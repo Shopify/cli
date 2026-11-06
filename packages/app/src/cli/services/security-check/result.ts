@@ -123,6 +123,13 @@ export async function renderSecurityCheckResult(
   }
 
   await renderGatheringWarnings(check.execution)
+  if (check.codeExcerptsOmitted) {
+    renderWarning({
+      headline:
+        'deterministic-findings.json was written without code excerpts, because with them it would be larger than 5 MB.',
+      body: ['Use', {command: '--exclude'}, 'or scan fewer directories to keep them.'],
+    })
+  }
   if (format === 'json') {
     await renderScanAsJson(check, options, dependencies)
   } else {
