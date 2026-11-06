@@ -3,7 +3,9 @@ import {appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+import {symlink} from 'node:fs/promises'
 
 const deterministicEntry: AppSecuritySuppression = {
   source: 'deterministic',
@@ -309,6 +311,21 @@ describe('readAppSecuritySuppressions', () => {
   })
 
   describe('the file', () => {
+    test('rejects a symbolic link without reading the file it points to', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const targetPath = joinPath(directory, 'outside.env')
+        await writeFile(targetPath, 'SHOPIFY_API_SECRET=fake-value-for-tests\n')
+        await symlink(targetPath, appSecuritySuppressionsPath(directory), 'file')
+
+        const error = await readError(directory)
+
+        expect((error.details as {errors: string[]}).errors).toStrictEqual([
+          'The file must be a regular file, not a symbolic link, a directory, or a special file.',
+        ])
+        expect(JSON.stringify(error.customSections)).not.toContain('SHOPIFY')
+      })
+    })
+
     test('rejects JSON that does not parse', async () => {
       await inTemporaryDirectory(async (directory) => {
         await writeSuppressionsFile(directory, '{"schema_version": 1, "suppressions": [')
