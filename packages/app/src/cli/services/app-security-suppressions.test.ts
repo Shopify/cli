@@ -328,7 +328,7 @@ describe('readAppSecuritySuppressions', () => {
         {configurations: []},
         'suppressions[0].configurations: must list at least one app configuration',
       ],
-      ...[';', ' , ', ',;\n'].map((code) => [
+      ...[';', ' , ', ',;\n'].map((code): [string, Record<string, unknown>, string] => [
         `the code ${JSON.stringify(code)}`,
         {code},
         'suppressions[0].code: must contain more than whitespace, commas, and semicolons',
