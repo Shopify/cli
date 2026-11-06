@@ -130,13 +130,14 @@ describe('renderSecurityRecordResult', () => {
           {
             checkId: 'SCOPE_OVER_REQUEST',
             location: {file: 'shopify.app.toml', line: 4},
-            problem: 'every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+            problem:
+              'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
           },
           {
             checkId: 'MISSING_TENANT_ISOLATION',
             location: {file: 'app/routes/orders.tsx', line: 3},
             problem:
-              'every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+              'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
             withoutCode: {findingCount: 2},
           },
         ],
@@ -169,13 +170,13 @@ describe('renderSecurityRecordResult', () => {
           "They're recorded in agent-findings.json, so they apply to these findings only, until the next record. To keep them, add entries to shopify.app-security.json by hand.",
         )
         expect(text).toContain(
-          "It can't be saved because every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml. Give its entry a code that names it alone.",
+          "It can't be saved because every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml. Give its entry a code that names it alone.",
         )
-        // No code can name the second one alone, so the advice is an entry without code, or a change to the code.
+        // The broader option must state that it also suppresses the other finding.
         expect(text).toContain(
-          "It can't be saved because every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx. No code from its lines, evidence or message names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. To keep only this one suppressed, change the code so that the findings differ.",
+          "It can't be saved because every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx. The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. Omit code only if you intend to suppress all of these findings.",
         )
-        expect(text.match(/a code that names it alone/g)).toHaveLength(1)
+        expect(text.match(/a code that names it alone/g)).toHaveLength(2)
         output.clear()
       })
     })
@@ -232,13 +233,13 @@ describe('renderSecurityRecordResult', () => {
                 checkId: 'SCOPE_OVER_REQUEST',
                 location: {filePath: resolve(appRoot, 'shopify.app.toml'), line: 4},
                 message:
-                  'every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+                  'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
               },
               {
                 checkId: 'MISSING_TENANT_ISOLATION',
                 location: {filePath: resolve(appRoot, 'app', 'routes', 'orders.tsx'), line: 3},
                 message:
-                  'every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+                  'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
               },
             ],
           })

@@ -1317,7 +1317,7 @@ const notSuppressible: FindingSuppressionResult = {
   refusal: {
     code: 'finding-not-suppressible',
     message:
-      "Finding 5 can't be suppressed: the results hold no code for its line, so no entry can name it alone. Nothing was saved.",
+      "Finding 5 can't be suppressed: the results hold no code for its line, so no automatic code selector is available. Nothing was saved.",
     tryMessage: 'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
     details: {findingNumber: 5},
   },
@@ -1650,7 +1650,7 @@ describe('interactiveSecurityReview', () => {
     expect(outcome).toStrictEqual({saved: [], declinedCompanions: [], ending: 'finished'})
     expect(promptMessages(prompts.selectAction).at(-1)).toBe('What do you want to do with finding #6?')
     expect(unstyled(output.warn()).replace(/[│\s]+/g, ' ')).toContain(
-      "Finding 5 can't be suppressed: the results hold no code for its line, so no entry can name it alone. Nothing was saved. Add an entry for it to shopify.app-security.json by hand",
+      "Finding 5 can't be suppressed: the results hold no code for its line, so no automatic code selector is available. Nothing was saved. Add an entry for it to shopify.app-security.json by hand",
     )
   })
 

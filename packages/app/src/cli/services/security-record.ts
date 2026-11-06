@@ -51,7 +51,7 @@ export interface RecordedSuppressions {
     checkId: string
     location: StoredFinding['location']
     problem: string
-    /** Set when only an entry without `code` can suppress the finding, as `planSuppression` says. */
+    /** The number of findings covered by the broader entry without `code`. */
     withoutCode?: {findingCount: number}
   }[]
 }
@@ -226,8 +226,8 @@ export default async function securityRecord(
 /**
  * Plans an entry of shopify.app-security.json for each finding that the agent suppressed, with the writer and the
  * matching rules of `review --suppress`, against the recorded document. Returns null when no finding is suppressed, and
- * then doesn't read the file. An invalid file aborts before anything is written. A suppression that no entry can name
- * alone is recorded in agent-findings.json as usual, and reported as not saved.
+ * then doesn't read the file. An invalid file aborts before anything is written. A suppression that the automatic candidates cannot select
+ * is recorded in agent-findings.json as usual, and reported as not saved.
  */
 async function planAgentSuppressions(
   selection: AppSecuritySelection,

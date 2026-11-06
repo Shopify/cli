@@ -519,11 +519,7 @@ function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal
   }
 }
 
-/**
- * Refuses a finding that no saved entry can name alone. The advice names what a person can add by hand: an entry with a
- * more specific code, only when one can name the finding alone, or else an entry without code, which suppresses every
- * finding of the finding's source and check in its file.
- */
+/** Refuses an automatic suppression and explains the selective and broader manual options. */
 function noUniqueEntry(
   target: NumberedFinding,
   {problem, withoutCode}: Extract<SuppressionPlan, {status: 'refused'}>,
@@ -539,8 +535,8 @@ function noUniqueEntry(
   }
 }
 
-/** "No code from its lines, … names it alone. A deterministic entry for X in a.ts without code suppresses all 2 …: 3 and 4. …" */
-function entryWithoutCodeAdvice({number, check, finding}: NumberedFinding, numbered: NumberedFinding[]): string {
+/** Explain the scope of an entry without code without ruling out a selective manual entry. */
+function entryWithoutCodeAdvice({check, finding}: NumberedFinding, numbered: NumberedFinding[]): string {
   const path = normalizePath(finding.location.file)
   const numbers = numbered
     .filter(
@@ -552,9 +548,8 @@ function entryWithoutCodeAdvice({number, check, finding}: NumberedFinding, numbe
     .map((other) => other.number)
   const entry = finding.source === 'agent' ? 'An agent entry' : 'A deterministic entry'
   return [
-    'No code from its lines, evidence or message names it alone.',
+    'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone.',
     `${entry} for ${check.id} in ${path} without code suppresses all ${countLabel(numbers.length, `${finding.source} finding`)} of that check in that file: ${listedNumbers(numbers)}.`,
-    `To suppress them all, add such an entry to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand.`,
-    `To suppress only finding ${number}, change the code so that the findings differ, and run check again.`,
+    `Add either entry to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} by hand. Omit code only if you intend to suppress all of these findings.`,
   ].join(' ')
 }

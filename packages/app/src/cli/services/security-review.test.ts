@@ -462,8 +462,8 @@ const committedSecrets: Files = {
 }
 
 /** The advice for finding 1 or 2 of `committedSecrets`: the entry without code that suppresses both, or a code change. */
-function committedSecretsAdvice(findingNumber: number): string {
-  return `No code from its lines, evidence or message names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: 1 and 2. To suppress them all, add such an entry to shopify.app-security.json by hand. To suppress only finding ${findingNumber}, change the code so that the findings differ, and run check again.`
+function committedSecretsAdvice(): string {
+  return `The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: 1 and 2. Add either entry to shopify.app-security.json by hand. Omit code only if you intend to suppress all of these findings.`
 }
 
 describe('securityReview --suppress', () => {
@@ -809,8 +809,8 @@ describe('securityReview --suppress', () => {
       'a finding whose line the results hold no code for',
       5,
       'finding-not-suppressible',
-      "Finding 5 can't be suppressed: the results hold no code for its line, so no entry can name it alone. Nothing was saved.",
-      'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
+      "Finding 5 can't be suppressed: the results hold no code for its line, so no automatic code selector is available. Nothing was saved.",
+      'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry for MISSING_TENANT_ISOLATION in app/routes/orders.tsx without code suppresses all 1 agent finding of that check in that file: 5. Add either entry to shopify.app-security.json by hand. Omit code only if you intend to suppress all of these findings.',
     ],
   ])('refuses %s with a clear message, and saves nothing', async (_name, findingNumber, code, message, tryMessage) => {
     await inTemporaryDirectory(async (directory) => {
@@ -832,17 +832,17 @@ describe('securityReview --suppress', () => {
       expect(error).toMatchObject({
         code: 'finding-not-suppressible',
         message:
-          "Finding 2 can't be suppressed: every code from its lines also names another finding of COMMITTED_SECRET in test/fixtures/sessions.ts. Nothing was saved.",
-        tryMessage: committedSecretsAdvice(2),
+          "Finding 2 can't be suppressed: every automatic code candidate also names another finding of COMMITTED_SECRET in test/fixtures/sessions.ts. Nothing was saved.",
+        tryMessage: committedSecretsAdvice(),
         details: {findingNumber: 2},
       })
       await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
     })
   })
 
-  test('keeps the advice of a code by hand when its message names the finding alone, although the plan finds no code', async () => {
+  test('offers manual selective and broader entries when automatic candidates fail', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const lines = ['export async function loader() {', '  console.log(session.accessToken)', '  return null', '}']
+      const lines = ['export async function loader() {', '  console.log(db.id)', '  return null', '}']
       const [credentialCheck] = agentFindingsDocument.checks
       const finding = (message: string) =>
         findingWithExcerpt(
@@ -853,7 +853,7 @@ describe('securityReview --suppress', () => {
           },
           lines,
         )
-      // The same line, but each agent finding has its own message, so an entry with that message as its code names it alone.
+      // Only the short selector id occurs in both the first finding's code and message.
       const appRoot = await createApp(directory, {
         agent: {
           ...agentFindingsDocument,
@@ -861,8 +861,16 @@ describe('securityReview --suppress', () => {
             {
               ...credentialCheck!,
               findings: [
-                finding('The loader writes the access token to the log.'),
-                finding('The token reaches a log.'),
+                finding('id leaks'),
+                {
+                  ...finding('logging unsafe'),
+                  evidence: [
+                    {
+                      location: {file: 'app/routes/orders.tsx', line: 5},
+                      code_excerpt: [{line: 5, text: '// id leaks'}],
+                    },
+                  ],
+                },
               ],
             },
           ],
@@ -874,9 +882,14 @@ describe('securityReview --suppress', () => {
       expect(error).toMatchObject({
         code: 'finding-not-suppressible',
         message:
-          "Finding 1 can't be suppressed: every code from its lines also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx. Nothing was saved.",
-        tryMessage: 'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
+          "Finding 1 can't be suppressed: every automatic code candidate also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx. Nothing was saved.",
+        tryMessage: expect.stringContaining(
+          'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone.',
+        ),
       })
+      expect(error.tryMessage).toContain('without code suppresses all 2 agent findings')
+      expect(error.tryMessage).toContain('Omit code only if you intend to suppress all of these findings.')
+      expect(error.tryMessage).not.toContain('No code from')
       await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
     })
   })
@@ -1050,8 +1063,10 @@ describe('securityReview --interactive', () => {
           refusal: {
             code: 'finding-not-suppressible',
             message:
-              "Finding 5 can't be suppressed: the results hold no code for its line, so no entry can name it alone. Nothing was saved.",
-            tryMessage: 'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
+              "Finding 5 can't be suppressed: the results hold no code for its line, so no automatic code selector is available. Nothing was saved.",
+            tryMessage: expect.stringContaining(
+              'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone.',
+            ),
             details: {findingNumber: 5},
           },
         })
@@ -1073,7 +1088,7 @@ describe('securityReview --interactive', () => {
       await reviewInteractively(appRoot, async (session) => {
         await expect(session.suppress({findingNumber: 1, decision, includeSuperseded: false})).resolves.toMatchObject({
           status: 'refused',
-          refusal: {code: 'finding-not-suppressible', tryMessage: committedSecretsAdvice(1)},
+          refusal: {code: 'finding-not-suppressible', tryMessage: committedSecretsAdvice()},
         })
         return outcomeOf()
       })

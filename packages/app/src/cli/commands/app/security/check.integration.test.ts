@@ -1054,20 +1054,20 @@ describe('app security check --json command boundary', () => {
       const passed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
 
       expect(secretCheck.findings).toMatchObject([{location: {line: 4}}, {location: {line: 9}}])
-      const tryMessage = `No code from its lines, evidence or message names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: ${numbers[0]} and ${numbers[1]}. To suppress them all, add such an entry to shopify.app-security.json by hand. To suppress only finding ${numbers[0]}, change the code so that the findings differ, and run check again.`
+      const tryMessage = `The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. A deterministic entry for COMMITTED_SECRET in test/fixtures/sessions.ts without code suppresses all 2 deterministic findings of that check in that file: ${numbers[0]} and ${numbers[1]}. Add either entry to shopify.app-security.json by hand. Omit code only if you intend to suppress all of these findings.`
       expect(json.exitCode).toBe(1)
       expect(JSON.parse(json.stdout)).toStrictEqual({
         error: {
           type: 'abort',
           code: 'finding-not-suppressible',
-          message: `Finding ${numbers[0]} can't be suppressed: every code from its lines also names another finding of COMMITTED_SECRET in test/fixtures/sessions.ts. Nothing was saved.`,
+          message: `Finding ${numbers[0]} can't be suppressed: every automatic code candidate also names another finding of COMMITTED_SECRET in test/fixtures/sessions.ts. Nothing was saved.`,
           tryMessage,
           details: {findingNumber: numbers[0]},
         },
       })
       expect(text.exitCode).toBe(1)
       expect(boxText(text.stderr)).toContain(tryMessage)
-      expect(boxText(text.stderr)).not.toContain('a code that names it alone')
+      expect(boxText(text.stderr)).not.toContain('No code from')
       expect(JSON.parse(passed.stdout)).toMatchObject({
         valid: true,
         blocking: {level: 'high', blockedCheckCount: 0},
