@@ -1,6 +1,8 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
+import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
 import {
+  SUPPRESSION_KIND_LABEL,
   suppressedFindingsView,
   unappliedEntriesView,
   type SuppressedFindingsView,
@@ -26,7 +28,7 @@ import {
 import {timeAgo} from '@shopify/cli-kit/common/string'
 import {renderError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
-import type {SecurityReviewResult} from './security-review.js'
+import type {SavedReviewSuppressions, SecurityReviewResult} from './security-review.js'
 
 /**
  * The terminal view of `app security review` (§9.4). The view-model functions return data; only
@@ -38,7 +40,12 @@ export interface SecurityReviewPresenterInput {
   verbose: boolean
   now: Date
   commands: AppSecurityCommands
+  /** What `--suppress` saved, shown after the review. */
+  savedSuppressions?: SavedReviewSuppressions
 }
+
+/** The number of a finding of the review, which every finding has. */
+type FindingNumberLookup = (finding: CombinedFinding) => number
 
 type SecurityReviewAlertType = 'info' | 'success' | 'warning' | 'error'
 
@@ -78,6 +85,8 @@ type SecurityReviewSummary = {
   scopeLines: string[]
   scopeNote?: string
   resultsFiles: {directory: string; rows: ResultsFileRow[]}
+  /** Present when a results file exists. */
+  resultsDigest?: string
 } & SecurityReviewSummaryClosing
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
@@ -119,12 +128,14 @@ export function renderSecurityReview(input: SecurityReviewPresenterInput): void 
 
 /**
  * Every box in order: unresolved checks, passed checks, one per check with findings, the suppressed findings, the
- * entries of shopify.app-security.json that apply to nothing, then the summary. The suppressed findings box is shown
- * whatever `--verbose`, whenever a shown check has one. The entries box is shown whatever `--verbose`, whenever an
- * entry of a shown check applies to nothing: `--check-id` narrows both boxes to the selected checks.
+ * entries of shopify.app-security.json that apply to nothing, the summary, then what `--suppress` saved. The
+ * suppressed findings box is shown whatever `--verbose`, whenever a shown check has one. The entries box is shown
+ * whatever `--verbose`, whenever an entry of a shown check applies to nothing: `--check-id` narrows both boxes to the
+ * selected checks. Each finding's title starts with its number.
  */
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
   const {checks, filter, suppressions} = input.result
+  const numberOf: FindingNumberLookup = (finding) => input.result.findingNumbers.get(finding)!
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
   const passedOrNotApplicable = checks.filter(
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
@@ -137,13 +148,61 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
   )
 
   return [
-    ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose)] : []),
-    ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose)] : []),
-    ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now)),
+    ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose, numberOf)] : []),
+    ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose, numberOf)] : []),
+    ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now, numberOf)),
     ...(suppressed ? [suppressedFindingsAlert(suppressed)] : []),
     ...(unappliedEntries ? [unappliedEntriesAlert(unappliedEntries)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
+    ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions)] : []),
   ]
+}
+
+/** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
+function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressions): SecurityReviewAlert {
+  const entrySections: AlertCustomSection[] = saved.map(({index, change, entry, findingNumber}) => ({
+    title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
+    body: [
+      `${entry.source} ${entry.check} in`,
+      {filePath: entry.path},
+      {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
+      ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
+      {subdued: `\nReason: ${entry.reason}`},
+      {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
+    ],
+  }))
+  const companionSections: AlertCustomSection[] =
+    companionNumbers.length === 0
+      ? []
+      : [
+          {
+            title: 'Not suppressed',
+            body: `${companionsLabel(companionNumbers)} the same check in the same file, so check --blocking, which reads no agent results, still counts ${
+              companionNumbers.length === 1 ? 'it' : 'them'
+            }. To suppress ${
+              companionNumbers.length === 1 ? 'it' : 'them'
+            } with the same kind and reason, run the command again with --include-superseded.`,
+          },
+        ]
+  return {
+    type: 'success',
+    options: {
+      headline: `Saved ${countLabel(saved.length, 'suppression')} to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+      // A section rather than `nextSteps`, which a box draws before its sections: the entries come first.
+      customSections: [
+        ...entrySections,
+        ...companionSections,
+        {title: 'Next steps', body: {list: {items: [`Review and commit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`]}}},
+      ],
+    },
+  }
+}
+
+/** "Finding 7 is a superseded deterministic finding of", "Findings 7 and 8 are superseded deterministic findings of". */
+function companionsLabel(numbers: number[]): string {
+  if (numbers.length === 1) return `Finding ${numbers[0]} is a superseded deterministic finding of`
+  const listed = `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
+  return `Findings ${listed} are superseded deterministic findings of`
 }
 
 function suppressedFindingsAlert({headline, counts, sections}: SuppressedFindingsView): SecurityReviewAlert {
@@ -179,6 +238,7 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
       directory: result.resultsDirectory,
       rows: SOURCE_ORDER.map((source) => resultsFileRow(source, result.sources[source]?.document, input.now)),
     },
+    ...(result.resultsDigest === null ? {} : {resultsDigest: result.resultsDigest}),
     ...(breached
       ? {
           blocking: `${countLabel(result.blocking.blockedChecks, 'check')} at or above ${result.blocking.level} (--blocking ${
@@ -364,6 +424,11 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
       ],
     },
   })
+  if (summary.resultsDigest) {
+    sections.push({
+      body: {subdued: `Results digest: ${summary.resultsDigest} (pass it to --results-digest with --suppress)`},
+    })
+  }
   if (summary.blocking === undefined) {
     // Nothing left to suggest when both result files are present and no check has findings or is stale.
     if (summary.nextSteps.length > 0) sections.push({title: 'Next steps', body: {list: {items: summary.nextSteps}}})
@@ -383,7 +448,11 @@ function resultsFileCells(row: ResultsFileRow): InlineToken[] {
  * Unresolved checks with no active findings. With `--verbose`, each check's suppressed and superseded findings
  * follow it in full, prefixed by the check ID, as in the passed checks box.
  */
-function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityReviewAlert {
+function unresolvedChecksAlert(
+  checks: CombinedCheck[],
+  verbose: boolean,
+  numberOf: FindingNumberLookup,
+): SecurityReviewAlert {
   return {
     type: 'warning',
     options: {
@@ -393,7 +462,9 @@ function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): Secur
           title: `${check.id} · ${check.title}`,
           body: {tabularData: sourceStatusRows(check, {withDispositions: true}), firstColumnSubdued: true},
         },
-        ...(verbose ? check.findings.map((finding) => findingSection(finding, verbose, `${check.id} · `)) : []),
+        ...(verbose
+          ? check.findings.map((finding) => findingSection(finding, numberOf(finding), verbose, `${check.id} · `))
+          : []),
       ]),
     },
   }
@@ -403,7 +474,11 @@ function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): Secur
  * Passed and not applicable checks in one table. These checks have no active findings, so with
  * `--verbose` their suppressed and superseded findings are listed here in full, prefixed by the check ID.
  */
-function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityReviewAlert {
+function passedChecksAlert(
+  checks: CombinedCheck[],
+  verbose: boolean,
+  numberOf: FindingNumberLookup,
+): SecurityReviewAlert {
   const passed = checks.filter(isCheckPassed).length
   const notApplicable = checks.length - passed
   const headline = [
@@ -426,7 +501,7 @@ function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityR
         },
         ...(verbose
           ? checks.flatMap((check) =>
-              check.findings.map((finding) => findingSection(finding, verbose, `${check.id} · `)),
+              check.findings.map((finding) => findingSection(finding, numberOf(finding), verbose, `${check.id} · `)),
             )
           : []),
       ],
@@ -451,7 +526,12 @@ function passedCheckRow(check: CombinedCheck): InlineToken[] {
  * The statuses are shown when the sources disagree, and always for a stale check: there both results count,
  * so each comes with its age and a line says why.
  */
-function checkWithFindingsAlert(check: CombinedCheck, verbose: boolean, now: Date): SecurityReviewAlert {
+function checkWithFindingsAlert(
+  check: CombinedCheck,
+  verbose: boolean,
+  now: Date,
+  numberOf: FindingNumberLookup,
+): SecurityReviewAlert {
   const counts = checkDispositionCounts(check)
   const findings = verbose ? check.findings : activeFindings(check)
 
@@ -463,7 +543,7 @@ function checkWithFindingsAlert(check: CombinedCheck, verbose: boolean, now: Dat
       ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
       customSections: [
         ...sourceStatusSections(check, now),
-        ...findings.map((finding) => findingSection(finding, verbose)),
+        ...findings.map((finding) => findingSection(finding, numberOf(finding), verbose)),
       ],
     },
   }
@@ -510,7 +590,12 @@ function sourceStatusText(result: SourceCheckResult): string {
   return result.reason ? `${status} — ${result.reason.message}` : status
 }
 
-function findingSection(finding: CombinedFinding, verbose: boolean, titlePrefix = ''): AlertCustomSection {
+function findingSection(
+  finding: CombinedFinding,
+  number: number,
+  verbose: boolean,
+  titlePrefix = '',
+): AlertCustomSection {
   const disposition = finding.disposition === 'active' ? '' : ` (${finding.disposition})`
   const details: Token[] = [finding.message]
   if (finding.snippet) details.push({subdued: `\nCode: ${finding.snippet}`})
@@ -534,7 +619,10 @@ function findingSection(finding: CombinedFinding, verbose: boolean, titlePrefix 
       details.push({subdued: `\nSuppressed: ${finding.suppressed_by.reason}`})
     }
   }
-  return {title: `${titlePrefix}${finding.source} · ${formatLocation(finding.location)}${disposition}`, body: details}
+  return {
+    title: `${titlePrefix}#${number} · ${finding.source} · ${formatLocation(finding.location)}${disposition}`,
+    body: details,
+  }
 }
 
 function conciseReasoning(reasoning: string): string {

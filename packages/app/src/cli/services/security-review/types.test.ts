@@ -1,4 +1,5 @@
 import {appSecurityReviewJsonOutputSchema} from './types.js'
+import {savedSuppressionFixture} from '../app-security/types.test-data.js'
 import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 import {describe, expect, test} from 'vitest'
 
@@ -13,6 +14,7 @@ const scope = {includeDirs: [], excludes: [], noGitIgnore: false}
 const location = {filePath: ordersPath, line: 12, column: null}
 const deterministicFinding = {
   source: 'deterministic',
+  number: 1,
   disposition: 'superseded',
   location,
   message: 'accessToken flows into console.log.',
@@ -30,6 +32,7 @@ const fileSuppression = {
 const agentSuppression = {justification: 'An allowlist middleware restricts the route.', origin: 'agent'}
 const agentFinding = {
   source: 'agent',
+  number: 2,
   disposition: 'active',
   location,
   message: 'The session access token is written to the server log.',
@@ -97,6 +100,7 @@ const result = {
   },
   scopeDiffers: false,
   checks: [check],
+  resultsDigest: '3f2a9c0d41be',
   blocking: {level: 'high', blockedCheckCount: 1},
   suppressions: {
     filePath: onWindows ? 'C:\\apps\\my-app\\shopify.app-security.json' : '/apps/my-app/shopify.app-security.json',
@@ -129,6 +133,14 @@ const result = {
       },
     ],
   },
+  savedSuppressions: null,
+}
+
+const savedEntry = {...savedSuppressionFixture(ordersPath), findingNumber: 2}
+const savedSuppressions = {
+  filePath: result.suppressions.filePath,
+  entries: [savedEntry],
+  companionFindingNumbers: [1],
 }
 
 /** The result with one check that holds these findings. */
@@ -146,6 +158,7 @@ describe('appSecurityReviewJsonOutputSchema', () => {
         detection: null,
         coverage: null,
         checks: [],
+        resultsDigest: null,
         blocking: {level: 'none', blockedCheckCount: 0},
       },
     ],
@@ -180,6 +193,18 @@ describe('appSecurityReviewJsonOutputSchema', () => {
           staleEntryCount: 0,
           ambiguousEntryCount: 0,
           entries: [],
+        },
+      },
+    ],
+    ['the entries that --suppress saved, and a companion it left out', {...result, savedSuppressions}],
+    [
+      'a saved entry without code that got a configuration, and no companion',
+      {
+        ...result,
+        savedSuppressions: {
+          ...savedSuppressions,
+          entries: [{...savedEntry, change: 'configuration-added', code: null, configurations: ['a', 'b']}],
+          companionFindingNumbers: [],
         },
       },
     ],
@@ -328,6 +353,20 @@ describe('appSecurityReviewJsonOutputSchema', () => {
         },
       },
     ],
+    ['a finding without a number', withFindings({...agentFinding, number: undefined})],
+    ['a finding numbered 0', withFindings({...agentFinding, number: 0})],
+    ['no results digest', {...result, resultsDigest: undefined}],
+    ['an empty results digest', {...result, resultsDigest: ''}],
+    ['no saved suppressions', {...result, savedSuppressions: undefined}],
+    [
+      'a saved entry without its finding number',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, findingNumber: undefined}]}},
+    ],
+    [
+      'a saved entry with a kind with an underscore',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, kind: 'false_positive'}]}},
+    ],
+    ['an extra saved suppressions field', {...result, savedSuppressions: {...savedSuppressions, companions: []}}],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityReviewJsonOutputSchema.validate(value)).toThrow()
   })
@@ -346,6 +385,8 @@ describe('appSecurityReviewJsonOutputSchema', () => {
       expect(jsonSchemaValidate(finding, definitions.AppSecurityFinding, 'fail').state).toBe('ok')
     }
     expect(jsonSchemaValidate(result.suppressions, definitions.AppSecuritySuppressions, 'fail').state).toBe('ok')
+    expect(jsonSchemaValidate(savedSuppressions, definitions.AppSecuritySavedSuppressions, 'fail').state).toBe('ok')
+    expect(jsonSchemaValidate({...agentFinding, number: 0}, definitions.AppSecurityFinding, 'fail').state).toBe('error')
     const agentWithEntryIndex = {...agentFinding, suppression: {...agentSuppression, entryIndex: 0}}
     expect(jsonSchemaValidate(agentWithEntryIndex, definitions.AppSecurityFinding, 'fail').state).toBe('error')
     const underscoreKind = {...deterministicFinding, suppression: {...fileSuppression, kind: 'false_positive'}}

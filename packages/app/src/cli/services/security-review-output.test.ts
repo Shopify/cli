@@ -17,6 +17,7 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
+import type {AppSecuritySuppression} from './app-security-suppressions.js'
 import type {
   AgentFindingsDocument,
   DeterministicFindingsDocument,
@@ -683,7 +684,8 @@ describe('buildSecurityReviewAlerts', () => {
         },
       },
       {
-        title: 'agent · app/routes/orders.tsx:31',
+        // Numbers count the findings of every check, so --check-id keeps them.
+        title: '#5 · agent · app/routes/orders.tsx:31',
         body: [
           'Orders are loaded for every shop: the query has no shop filter.',
           {subdued: '\nCode: const orders = await prisma.order.findMany()'},
@@ -714,9 +716,9 @@ describe('buildSecurityReviewAlerts', () => {
     ])
     // Union applies: the deterministic findings are active alongside the agent's.
     expect(alert!.options.customSections!.slice(2).map((section) => section.title)).toEqual([
-      'deterministic \u00b7 app/routes/orders.tsx:12',
-      'agent \u00b7 app/routes/orders.tsx:12',
-      'deterministic \u00b7 app/shopify.server.ts:40',
+      '#1 \u00b7 deterministic \u00b7 app/routes/orders.tsx:12',
+      '#2 \u00b7 agent \u00b7 app/routes/orders.tsx:12',
+      '#3 \u00b7 deterministic \u00b7 app/shopify.server.ts:40',
     ])
   })
 
@@ -770,7 +772,7 @@ describe('buildSecurityReviewAlerts', () => {
 
     expect(alert!.options.customSections).toEqual([
       {
-        title: 'deterministic · shopify.app.toml:8',
+        title: '#3 · deterministic · shopify.app.toml:8',
         body: [
           'api_version 2024-01 is past its support window.',
           {subdued: '\nFix: Update api_version in shopify.app.toml and the ApiVersion enum in shopify.server.ts.'},
@@ -832,8 +834,8 @@ describe('buildSecurityReviewAlerts', () => {
     const sections = alert!.options.customSections!
     expect(sections.map((section) => section.title)).toEqual([
       undefined,
-      'agent · app/routes/admin.settings.tsx:55 (suppressed)',
-      'agent · app/routes/orders.tsx:31',
+      '#4 · agent · app/routes/admin.settings.tsx:55 (suppressed)',
+      '#5 · agent · app/routes/orders.tsx:31',
     ])
     expect(sections[1]!.body).toContainEqual({
       subdued: '\nSuppressed: The route is restricted to the app owner by an allowlist middleware.',
@@ -866,7 +868,7 @@ describe('buildSecurityReviewAlerts', () => {
 
     expect(alert!.options.customSections).toEqual([
       {
-        title: 'deterministic · shopify.app.toml:8',
+        title: '#3 · deterministic · shopify.app.toml:8',
         body: [
           'api_version 2024-01 is past its support window.',
           {subdued: '\nFix: Update api_version in shopify.app.toml and the ApiVersion enum in shopify.server.ts.'},
@@ -926,15 +928,15 @@ describe('buildSecurityReviewAlerts', () => {
     const sections = verbose!.options.customSections!
     expect(sections[0]).toEqual(concise!.options.customSections![0])
     expect(sections.slice(1).map((section) => section.title)).toEqual([
-      'CREDENTIAL_LOG_LEAKAGE \u00b7 deterministic \u00b7 app/routes/orders.tsx:12 (superseded)',
-      'CREDENTIAL_LOG_LEAKAGE \u00b7 agent \u00b7 app/routes/orders.tsx:12 (suppressed)',
-      'CREDENTIAL_LOG_LEAKAGE \u00b7 deterministic \u00b7 app/shopify.server.ts:40 (superseded)',
+      'CREDENTIAL_LOG_LEAKAGE \u00b7 #1 \u00b7 deterministic \u00b7 app/routes/orders.tsx:12 (superseded)',
+      'CREDENTIAL_LOG_LEAKAGE \u00b7 #2 \u00b7 agent \u00b7 app/routes/orders.tsx:12 (suppressed)',
+      'CREDENTIAL_LOG_LEAKAGE \u00b7 #3 \u00b7 deterministic \u00b7 app/shopify.server.ts:40 (superseded)',
     ])
     expect(sections[1]!.body).toContainEqual({
       subdued: '\nEvidence: app/routes/orders.tsx:12 \u2014 console.log(session.accessToken)',
     })
     expect(sections[2]).toEqual({
-      title: 'CREDENTIAL_LOG_LEAKAGE \u00b7 agent \u00b7 app/routes/orders.tsx:12 (suppressed)',
+      title: 'CREDENTIAL_LOG_LEAKAGE \u00b7 #2 \u00b7 agent \u00b7 app/routes/orders.tsx:12 (suppressed)',
       body: [
         'The session access token is written to the server log.',
         {subdued: '\nConfidence: high'},
@@ -1002,7 +1004,7 @@ describe('buildSecurityReviewAlerts', () => {
     expect(concise!.options.customSections).toHaveLength(1)
     expect(verbose!.options.customSections).toHaveLength(2)
     expect(verbose!.options.customSections![1]).toEqual({
-      title: 'MISSING_TENANT_ISOLATION \u00b7 agent \u00b7 app/routes/admin.settings.tsx:55 (suppressed)',
+      title: 'MISSING_TENANT_ISOLATION \u00b7 #2 \u00b7 agent \u00b7 app/routes/admin.settings.tsx:55 (suppressed)',
       body: [
         'Settings are deleted by id without checking the owning shop.',
         {subdued: '\nConfidence: medium'},
@@ -1024,10 +1026,14 @@ describe('buildSecurityReviewAlerts', () => {
       undefined,
       undefined,
       `Results files in ${paths.resultsDirectory}`,
+      undefined,
       'Blocking',
     ])
     expect(summary.options.customSections![0]!.body).toEqual({subdued: 'Showing 1 of 6 checks (--check-id).'})
-    expect(summary.options.customSections![5]!.body).toBe('1 check at or above low (--blocking low).')
+    expect(summary.options.customSections![5]!.body).toEqual({
+      subdued: expect.stringMatching(/^Results digest: [0-9a-f]{12} \(pass it to --results-digest with --suppress\)$/),
+    })
+    expect(summary.options.customSections![6]!.body).toBe('1 check at or above low (--blocking low).')
   })
 
   test('puts the stale line after Other checks and before Deterministic coverage', () => {
@@ -1041,6 +1047,7 @@ describe('buildSecurityReviewAlerts', () => {
       undefined,
       undefined,
       `Results files in ${paths.resultsDirectory}`,
+      undefined,
       'Next steps',
     ])
     expect(sections[2]!.body).toBe(
@@ -1073,6 +1080,89 @@ describe('renderSecurityReview', () => {
     expect(summaryBox).toContain('agent-findings.json          1 hour ago   3.99.0')
     expect(summaryBox).toContain('Next steps')
     expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check`')
+  })
+
+  test('renders the number of each finding before its source, and the results digest in the summary', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const input = presenterInput(both)
+
+    renderSecurityReview(input)
+
+    const rendered = unstyled(output.error() + output.warn() + output.info())
+    expect(rendered).toContain('#2 · agent · app/routes/orders.tsx:12')
+    expect(rendered).toContain('#6 · deterministic · shopify.app.toml:8')
+    expect(rendered.replace(/[│\s]+/g, ' ')).toContain(
+      `Results digest: ${input.result.resultsDigest} (pass it to --results-digest with --suppress)`,
+    )
+  })
+
+  test('renders what --suppress saved after the summary, the companions it left out, and to review and commit the file', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const entry: AppSecuritySuppression = {
+      source: 'agent',
+      check: 'CREDENTIAL_LOG_LEAKAGE',
+      kind: 'false-positive',
+      path: 'app/routes/orders.tsx',
+      code: 'console.log(session.accessToken)',
+      reason: 'The logger redacts tokens.',
+      configurations: ['shopify.app.toml', 'shopify.app.staging.toml'],
+    }
+    const input: SecurityReviewPresenterInput = {
+      ...presenterInput(both),
+      savedSuppressions: {
+        path: `${appRoot}/shopify.app-security.json`,
+        saved: [{index: 3, change: 'added', entry, findingNumber: 2}],
+        companionNumbers: [1],
+      },
+    }
+
+    renderSecurityReview(input)
+
+    const alerts = buildSecurityReviewAlerts(input)
+    expect(alerts.at(-2)!.options.headline).toBe('3 checks with findings. 1 check unresolved.')
+    expect(alerts.at(-1)!.type).toBe('success')
+    const rendered = unstyled(output.info()).replace(/[│\s]+/g, ' ')
+    expect(rendered).toContain('Saved 1 suppression to shopify.app-security.json.')
+    expect(rendered).toContain(
+      'suppressions[3] · finding 2 · added agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx Kind: false positive Code: console.log(session.accessToken) Reason: The logger redacts tokens. Configurations: shopify.app.toml, shopify.app.staging.toml',
+    )
+    expect(rendered).toContain(
+      'Not suppressed Finding 1 is a superseded deterministic finding of the same check in the same file, so check --blocking, which reads no agent results, still counts it. To suppress it with the same kind and reason, run the command again with --include-superseded.',
+    )
+    expect(rendered).toContain('Next steps • Review and commit shopify.app-security.json.')
+  })
+
+  test('names several companions and an entry that got a configuration', () => {
+    const entry: AppSecuritySuppression = {
+      source: 'deterministic',
+      check: 'EOL_API_VERSION',
+      kind: 'accepted-risk',
+      path: 'shopify.app.toml',
+      reason: 'Later.',
+      configurations: ['shopify.app.staging.toml', 'shopify.app.toml'],
+    }
+    const alert = buildSecurityReviewAlerts({
+      ...presenterInput(both),
+      savedSuppressions: {
+        path: `${appRoot}/shopify.app-security.json`,
+        saved: [{index: 0, change: 'configuration-added', entry, findingNumber: 6}],
+        companionNumbers: [1, 3, 7],
+      },
+    }).at(-1)!
+
+    expect(alert.options.customSections!.map((section) => section.title)).toStrictEqual([
+      'suppressions[0] · finding 6 · configuration added',
+      'Not suppressed',
+      'Next steps',
+    ])
+    expect(alert.options.customSections![0]!.body).not.toContainEqual({subdued: expect.stringContaining('Code:')})
+    expect(alert.options.customSections![1]!.body).toEqual(
+      expect.stringMatching(
+        /^Findings 1, 3 and 7 are superseded deterministic findings of .* still counts them\. To suppress them /,
+      ),
+    )
   })
 
   test('renders each suppressed finding with its kind and reason without --verbose', () => {

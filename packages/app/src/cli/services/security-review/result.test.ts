@@ -354,6 +354,7 @@ describe('renderSecurityReviewResult as JSON', () => {
           findings: [
             {
               source: 'deterministic',
+              number: 1,
               disposition: 'superseded',
               location: {filePath: appPath('app/routes/orders.tsx'), line: 12, column: 5},
               message: 'accessToken flows into console.log.',
@@ -369,6 +370,7 @@ describe('renderSecurityReviewResult as JSON', () => {
             },
             {
               source: 'agent',
+              number: 2,
               disposition: 'active',
               location: {filePath: appPath('app/routes/orders.tsx'), line: 12, column: null},
               message: 'The session access token is written to the server log.',
@@ -403,6 +405,7 @@ describe('renderSecurityReviewResult as JSON', () => {
           findings: [
             {
               source: 'agent',
+              number: 3,
               disposition: 'suppressed',
               location: {filePath: appPath('app/routes/admin.settings.tsx'), line: 55, column: null},
               message: 'Settings are deleted by ID without checking the owning shop.',
@@ -418,8 +421,10 @@ describe('renderSecurityReviewResult as JSON', () => {
           ],
         },
       ],
+      resultsDigest: expect.stringMatching(/^[0-9a-f]{12}$/),
       blocking: {level: 'none', blockedCheckCount: 0},
       suppressions: noSuppressionsFile,
+      savedSuppressions: null,
     })
   })
 
@@ -434,8 +439,10 @@ describe('renderSecurityReviewResult as JSON', () => {
       coverage: null,
       scopeDiffers: false,
       checks: [],
+      resultsDigest: null,
       blocking: {level: 'none', blockedCheckCount: 0},
       suppressions: noSuppressionsFile,
+      savedSuppressions: null,
     })
   })
 

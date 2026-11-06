@@ -221,6 +221,8 @@ export interface CodeExcerptLine {
  * `check` writes a DeterministicFindingsDocument and `record` writes an AgentFindingsDocument.
  */
 export type FindingsSource = 'deterministic' | 'agent'
+/** Why a finding is suppressed: it is a false positive, or the team accepts the risk. */
+export type SuppressionKind = 'false-positive' | 'accepted-risk'
 export type StoredCheckStatus = 'executed' | 'not_applicable' | 'unresolved'
 export type CheckPrecedence = 'union' | 'prefer-agent'
 
@@ -255,8 +257,8 @@ export interface StoredFinding {
   confidence?: 'high' | 'medium' | 'low'
   /** Agent documents only. */
   reasoning?: string
-  /** Agent documents only. */
-  suppression?: {justification: string}
+  /** Agent documents only. `kind` is absent in files written before `record` saved suppressions. */
+  suppression?: {justification: string; kind?: SuppressionKind}
 }
 
 export interface StoredCheck {

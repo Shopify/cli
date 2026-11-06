@@ -1,12 +1,10 @@
 import {normalizePath} from '@shopify/cli-kit/node/path'
-import type {CodeExcerptLine, FindingsSource, Location, StoredCheck, StoredFinding} from '../types.js'
+import type {CodeExcerptLine, FindingsSource, Location, StoredCheck, StoredFinding, SuppressionKind} from '../types.js'
 
 /**
  * Matching of the entries of shopify.app-security.json against stored findings (§8.2). Pure: the caller reads and
  * validates the file, and no source file is read here, so a finding matches by the code its results file holds.
  */
-
-export type SuppressionKind = 'false-positive' | 'accepted-risk'
 
 /** One entry of shopify.app-security.json, as `readAppSecuritySuppressions` validates it. */
 export interface SuppressionEntry {

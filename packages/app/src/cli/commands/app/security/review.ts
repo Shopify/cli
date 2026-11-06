@@ -1,6 +1,7 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityReview from '../../../services/security-review.js'
+import {SUPPRESSION_KINDS} from '../../../services/app-security-suppressions.js'
 import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
 import {appSecurityReviewJsonOutputSchema} from '../../../services/security-review/types.js'
 import {Flags} from '@oclif/core'
@@ -18,6 +19,8 @@ The agent results are optional. Use \`--check-id\` to narrow the review to speci
 
 Suppressed findings don't count for \`--blocking\`: those the agent suppressed, and those that an entry of \`shopify.app-security.json\` in the app directory suppresses. An entry applies to the results that its \`configurations\` name: an app configuration file name without \`--client-id\`, or a client ID passed with \`--client-id\`. An entry's \`code\` matches the code excerpt that the results file saved with the finding. A results file that would be larger than 5 MB with excerpts is saved without them, and results written before excerpts existed have none; then an entry with \`code\` matches only the finding's message, so it can go stale and leave the finding active. Superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count either. An invalid \`shopify.app-security.json\` stops the command.
 
+Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count every finding of every check, so \`--check-id\` and \`--verbose\` change which findings are shown, never their numbers, and a number names the same finding until the results files change. To suppress a finding, pass its number to \`--suppress\` with \`--kind\` and \`--reason\`, and the digest to \`--results-digest\` to refuse the suppression if the results changed since you read the number. The command saves an entry to \`shopify.app-security.json\` that matches only that finding, then shows the review with the finding suppressed. Review and commit the file. When the finding is an agent finding that supersedes a deterministic finding of the same check in the same file, \`check --blocking\` still counts the deterministic finding, because it reads no agent results: the output names it, and \`--include-superseded\` suppresses it too, with the same kind and reason.
+
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
   static jsonOutputSchema = appSecurityReviewJsonOutputSchema
@@ -33,6 +36,34 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
       multiple: true,
     }),
     ...appSecurityBlockingFlag,
+    suppress: Flags.integer({
+      description:
+        'Suppress the finding with this number: save an entry for it to shopify.app-security.json. Requires --kind and --reason.',
+      env: 'SHOPIFY_FLAG_APP_SECURITY_SUPPRESS',
+      min: 1,
+    }),
+    kind: Flags.string({
+      description: `Why the finding is suppressed, with --suppress: ${SUPPRESSION_KINDS.join(' or ')}.`,
+      env: 'SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_KIND',
+      dependsOn: ['suppress'],
+    }),
+    reason: Flags.string({
+      description: 'The reason for the suppression, with --suppress. It is saved in shopify.app-security.json.',
+      env: 'SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_REASON',
+      dependsOn: ['suppress'],
+    }),
+    'results-digest': Flags.string({
+      description:
+        'With --suppress, the results digest that the finding number was read with. The suppression is refused if the results changed since.',
+      env: 'SHOPIFY_FLAG_APP_SECURITY_RESULTS_DIGEST',
+      dependsOn: ['suppress'],
+    }),
+    'include-superseded': Flags.boolean({
+      description:
+        "With --suppress, also suppress the superseded deterministic findings of the agent finding's check in the same file, which check --blocking still counts.",
+      env: 'SHOPIFY_FLAG_APP_SECURITY_INCLUDE_SUPERSEDED',
+      dependsOn: ['suppress'],
+    }),
     ...jsonFlag,
   }
 
@@ -46,6 +77,17 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
       withoutAppConfig: Boolean(flags['without-app-config']),
       checkIds: flags['check-id'] ?? [],
       blocking: flags.blocking,
+      ...(flags.suppress === undefined
+        ? {}
+        : {
+            suppress: {
+              findingNumber: flags.suppress,
+              kind: flags.kind,
+              reason: flags.reason,
+              resultsDigest: flags['results-digest'],
+              includeSuperseded: Boolean(flags['include-superseded']),
+            },
+          }),
     })
     renderSecurityReviewResult(review, {verbose: Boolean(flags.verbose)}, flags.json ? 'json' : 'text')
   }

@@ -1,9 +1,11 @@
+import {savedSuppressionFixture} from './types.test-data.js'
 import {
   appSecurityAppSchema,
   appSecurityBlockingSchema,
   appSecurityInstructionsSchema,
   appSecurityScanDirectorySchema,
   appSecurityScopeSchema,
+  appSecuritySavedSuppressionSchema,
 } from './types.js'
 import {describe, expect, test} from 'vitest'
 
@@ -89,5 +91,22 @@ describe('appSecurityBlockingSchema', () => {
     ['a fractional count', {level: 'high', blockedCheckCount: 0.5}],
   ])('rejects %s', (_description, value) => {
     expect(appSecurityBlockingSchema.safeParse(value).success).toBe(false)
+  })
+})
+
+describe('appSecuritySavedSuppressionSchema', () => {
+  const entry = savedSuppressionFixture(nativeConfigurationPath)
+
+  test('accepts a saved entry', () => {
+    expect(appSecuritySavedSuppressionSchema.parse(entry)).toStrictEqual(entry)
+  })
+
+  test.each([
+    ['kind', 'false_positive'],
+    ['change', 'replaced'],
+    ['path', 'a.ts'],
+    ['code', ''],
+  ])('rejects an invalid %s', (field, value) => {
+    expect(appSecuritySavedSuppressionSchema.safeParse({...entry, [field]: value}).success).toBe(false)
   })
 })

@@ -1,4 +1,5 @@
 import {appSecurityRecordJsonOutputSchema} from './types.js'
+import {savedSuppressionFixture} from '../app-security/types.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 const onWindows = process.platform === 'win32'
@@ -17,6 +18,26 @@ const result = {
   path: onWindows ? `${resultsDirectory}\\agent-findings.json` : `${resultsDirectory}/agent-findings.json`,
   checkCount: 2,
   findingCount: 3,
+  suppressions: null,
+}
+
+const suppressionsFile = onWindows
+  ? 'C:\\apps\\my-app\\shopify.app-security.json'
+  : '/apps/my-app/shopify.app-security.json'
+const routeFile = onWindows ? 'C:\\apps\\my-app\\app\\routes\\orders.tsx' : '/apps/my-app/app/routes/orders.tsx'
+const savedEntry = savedSuppressionFixture(routeFile)
+const suppressions = {
+  filePath: suppressionsFile,
+  entries: [savedEntry],
+  alreadySavedCount: 1,
+  notSaved: [
+    {
+      checkId: 'MISSING_TENANT_ISOLATION',
+      location: {filePath: routeFile, line: 40},
+      message:
+        'every code from its lines also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+    },
+  ],
 }
 
 describe('appSecurityRecordJsonOutputSchema', () => {
@@ -24,6 +45,19 @@ describe('appSecurityRecordJsonOutputSchema', () => {
     ['the selected app', result],
     ['no checks or findings', {...result, checkCount: 0, findingCount: 0}],
     ['no app configuration', {...result, app: {directory: appDirectory, configurationPath: null, clientId: 'abc'}}],
+    ['saved suppressions', {...result, suppressions}],
+    [
+      'an entry without code that got a configuration',
+      {
+        ...result,
+        suppressions: {
+          ...suppressions,
+          entries: [
+            {...savedEntry, change: 'configuration-added', code: null, configurations: ['shopify.app.toml', 'abc']},
+          ],
+        },
+      },
+    ],
   ])('accepts a result with %s', (_description, value) => {
     expect(appSecurityRecordJsonOutputSchema.validate(value)).toStrictEqual(value)
   })
@@ -37,6 +71,11 @@ describe('appSecurityRecordJsonOutputSchema', () => {
     ['a negative count', {...result, findingCount: -1}],
     ['a fractional count', {...result, checkCount: 1.5}],
     ['another status', {...result, status: 'cancelled'}],
+    ['no suppressions field', {...result, suppressions: undefined}],
+    [
+      'a kind with an underscore',
+      {...result, suppressions: {...suppressions, entries: [{...savedEntry, kind: 'false_positive'}]}},
+    ],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityRecordJsonOutputSchema.validate(value)).toThrow()
   })

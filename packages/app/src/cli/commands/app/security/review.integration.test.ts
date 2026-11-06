@@ -3,7 +3,7 @@ import {writeAppSecuritySuppressionsFixture} from '../../../services/app-securit
 import {appSecurityArtifactPaths, appSecuritySuppressionsPath} from '../../../services/app-security-artifacts.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {Config} from '@oclif/core'
-import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -240,7 +240,8 @@ function coverageJson(appDirectory: string) {
   }
 }
 
-function eolApiVersionJson(appDirectory: string) {
+/** EOL_API_VERSION with its one finding, which has this number. */
+function eolApiVersionJson(appDirectory: string, findingNumber: number) {
   return {
     id: 'EOL_API_VERSION',
     title: 'End-of-life API version',
@@ -264,6 +265,7 @@ function eolApiVersionJson(appDirectory: string) {
     findings: [
       {
         source: 'deterministic',
+        number: findingNumber,
         disposition: 'active',
         location: {filePath: resolve(appDirectory, 'shopify.app.toml'), line: 8, column: null},
         message: 'api_version 2024-01 is past its support window.',
@@ -374,6 +376,7 @@ describe('app security review command boundary', () => {
             findings: [
               {
                 source: 'deterministic',
+                number: 1,
                 disposition: 'active',
                 location: {filePath: resolve(appDirectory, 'app', 'routes', 'orders.tsx'), line: 5, column: 3},
                 message: 'accessToken flows into console.log.',
@@ -389,10 +392,12 @@ describe('app security review command boundary', () => {
               },
             ],
           },
-          eolApiVersionJson(appDirectory),
+          eolApiVersionJson(appDirectory, 2),
         ],
+        resultsDigest: expect.stringMatching(/^[0-9a-f]{12}$/),
         blocking: {level: 'none', blockedCheckCount: 0},
         suppressions: noSuppressionsFileJson(appDirectory),
+        savedSuppressions: null,
       })
       expect(result.stderr).toBe('')
     })
@@ -452,6 +457,7 @@ describe('app security review command boundary', () => {
             findings: [
               {
                 source: 'deterministic',
+                number: 1,
                 disposition: 'superseded',
                 location: {filePath: resolve(appDirectory, 'app', 'routes', 'orders.tsx'), line: 5, column: 3},
                 message: 'accessToken flows into console.log.',
@@ -467,6 +473,7 @@ describe('app security review command boundary', () => {
               },
               {
                 source: 'agent',
+                number: 2,
                 disposition: 'active',
                 location: {filePath: resolve(appDirectory, 'app', 'routes', 'orders.tsx'), line: 5, column: null},
                 message: 'The session access token is written to the server log.',
@@ -506,6 +513,7 @@ describe('app security review command boundary', () => {
             findings: [
               {
                 source: 'agent',
+                number: 3,
                 disposition: 'suppressed',
                 location: {filePath: resolve(appDirectory, 'app', 'shopify.server.ts'), line: 3, column: null},
                 message: 'The app configuration is shared by every shop.',
@@ -522,10 +530,12 @@ describe('app security review command boundary', () => {
               },
             ],
           },
-          eolApiVersionJson(appDirectory),
+          eolApiVersionJson(appDirectory, 4),
         ],
+        resultsDigest: expect.stringMatching(/^[0-9a-f]{12}$/),
         blocking: {level: 'none', blockedCheckCount: 0},
         suppressions: noSuppressionsFileJson(appDirectory),
+        savedSuppressions: null,
       })
       expect(result.stderr).toBe('')
     })
@@ -548,8 +558,10 @@ describe('app security review command boundary', () => {
         coverage: null,
         scopeDiffers: false,
         checks: [],
+        resultsDigest: null,
         blocking: {level: 'high', blockedCheckCount: 0},
         suppressions: noSuppressionsFileJson(appDirectory),
+        savedSuppressions: null,
       })
       expect(result.stderr).toBe('')
     })
@@ -940,6 +952,165 @@ describe('app security review command boundary', () => {
       expect(text).toContain('High · CREDENTIAL_LOG_LEAKAGE · Credential reaches a log sink')
       expect(text).toContain('2 checks with findings.')
       expect(text).toContain('Blocking 2 checks at or above low (--blocking low).')
+    })
+  })
+})
+
+describe('app security review --suppress command boundary', () => {
+  /** The deterministic results with the excerpts that `check` captures for the EOL_API_VERSION finding. */
+  const deterministicWithExcerpts: DeterministicFindingsDocument = {
+    ...deterministicFindings,
+    checks: deterministicFindings.checks.map((check) => ({
+      ...check,
+      findings: check.findings.map((finding) =>
+        check.id === 'EOL_API_VERSION'
+          ? {
+              ...finding,
+              code_excerpt: [
+                {line: 7, text: '[webhooks]'},
+                {line: 8, text: 'api_version = "2024-01"'},
+              ],
+            }
+          : finding,
+      ),
+    })),
+  }
+  const suppressFlags = ['--kind', 'accepted-risk', '--reason', 'The upgrade ships with the next release.']
+
+  test('--json saves the entry, then writes the review with the finding suppressed and the saved entry', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicWithExcerpts})
+      const before = JSON.parse((await runJsonCommand(['--path', directory])).stdout)
+      const eolFinding = before.checks[1].findings[0]
+
+      const result = await runJsonCommand([
+        '--path',
+        directory,
+        '--suppress',
+        String(eolFinding.number),
+        ...suppressFlags,
+        '--results-digest',
+        before.resultsDigest,
+        '--blocking',
+        'low',
+      ])
+
+      expect(eolFinding).toMatchObject({number: 2, message: 'api_version 2024-01 is past its support window.'})
+      const document = JSON.parse(result.stdout)
+      expect(result.stderr).toBe('')
+      expect(document.savedSuppressions).toStrictEqual({
+        filePath: resolve(appDirectory, 'shopify.app-security.json'),
+        entries: [
+          {
+            index: 0,
+            change: 'added',
+            source: 'deterministic',
+            check: 'EOL_API_VERSION',
+            kind: 'accepted-risk',
+            path: resolve(appDirectory, 'shopify.app.toml'),
+            code: 'api_version = "2024-01"',
+            reason: 'The upgrade ships with the next release.',
+            configurations: ['shopify.app.toml'],
+            findingNumber: 2,
+          },
+        ],
+        companionFindingNumbers: [],
+      })
+      expect(document.checks[1].findings[0]).toMatchObject({
+        number: 2,
+        disposition: 'suppressed',
+        suppression: {origin: 'file', entryIndex: 0, kind: 'accepted-risk'},
+      })
+      expect(document.resultsDigest).toBe(before.resultsDigest)
+      // CREDENTIAL_LOG_LEAKAGE is still active, so --blocking low fails after the save.
+      expect(document.blocking).toStrictEqual({level: 'low', blockedCheckCount: 1})
+      expect(result.exitCode).toBe(1)
+      await expect(readFile(appSecuritySuppressionsPath(appDirectory))).resolves.toBe(
+        `${JSON.stringify(
+          {
+            schema_version: 1,
+            suppressions: [
+              {
+                source: 'deterministic',
+                check: 'EOL_API_VERSION',
+                kind: 'accepted-risk',
+                path: 'shopify.app.toml',
+                code: 'api_version = "2024-01"',
+                reason: 'The upgrade ships with the next release.',
+                configurations: ['shopify.app.toml'],
+              },
+            ],
+          },
+          null,
+          2,
+        )}\n`,
+      )
+    })
+  })
+
+  test('without --json, renders the review with the finding suppressed, then what was saved', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicWithExcerpts})
+
+      const result = await runCommand(['--path', directory, '--suppress', '2', ...suppressFlags])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toBe('')
+      const text = boxText(result.stderr)
+      expect(text).toContain(
+        'shopify.app.toml:8 · deterministic · accepted risk · suppressions[0] The upgrade ships with the next release.',
+      )
+      expect(text).toMatch(/Results digest: [0-9a-f]{12} \(pass it to --results-digest with --suppress\)/)
+      expect(text).toContain('Saved 1 suppression to shopify.app-security.json.')
+      expect(text).toContain('suppressions[0] · finding 2 · added deterministic EOL_API_VERSION in shopify.app.toml')
+      expect(text).toContain('Next steps • Review and commit shopify.app-security.json.')
+      expect(text.indexOf('Saved 1 suppression')).toBeGreaterThan(text.indexOf('Results digest'))
+    })
+  })
+
+  test('--json with a stale --results-digest writes the error document and saves nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicWithExcerpts})
+      const {resultsDigest} = JSON.parse((await runJsonCommand(['--path', directory])).stdout)
+
+      const result = await runJsonCommand([
+        '--path',
+        directory,
+        '--suppress',
+        '2',
+        ...suppressFlags,
+        '--results-digest',
+        'ffffffffffff',
+      ])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        error: {
+          type: 'abort',
+          message:
+            'The results changed since digest ffffffffffff, so the finding numbers may name other findings. Nothing was saved.',
+          code: 'results-digest-mismatch',
+          details: {resultsDigest},
+        },
+      })
+      await expect(fileExists(appSecuritySuppressionsPath(appDirectory))).resolves.toBe(false)
+    })
+  })
+
+  test('--json with an empty --reason writes the error document of the file validation and saves nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicWithExcerpts})
+
+      const result = await runJsonCommand(['--path', directory, '--suppress', '2', '--kind', 'risk', '--reason', ' '])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        error: {
+          code: 'suppression-flags-invalid',
+          details: {errors: ['--kind: must be false-positive or accepted-risk', '--reason: must not be empty']},
+        },
+      })
+      await expect(fileExists(appSecuritySuppressionsPath(appDirectory))).resolves.toBe(false)
     })
   })
 })

@@ -6667,6 +6667,11 @@ DESCRIPTION
   The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
   and exits with a non-zero code. It needs the results directory that `shopify app security check` creates.
 
+  A finding's `suppression` needs a `justification` and a `kind`, `false-positive` or `accepted-risk`. The command saves
+  each suppression as an entry of `shopify.app-security.json` in the app directory, so it also applies to later results,
+  and says how many it saved. Review and commit that file. A suppression that no entry can name alone is reported, and
+  applies to the recorded findings only.
+
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 
@@ -6702,6 +6707,17 @@ DESCRIPTION
         "type": "integer",
         "minimum": 0,
         "description": "The number of findings recorded, across every check."
+      },
+      "suppressions": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityRecordedSuppressions"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "How the suppressions in the document were saved to shopify.app-security.json, or null when no finding has a suppression."
       }
     },
     "required": [
@@ -6710,7 +6726,8 @@ DESCRIPTION
       "resultsDirectory",
       "path",
       "checkCount",
-      "findingCount"
+      "findingCount",
+      "suppressions"
     ],
     "additionalProperties": false,
     "title": "AppSecurityRecordResult",
@@ -6752,6 +6769,163 @@ DESCRIPTION
           "clientId"
         ],
         "additionalProperties": false
+      },
+      "AppSecurityRecordedSuppressions": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute path of shopify.app-security.json."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecuritySavedSuppression"
+            },
+            "description": "The entries that were added or extended for the agent's suppressions."
+          },
+          "alreadySavedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of suppressions that an entry of the file already held, so the file did not change for them."
+          },
+          "notSaved": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "checkId": {
+                  "type": "string",
+                  "description": "The finding's check ID."
+                },
+                "location": {
+                  "type": "object",
+                  "properties": {
+                    "filePath": {
+                      "type": "string",
+                      "description": "The absolute path of the file."
+                    },
+                    "line": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "The one-based line, or null for none."
+                    }
+                  },
+                  "required": [
+                    "filePath",
+                    "line"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The finding's location."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Why no entry could be saved for the suppression."
+                }
+              },
+              "required": [
+                "checkId",
+                "location",
+                "message"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The suppressions that no entry could name alone. They're recorded in agent-findings.json, and apply to this run's findings only."
+          }
+        },
+        "required": [
+          "filePath",
+          "entries",
+          "alreadySavedCount",
+          "notSaved"
+        ],
+        "additionalProperties": false,
+        "description": "How the agent's suppressions were saved to shopify.app-security.json."
+      },
+      "AppSecuritySavedSuppression": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The entry's index in the file's suppressions array, from 0."
+          },
+          "change": {
+            "type": "string",
+            "enum": [
+              "added",
+              "configuration-added"
+            ],
+            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "agent"
+            ],
+            "description": "The source whose findings the entry suppresses."
+          },
+          "check": {
+            "type": "string",
+            "description": "The check ID that the entry names."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "false-positive",
+              "accepted-risk"
+            ],
+            "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the file that the entry names."
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The entry's code, redacted, which names the finding in the file. Null for a finding without a line: the entry then covers every finding of the check in the file."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the finding is suppressed."
+          },
+          "configurations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
+          }
+        },
+        "required": [
+          "index",
+          "change",
+          "source",
+          "check",
+          "kind",
+          "path",
+          "code",
+          "reason",
+          "configurations"
+        ],
+        "additionalProperties": false,
+        "description": "An entry of shopify.app-security.json that the command saved, as the file now holds it."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
@@ -6765,8 +6939,9 @@ Show the combined app security check results.
 
 ```
 USAGE
-  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [-j] [--json-schema]
-    [--no-color] [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [--include-superseded
+    --suppress <value>] [-j] [--json-schema] [--kind <value> ] [--no-color] [--no-input] [--path <value>] [--reason
+    <value> ] [--results-digest <value> ] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
@@ -6791,9 +6966,18 @@ FLAGS
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
+  --include-superseded
+      With --suppress, also suppress the superseded deterministic findings of the agent finding's check in the same file,
+      which check --blocking still counts.
+      [env: SHOPIFY_FLAG_APP_SECURITY_INCLUDE_SUPERSEDED]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --kind=<value>
+      Why the finding is suppressed, with --suppress: false-positive or accepted-risk.
+      [env: SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_KIND]
 
   --no-color
       Disable color output.
@@ -6806,6 +6990,20 @@ FLAGS
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
+
+  --reason=<value>
+      The reason for the suppression, with --suppress. It is saved in shopify.app-security.json.
+      [env: SHOPIFY_FLAG_APP_SECURITY_SUPPRESSION_REASON]
+
+  --results-digest=<value>
+      With --suppress, the results digest that the finding number was read with. The suppression is refused if the results
+      changed since.
+      [env: SHOPIFY_FLAG_APP_SECURITY_RESULTS_DIGEST]
+
+  --suppress=<value>
+      Suppress the finding with this number: save an entry for it to shopify.app-security.json. Requires --kind and
+      --reason.
+      [env: SHOPIFY_FLAG_APP_SECURITY_SUPPRESS]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -6841,6 +7039,16 @@ DESCRIPTION
   `code` matches only the finding's message, so it can go stale and leave the finding active. Superseded deterministic
   findings, which a check's prefer-agent agent result replaces, don't count either. An invalid
   `shopify.app-security.json` stops the command.
+
+  Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
+  every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
+  and a number names the same finding until the results files change. To suppress a finding, pass its number to
+  `--suppress` with `--kind` and `--reason`, and the digest to `--results-digest` to refuse the suppression if the
+  results changed since you read the number. The command saves an entry to `shopify.app-security.json` that matches only
+  that finding, then shows the review with the finding suppressed. Review and commit the file. When the finding is an
+  agent finding that supersedes a deterministic finding of the same check in the same file, `check --blocking` still
+  counts the deterministic finding, because it reads no agent results: the output names it, and `--include-superseded`
+  suppresses it too, with the same kind and reason.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6934,11 +7142,34 @@ DESCRIPTION
         },
         "description": "The checks after --check-id, most severe first, then by ID. Empty when no results file exists."
       },
+      "resultsDigest": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "A digest of the findings that the numbers name. Pass it to --results-digest with --suppress, so the suppression is refused if the results changed. Null when no results file exists."
+      },
       "blocking": {
         "$ref": "#/definitions/AppSecurityBlocking"
       },
       "suppressions": {
         "$ref": "#/definitions/AppSecuritySuppressions"
+      },
+      "savedSuppressions": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecuritySavedSuppressions"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "What --suppress saved to shopify.app-security.json, or null without --suppress. With --suppress, the rest of the result is the review after the save."
       }
     },
     "required": [
@@ -6951,8 +7182,10 @@ DESCRIPTION
       "coverage",
       "scopeDiffers",
       "checks",
+      "resultsDigest",
       "blocking",
-      "suppressions"
+      "suppressions",
+      "savedSuppressions"
     ],
     "additionalProperties": false,
     "description": "The combined results of the app security check.",
@@ -7728,6 +7961,11 @@ DESCRIPTION
             "type": "string",
             "const": "deterministic"
           },
+          "number": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The finding's number, from 1, which --suppress takes. Every finding of every check has one, whatever --check-id and --verbose, in the order of checks then findings. It names the same finding for the same results files, which resultsDigest identifies."
+          },
           "disposition": {
             "type": "string",
             "enum": [
@@ -7814,6 +8052,7 @@ DESCRIPTION
         },
         "required": [
           "source",
+          "number",
           "disposition",
           "location",
           "message",
@@ -7831,6 +8070,11 @@ DESCRIPTION
           "source": {
             "type": "string",
             "const": "agent"
+          },
+          "number": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The finding's number, from 1, which --suppress takes. Every finding of every check has one, whatever --check-id and --verbose, in the order of checks then findings. It names the same finding for the same results files, which resultsDigest identifies."
           },
           "disposition": {
             "type": "string",
@@ -7908,6 +8152,7 @@ DESCRIPTION
         },
         "required": [
           "source",
+          "number",
           "disposition",
           "location",
           "message",
@@ -8043,6 +8288,121 @@ DESCRIPTION
           }
         ],
         "description": "What suppresses a finding, and why."
+      },
+      "AppSecuritySavedSuppressions": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute path of shopify.app-security.json."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecuritySavedSuppression"
+            },
+            "description": "The entries that were added or extended: the one for the --suppress finding, then one for each companion with --include-superseded."
+          },
+          "companionFindingNumbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "description": "The numbers of the finding's companions that weren't suppressed because --include-superseded wasn't passed: superseded deterministic findings of the same check in the same file, which check --blocking still counts because it reads no agent results."
+          }
+        },
+        "required": [
+          "filePath",
+          "entries",
+          "companionFindingNumbers"
+        ],
+        "additionalProperties": false,
+        "description": "What --suppress saved to shopify.app-security.json."
+      },
+      "AppSecuritySavedSuppression": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The entry's index in the file's suppressions array, from 0."
+          },
+          "change": {
+            "type": "string",
+            "enum": [
+              "added",
+              "configuration-added"
+            ],
+            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "agent"
+            ],
+            "description": "The source whose findings the entry suppresses."
+          },
+          "check": {
+            "type": "string",
+            "description": "The check ID that the entry names."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "false-positive",
+              "accepted-risk"
+            ],
+            "description": "Why the finding is suppressed, as the entry's kind: false-positive, when the finding is a false positive, or accepted-risk, when the team accepts the risk."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the file that the entry names."
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The entry's code, redacted, which names the finding in the file. Null for a finding without a line: the entry then covers every finding of the check in the file."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the finding is suppressed."
+          },
+          "configurations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
+          },
+          "findingNumber": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The number of the finding that the entry was saved for."
+          }
+        },
+        "required": [
+          "index",
+          "change",
+          "source",
+          "check",
+          "kind",
+          "path",
+          "code",
+          "reason",
+          "configurations",
+          "findingNumber"
+        ],
+        "additionalProperties": false,
+        "description": "An entry of shopify.app-security.json that --suppress saved, as the file now holds it."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"

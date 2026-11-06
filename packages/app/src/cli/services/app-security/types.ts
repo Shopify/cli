@@ -167,3 +167,35 @@ export const appSecuritySuppressionsSchema = zod
   )
 
 export type AppSecuritySuppressions = zod.infer<typeof appSecuritySuppressionsSchema>
+
+/** An entry of shopify.app-security.json that a command saved, as the file holds it after the save. */
+export const appSecuritySavedSuppressionSchema = zod
+  .object({
+    index: zod.number().int().nonnegative().describe("The entry's index in the file's suppressions array, from 0."),
+    change: zod
+      .enum(['added', 'configuration-added'])
+      .describe(
+        'added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding.',
+      ),
+    source: zod.enum(['deterministic', 'agent']).describe('The source whose findings the entry suppresses.'),
+    check: zod.string().describe('The check ID that the entry names.'),
+    kind: createAppSecuritySuppressionKindSchema(),
+    path: createAbsolutePathSchema().describe('The absolute path of the file that the entry names.'),
+    code: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe(
+        "The entry's code, redacted, which names the finding in the file. Null for a finding without a line: the entry then covers every finding of the check in the file.",
+      ),
+    reason: zod.string().describe('Why the finding is suppressed.'),
+    configurations: zod
+      .array(zod.string())
+      .describe(
+        'The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to.',
+      ),
+  })
+  .strict()
+  .describe('An entry of shopify.app-security.json that the command saved, as the file now holds it.')
+
+export type AppSecuritySavedSuppression = zod.infer<typeof appSecuritySavedSuppressionSchema>
