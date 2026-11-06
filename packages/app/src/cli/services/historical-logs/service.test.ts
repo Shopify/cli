@@ -323,6 +323,50 @@ test('requests Function runs with exact filters and preserves native JSON', asyn
   })
 })
 
+test('requests app events with exact filters and preserves native JSON without a result status', async () => {
+  const appEventRecord = {
+    timestamp: record.timestamp,
+    type: 'APP_EVENT',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    eventHandle: 'onboarding_completed',
+    attributes: {step: 3, completed: true, nested: [null, 'unchanged']},
+    idempotencyKey: 'event-123',
+  }
+  authorize()
+  logResponse([appEventRecord])
+
+  const result = await retrieveLogs({
+    ...scope,
+    type: ['app-event'],
+    store: 'example',
+    'event-handle': 'onboarding_completed',
+  })
+
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+    clientId,
+    types: ['APP_EVENT'],
+    timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+    limit: 20,
+    filters: [
+      {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+      {field: 'EVENT_HANDLE', operator: 'EQUALS', value: 'onboarding_completed'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  expect(result.logs).toEqual([appEventRecord])
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    renderHistoricalLogs(result, true, 20)
+    expect(JSON.parse(stdout())).toEqual({
+      logs: [appEventRecord],
+      ordering: 'subset-timestamp-asc',
+      limitations: [],
+    })
+    expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('resultStatus')
+    expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+    expect(stderr()).toBe('')
+  })
+})
+
 test('an empty successful search has no result-limit warning', async () => {
   authorize()
   logResponse([])
@@ -350,12 +394,18 @@ test.each([
 test('default mixed-type search shares one query and limit, preserving every predicate', async () => {
   authorize()
   const graphqlRecord = {...record, type: 'GRAPHQL_REQUEST', api: 'storefront', timestamp: '2026-10-06T13:29:00Z'}
-  logResponse([record, graphqlRecord])
-  const result = await retrieveLogs({'client-id': clientId, limit: 2})
-  expect(result.logs).toEqual([graphqlRecord, record])
+  const appEventRecord = {
+    timestamp: '2026-10-06T13:31:00Z',
+    type: 'APP_EVENT',
+    shopMyshopifyDomain: null,
+    eventHandle: 'onboarding_completed',
+  }
+  logResponse([record, appEventRecord, graphqlRecord])
+  const result = await retrieveLogs({'client-id': clientId, limit: 3})
+  expect(result.logs).toEqual([graphqlRecord, record, appEventRecord])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN'],
-    limit: 2,
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN', 'APP_EVENT'],
+    limit: 3,
     filters: [],
   })
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
@@ -367,7 +417,7 @@ test('cross-type filters are sent together and an empty intersection is not an e
   const result = await retrieveLogs({'client-id': clientId, topic: 'orders/create', 'operation-name': 'MyQuery'})
   expect(result.logs).toEqual([])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN', 'APP_EVENT'],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
       {field: 'OPERATION_NAME', operator: 'EQUALS', value: 'MyQuery'},

@@ -13,7 +13,7 @@ function window(input: Pick<LogInput, 'since' | 'until'> = {}) {
 
 test('defaults to all supported types and a bounded shared limit', () => {
   expect(prepareLogInput({})).toMatchObject({
-    types: [{backend: 'WEBHOOK'}, {backend: 'GRAPHQL_REQUEST'}, {backend: 'FUNCTION_RUN'}],
+    types: [{backend: 'WEBHOOK'}, {backend: 'GRAPHQL_REQUEST'}, {backend: 'FUNCTION_RUN'}, {backend: 'APP_EVENT'}],
     limit: 20,
     filters: [],
   })
@@ -96,6 +96,7 @@ test.each([
   [{type: ['rest']}, 'Supported log types'],
   [{'function-handle': ' '}, 'nonempty'],
   [{target: ' '}, 'nonempty'],
+  [{'event-handle': ' '}, 'nonempty'],
   [{type: []}, 'at least one'],
   [{'status-code': '5xx'}, 'exact code'],
   [{topic: 'orders/*'}, 'slash-form'],
@@ -123,7 +124,7 @@ test('preserves all AND filters even when their types do not overlap', () => {
   ])
 })
 
-test.each(['operation-name', 'function-handle', 'target'])(
+test.each(['operation-name', 'function-handle', 'target', 'event-handle'])(
   'enforces the byte limit without truncating --%s',
   (flag) => {
     expect(prepareLogInput({[flag]: 'é'.repeat(512)}).filters[0]?.value).toBe('é'.repeat(512))
