@@ -10,7 +10,7 @@ const blockingLevels: AppSecurityBlockingLevel[] = ['high', 'medium', 'low', 'no
 export const appSecurityBlockingFlag = {
   blocking: Flags.custom<AppSecurityBlockingLevel>({
     description:
-      "The minimum check severity that causes a non-zero exit code when the check has findings: high, medium, or low. Suppressed and superseded findings don't count. Defaults to none, which never fails on findings.",
+      'The minimum check severity that causes a non-zero exit code when the check has active findings: high, medium, or low. Suppressed and superseded findings never count. Defaults to none, which never fails on findings.',
     options: blockingLevels,
     default: 'none',
     env: 'SHOPIFY_FLAG_APP_SECURITY_BLOCKING',

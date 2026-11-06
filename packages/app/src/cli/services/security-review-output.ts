@@ -1,6 +1,7 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
 import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
+import {type SavedSuppression} from './app-security-suppressions.js'
 import {
   SUPPRESSION_KIND_LABEL,
   suppressedFindingsView,
@@ -28,11 +29,16 @@ import {
 import {timeAgo} from '@shopify/cli-kit/common/string'
 import {renderError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
-import type {SavedReviewSuppressions, SecurityReviewResult} from './security-review.js'
+import type {
+  InteractiveReviewOutcome,
+  NumberedFinding,
+  SavedReviewSuppressions,
+  SecurityReviewResult,
+} from './security-review.js'
 
 /**
- * The terminal view of `app security review` (§9.4). The view-model functions return data; only
- * `renderSecurityReview` touches the terminal, so tests assert on data plus a few rendered checks.
+ * The terminal view of `app security review` (§9.4). The view-model functions return data;
+ * `renderSecurityReview` and `renderAlert` render the report and interactive session alerts.
  */
 
 export interface SecurityReviewPresenterInput {
@@ -42,6 +48,8 @@ export interface SecurityReviewPresenterInput {
   commands: AppSecurityCommands
   /** What `--suppress` saved, shown after the review. */
   savedSuppressions?: SavedReviewSuppressions
+  /** How the `--interactive` session ended and what it saved, shown after the review. */
+  interactiveReview?: InteractiveReviewOutcome
 }
 
 /** The number of a finding of the review, which every finding has. */
@@ -49,7 +57,7 @@ type FindingNumberLookup = (finding: CombinedFinding) => number
 
 type SecurityReviewAlertType = 'info' | 'success' | 'warning' | 'error'
 
-interface SecurityReviewAlert {
+export interface SecurityReviewAlert {
   type: SecurityReviewAlertType
   options: RenderAlertOptions
 }
@@ -122,16 +130,20 @@ const renderers: Record<SecurityReviewAlertType, (options: RenderAlertOptions) =
 
 export function renderSecurityReview(input: SecurityReviewPresenterInput): void {
   for (const alert of buildSecurityReviewAlerts(input)) {
-    renderers[alert.type](alert.options)
+    renderAlert(alert)
   }
+}
+
+export function renderAlert(alert: SecurityReviewAlert): void {
+  renderers[alert.type](alert.options)
 }
 
 /**
  * Every box in order: unresolved checks, passed checks, one per check with findings, the suppressed findings, the
- * entries of shopify.app-security.json that apply to nothing, the summary, then what `--suppress` saved. The
- * suppressed findings box is shown whatever `--verbose`, whenever a shown check has one. The entries box is shown
- * whatever `--verbose`, whenever an entry of a shown check applies to nothing: `--check-id` narrows both boxes to the
- * selected checks. Each finding's title starts with its number.
+ * entries of shopify.app-security.json that apply to nothing, the summary, then what `--suppress` or `--interactive`
+ * saved. The suppressed findings box is shown whatever `--verbose`, whenever a shown check has one. The entries box is
+ * shown whatever `--verbose`, whenever an entry of a shown check applies to nothing: `--check-id` narrows both boxes to
+ * the selected checks. Each finding's title starts with its number.
  */
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
   const {checks, filter, suppressions} = input.result
@@ -155,12 +167,15 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
     ...(unappliedEntries ? [unappliedEntriesAlert(unappliedEntries)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
     ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions)] : []),
+    ...(input.interactiveReview ? [interactiveReviewOutcomeAlert(input.interactiveReview)] : []),
   ]
 }
 
-/** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
-function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressions): SecurityReviewAlert {
-  const entrySections: AlertCustomSection[] = saved.map(({index, change, entry, findingNumber}) => ({
+type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
+
+/** One saved entry: its index, the finding it was saved for and the change, then what it holds. */
+function savedEntrySection({index, change, entry, findingNumber}: NumberedSavedSuppression): AlertCustomSection {
+  return {
     title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
     body: [
       `${entry.source} ${entry.check} in`,
@@ -170,7 +185,21 @@ function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressio
       {subdued: `\nReason: ${entry.reason}`},
       {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
     ],
-  }))
+  }
+}
+
+const COMMIT_SUPPRESSIONS_STEP: AlertCustomSection = {
+  title: 'Next steps',
+  body: {list: {items: [`Review and commit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`]}},
+}
+
+function savedHeadline(saved: SavedSuppression[]): string {
+  return `Saved ${countLabel(saved.length, 'suppression')} to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`
+}
+
+/** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
+function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressions): SecurityReviewAlert {
+  const entrySections = saved.map(savedEntrySection)
   const companionSections: AlertCustomSection[] =
     companionNumbers.length === 0
       ? []
@@ -187,22 +216,86 @@ function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressio
   return {
     type: 'success',
     options: {
-      headline: `Saved ${countLabel(saved.length, 'suppression')} to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+      headline: savedHeadline(saved),
       // A section rather than `nextSteps`, which a box draws before its sections: the entries come first.
-      customSections: [
-        ...entrySections,
-        ...companionSections,
-        {title: 'Next steps', body: {list: {items: [`Review and commit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`]}}},
-      ],
+      customSections: [...entrySections, ...companionSections, COMMIT_SUPPRESSIONS_STEP],
     },
   }
+}
+
+/** The finding in full, with its evidence and reasoning, in the box of its check. */
+export function interactiveFindingAlert(
+  {number, check, finding}: NumberedFinding,
+  position: number,
+  total: number,
+): SecurityReviewAlert {
+  return {
+    type: check.severity === 'high' ? 'error' : 'warning',
+    options: {
+      headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
+      body: {subdued: `Active finding ${position} of ${total}`},
+      ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
+      customSections: [findingSection(finding, number, true)],
+    },
+  }
+}
+
+/** What one decision saved, shown at once. */
+export function savedNowAlert(saved: NumberedSavedSuppression[]): SecurityReviewAlert {
+  return {type: 'success', options: {headline: savedHeadline(saved), customSections: saved.map(savedEntrySection)}}
+}
+
+/** After the review: everything the session saved, the companions left out, how it ended, and the next step. */
+function interactiveReviewOutcomeAlert({
+  saved,
+  declinedCompanions,
+  ending,
+}: InteractiveReviewOutcome): SecurityReviewAlert {
+  const endingLines = {
+    finished: undefined,
+    quit: 'You quit the review. The suppressions you saved are kept.',
+    'results-changed': 'The review stopped because the results changed. The suppressions you saved are kept.',
+  }
+  const endingLine = endingLines[ending]
+  const body = endingLine === undefined ? {} : {body: endingLine}
+  if (saved.length === 0) {
+    return {
+      type: 'info',
+      options: {headline: `No suppressions saved to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`, ...body},
+    }
+  }
+  const declinedSections: AlertCustomSection[] =
+    declinedCompanions.length === 0
+      ? []
+      : [{title: 'Not suppressed', body: {list: {items: declinedCompanions.map(declinedCompanionsItem)}}}]
+  return {
+    type: 'success',
+    options: {
+      headline: savedHeadline(saved),
+      ...body,
+      customSections: [...saved.map(savedEntrySection), ...declinedSections, COMMIT_SUPPRESSIONS_STEP],
+    },
+  }
+}
+
+function declinedCompanionsItem({
+  findingNumber,
+  companionNumbers,
+}: InteractiveReviewOutcome['declinedCompanions'][number]): string {
+  const pronoun = companionNumbers.length === 1 ? 'it' : 'them'
+  return `${companionsLabel(companionNumbers)} the same check in the same file as finding ${findingNumber}, so check --blocking, which reads no agent results, still counts ${pronoun}. To suppress ${pronoun}, run the review with --suppress ${findingNumber} --include-superseded and the same --kind and --reason.`
+}
+
+/** "7", "7 and 8", "7, 8 and 9". */
+export function listedNumbers(numbers: (number | string)[]): string {
+  if (numbers.length === 1) return String(numbers[0])
+  return `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
 }
 
 /** "Finding 7 is a superseded deterministic finding of", "Findings 7 and 8 are superseded deterministic findings of". */
 function companionsLabel(numbers: number[]): string {
   if (numbers.length === 1) return `Finding ${numbers[0]} is a superseded deterministic finding of`
-  const listed = `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
-  return `Findings ${listed} are superseded deterministic findings of`
+  return `Findings ${listedNumbers(numbers)} are superseded deterministic findings of`
 }
 
 function suppressedFindingsAlert({headline, counts, sections}: SuppressedFindingsView): SecurityReviewAlert {

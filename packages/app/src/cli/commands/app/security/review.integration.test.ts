@@ -1114,3 +1114,77 @@ describe('app security review --suppress command boundary', () => {
     })
   })
 })
+
+describe('app security review --interactive command boundary', () => {
+  /** Runs `check` with stdin, stdout and stderr reporting that they are terminals, then restores them. */
+  async function inTerminal<T>(check: () => Promise<T>): Promise<T> {
+    const streams = [process.stdin, process.stdout, process.stderr]
+    const original = streams.map((stream) => Object.getOwnPropertyDescriptor(stream, 'isTTY'))
+    streams.forEach((stream) => Object.defineProperty(stream, 'isTTY', {value: true, configurable: true}))
+    try {
+      return await check()
+    } finally {
+      streams.forEach((stream, index) => {
+        const descriptor = original[index]
+        if (descriptor) Object.defineProperty(stream, 'isTTY', descriptor)
+        else Reflect.deleteProperty(stream, 'isTTY')
+      })
+    }
+  }
+
+  function expectUnavailable(result: Awaited<ReturnType<typeof runCommand>>) {
+    expect(result.exitCode).toBe(1)
+    const text = boxText(result.stderr)
+    expect(text).toContain('The interactive review needs an interactive terminal.')
+    expect(text).toContain('Run it in a terminal, outside CI and without --no-input.')
+    // It fails before it reads the results, so no review and no prompt is shown.
+    expect(text).not.toContain('CREDENTIAL_LOG_LEAKAGE')
+    expect(text).not.toContain('What do you want to do')
+  }
+
+  test('without a terminal, fails before it reads anything, prompts nothing and saves nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+
+      const result = await runCommand(['--path', directory, '--interactive'])
+
+      expectUnavailable(result)
+      await expect(fileExists(appSecuritySuppressionsPath(appDirectory))).resolves.toBe(false)
+    })
+  })
+
+  test('in CI or with --no-input, fails the same way in a terminal', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+
+      vi.stubEnv('CI', 'true')
+      try {
+        expectUnavailable(await inTerminal(() => runCommand(['--path', directory, '--interactive'])))
+      } finally {
+        vi.unstubAllEnvs()
+      }
+      vi.stubEnv('CI', undefined)
+      vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
+      try {
+        expectUnavailable(await inTerminal(() => runCommand(['--path', directory, '--interactive'])))
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test('--json with --interactive writes the error document, prompts nothing and saves nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings})
+
+      const result = await runJsonCommand(['--path', directory, '--interactive'])
+
+      expect(result.exitCode).not.toBe(0)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        error: {message: expect.stringContaining('--json=true cannot also be provided when using --interactive')},
+      })
+      expect(result.stderr).not.toContain('What do you want to do')
+      await expect(fileExists(appSecuritySuppressionsPath(appDirectory))).resolves.toBe(false)
+    })
+  })
+})

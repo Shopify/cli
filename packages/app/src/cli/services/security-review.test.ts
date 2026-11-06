@@ -2,6 +2,8 @@ import {writeAppSecuritySuppressionsFixture} from './app-security-suppressions.t
 import securityReview, {
   numberFindings,
   reviewAppSecurityResults,
+  type InteractiveReviewOutcome,
+  type InteractiveReviewSession,
   type SecurityReviewDependencies,
   type SecurityReviewSuppressOptions,
 } from './security-review.js'
@@ -692,6 +694,166 @@ describe('securityReview --suppress', () => {
         code: 'finding-not-found',
         tryMessage: 'The results have no findings.',
       })
+    })
+  })
+})
+
+describe('securityReview --interactive', () => {
+  const decision = {kind: 'false-positive', reason: 'The logger redacts tokens.'} as const
+
+  /** Runs `review --interactive` with `run` as the session, which returns what the session saved. */
+  function reviewInteractively(
+    appRoot: string,
+    run: (session: InteractiveReviewSession) => Promise<InteractiveReviewOutcome>,
+    checkIds: string[] = [],
+  ) {
+    return securityReview({directory: appRoot, checkIds, blocking: 'high', interactive: run}, testDependencies())
+  }
+
+  function outcomeOf(saved: InteractiveReviewOutcome['saved'] = []): InteractiveReviewOutcome {
+    return {saved, declinedCompanions: [], ending: 'finished'}
+  }
+
+  async function readEntries(appRoot: string): Promise<unknown> {
+    return (JSON.parse(await readFile(appSecuritySuppressionsPath(appRoot))) as {suppressions: unknown}).suppressions
+  }
+
+  test('offers the active findings of the checks that --check-id selects, most severe first', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      const offered: string[][] = []
+      const record = async (session: InteractiveReviewSession) => {
+        offered.push(session.findings.map(({number, check, finding}) => `${number} ${check.id} ${finding.source}`))
+        expect(session.configuration).toBe('shopify.app.toml')
+        expect(session.result.resultsDigest).toMatch(/^[0-9a-f]{12}$/)
+        return outcomeOf()
+      }
+
+      await reviewInteractively(appRoot, record)
+      await reviewInteractively(appRoot, record, ['EOL_API_VERSION', 'CREDENTIAL_LOG_LEAKAGE'])
+
+      // Finding 4 is suppressed by the agent, and 1 and 3 are superseded.
+      expect(offered).toStrictEqual([
+        ['2 CREDENTIAL_LOG_LEAKAGE agent', '5 MISSING_TENANT_ISOLATION agent', '6 EOL_API_VERSION deterministic'],
+        ['2 CREDENTIAL_LOG_LEAKAGE agent', '6 EOL_API_VERSION deterministic'],
+      ])
+    })
+  })
+
+  test('saves with the planner and writer of --suppress, then returns the review after the session', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      const entry = {
+        source: 'deterministic',
+        check: 'EOL_API_VERSION',
+        kind: 'false-positive',
+        path: 'shopify.app.toml',
+        code: 'api_version = "2024-01"',
+        reason: 'The logger redacts tokens.',
+        configurations: ['shopify.app.toml'],
+      }
+      let outcome: InteractiveReviewOutcome | undefined
+
+      const reviewed = await reviewInteractively(appRoot, async (session) => {
+        const saved = await session.suppress({findingNumber: 6, decision, includeSuperseded: false})
+        expect(saved).toStrictEqual({
+          status: 'saved',
+          savedSuppressions: {
+            path: appSecuritySuppressionsPath(appRoot),
+            saved: [{index: 0, change: 'added', entry, findingNumber: 6}],
+            companionNumbers: [],
+          },
+        })
+        outcome = outcomeOf(saved.status === 'saved' ? saved.savedSuppressions.saved : [])
+        return outcome
+      })
+
+      expect(reviewed.interactiveReview).toBe(outcome)
+      expect(reviewed.savedSuppressions).toBeUndefined()
+      await expect(readEntries(appRoot)).resolves.toStrictEqual([entry])
+      expect(dispositionsOf(reviewed.result.checks, 'EOL_API_VERSION')).toEqual([
+        {source: 'deterministic', disposition: 'suppressed'},
+      ])
+      expect(reviewed.result.suppressions.map(({status}) => status)).toEqual(['matched'])
+    })
+  })
+
+  test('reads the results again for each save, so the companions of a saved agent finding are saved alone', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+
+      await reviewInteractively(appRoot, async (session) => {
+        const agentEntry = await session.suppress({findingNumber: 2, decision, includeSuperseded: false})
+        const companions = await session.suppress({findingNumber: 2, decision, includeSuperseded: true})
+
+        expect(agentEntry).toMatchObject({status: 'saved', savedSuppressions: {companionNumbers: [1]}})
+        expect(companions).toMatchObject({
+          status: 'saved',
+          savedSuppressions: {saved: [{index: 1, change: 'added', findingNumber: 1}], companionNumbers: []},
+        })
+        return outcomeOf()
+      })
+
+      await expect(readEntries(appRoot)).resolves.toMatchObject([
+        {source: 'agent', check: 'CREDENTIAL_LOG_LEAKAGE', kind: 'false-positive'},
+        {source: 'deterministic', check: 'CREDENTIAL_LOG_LEAKAGE', kind: 'false-positive'},
+      ])
+    })
+  })
+
+  test('returns the refusals of --suppress without aborting, and saves nothing for them', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+
+      await reviewInteractively(appRoot, async (session) => {
+        await expect(session.suppress({findingNumber: 5, decision, includeSuperseded: false})).resolves.toStrictEqual({
+          status: 'refused',
+          refusal: {
+            code: 'finding-not-suppressible',
+            message:
+              "Finding 5 can't be suppressed: the results hold no code for its line, so no entry can name it alone. Nothing was saved.",
+            tryMessage: 'Add an entry for it to shopify.app-security.json by hand, with a code that names it alone.',
+            details: {findingNumber: 5},
+          },
+        })
+        await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+        await expect(session.suppress({findingNumber: 6, decision, includeSuperseded: false})).resolves.toMatchObject({
+          status: 'saved',
+        })
+        return outcomeOf()
+      })
+
+      await expect(readEntries(appRoot)).resolves.toMatchObject([{check: 'EOL_API_VERSION'}])
+    })
+  })
+
+  test('refuses a number once the results changed during the session, and reviews the new results', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, bothWithExcerpts)
+      const [first, ...rest] = bothWithExcerpts.deterministic!.checks
+      const [finding, ...otherFindings] = first!.findings
+      const rescanned = {
+        ...bothWithExcerpts.deterministic!,
+        checks: [{...first!, findings: [{...finding!, message: 'Another issue.'}, ...otherFindings]}, ...rest],
+      }
+      let startDigest: string | null = null
+
+      const reviewed = await reviewInteractively(appRoot, async (session) => {
+        startDigest = session.result.resultsDigest
+        await writeFile(
+          appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
+          JSON.stringify(rescanned),
+        )
+
+        await expect(session.suppress({findingNumber: 6, decision, includeSuperseded: false})).resolves.toMatchObject({
+          status: 'refused',
+          refusal: {code: 'results-digest-mismatch', details: {resultsDigest: expect.not.stringMatching(startDigest!)}},
+        })
+        return {...outcomeOf(), ending: 'results-changed'}
+      })
+
+      await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
+      expect(reviewed.result.resultsDigest).not.toBe(startDigest)
     })
   })
 })
