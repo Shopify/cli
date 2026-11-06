@@ -1,7 +1,7 @@
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const logTypes = [
-  {name: 'webhook', backend: 'WEBHOOK_DELIVERY'},
+  {name: 'webhook', backend: 'WEBHOOK'},
   {name: 'graphql', backend: 'GRAPHQL_REQUEST'},
 ] as const
 
