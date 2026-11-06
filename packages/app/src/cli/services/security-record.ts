@@ -4,11 +4,14 @@ import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-securit
 import {
   createCitedFileReader,
   getEngineVersion,
+  listGatheredPaths,
   recordAgentFindings,
   withoutCodeExcerpts,
   type AgentFindingsDocument,
+  type AppSecurityScope,
+  type SourceTextReader,
 } from './app-security-engine/index.js'
-import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
+import {mergeScanDirectories, resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import type {AppSecurityCommands} from './app-security-commands.js'
@@ -101,16 +104,34 @@ async function readInputDocument(
   }
 }
 
-/** What `check` scans without `--include-dir`: the app directory, and the extension and web directories outside it. */
-function citedFileDirectories(selection: AppSecuritySelection): string[] {
-  return [selection.appDirectory, ...(selection.kind === 'config' ? (selection.appConfigDirectories ?? []) : [])]
+/**
+ * Reads the files that findings cite, for their excerpts, when `check` would gather them with the document's scope:
+ * below the app directory, and the extension and web directories outside it, with its `excludes` and `no_git_ignore`.
+ */
+async function createRecordFileReader(
+  selection: AppSecuritySelection,
+  scope: AppSecurityScope,
+): Promise<SourceTextReader> {
+  const appConfigDirectories = selection.kind === 'config' ? (selection.appConfigDirectories ?? []) : []
+  const merged = mergeScanDirectories(selection.appDirectory, [], appConfigDirectories)
+  const scanDirectories = merged.scanDirectories.map(({directory}) => directory)
+  const {paths} = await listGatheredPaths(
+    {
+      appDirectory: selection.appDirectory,
+      scanDirectories,
+      requestedScanDirectories: merged.requestedScanDirectories,
+      appConfigFilePath: selection.kind === 'config' ? selection.appConfigFilePath : undefined,
+    },
+    {excludePatterns: scope.excludes, noGitIgnore: scope.no_git_ignore},
+  )
+  return createCitedFileReader(selection.appDirectory, scanDirectories, new Set(paths))
 }
 
 /**
  * Validates the agent's findings document from stdin and, only if it is fully valid, replaces
- * agent-findings.json. Each finding gets the redacted lines it cites, read from the files below the scanned
- * directories. Doesn't read or require deterministic-findings.json. Prints nothing; every failure throws an
- * AbortError before anything is written.
+ * agent-findings.json. Each finding gets the redacted lines it cites, read from the files that `check` would gather
+ * with the document's scope. Doesn't read or require deterministic-findings.json. Prints nothing; every failure throws
+ * an AbortError before anything is written.
  */
 export default async function securityRecord(
   options: SecurityRecordOptions,
@@ -120,9 +141,13 @@ export default async function securityRecord(
   const commands = resolveAppSecurityCommands(selection, options.path)
   const input = await readInputDocument(commands, dependencies)
 
+  const engineVersion = dependencies.engineVersion()
+  // Validated before anything is gathered, so a rejected document fails fast, and its scope chooses the files to read.
+  const validated = recordAgentFindings(input, {engineVersion})
+  if (!validated.ok) abortRejectedDocument(validated.errors, commands)
   const recorded = recordAgentFindings(input, {
-    engineVersion: dependencies.engineVersion(),
-    readCitedFile: createCitedFileReader(selection.appDirectory, citedFileDirectories(selection)),
+    engineVersion,
+    readCitedFile: await createRecordFileReader(selection, validated.document.scope),
   })
   if (!recorded.ok) abortRejectedDocument(recorded.errors, commands)
 

@@ -439,7 +439,7 @@ describe('code excerpts never hold a secret', () => {
     const dir = realpathSync(removeAfterTest(makeApp({[file!]: `SHOPIFY_API_SECRET=${unprefixedSecret}\n`})))
     skip(!existsSync(join(dir, citedFile!)), 'the file system is case-sensitive')
 
-    expect(createCitedFileReader(dir, [dir])(citedFile!)).toBeUndefined()
+    expect(createCitedFileReader(dir, [dir], new Set([citedFile!]))(citedFile!)).toBeUndefined()
   })
 })
 

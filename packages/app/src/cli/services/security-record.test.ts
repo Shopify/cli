@@ -1,4 +1,5 @@
 import securityRecord from './security-record.js'
+import {git, isolateGitConfig} from './app-security-engine/tests/git-test-helpers.js'
 import {appSecurityArtifactPaths, readFindingsDocument, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {
@@ -14,10 +15,10 @@ import {
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecuritySelection} from './app-security-selection.js'
 import type {SecurityRecordDependencies} from './security-record.js'
-import type {AgentFindingsDocument} from './app-security-engine/index.js'
+import type {AgentFindingsDocument, AppSecurityScope} from './app-security-engine/index.js'
 
 // Composed at runtime so the literal token never appears in the repository.
 const FAKE_SHOPIFY_TOKEN = ['shpat', '_', '0123456789abcdef'.repeat(2)].join('')
@@ -469,6 +470,36 @@ describe('securityRecord', () => {
       return createApp(joinPath(directory, 'app'))
     }
 
+    let restoreGitConfig: (() => void) | undefined
+    beforeEach(() => {
+      restoreGitConfig = isolateGitConfig()
+    })
+    afterEach(() => {
+      restoreGitConfig?.()
+    })
+
+    /** Writes each file below the app directory, creating its directory. */
+    async function writeAppFiles(appRoot: string, files: Record<string, string>): Promise<void> {
+      for (const [path, content] of Object.entries(files)) {
+        // eslint-disable-next-line no-await-in-loop
+        await mkdir(dirname(joinPath(appRoot, path)))
+        // eslint-disable-next-line no-await-in-loop
+        await writeFile(joinPath(appRoot, path), content)
+      }
+    }
+
+    /** Records one finding on line 1 of each file, and returns each file's stored excerpt. */
+    async function recordedExcerpts(appRoot: string, files: string[], scope: AppSecurityScope = NO_SCOPE) {
+      const document = {
+        ...validDocument(),
+        scope,
+        findings: files.map((file) => finding({file, line: 1, evidence: [{file, line: 1}]})),
+      }
+      await record(appRoot, testDependencies(JSON.stringify(document)))
+      const findings = (await readRecorded(appRoot)).checks[0]!.findings
+      return Object.fromEntries(findings.map((stored) => [stored.location.file, stored.code_excerpt]))
+    }
+
     test('stores the lines each finding cites, read from the files in the app directory', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
@@ -591,6 +622,51 @@ describe('securityRecord', () => {
 
         const [stored] = (await readRecorded(appRoot)).checks[0]!.findings
         expect(stored!.code_excerpt).toEqual(excerptOf(10, 14))
+      })
+    })
+
+    test("doesn't read a cited file that check doesn't gather: one that Git ignores, or one in .git", async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const secret = 'fedcba9876543210'.repeat(2)
+        await writeAppFiles(appRoot, {
+          '.gitignore': 'config/local.js\n',
+          'config/local.js': `export const signingKey = '${secret}'\n`,
+          'app/routes/orders.tsx': `${orders.join('\n')}\n`,
+        })
+        git(appRoot, ['init', '-q', '.'])
+        git(appRoot, ['remote', 'add', 'origin', `https://deploy:${secret}@git.example.com/app.git`])
+
+        const excerpts = await recordedExcerpts(appRoot, ['config/local.js', '.git/config', 'app/routes/orders.tsx'])
+
+        expect(excerpts).toEqual({
+          'config/local.js': undefined,
+          '.git/config': undefined,
+          'app/routes/orders.tsx': excerptOf(1, 3),
+        })
+        await expect(readFile(artifactPaths(appRoot).agentFindingsPath)).resolves.not.toContain(secret)
+      })
+    })
+
+    test("reads the cited files that check gathers with the document's excludes and no_git_ignore", async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        await writeAppFiles(appRoot, {
+          '.gitignore': 'config/local.js\n',
+          'config/local.js': `${orders.join('\n')}\n`,
+          'app/generated/schema.ts': `${orders.join('\n')}\n`,
+        })
+        git(appRoot, ['init', '-q', '.'])
+        // `--exclude` globs are matched from the working directory.
+        vi.stubEnv('INIT_CWD', appRoot)
+
+        const excerpts = await recordedExcerpts(appRoot, ['config/local.js', 'app/generated/schema.ts'], {
+          include_dirs: [],
+          excludes: ['app/generated'],
+          no_git_ignore: true,
+        })
+
+        expect(excerpts).toEqual({'config/local.js': excerptOf(1, 3), 'app/generated/schema.ts': undefined})
       })
     })
 
