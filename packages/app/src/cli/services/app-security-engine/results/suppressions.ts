@@ -171,14 +171,13 @@ function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
   const text = normalizeSuppressionText(entry.code)
   // Text that is only whitespace, commas and semicolons names nothing.
   if (text === '') return matchOrMiss([], check)
-  const matches = candidates
-    .flatMap(({finding, index}): ScoredCandidate[] => {
-      const inCode = occursInCode(text, finding, entry.path)
-      const inMessage = normalizeSuppressionText(finding.message).includes(text)
-      // Messages are fixed per rule, so a finding with captured code matches by its code alone.
-      const matched = inCode || (inMessage && !hasCapturedCode(finding, entry.path))
-      return matched ? [{index, inCode, inMessage}] : []
-    })
+  const matches = candidates.flatMap(({finding, index}): ScoredCandidate[] => {
+    const inCode = occursInCode(text, finding, entry.path)
+    const inMessage = normalizeSuppressionText(finding.message).includes(text)
+    // Messages are fixed per rule, so a finding with captured code matches by its code alone.
+    const matched = inCode || (inMessage && !hasCapturedCode(finding, entry.path))
+    return matched ? [{index, inCode, inMessage}] : []
+  })
   if (matches.length <= 1) return matchOrMiss(matches, check)
 
   const inCodeAndMessage = matches.filter(({inCode, inMessage}) => inCode && inMessage)
