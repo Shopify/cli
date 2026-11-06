@@ -1,10 +1,13 @@
 import securityRecord from './security-record.js'
+import {git, isolateGitConfig} from './app-security-engine/tests/git-test-helpers.js'
 import {
   appSecurityArtifactPaths,
   appSecuritySuppressionsPath,
   readFindingsDocument,
   writeAgentFindings,
+  writeCheckArtifacts,
 } from './app-security-artifacts.js'
+import {agentChecks, deterministicFindings} from './security-check.test-data.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {
   fileExists,
@@ -17,12 +20,12 @@ import {
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecuritySelection} from './app-security-selection.js'
 import type {SecurityRecordDependencies} from './security-record.js'
-import type {AgentFindingsDocument} from './app-security-engine/index.js'
+import type {AgentFindingsDocument, AppSecurityScope} from './app-security-engine/index.js'
 
 // Composed at runtime so the literal token never appears in the repository.
 const FAKE_SHOPIFY_TOKEN = ['shpat', '_', '0123456789abcdef'.repeat(2)].join('')
@@ -479,6 +482,36 @@ describe('securityRecord', () => {
       return createApp(joinPath(directory, 'app'))
     }
 
+    let restoreGitConfig: (() => void) | undefined
+    beforeEach(() => {
+      restoreGitConfig = isolateGitConfig()
+    })
+    afterEach(() => {
+      restoreGitConfig?.()
+    })
+
+    /** Writes each file below the app directory, creating its directory. */
+    async function writeAppFiles(appRoot: string, files: Record<string, string>): Promise<void> {
+      for (const [path, content] of Object.entries(files)) {
+        // eslint-disable-next-line no-await-in-loop
+        await mkdir(dirname(joinPath(appRoot, path)))
+        // eslint-disable-next-line no-await-in-loop
+        await writeFile(joinPath(appRoot, path), content)
+      }
+    }
+
+    /** Records one finding on line 1 of each file, and returns each file's stored excerpt. */
+    async function recordedExcerpts(appRoot: string, files: string[], scope: AppSecurityScope = NO_SCOPE) {
+      const document = {
+        ...validDocument(),
+        scope,
+        findings: files.map((file) => finding({file, line: 1, evidence: [{file, line: 1}]})),
+      }
+      await record(appRoot, testDependencies(JSON.stringify(document)))
+      const findings = (await readRecorded(appRoot)).checks[0]!.findings
+      return Object.fromEntries(findings.map((stored) => [stored.location.file, stored.code_excerpt]))
+    }
+
     test('stores the lines each finding cites, read from the files in the app directory', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
@@ -505,8 +538,11 @@ describe('securityRecord', () => {
       ['.env', 'config.ts'],
       ['secrets.json', 'config.ts'],
       ['credentials.json', 'config.ts'],
+      ['.npmrc', 'config.ts'],
+      ['Secrets.json', 'config.ts'],
       ['source.ts', '.env'],
       ['source.ts', 'secrets.json'],
+      ['source.ts', 'server.pem'],
     ])('omits excerpts for target %s cited through %s', async (targetFile, citedFile) => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
@@ -525,6 +561,26 @@ describe('securityRecord', () => {
         expect(written).not.toContain(secret)
       })
     })
+
+    test.each(['.envrc', '.dev.vars', 'config/secrets.yml', '.npmrc', '.netrc', 'config/master.key', 'Secrets.json'])(
+      'omits excerpts for the secret file %s',
+      async (file) => {
+        await inTemporaryDirectory(async (directory) => {
+          const appRoot = await createApp(directory)
+          // No redaction pattern knows a bare value, so only leaving the file out keeps it out of the excerpt.
+          const secret = 'fedcba9876543210'.repeat(2)
+          await mkdir(dirname(joinPath(appRoot, file)))
+          await writeFile(joinPath(appRoot, file), `${secret}\n`)
+          const document = {...validDocument(), findings: [finding({file, line: 1, evidence: [{file, line: 1}]})]}
+
+          await record(appRoot, testDependencies(JSON.stringify(document)))
+
+          const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
+          expect(written).not.toContain('code_excerpt')
+          expect(written).not.toContain(secret)
+        })
+      },
+    )
 
     test('keeps excerpts for an in-root symlink to an ordinary source file', async () => {
       await inTemporaryDirectory(async (directory) => {
@@ -581,6 +637,110 @@ describe('securityRecord', () => {
       })
     })
 
+    test("doesn't read a cited file that check doesn't gather: one that Git ignores, or one in .git", async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const secret = 'fedcba9876543210'.repeat(2)
+        await writeAppFiles(appRoot, {
+          '.gitignore': 'config/local.js\n',
+          'config/local.js': `export const signingKey = '${secret}'\n`,
+          'app/routes/orders.tsx': `${orders.join('\n')}\n`,
+        })
+        git(appRoot, ['init', '-q', '.'])
+        git(appRoot, ['remote', 'add', 'origin', `https://deploy:${secret}@git.example.com/app.git`])
+
+        const excerpts = await recordedExcerpts(appRoot, ['config/local.js', '.git/config', 'app/routes/orders.tsx'])
+
+        expect(excerpts).toEqual({
+          'config/local.js': undefined,
+          '.git/config': undefined,
+          'app/routes/orders.tsx': excerptOf(1, 3),
+        })
+        await expect(readFile(artifactPaths(appRoot).agentFindingsPath)).resolves.not.toContain(secret)
+      })
+    })
+
+    test("reads the cited files that check gathers with the document's excludes and no_git_ignore", async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        await writeAppFiles(appRoot, {
+          '.gitignore': 'config/local.js\n',
+          'config/local.js': `${orders.join('\n')}\n`,
+          'app/generated/schema.ts': `${orders.join('\n')}\n`,
+        })
+        git(appRoot, ['init', '-q', '.'])
+        // `--exclude` globs are matched from the working directory.
+        vi.stubEnv('INIT_CWD', appRoot)
+
+        const excerpts = await recordedExcerpts(appRoot, ['config/local.js', 'app/generated/schema.ts'], {
+          include_dirs: [],
+          excludes: ['app/generated'],
+          no_git_ignore: true,
+        })
+
+        expect(excerpts).toEqual({'config/local.js': excerptOf(1, 3), 'app/generated/schema.ts': undefined})
+      })
+    })
+
+    /**
+     * An app below `directory` with a `shared` directory next to it, and the deterministic-findings.json of a check run
+     * with `--include-dir ../shared`.
+     */
+    async function createAppWithIncludeDirectory(directory: string): Promise<string> {
+      const appRoot = await createNestedApp(directory)
+      await mkdir(joinPath(directory, 'shared'))
+      await writeFile(joinPath(directory, 'shared', 'util.ts'), `${orders.join('\n')}\n`)
+      await writeCheckArtifacts(appRoot, 'shopify.app', {
+        deterministicFindings: {
+          ...deterministicFindings,
+          coverage: {
+            ...deterministicFindings.coverage,
+            scope: {include_dirs: ['../shared'], excludes: [], no_git_ignore: false},
+            scan_directories: [
+              {directory: '.', origin: 'app_directory'},
+              {directory: '../shared', origin: 'include_dir'},
+            ],
+          },
+        },
+        agentChecks,
+      })
+      return appRoot
+    }
+
+    test('reads a cited file in an --include-dir directory outside the app that the check run recorded', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createAppWithIncludeDirectory(directory)
+
+        const excerpts = await recordedExcerpts(appRoot, ['../shared/util.ts'], {
+          include_dirs: ['../shared'],
+          excludes: [],
+          no_git_ignore: false,
+        })
+
+        expect(excerpts).toEqual({'../shared/util.ts': excerptOf(1, 3)})
+      })
+    })
+
+    test.each([
+      ['the document names other include directories', ['../other']],
+      ['the document names none', []],
+    ])(
+      "doesn't read a cited file in the check run's include directories when %s",
+      async (_description, includeDirs) => {
+        await inTemporaryDirectory(async (directory) => {
+          const appRoot = await createAppWithIncludeDirectory(directory)
+
+          const excerpts = await recordedExcerpts(appRoot, ['../shared/util.ts'], {
+            include_dirs: includeDirs,
+            excludes: [],
+            no_git_ignore: false,
+          })
+
+          expect(excerpts).toEqual({'../shared/util.ts': undefined})
+        })
+      },
+    )
+
     test('stores the findings without excerpts when the excerpts would make the file too large for review', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
@@ -595,11 +755,12 @@ describe('securityRecord', () => {
           ),
         })
 
-        await record(appRoot, testDependencies(document))
+        const result = await record(appRoot, testDependencies(document))
 
         const {agentFindingsPath} = artifactPaths(appRoot)
         await expect(readFindingsDocument(agentFindingsPath, 'agent')).resolves.toMatchObject({status: 'ok'})
         await expect(readFile(agentFindingsPath)).resolves.not.toContain('code_excerpt')
+        expect(result.codeExcerptsOmitted).toBe(true)
       })
     })
   })

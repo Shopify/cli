@@ -597,14 +597,25 @@ function gatherScanPaths(
 }
 
 /**
- * Reads the files that agent findings cite, for their code excerpts, with the scan's containment rules: a file is read
- * only below one of `directories`, which are absolute real paths, never through a symbolic link that leaves it, within
- * the size limit, and not when it's binary. Cited paths are relative to the app directory. Configures the repository
- * reader, as a scan does.
+ * Reads the files that agent findings cite, for their code excerpts, with the scan's rules: a file is read only when
+ * `gatheredPaths` holds it, which are the paths relative to the app directory that `listGatheredPaths` returns for
+ * `directories` and the scope, so never when Git ignores it, it's excluded, or it's in `.git`. It's read only below
+ * one of `directories`, which are absolute real paths, never through a symbolic link that leaves it, within the size
+ * limit, and not when it's binary. Cited paths are relative to the app directory. Configures the repository reader, as
+ * a scan does.
  */
-export function createCitedFileReader(appDirectory: string, directories: ReadonlyArray<string>): SourceTextReader {
+export function createCitedFileReader(
+  appDirectory: string,
+  directories: ReadonlyArray<string>,
+  gatheredPaths: ReadonlySet<string>,
+): SourceTextReader {
   configureRepositoryReader({appDirectory, scanDirectories: directories, explicitInputs: new Set()})
-  return (file) => readRepositoryTextFile(resolvePath(appDirectory, file))
+  // The repository reader is module state. The returned reader reads with this configuration only while nothing
+  // configures it again, such as a scan or `listGatheredPaths`, so create it after those and use it before any other.
+  return (file) => {
+    const path = resolvePath(appDirectory, file)
+    return gatheredPaths.has(normalizePath(relativePath(appDirectory, path))) ? readRepositoryTextFile(path) : undefined
+  }
 }
 
 /**

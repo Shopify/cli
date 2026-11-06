@@ -2,6 +2,7 @@ import {renderSecurityRecordResult} from './result.js'
 import {appSecurityArtifactPaths} from '../app-security-artifacts.js'
 import {fileRealPath, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test} from 'vitest'
@@ -45,6 +46,55 @@ describe('renderSecurityRecordResult', () => {
       expect(rendered).toContain('agent-findings.json')
       expect(rendered).toContain('shopify app security review --path')
       output.clear()
+    })
+  })
+
+  test('warns on stderr when agent-findings.json was written without code excerpts', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const path = artifactPaths(appRoot).agentFindingsPath
+
+      await withCapturedStandardStreams(({stderr}) => {
+        renderSecurityRecordResult(
+          {path, checks: 1, findings: 2, codeExcerptsOmitted: true},
+          {selection: selectionFor(appRoot), path: appRoot},
+          'text',
+        )
+
+        const output = unstyled(stderr())
+          .replaceAll(/[│╭╮╰╯─]/g, ' ')
+          .replace(/\s+/g, ' ')
+        expect(output).toContain(
+          'agent-findings.json was written without code excerpts, because with them it would be larger than 5 MB. Record fewer or shorter findings to keep them.',
+        )
+        expect(output).toContain('Agent findings recorded.')
+      })
+    })
+  })
+
+  test('reports code excerpts left out of agent-findings.json as an event on stderr, with the JSON result', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const path = artifactPaths(appRoot).agentFindingsPath
+
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runWithCommandEventsForCommand(['--json'], async () =>
+          renderSecurityRecordResult(
+            {path, checks: 1, findings: 2, codeExcerptsOmitted: true},
+            {selection: selectionFor(appRoot), path: appRoot},
+            'json',
+          ),
+        )
+
+        expect(JSON.parse(stdout())).toMatchObject({status: 'success', checkCount: 1, findingCount: 2})
+        expect(JSON.parse(stderr())).toEqual({
+          type: 'diagnostic',
+          timestamp: expect.any(String),
+          level: 'warning',
+          message:
+            'agent-findings.json was written without code excerpts, because with them it would be larger than 5 MB.\n\nRecord fewer or shorter findings to keep them.',
+        })
+      })
     })
   })
 
