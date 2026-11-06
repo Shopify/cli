@@ -40,10 +40,22 @@ export interface UnappliedEntriesView {
   /** Whether a stale or an ambiguous entry needs a change. Not-evaluated entries need none. */
   needsChange: boolean
   /**
-   * The stale entries, each with its kind, reason and likely new path, then the ambiguous entries, each with the
-   * locations of the findings its code matches, then one line that counts the not-evaluated entries with their reasons.
+   * The stale entries, each with its kind, reason, and likely new path or likely finding, then the ambiguous entries,
+   * each with the locations of the findings its code matches, then one line that counts the not-evaluated entries with
+   * their reasons.
    */
   sections: AlertCustomSection[]
+}
+
+/** The commands that a stale entry's likely finding names: they re-attach the entry to it, with `review --suppress`. */
+export interface LikelyFindingCommands {
+  /** The review command, which shows the number of each finding. */
+  review: string
+  /**
+   * In `review`, which numbers findings: the number of each stale entry's likely finding, by the entry's index, and the
+   * command that re-attaches an entry to the finding with a number. `check` names the finding's location instead.
+   */
+  reattach?: {findingNumbers: ReadonlyMap<number, number>; command(findingNumber: number): string}
 }
 
 interface SuppressedFinding {
@@ -88,9 +100,13 @@ export function suppressedFindingsView(
 
 /**
  * The entries of `suppressions` that apply to nothing, in file order, or undefined when every entry matched. The
- * caller passes the entries of the checks that the output shows.
+ * caller passes the entries of the checks that the output shows, and the commands that re-attach a stale entry to its
+ * likely finding.
  */
-export function unappliedEntriesView(suppressions: SuppressionEntryResult[]): UnappliedEntriesView | undefined {
+export function unappliedEntriesView(
+  suppressions: SuppressionEntryResult[],
+  likelyFindingCommands: LikelyFindingCommands,
+): UnappliedEntriesView | undefined {
   const stale = suppressions.filter((result) => result.status === 'stale')
   const ambiguous = suppressions.filter((result) => result.status === 'ambiguous')
   const notEvaluated = suppressions.filter((result) => result.status === 'not-evaluated')
@@ -101,7 +117,7 @@ export function unappliedEntriesView(suppressions: SuppressionEntryResult[]): Un
     headline: unappliedEntriesHeadline(needingChange, notEvaluated.length),
     needsChange: needingChange > 0,
     sections: [
-      ...(stale.length > 0 ? staleEntriesSections(stale) : []),
+      ...(stale.length > 0 ? staleEntriesSections(stale, likelyFindingCommands) : []),
       ...(ambiguous.length > 0 ? ambiguousEntriesSections(ambiguous) : []),
       ...(notEvaluated.length > 0 ? [{body: {subdued: notEvaluatedLine(notEvaluated)}}] : []),
     ],
@@ -172,11 +188,14 @@ function unappliedEntriesHeadline(needingChange: number, notEvaluated: number): 
   return `${entryCountLabel(needingChange)} in ${file} ${needingChange === 1 ? 'suppresses' : 'suppress'} nothing.`
 }
 
-function staleEntriesSections(stale: SuppressionEntryResult[]): AlertCustomSection[] {
+function staleEntriesSections(
+  stale: SuppressionEntryResult[],
+  likelyFindingCommands: LikelyFindingCommands,
+): AlertCustomSection[] {
   return [
     {
       title: `Stale entries in ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}`,
-      body: {list: {items: stale.map(staleEntryItem)}},
+      body: {list: {items: stale.map((result) => staleEntryItem(result, likelyFindingCommands))}},
     },
     {
       body:
@@ -207,13 +226,48 @@ function entryHeading({index, entry}: SuppressionEntryResult): InlineToken[] {
   return [{subdued: `${entryLabel(index)}:`}, `${entry.source} ${entry.check} in`, {filePath: entry.path}]
 }
 
-/** The entry with its kind, then its reason and its likely new path on their own lines. */
-function staleEntryItem(result: SuppressionEntryResult): TokenItem<InlineToken> {
+/** The entry with its kind, then its reason, and its likely new path or its likely finding, on their own lines. */
+function staleEntryItem(
+  result: SuppressionEntryResult,
+  likelyFindingCommands: LikelyFindingCommands,
+): TokenItem<InlineToken> {
   return [
     ...entryHeading(result),
     {subdued: `· ${SUPPRESSION_KIND_LABEL[result.entry.kind]}`},
     `\n${result.entry.reason}`,
     ...(result.likely_path === undefined ? [] : ['\nMaybe moved to', {filePath: result.likely_path}]),
+    ...likelyFindingTokens(result, likelyFindingCommands),
+  ]
+}
+
+/**
+ * "Likely now finding 3, at app/a.ts:5. To re-attach the entry to it, run …": the likely finding by its number and the
+ * command that re-attaches the entry in `review`, or by its location and the review command in `check`.
+ */
+function likelyFindingTokens(
+  {index, likely_finding: likelyFinding}: SuppressionEntryResult,
+  {review, reattach}: LikelyFindingCommands,
+): InlineToken[] {
+  if (likelyFinding === undefined) return []
+  const location: InlineToken = {filePath: formatLocation({file: likelyFinding.file, line: likelyFinding.line})}
+  const findingNumber = reattach?.findingNumbers.get(index)
+  if (reattach && findingNumber !== undefined) {
+    return [
+      `\nLikely now finding ${findingNumber}, at`,
+      location,
+      {char: '.'},
+      'To re-attach the entry to it, with its kind and reason, run',
+      {command: reattach.command(findingNumber)},
+    ]
+  }
+  return [
+    '\nLikely now the finding at',
+    location,
+    {char: '.'},
+    'To re-attach the entry to it, with its kind and reason, run',
+    {command: review},
+    {char: ','},
+    "and pass the finding's number to --suppress.",
   ]
 }
 

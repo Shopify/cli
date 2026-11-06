@@ -10,18 +10,22 @@ import {loadAppSecurityResults, type AppSecurityResults} from './app-security-re
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {
   parseSuppressionFlags,
+  planReattachment,
   planSuppression,
   saveAppSecuritySuppressions,
   suppressionConfiguration,
+  type AppSecuritySuppression,
   type SavedSuppression,
   type SuppressionDecision,
   type SuppressionPlan,
+  type SuppressionResults,
   type SuppressionTarget,
 } from './app-security-suppressions.js'
 import {
   activeFindings,
   type CombinedCheck,
   type CombinedFinding,
+  type StoredFinding,
   type SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import {blockedCheckCount, type AppSecurityBlockingLevel} from './app-security-api.js'
@@ -48,7 +52,10 @@ interface SecurityReviewOptions {
 /** The flags of `review --suppress`, as typed. */
 export interface SecurityReviewSuppressOptions {
   findingNumber: number
-  /** `false-positive` or `accepted-risk`. */
+  /**
+   * `false-positive` or `accepted-risk`. With the reason, required for a new entry. Optional when the finding is the
+   * likely finding of a stale entry, which `--suppress` re-attaches: the entry then keeps its own unless they're given.
+   */
   kind: string | undefined
   reason: string | undefined
   /** `--results-digest`: the digest that the numbers were read with. */
@@ -72,6 +79,11 @@ export interface SecurityReviewResult {
   suppressions: SuppressionEntryResult[]
   /** The number of each finding of `allChecks` (`numberFindings`), whatever `--check-id` and `--verbose`. */
   findingNumbers: ReadonlyMap<CombinedFinding, number>
+  /**
+   * The number of each stale entry's likely finding (`likely_finding`), by the entry's index: the finding that
+   * `--suppress` re-attaches the entry to.
+   */
+  likelyFindingNumbers: ReadonlyMap<number, number>
   /** A digest of the findings that the numbers name, or null when no results file exists. */
   resultsDigest: string | null
   blocking: {
@@ -120,10 +132,12 @@ export interface NumberedFinding {
  * `--interactive` shows before it goes on. Nothing is saved then.
  */
 export interface SuppressionRefusal {
-  code: 'results-digest-mismatch' | 'finding-not-found' | 'finding-not-suppressible'
+  code: 'results-digest-mismatch' | 'finding-not-found' | 'finding-not-suppressible' | 'suppression-flags-invalid'
   message: string
   tryMessage: string
   details: unknown
+  /** For `suppression-flags-invalid` only: the problem of each missing flag, which the error lists. */
+  errors?: string[]
 }
 
 /** What saving a suppression for a numbered finding did: the entries it saved, or why it saved nothing. */
@@ -154,9 +168,28 @@ export interface InteractiveReviewSession {
   /**
    * Saves a suppression for a finding of `findings` as `--suppress` does, with the same planner, writer and refusals.
    * The results are read again first, and the digest of `result` is checked, so a number that may name another
-   * finding is refused (`results-digest-mismatch`).
+   * finding is refused (`results-digest-mismatch`). The likely finding of a stale entry re-attaches that entry, with
+   * the decision's kind and reason.
    */
   suppress(request: InteractiveSuppressionRequest): Promise<FindingSuppressionResult>
+  /**
+   * The stale entries that the session can re-attach to their likely findings, by the finding's number, each with the
+   * code that it would get. A finding that no code names alone has none.
+   */
+  reattachments: ReadonlyMap<number, ReattachmentOffer>
+  /**
+   * Re-attaches the stale entry of `reattachments` to the finding as `--suppress` does without `--kind` and
+   * `--reason`: the entry keeps its kind and reason, and gets the finding's code. The results are read again first, and
+   * a finding that is no longer the likely finding of the displayed entry, or whose entry changed, is refused.
+   */
+  reattach(findingNumber: number): Promise<FindingSuppressionResult>
+}
+
+/** A stale entry of shopify.app-security.json, and the code that re-attaching it to its likely finding gives it. */
+export interface ReattachmentOffer {
+  entryIndex: number
+  entry: AppSecuritySuppression
+  code: string
 }
 
 export interface InteractiveSuppressionRequest {
@@ -215,6 +248,7 @@ export function reviewAppSecurityResults(
     scopeDiffers: scopeDiffers(results.sources),
     suppressions: results.suppressions,
     findingNumbers: new Map(numbered.map(({finding, number}) => [finding, number])),
+    likelyFindingNumbers: likelyFindingNumbers(results, numbered),
     resultsDigest: anyFilePresent ? resultsDigest(numbered) : null,
     blocking: {level: options.blocking, blockedChecks: blockedCheckCount(checks, options.blocking)},
   }
@@ -230,6 +264,27 @@ export function numberFindings(checks: CombinedCheck[]): NumberedFinding[] {
   return checks
     .flatMap((check) => check.findings.map((finding) => ({check, finding})))
     .map((item, index) => ({...item, number: index + 1}))
+}
+
+/**
+ * The number of each stale entry's likely finding, by the entry's index. The matching names the finding by its index in
+ * its source's stored check, and a combined finding holds the stored finding's fields.
+ */
+function likelyFindingNumbers(results: AppSecurityResults, numbered: NumberedFinding[]): ReadonlyMap<number, number> {
+  return new Map(
+    results.suppressions.flatMap(({index, entry, likely_finding: likelyFinding}): [number, number][] => {
+      if (likelyFinding === undefined) return []
+      const storedCheck = results.sources[entry.source]?.document.checks.find(({id}) => id === entry.check)
+      const stored = storedCheck?.findings[likelyFinding.index]
+      const match = numbered.find(
+        ({check, finding}) =>
+          check.id === entry.check &&
+          finding.source === entry.source &&
+          isDeepStrictEqual(storedFindingOf(finding), stored),
+      )
+      return match ? [[index, match.number]] : []
+    }),
+  )
 }
 
 /**
@@ -276,7 +331,7 @@ export default async function securityReview(
   options: SecurityReviewOptions,
   dependencies: SecurityReviewDependencies = defaultDependencies,
 ): Promise<ReviewedAppSecurityResults> {
-  const decision = options.suppress ? suppressionDecision(options.suppress) : undefined
+  const decision = options.suppress ? givenSuppressionDecision(options.suppress) : undefined
   const selection = await dependencies.resolveSelection({
     path: options.directory,
     config: options.configName,
@@ -299,6 +354,9 @@ export default async function securityReview(
     options.suppress && decision
       ? savedOrAbort(await suppressFinding(selection, loaded.results, loaded.result, options.suppress, decision))
       : undefined
+  const reattachments = options.interactive
+    ? reattachmentOffers(selection, loaded.results, loaded.result)
+    : new Map<number, ReattachmentOffer>()
   const interactiveReview = options.interactive
     ? await options.interactive({
         result: loaded.result,
@@ -312,7 +370,26 @@ export default async function securityReview(
             resultsDigest: loaded.result.resultsDigest ?? undefined,
             includeSuperseded,
           }
-          return suppressFinding(selection, current.results, current.result, suppressOptions, requestDecision)
+          return suppressFinding(selection, current.results, current.result, suppressOptions, {
+            decision: requestDecision,
+            missing: [],
+          })
+        },
+        reattachments,
+        reattach: async (findingNumber) => {
+          const offer = reattachments.get(findingNumber)
+          if (!offer) return refused(noLongerLikely(findingNumber))
+          const current = await review()
+          const reattachOptions = {
+            findingNumber,
+            resultsDigest: loaded.result.resultsDigest ?? undefined,
+            includeSuperseded: false,
+            reattachment: offer,
+          }
+          return suppressFinding(selection, current.results, current.result, reattachOptions, {
+            decision: {},
+            missing: [],
+          })
         },
       })
     : undefined
@@ -365,46 +442,151 @@ function isCountedByCheckBlocking(finding: CombinedFinding): boolean {
 
 function savedOrAbort(result: FindingSuppressionResult): SavedReviewSuppressions {
   if (result.status === 'saved') return result.savedSuppressions
-  const {code, message, tryMessage, details} = result.refusal
+  const {code, message, tryMessage, details, errors} = result.refusal
+  if (errors !== undefined) throw invalidSuppressionFlagsError(errors)
   const error = new AbortError(message, tryMessage)
   error.code = code
   error.details = details
   throw error
 }
 
-/** The kind and reason of `--suppress`, checked before anything is read. Aborts with every problem. */
-function suppressionDecision(options: SecurityReviewSuppressOptions): SuppressionDecision {
+interface GivenSuppressionDecision {
+  decision: Partial<SuppressionDecision>
+  missing: string[]
+}
+
+/**
+ * The kind and reason that `--suppress` was given, checked before anything is read. Aborts with every problem of a
+ * given flag. A flag that isn't given is checked once the results are read, because the likely finding of a stale
+ * entry doesn't need it.
+ */
+function givenSuppressionDecision(options: SecurityReviewSuppressOptions): GivenSuppressionDecision {
   const parsed = parseSuppressionFlags(options)
-  if (parsed.ok) return parsed.decision
+  if (parsed.ok) return parsed
+  throw invalidSuppressionFlagsError(parsed.errors)
+}
+
+const SUPPRESSION_FLAGS_MESSAGE = 'The suppression could not be saved because a flag is invalid.'
+const SUPPRESSION_FLAGS_TRY_MESSAGE =
+  'Pass --kind false-positive or --kind accepted-risk, and a --reason that explains the decision.'
+
+function invalidSuppressionFlagsError(errors: string[]): AbortError {
   const error = new AbortError(
-    'The suppression could not be saved because a flag is invalid.',
-    'Pass --kind false-positive or --kind accepted-risk, and a --reason that explains the decision.',
+    SUPPRESSION_FLAGS_MESSAGE,
+    SUPPRESSION_FLAGS_TRY_MESSAGE,
     [],
-    [{title: 'Errors', body: {list: {items: parsed.errors}}}],
+    [{title: 'Errors', body: {list: {items: errors}}}],
   )
   error.code = 'suppression-flags-invalid'
-  error.details = {errors: parsed.errors}
-  throw error
+  error.details = {errors}
+  return error
+}
+
+/** Refuses a finding that needs a new entry when `--kind` or `--reason` isn't given, with the errors of the missing flags. */
+function missingFlags(errors: string[]): SuppressionRefusal {
+  return {
+    code: 'suppression-flags-invalid',
+    message: SUPPRESSION_FLAGS_MESSAGE,
+    tryMessage: SUPPRESSION_FLAGS_TRY_MESSAGE,
+    details: {errors},
+    errors,
+  }
+}
+
+/** The kind and reason of a new entry, when both are given. */
+function completeDecision({kind, reason}: Partial<SuppressionDecision>): SuppressionDecision | undefined {
+  return kind === undefined || reason === undefined ? undefined : {kind, reason}
+}
+
+/** The kind and reason of a re-attached entry: its own, unless they're given. */
+function keptDecision(entry: AppSecuritySuppression, given: Partial<SuppressionDecision>): SuppressionDecision {
+  return {kind: given.kind ?? entry.kind, reason: given.reason ?? entry.reason}
+}
+
+/** The stale entry whose likely finding has this number, if any. */
+function reattachedEntry(
+  results: AppSecurityResults,
+  review: SecurityReviewResult,
+  findingNumber: number,
+): {index: number; entry: AppSecuritySuppression} | undefined {
+  const [index] = [...review.likelyFindingNumbers].find(([, number]) => number === findingNumber) ?? []
+  const entry = index === undefined ? undefined : results.suppressions[index]?.entry
+  return index === undefined || entry === undefined ? undefined : {index, entry}
+}
+
+/** The stored results that new and re-attached entries must match, with the run's results key and configuration. */
+function suppressionResultsOf(selection: AppSecuritySelection, results: AppSecurityResults): SuppressionResults {
+  return {
+    deterministic: results.sources.deterministic?.document ?? null,
+    agent: results.sources.agent?.document ?? null,
+    resultsKey: resultsKey(selection),
+    configuration: suppressionConfiguration(selection),
+  }
+}
+
+/** The stale entries that `--interactive` can re-attach, by their likely finding's number, each with its new code. */
+function reattachmentOffers(
+  selection: AppSecuritySelection,
+  results: AppSecurityResults,
+  review: SecurityReviewResult,
+): ReadonlyMap<number, ReattachmentOffer> {
+  const numbered = numberFindings(review.allChecks)
+  const entries = results.suppressions.map(({entry}) => entry)
+  return new Map(
+    [...review.likelyFindingNumbers].flatMap(([entryIndex, findingNumber]): [number, ReattachmentOffer][] => {
+      const target = numbered.find(({number}) => number === findingNumber)
+      const entry = entries[entryIndex]
+      if (!target || !entry) return []
+      const plan = planReattachment(
+        storedTarget(results, target),
+        entryIndex,
+        keptDecision(entry, {}),
+        suppressionResultsOf(selection, results),
+        entries,
+      )
+      if (plan.status !== 'change' || plan.change.type !== 'replace-code') return []
+      return [[findingNumber, {entryIndex, entry, code: plan.change.code}]]
+    }),
+  )
 }
 
 /**
  * Saves an entry to shopify.app-security.json for the finding that `--suppress` numbers, as `planSuppression` plans
- * it, and one for each companion with `--include-superseded`. All or nothing: any refusal returns before the write.
- * A superseded deterministic finding can be numbered too, because `check --blocking` still counts it until an entry
- * matches it.
+ * it, and one for each companion with `--include-superseded`. A finding that is the likely finding of a stale entry
+ * re-attaches that entry instead, as `planReattachment` plans it: the entry keeps its kind and reason unless they're
+ * given, and only such a finding does without them. All or nothing: any refusal returns before the write. A superseded
+ * deterministic finding can be numbered too, because `check --blocking` still counts it until an entry matches it.
+ * With `reattachment`, the current entry must match the offer that the person saw.
  */
 async function suppressFinding(
   selection: AppSecuritySelection,
   results: AppSecurityResults,
   review: SecurityReviewResult,
-  options: Pick<SecurityReviewSuppressOptions, 'findingNumber' | 'resultsDigest' | 'includeSuperseded'>,
-  decision: SuppressionDecision,
+  options: Pick<SecurityReviewSuppressOptions, 'findingNumber' | 'resultsDigest' | 'includeSuperseded'> & {
+    reattachment?: ReattachmentOffer
+  },
+  {decision: given, missing}: GivenSuppressionDecision,
 ): Promise<FindingSuppressionResult> {
   if (options.resultsDigest !== undefined && options.resultsDigest !== review.resultsDigest) {
     return refused(digestMismatch(options.resultsDigest, review.resultsDigest))
   }
   const numbered = numberFindings(review.allChecks)
   const target = numbered.find(({number}) => number === options.findingNumber)
+  const targetEntry = target ? reattachedEntry(results, review, target.number) : undefined
+  if (options.reattachment) {
+    if (!targetEntry) return refused(noLongerLikely(options.findingNumber))
+    const {entryIndex, entry} = options.reattachment
+    if (targetEntry.index !== entryIndex || !isDeepStrictEqual(targetEntry.entry, entry)) {
+      return refused({
+        code: 'finding-not-suppressible',
+        message: `The stale suppression for finding ${options.findingNumber} changed during the review. Nothing was saved.`,
+        tryMessage: 'Run the review again to see the current entry before re-attaching it.',
+        details: {findingNumber: options.findingNumber},
+      })
+    }
+  }
+  const decision = targetEntry ? keptDecision(targetEntry.entry, given) : completeDecision(given)
+  if (!decision) return refused(missingFlags(missing))
   if (!target) return refused(findingNotFound(options.findingNumber, numbered.length))
   const companions = companionFindings(target, numbered)
   // A superseded finding that an entry matched is suppressed for `check --blocking`, the only command that counts it.
@@ -416,17 +598,18 @@ async function suppressFinding(
   const findings = [...(alreadySuppressed ? [] : [target]), ...(options.includeSuperseded ? companions : [])]
   if (findings.length === 0) return refused(notSuppressible(target))
 
-  const suppressionResults = {
-    deterministic: results.sources.deterministic?.document ?? null,
-    agent: results.sources.agent?.document ?? null,
-    resultsKey: resultsKey(selection),
-    configuration: suppressionConfiguration(selection),
-  }
+  const suppressionResults = suppressionResultsOf(selection, results)
   const entries = results.suppressions.map(({entry}) => entry)
-  const plans = findings.map((numberedFinding) => ({
-    numberedFinding,
-    plan: planSuppression(storedTarget(results, numberedFinding), decision, suppressionResults, entries),
-  }))
+  const plans = findings.map((numberedFinding) => {
+    const stored = storedTarget(results, numberedFinding)
+    const reattached = reattachedEntry(results, review, numberedFinding.number)
+    return {
+      numberedFinding,
+      plan: reattached
+        ? planReattachment(stored, reattached.index, keptDecision(reattached.entry, given), suppressionResults, entries)
+        : planSuppression(stored, decision, suppressionResults, entries),
+    }
+  })
   const refusedPlan = plans.find(({plan}) => plan.status === 'refused')
   if (refusedPlan?.plan.status === 'refused') {
     return refused(noUniqueEntry(refusedPlan.numberedFinding, refusedPlan.plan, numbered))
@@ -478,10 +661,27 @@ function companionFindings(target: NumberedFinding, numbered: NumberedFinding[])
 
 /** The stored finding that a numbered finding was combined from, and its index in its source's stored check. */
 function storedTarget(results: AppSecurityResults, {check, finding}: NumberedFinding): SuppressionTarget {
-  const {source, disposition: _disposition, suppressed_by: _suppressedBy, ...storedFinding} = finding
+  const {source} = finding
+  const storedFinding = storedFindingOf(finding)
   const storedCheck = results.sources[source]?.document.checks.find(({id}) => id === check.id)
   const findingIndex = storedCheck?.findings.findIndex((candidate) => isDeepStrictEqual(candidate, storedFinding)) ?? -1
   return {source, checkId: check.id, findingIndex, finding: storedFinding}
+}
+
+/** The fields of a combined finding that its results file stores. */
+function storedFindingOf(finding: CombinedFinding): StoredFinding {
+  const {source: _source, disposition: _disposition, suppressed_by: _suppressedBy, ...storedFinding} = finding
+  return storedFinding
+}
+
+/** Refuses Re-attach in `--interactive` for a finding that is no longer the likely finding of a stale entry. */
+function noLongerLikely(findingNumber: number): SuppressionRefusal {
+  return {
+    code: 'finding-not-suppressible',
+    message: `Finding ${findingNumber} is no longer the likely finding of a stale entry. Nothing was saved.`,
+    tryMessage: `Choose Suppress to save a new entry for it, or run the review again to see the stale entries of ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+    details: {findingNumber},
+  }
 }
 
 function digestMismatch(givenDigest: string, resultsDigest: string | null): SuppressionRefusal {

@@ -46,6 +46,7 @@ export type {
 export {matchSuppressionEntries} from './results/suppressions.js'
 export type {
   FindingSuppression,
+  LikelyFinding,
   SuppressionEntry,
   SuppressionEntryResult,
   SuppressionEntryStatus,

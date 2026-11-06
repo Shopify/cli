@@ -119,6 +119,7 @@ const result = {
         matchedFindingCount: 1,
         likelyPath: null,
         candidateFindingCount: null,
+        likelyFinding: null,
       },
       {
         index: 1,
@@ -130,6 +131,7 @@ const result = {
         matchedFindingCount: 0,
         likelyPath: ordersPath,
         candidateFindingCount: null,
+        likelyFinding: null,
       },
     ],
   },
@@ -141,6 +143,24 @@ const savedSuppressions = {
   filePath: result.suppressions.filePath,
   entries: [savedEntry],
   companionFindingNumbers: [1],
+}
+
+/** The suppressions of `result` with a stale entry whose code likely became finding 2 after an edit. */
+const withLikelyFinding = {
+  ...result.suppressions,
+  entries: [
+    result.suppressions.entries[0],
+    {
+      ...result.suppressions.entries[1],
+      likelyPath: null,
+      likelyFinding: {filePath: ordersPath, line: 12, findingNumber: 2},
+    },
+  ],
+}
+const reattachedEntry = {
+  ...savedEntry,
+  change: 'code-replaced',
+  previous: {code: 'console.log(session.idToken)', kind: 'accepted-risk', reason: 'Placeholder tokens.'},
 }
 
 /** The result with one check that holds these findings. */
@@ -207,6 +227,11 @@ describe('appSecurityReviewJsonOutputSchema', () => {
           companionFindingNumbers: [],
         },
       },
+    ],
+    ['a stale entry with its likely finding', {...result, suppressions: withLikelyFinding}],
+    [
+      'an entry that --suppress re-attached, with its previous code, kind and reason',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [reattachedEntry]}},
     ],
   ])('accepts a result with %s', (_description, value) => {
     expect(appSecurityReviewJsonOutputSchema.validate(value)).toStrictEqual(value)
@@ -367,6 +392,33 @@ describe('appSecurityReviewJsonOutputSchema', () => {
       {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, kind: 'false_positive'}]}},
     ],
     ['an extra saved suppressions field', {...result, savedSuppressions: {...savedSuppressions, companions: []}}],
+    [
+      'an entry without its likely finding',
+      {
+        ...result,
+        suppressions: {...withLikelyFinding, entries: [{...withLikelyFinding.entries[1], likelyFinding: undefined}]},
+      },
+    ],
+    [
+      'a likely finding with a relative path',
+      {
+        ...result,
+        suppressions: {
+          ...withLikelyFinding,
+          entries: [
+            {...withLikelyFinding.entries[1], likelyFinding: {filePath: 'app/a.ts', line: 1, findingNumber: 1}},
+          ],
+        },
+      },
+    ],
+    [
+      'a saved entry without its previous fields',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...savedEntry, previous: undefined}]}},
+    ],
+    [
+      'an unknown saved change',
+      {...result, savedSuppressions: {...savedSuppressions, entries: [{...reattachedEntry, change: 'code_replaced'}]}},
+    ],
   ])('rejects %s', (_description, value) => {
     expect(() => appSecurityReviewJsonOutputSchema.validate(value)).toThrow()
   })
@@ -386,6 +438,9 @@ describe('appSecurityReviewJsonOutputSchema', () => {
     }
     expect(jsonSchemaValidate(result.suppressions, definitions.AppSecuritySuppressions, 'fail').state).toBe('ok')
     expect(jsonSchemaValidate(savedSuppressions, definitions.AppSecuritySavedSuppressions, 'fail').state).toBe('ok')
+    expect(jsonSchemaValidate(withLikelyFinding, definitions.AppSecuritySuppressions, 'fail').state).toBe('ok')
+    const reattached = {...savedSuppressions, entries: [reattachedEntry]}
+    expect(jsonSchemaValidate(reattached, definitions.AppSecuritySavedSuppressions, 'fail').state).toBe('ok')
     expect(jsonSchemaValidate({...agentFinding, number: 0}, definitions.AppSecurityFinding, 'fail').state).toBe('error')
     const agentWithEntryIndex = {...agentFinding, suppression: {...agentSuppression, entryIndex: 0}}
     expect(jsonSchemaValidate(agentWithEntryIndex, definitions.AppSecurityFinding, 'fail').state).toBe('error')

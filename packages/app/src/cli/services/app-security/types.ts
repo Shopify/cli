@@ -126,6 +126,24 @@ export const appSecuritySuppressionEntrySchema = zod
       .describe(
         "For an ambiguous entry: the number of findings that its code matches and can't choose between. Otherwise null.",
       ),
+    likelyFinding: zod
+      .object({
+        filePath: createAbsolutePathSchema().describe("The absolute path of the finding's file, the entry's file."),
+        line: zod.number().int().positive().describe("The finding's one-based line."),
+        findingNumber: zod
+          .number()
+          .int()
+          .positive()
+          .nullable()
+          .describe(
+            "With review, the finding's number, which review --suppress takes to re-attach the entry. Null with check, which doesn't number findings.",
+          ),
+      })
+      .strict()
+      .nullable()
+      .describe(
+        "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null.",
+      ),
   })
   .strict()
   .describe('One entry of shopify.app-security.json, and how it applied to the results.')
@@ -173,9 +191,9 @@ export const appSecuritySavedSuppressionSchema = zod
   .object({
     index: zod.number().int().nonnegative().describe("The entry's index in the file's suppressions array, from 0."),
     change: zod
-      .enum(['added', 'configuration-added'])
+      .enum(['added', 'configuration-added', 'code-replaced'])
       .describe(
-        'added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding.',
+        "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced.",
       ),
     source: zod.enum(['deterministic', 'agent']).describe('The source whose findings the entry suppresses.'),
     check: zod.string().describe('The check ID that the entry names.'),
@@ -194,6 +212,15 @@ export const appSecuritySavedSuppressionSchema = zod
       .describe(
         'The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to.',
       ),
+    previous: zod
+      .object({
+        code: zod.string().min(1).nullable().describe("The entry's code before the change, redacted."),
+        kind: createAppSecuritySuppressionKindSchema(),
+        reason: zod.string().describe("The entry's reason before the change."),
+      })
+      .strict()
+      .nullable()
+      .describe('For code-replaced: the code, kind and reason that the entry had before the change. Otherwise null.'),
   })
   .strict()
   .describe('An entry of shopify.app-security.json that the command saved, as the file now holds it.')

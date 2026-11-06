@@ -1,3 +1,4 @@
+import {hasRedactedSecret} from '../rules/secret-rules.js'
 import {normalizePath} from '@shopify/cli-kit/node/path'
 import type {CodeExcerptLine, FindingsSource, Location, StoredCheck, StoredFinding, SuppressionKind} from '../types.js'
 
@@ -65,8 +66,21 @@ export interface SuppressionEntryResult {
    * at another path, whose code or message holds the entry's text. A hint: the entry still applies to nothing.
    */
   likely_path?: string
+  /**
+   * For a stale entry with `code` whose file still exists only: the finding that its flagged code probably became
+   * (`likelyFindingsOf`). A hint: the entry still applies to nothing until a person re-attaches it with
+   * `review --suppress`.
+   */
+  likely_finding?: LikelyFinding
   /** For a not-evaluated entry only. */
   not_evaluated_reason?: SuppressionNotEvaluatedReason
+}
+
+/** A finding of an entry's source and check in the entry's path: its index in the stored check's findings, and its line. */
+export interface LikelyFinding {
+  index: number
+  file: string
+  line: number
 }
 
 /** What suppresses a finding: an entry of shopify.app-security.json, or the agent's own per-run suppression. */
@@ -93,8 +107,8 @@ interface EntryMatch {
   candidateIndexes?: number[]
 }
 
-/** An entry's result, with the matched finding indexes that only the matching needs. */
-type EntryResult = SuppressionEntryResult & {findingIndexes: number[]}
+/** An entry's result, with the matched finding indexes and the stored check that only the matching needs. */
+type EntryResult = SuppressionEntryResult & {findingIndexes: number[]; check?: StoredCheck}
 
 interface ScoredCandidate {
   index: number
@@ -113,8 +127,9 @@ interface ScoredCandidate {
  *    more than one is still left, or none, the entry is ambiguous and matches nothing.
  * 5. An entry that matches nothing is stale when its source's result for the check is executed, and not evaluated
  *    otherwise. When a stale entry's file is gone and exactly one finding of its source and check at another path
- *    holds its text, that path is the entry's likely new path. The entry still matches nothing: there is no
- *    rematching.
+ *    holds its text, that path is the entry's likely new path. When its file still exists, its likely finding is the
+ *    one finding in its path that its code is similar to, unless either holds a redacted secret (`likelyFindingsOf`).
+ *    The entry still matches nothing: there is no rematching.
  */
 export function matchSuppressionEntries(
   {entries: suppressionEntries, resultsKey, missingPaths = []}: SuppressionsInput = {entries: [], resultsKey: ''},
@@ -134,6 +149,7 @@ export function matchSuppressionEntries(
       status,
       matched_finding_count: findingIndexes.length,
       findingIndexes,
+      check,
       ...(candidateIndexes ? {candidate_locations: candidateIndexes.map((at) => check.findings[at]!.location)} : {}),
       ...(likelyPath === undefined ? {} : {likely_path: likelyPath}),
       ...(status === 'not-evaluated' ? {not_evaluated_reason: 'no-executed-result'} : {}),
@@ -141,17 +157,90 @@ export function matchSuppressionEntries(
   })
 
   const firstEntryByFinding = new Map<string, SuppressionEntryResult>()
-  for (const {findingIndexes, ...result} of entries) {
+  for (const {findingIndexes, check: _check, ...result} of entries) {
     for (const index of findingIndexes) {
       const key = findingKey(result.entry.source, result.entry.check, index)
       if (!firstEntryByFinding.has(key)) firstEntryByFinding.set(key, result)
     }
   }
 
+  const likelyFindings = likelyFindingsOf(entries, missing, firstEntryByFinding)
   return {
-    entries: entries.map(({findingIndexes: _findingIndexes, ...result}) => result),
+    entries: entries.map(({findingIndexes: _findingIndexes, check: _check, ...result}, position) => {
+      const likelyFinding = likelyFindings[position]
+      return likelyFinding === undefined ? result : {...result, likely_finding: likelyFinding}
+    }),
     entryFor: (source, checkId, index) => firstEntryByFinding.get(findingKey(source, checkId, index)),
   }
+}
+
+/**
+ * The likely finding of each entry, or undefined. A stale entry with `code` whose file still exists has one when exactly
+ * one finding of its source and check in its path is similar to its code (`isSimilarToCode`) and nothing suppresses
+ * it, and no other stale entry's code is similar to that finding. The entry's code probably changed there, for example
+ * by a rename, so a person can re-attach the entry to it.
+ *
+ * There is none when the entry's code or that finding's flagged line holds a redacted secret. Redaction hides the
+ * secret, the only text that tells two credentials of one type apart, so the similar line can be another credential.
+ * Such a line still counts as a similar finding, so it can make another one ambiguous.
+ */
+function likelyFindingsOf(
+  entries: EntryResult[],
+  missingPaths: Set<string>,
+  firstEntryByFinding: Map<string, SuppressionEntryResult>,
+): (LikelyFinding | undefined)[] {
+  const similarByEntry = entries.map(({entry, status, check}): SimilarFinding[] => {
+    const {code} = entry
+    if (status !== 'stale' || code === undefined || check === undefined || missingPaths.has(entry.path)) return []
+    const words = codeWords(code)
+    return check.findings.flatMap((finding, index) => {
+      const key = findingKey(entry.source, entry.check, index)
+      const {line} = finding.location
+      if (line === undefined || normalizePath(finding.location.file) !== entry.path) return []
+      if (findingSuppression(finding, entry.source, firstEntryByFinding.get(key)) !== undefined) return []
+      const flaggedLine = finding.code_excerpt?.find((excerptLine) => excerptLine.line === line)?.text
+      if (flaggedLine === undefined || !isSimilarToCode(words, flaggedLine)) return []
+      const redacted = hasRedactedSecret(code) || hasRedactedSecret(flaggedLine)
+      return [{key, finding: {index, file: finding.location.file, line}, redacted}]
+    })
+  })
+  const entryCountByFinding = new Map<string, number>()
+  for (const {key} of similarByEntry.flat()) entryCountByFinding.set(key, (entryCountByFinding.get(key) ?? 0) + 1)
+
+  return similarByEntry.map((similar) => {
+    const [only] = similar
+    return similar.length === 1 && only && !only.redacted && entryCountByFinding.get(only.key) === 1
+      ? only.finding
+      : undefined
+  })
+}
+
+/** A finding that a stale entry's code is similar to, and whether either holds a redacted secret. */
+interface SimilarFinding {
+  key: string
+  finding: LikelyFinding
+  redacted: boolean
+}
+
+/**
+ * The words of a code text: its runs of letters, digits, `_` and `$`. Whitespace, commas, semicolons and quotes only
+ * separate words, so the words of a text don't change where `normalizeSuppressionText` doesn't change it either: when
+ * a formatter moves whitespace or swaps quotes.
+ */
+function codeWords(text: string): Set<string> {
+  return new Set(text.match(/[\p{L}\p{N}_$]+/gu) ?? [])
+}
+
+/**
+ * Whether an entry's code, as its words, is similar to a finding's flagged line: the line holds at least two thirds of
+ * the code's words. A rename of one identifier in a code of three or more words keeps it similar, and a line that does
+ * something else shares fewer of its words.
+ */
+function isSimilarToCode(words: Set<string>, flaggedLine: string): boolean {
+  if (words.size === 0) return false
+  const lineWords = codeWords(flaggedLine)
+  const sharedWords = [...words].filter((word) => lineWords.has(word)).length
+  return 3 * sharedWords >= 2 * words.size
 }
 
 /**

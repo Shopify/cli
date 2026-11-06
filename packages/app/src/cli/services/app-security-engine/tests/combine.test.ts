@@ -853,6 +853,210 @@ describe('combineFindings', () => {
 
       expect(statuses(suppressions)).toEqual([{status: 'matched', count: 1}])
     })
+
+    // For the likely finding: a finding's flagged line, in its excerpt.
+    const flaggedAt = (line: number, text: string, overrides: Partial<StoredFinding> = {}) =>
+      finding({
+        location: {file: path, line},
+        message: 'Flagged.',
+        evidence: [],
+        code_excerpt: excerpt(line, text),
+        ...overrides,
+      })
+    // An HTML sink: code without a secret, as the UNSAFE_INNERHTML rule flags it.
+    const sinkCode = (name: string) => `dangerouslySetInnerHTML={{__html: ${name}.descriptionHtml}}`
+    const sinkAt = (line: number, name: string, overrides: Partial<StoredFinding> = {}) =>
+      flaggedAt(line, `  <div ${sinkCode(name)} />`, overrides)
+    const productEntry = entry({check: 'UNSAFE_INNERHTML', code: sinkCode('product')})
+    // A committed token, as `check` captures the line, redacted. The token is never in the results.
+    const secretLine = (name: string) => `export const ${name} = "shpa[REDACTED:38]"`
+    const likelyFindings = (
+      entries: SuppressionEntry[],
+      findings: StoredFinding[],
+      {id = 'UNSAFE_INNERHTML', missingPaths = []}: {id?: string; missingPaths?: string[]} = {},
+    ) =>
+      combineWith(entries, {deterministic: [check({id, findings})], missingPaths}).suppressions.map((result) => [
+        result.status,
+        result.likely_finding,
+      ])
+
+    test('likely finding: is the finding whose flagged line renames an identifier of the code, and the entry still matches nothing', () => {
+      const renamed = sinkAt(4, 'item')
+
+      const {checks, suppressions} = combineWith([productEntry], {
+        deterministic: [
+          check({id: 'UNSAFE_INNERHTML', findings: [flaggedAt(9, '  element.innerHTML = banner'), renamed]}),
+        ],
+      })
+
+      expect(dispositions(checks).map(({disposition}) => disposition)).toEqual(['active', 'active'])
+      expect(suppressions).toEqual([
+        {
+          index: 0,
+          entry: productEntry,
+          status: 'stale',
+          matched_finding_count: 0,
+          likely_finding: {index: 1, file: path, line: 4},
+        },
+      ])
+    })
+
+    test('likely finding: compares words, so a reformat and other quotes around the renamed line keep it similar', () => {
+      const reformatted = flaggedAt(4, '<div dangerouslySetInnerHTML={ { __html: item.descriptionHtml } }/>')
+      const quotedEntry = entry({code: "console.log('order', order)"})
+      const requoted = flaggedAt(30, '  console.log("order", shop);')
+
+      expect(likelyFindings([productEntry], [reformatted])).toEqual([['stale', {index: 0, file: path, line: 4}]])
+      expect(likelyFindings([quotedEntry], [requoted], {id: 'CHECK'})).toEqual([
+        ['stale', {index: 0, file: path, line: 30}],
+      ])
+    })
+
+    test('likely finding: is no finding whose flagged line shares fewer than two thirds of the words of the code', () => {
+      // 2 of the 4 words of the code: dangerouslySetInnerHTML and __html.
+      const unrelated = flaggedAt(7, '  <p dangerouslySetInnerHTML={{__html: shop.policyBody}} />')
+      // 2 of the 3 words of `console.log(order)`, as a rename of one of 3 words keeps.
+      const loggedOrderEntry = entry({code: 'console.log(order)'})
+      const loggedShop = finding({...loggedOrder, code_excerpt: excerpt(30, 'console.log(shop)')})
+
+      expect(likelyFindings([productEntry], [unrelated])).toEqual([['stale', undefined]])
+      expect(
+        combineWith([loggedOrderEntry], {deterministic: [check({findings: [loggedShop]})]}).suppressions[0]!
+          .likely_finding,
+      ).toEqual({index: 0, file: path, line: 30})
+    })
+
+    test('likely finding: is no finding when two findings are similar to the code, or when two stale entries are similar to one finding', () => {
+      const renamed = sinkAt(4, 'item')
+      const copied = sinkAt(8, 'variant')
+      const otherEntry = entry({check: 'UNSAFE_INNERHTML', code: sinkCode('collection')})
+
+      expect(likelyFindings([productEntry], [renamed, copied])).toEqual([['stale', undefined]])
+      expect(likelyFindings([productEntry, otherEntry], [renamed])).toEqual([
+        ['stale', undefined],
+        ['stale', undefined],
+      ])
+    })
+
+    test('likely finding: is no finding that an entry or the agent already suppresses', () => {
+      const renamed = sinkAt(4, 'item')
+      const suppressingEntry = entry({check: 'UNSAFE_INNERHTML', code: sinkCode('item')})
+      const agentSuppressed = finding({
+        ...loggedToken,
+        code_excerpt: excerpt(12, '  console.log(currentSession.accessToken)'),
+        suppression: {justification: 'Only logged in development.'},
+      })
+      const agentEntry = entry({source: 'agent', code: 'console.log(session.accessToken)'})
+
+      expect(likelyFindings([productEntry, suppressingEntry], [renamed])).toEqual([
+        ['stale', undefined],
+        ['matched', undefined],
+      ])
+      expect(
+        combineWith([agentEntry], {agent: [check({findings: [agentSuppressed]})]}).suppressions[0]!.likely_finding,
+      ).toBeUndefined()
+    })
+
+    test('likely finding: is none for an entry without code, or whose file is gone, which keeps its likely path', () => {
+      const renamed = sinkAt(4, 'item')
+      const elsewhere = sinkAt(4, 'product', {location: {file: 'app/routes/product.tsx', line: 4}})
+      const withoutCode = entry({check: 'UNSAFE_INNERHTML', path: 'app/routes/removed.ts'})
+
+      expect(likelyFindings([withoutCode], [renamed])).toEqual([['stale', undefined]])
+      const [gone] = combineWith([productEntry], {
+        deterministic: [check({id: 'UNSAFE_INNERHTML', findings: [renamed, elsewhere]})],
+        missingPaths: [path],
+      }).suppressions
+      expect(gone).toMatchObject({status: 'stale', likely_path: 'app/routes/product.tsx'})
+      expect(gone).not.toHaveProperty('likely_finding')
+    })
+
+    test("likely finding: is a finding of the entry's own source and check only, without a line, and for agent entries too", () => {
+      const renamed = sinkAt(4, 'item')
+      const withoutLine = sinkAt(4, 'item', {location: {file: path}})
+      const agentEntry = entry({source: 'agent', code: 'console.log(session.accessToken)'})
+      const agentRenamed = finding({
+        ...loggedToken,
+        code_excerpt: excerpt(12, '  console.log(currentSession.accessToken)'),
+      })
+
+      // The deterministic finding is of another check.
+      expect(likelyFindings([entry({check: 'OTHER', code: sinkCode('product')})], [renamed])).toEqual([
+        ['not-evaluated', undefined],
+      ])
+      expect(likelyFindings([productEntry], [withoutLine])).toEqual([['stale', undefined]])
+      const agent = combineWith([agentEntry], {
+        deterministic: [check({findings: [agentRenamed]})],
+        agent: [check({findings: [agentRenamed]})],
+      })
+      expect(agent.suppressions[0]).toMatchObject({status: 'stale', likely_finding: {index: 0, line: 12}})
+    })
+
+    test('likely finding: is none for a rename on a line with a redacted secret, which hides the only text that tells two credentials apart', () => {
+      const keyEntry = entry({check: 'COMMITTED_SECRET', code: secretLine('KEY')})
+      // The entry of a token field, after its line was deleted and another session object with its own token was added.
+      const adminEntry = entry({check: 'COMMITTED_SECRET', code: 'adminAccessToken: "shpa[REDACTED:38]",'})
+      const otherCredential = flaggedAt(8, '  accessToken: "shpa[REDACTED:38]",')
+
+      expect(likelyFindings([keyEntry], [flaggedAt(4, secretLine('KEY2'))], {id: 'COMMITTED_SECRET'})).toEqual([
+        ['stale', undefined],
+      ])
+      expect(likelyFindings([adminEntry], [otherCredential], {id: 'COMMITTED_SECRET'})).toEqual([['stale', undefined]])
+    })
+
+    test('likely finding: is none when only the flagged line, or only the code, holds a redacted secret', () => {
+      const loggedEntry = entry({source: 'agent', code: 'console.log(session.accessToken)'})
+      const agentLine = (text: string) =>
+        combineWith([loggedEntry], {agent: [check({findings: [flaggedAt(12, text)]})]})
+      // The code's words without a redaction marker, so only the code's marker tells the two apart.
+      const redactedCodeEntry = entry({code: 'console.log("shpa[REDACTED:38]", session.accessToken)'})
+
+      expect(agentLine('  console.log(session.accessToken, "shpa[REDACTED:38]")').suppressions[0]).toMatchObject({
+        status: 'stale',
+      })
+      expect(agentLine('  console.log(session.accessToken, "shpa[REDACTED:38]")').suppressions[0]).not.toHaveProperty(
+        'likely_finding',
+      )
+      expect(agentLine('  console.log(session.accessToken) // [REDACTED TEXT]').suppressions[0]).not.toHaveProperty(
+        'likely_finding',
+      )
+      expect(agentLine('  console.log(currentSession.accessToken)').suppressions[0]).toMatchObject({
+        likely_finding: {index: 0, line: 12},
+      })
+      expect(
+        likelyFindings([redactedCodeEntry], [flaggedAt(12, 'console.log("shpa REDACTED 38", session.accessToken)')], {
+          id: 'CHECK',
+        }),
+      ).toEqual([['stale', undefined]])
+    })
+
+    test('likely finding: a similar line with a redacted secret still makes the other similar line ambiguous', () => {
+      const loggedEntry = entry({code: 'console.log(session.accessToken)'})
+      const renamed = flaggedAt(12, '  console.log(currentSession.accessToken)')
+      const withToken = flaggedAt(14, '  console.log(session.accessToken, "shpa[REDACTED:38]")')
+
+      expect(likelyFindings([loggedEntry], [renamed], {id: 'CHECK'})).toEqual([
+        ['stale', {index: 0, file: path, line: 12}],
+      ])
+      expect(likelyFindings([loggedEntry], [renamed, withToken], {id: 'CHECK'})).toEqual([['stale', undefined]])
+    })
+
+    test('likely finding: prefer-agent: a superseded deterministic finding that nothing suppresses is the likely finding of a deterministic entry', () => {
+      const renamed = finding({
+        ...loggedToken,
+        code_excerpt: excerpt(12, '  console.log(currentSession.accessToken)'),
+      })
+      const deterministic = [check({findings: [renamed]})]
+      const agent = [check({precedence: 'prefer-agent', findings: [finding({message: 'Agent finding.'})]})]
+
+      const {checks, suppressions} = combineWith([entry({code: 'console.log(session.accessToken)'})], {
+        deterministic,
+        agent,
+      })
+
+      expect(checks[0]!.findings.find(({source}) => source === 'deterministic')?.disposition).toBe('superseded')
+      expect(suppressions[0]).toMatchObject({status: 'stale', likely_finding: {index: 0, line: 12}})
+    })
   })
 
   describe('canonical ordering', () => {

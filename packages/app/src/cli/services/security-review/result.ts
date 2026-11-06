@@ -119,7 +119,12 @@ function appSecurityReviewResult({
     checks: result.checks.map((check) => projectCheck(check, appDirectory, result.findingNumbers)),
     resultsDigest: result.resultsDigest,
     blocking: projectAppSecurityBlocking(result.blocking),
-    suppressions: projectAppSecuritySuppressions(appDirectory, result.suppressions, result.allChecks),
+    suppressions: projectAppSecuritySuppressions(
+      appDirectory,
+      result.suppressions,
+      result.allChecks,
+      result.likelyFindingNumbers,
+    ),
     savedSuppressions: savedSuppressions ? projectSavedSuppressions(savedSuppressions, appDirectory) : null,
   }
 }
