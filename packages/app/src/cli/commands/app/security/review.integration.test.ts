@@ -772,7 +772,9 @@ describe('app security review command boundary', () => {
           code: 'suppressions-file-invalid',
           details: {
             path: resolve(appDirectory, 'shopify.app-security.json'),
-            errors: ['suppressions[0].check: not a known check ID'],
+            errors: [
+              'suppressions[0].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
+            ],
           },
         },
       })
