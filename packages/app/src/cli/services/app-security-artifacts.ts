@@ -193,7 +193,8 @@ export async function readJsonArtifact(path: string): Promise<ReadArtifactResult
   }
 
   try {
-    return {status: 'ok', value: JSON.parse(content)}
+    // Editors and Windows PowerShell 5.1 can start a UTF-8 file with a byte order mark, which JSON.parse rejects.
+    return {status: 'ok', value: JSON.parse(content.replace(/^\uFEFF/, ''))}
     // JSON is an untrusted artifact boundary.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

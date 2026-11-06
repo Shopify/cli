@@ -81,6 +81,15 @@ describe('readAppSecuritySuppressions', () => {
     })
   })
 
+  // Windows PowerShell 5.1 writes one with `Set-Content -Encoding UTF8`.
+  test('reads a file that starts with a UTF-8 byte order mark', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeSuppressionsFile(directory, `\uFEFF${suppressionsJson([agentEntry])}`)
+
+      await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([agentEntry])
+    })
+  })
+
   test('reads a file with an empty list as no suppressions', async () => {
     await inTemporaryDirectory(async (directory) => {
       await writeSuppressionsFile(directory, suppressionsJson([]))
