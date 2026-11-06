@@ -1,6 +1,11 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
-import {suppressedFindingsView, type SuppressedFindingsView} from './security-suppressions-output.js'
+import {
+  suppressedFindingsView,
+  unappliedEntriesView,
+  type SuppressedFindingsView,
+  type UnappliedEntriesView,
+} from './security-suppressions-output.js'
 import {
   activeFindings,
   isAgentResultStale,
@@ -113,29 +118,41 @@ export function renderSecurityReview(input: SecurityReviewPresenterInput): void 
 }
 
 /**
- * Every box in order: unresolved checks, passed checks, one per check with findings, the suppressed findings, then the
- * summary. The suppressed findings box is shown whatever `--verbose`, whenever a shown check has one.
+ * Every box in order: unresolved checks, passed checks, one per check with findings, the suppressed findings, the
+ * entries of shopify.app-security.json that apply to nothing, then the summary. The suppressed findings box is shown
+ * whatever `--verbose`, whenever a shown check has one. The entries box is shown whatever `--verbose`, whenever an
+ * entry of a shown check applies to nothing: `--check-id` narrows both boxes to the selected checks.
  */
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
-  const {checks} = input.result
+  const {checks, filter, suppressions} = input.result
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
   const passedOrNotApplicable = checks.filter(
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
   )
   const withFindings = checks.filter((check) => activeFindings(check).length > 0)
-  const suppressed = suppressedFindingsView(checks, input.result.suppressions)
+  const suppressed = suppressedFindingsView(checks, suppressions)
+  // Not every entry's check is in the results, so the entries are narrowed by the selected IDs, not by the checks.
+  const unappliedEntries = unappliedEntriesView(
+    filter ? suppressions.filter((result) => filter.checkIds.includes(result.entry.check)) : suppressions,
+  )
 
   return [
     ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose)] : []),
     ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose)] : []),
     ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now)),
     ...(suppressed ? [suppressedFindingsAlert(suppressed)] : []),
+    ...(unappliedEntries ? [unappliedEntriesAlert(unappliedEntries)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
   ]
 }
 
 function suppressedFindingsAlert({headline, counts, sections}: SuppressedFindingsView): SecurityReviewAlert {
   return {type: 'info', options: {headline, customSections: [{body: counts}, ...sections]}}
+}
+
+/** A warning when an entry needs a change. Like every box, it doesn't change the exit code or `--blocking`. */
+function unappliedEntriesAlert({headline, needsChange, sections}: UnappliedEntriesView): SecurityReviewAlert {
+  return {type: needsChange ? 'warning' : 'info', options: {headline, customSections: sections}}
 }
 
 export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput): SecurityReviewSummary {

@@ -14,14 +14,15 @@ export interface AppSecurityResultsSources {
 
 /**
  * The results `loadAppSecurityResults` would return for `appDirectory` and `resultsKey` if its result files held
- * these documents and shopify.app-security.json held these entries, without touching the filesystem. Each call
- * combines afresh, so tests share no state through it.
+ * these documents, shopify.app-security.json held these entries, and the files at `missingPaths` were gone, without
+ * touching the filesystem. Each call combines afresh, so tests share no state through it.
  */
 export function appSecurityResultsFor(
   appDirectory: string,
   resultsKey: string,
   sources: AppSecurityResultsSources,
   suppressionEntries: SuppressionEntry[] = [],
+  missingPaths: string[] = [],
 ): AppSecurityResults {
   const paths = appSecurityArtifactPaths(appDirectory, resultsKey)
   return {
@@ -31,6 +32,6 @@ export function appSecurityResultsFor(
         : null,
       agent: sources.agent ? {path: paths.agentFindingsPath, document: sources.agent} : null,
     },
-    ...combineFindings({...sources, suppressions: {entries: suppressionEntries, resultsKey}}),
+    ...combineFindings({...sources, suppressions: {entries: suppressionEntries, resultsKey, missingPaths}}),
   }
 }

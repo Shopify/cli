@@ -12,6 +12,8 @@ import {
   type FindingsSource,
 } from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const SUPPRESSIONS_SCHEMA_VERSION = 1
@@ -204,4 +206,17 @@ export async function readAppSecuritySuppressions(appDirectory: string): Promise
   const parsed = parseSuppressionsFile(file.value)
   if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
   return parsed.suppressions
+}
+
+/**
+ * The paths of the entries with `code` whose files no longer exist in the app directory, which a stale entry needs for
+ * its likely new path. It only tests whether each file exists, and reads none.
+ */
+export async function missingSuppressionPaths(
+  appDirectory: string,
+  suppressions: AppSecuritySuppression[],
+): Promise<string[]> {
+  const paths = [...new Set(suppressions.filter((suppression) => suppression.code !== undefined).map(({path}) => path))]
+  const present = await Promise.all(paths.map((path) => fileExists(joinPath(appDirectory, path))))
+  return paths.filter((_path, index) => !present[index])
 }

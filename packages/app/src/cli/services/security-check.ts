@@ -14,7 +14,7 @@ import {
   type DeclinedAppSecuritySelection,
 } from './app-security-selection.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {readAppSecuritySuppressions} from './app-security-suppressions.js'
+import {missingSuppressionPaths, readAppSecuritySuppressions} from './app-security-suppressions.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
@@ -191,7 +191,11 @@ export default async function securityCheck(
   const {checks, suppressions} = combineFindings({
     deterministic: execution.deterministicFindings,
     agent: null,
-    suppressions: {entries: suppressionEntries, resultsKey: resolution.resultsKey},
+    suppressions: {
+      entries: suppressionEntries,
+      resultsKey: resolution.resultsKey,
+      missingPaths: await missingSuppressionPaths(appDirectory, suppressionEntries),
+    },
   })
 
   return {

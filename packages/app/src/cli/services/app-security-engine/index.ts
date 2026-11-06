@@ -49,6 +49,7 @@ export type {
   SuppressionEntryResult,
   SuppressionEntryStatus,
   SuppressionKind,
+  SuppressionNotEvaluatedReason,
 } from './results/suppressions.js'
 export {recordAgentFindings} from './checks/index.js'
 export {MAX_JUSTIFICATION_LENGTH, MAX_PATH_LENGTH, MAX_SNIPPET_LENGTH} from './limits.js'

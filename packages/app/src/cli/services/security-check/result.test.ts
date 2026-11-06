@@ -85,11 +85,12 @@ const fixtureEntry: SuppressionEntry = {
 function scannedWithSuppressions(
   entries: SuppressionEntry[],
   overrides: Partial<ScannedSecurityCheck> = {},
+  missingPaths: string[] = [],
 ): ScannedSecurityCheck {
   const {checks, suppressions} = combineFindings({
     deterministic: committedSecretExecution.deterministicFindings,
     agent: null,
-    suppressions: {entries, resultsKey: 'shopify.app'},
+    suppressions: {entries, resultsKey: 'shopify.app', missingPaths},
   })
   return scanned({execution: committedSecretExecution, checks, suppressions, ...overrides})
 }
@@ -505,6 +506,26 @@ describe('renderSecurityCheckResult for a scan', () => {
     expect(report).not.toContain('1 security issue found.')
     expect(process.exitCode).toBeUndefined()
   })
+
+  test('reports stale and not-evaluated entries without --verbose, and keeps the exit code', async () => {
+    process.exitCode = undefined
+    const entries: SuppressionEntry[] = [
+      {...fixtureEntry, path: 'app/routes/session.ts', code: 'secret', reason: 'The file was renamed.'},
+      {...fixtureEntry, source: 'agent', check: 'MISSING_TENANT_ISOLATION'},
+    ]
+
+    const {stderr} = await present(
+      scannedWithSuppressions(entries, {blocking: {level: 'high', blockedChecks: 1}}, ['app/routes/session.ts']),
+    )
+
+    const report = boxText(stderr)
+    expect(report).toContain('1 security issue found.')
+    expect(report).toContain(
+      'Stale entries in shopify.app-security.json • suppressions[0]: deterministic COMMITTED_SECRET in app/routes/session.ts · false positive The file was renamed. Maybe moved to app/routes/index.ts',
+    )
+    expect(report).toContain('Not evaluated: 1 entry (1 for a check without an executed result).')
+    expect(process.exitCode).toBe(1)
+  })
 })
 
 describe('renderSecurityCheckResult for --list-files', () => {
@@ -587,6 +608,8 @@ const scanResult = {
     filePath: nativePath('my-app/shopify.app-security.json'),
     entryCount: 0,
     suppressedFindingCount: 0,
+    staleEntryCount: 0,
+    ambiguousEntryCount: 0,
     entries: [],
   },
 }
@@ -669,16 +692,24 @@ describe('renderSecurityCheckResult --json for a scan', () => {
       fixtureEntry,
       {...fixtureEntry, kind: 'accepted-risk', path: 'app/routes/deleted.ts', reason: 'The file is gone.'},
       {...fixtureEntry, source: 'agent', check: 'MISSING_TENANT_ISOLATION', reason: 'check reads no agent results.'},
+      {...fixtureEntry, path: 'app/routes/session.ts', code: 'secret', reason: 'The file was renamed.'},
     ]
 
-    const {result} = await presentJson(scannedWithSuppressions(entries, {selection: nativeSelection}))
+    const {result} = await presentJson(
+      scannedWithSuppressions(entries, {selection: nativeSelection}, [
+        'app/routes/deleted.ts',
+        'app/routes/session.ts',
+      ]),
+    )
 
     expect(result).toMatchObject({
       valid: true,
       suppressions: {
         filePath: nativePath('my-app/shopify.app-security.json'),
-        entryCount: 3,
+        entryCount: 4,
         suppressedFindingCount: 1,
+        staleEntryCount: 2,
+        ambiguousEntryCount: 0,
         entries: [
           {
             index: 0,
@@ -688,6 +719,8 @@ describe('renderSecurityCheckResult --json for a scan', () => {
             path: nativePath('my-app/app/routes/index.ts'),
             status: 'matched',
             matchedFindingCount: 1,
+            likelyPath: null,
+            candidateFindingCount: null,
           },
           {
             index: 1,
@@ -697,6 +730,9 @@ describe('renderSecurityCheckResult --json for a scan', () => {
             path: nativePath('my-app/app/routes/deleted.ts'),
             status: 'stale',
             matchedFindingCount: 0,
+            // Without code, nothing names a likely new path.
+            likelyPath: null,
+            candidateFindingCount: null,
           },
           {
             index: 2,
@@ -706,6 +742,16 @@ describe('renderSecurityCheckResult --json for a scan', () => {
             path: nativePath('my-app/app/routes/index.ts'),
             status: 'not-evaluated',
             matchedFindingCount: 0,
+            likelyPath: null,
+            candidateFindingCount: null,
+          },
+          {
+            index: 3,
+            path: nativePath('my-app/app/routes/session.ts'),
+            status: 'stale',
+            matchedFindingCount: 0,
+            likelyPath: nativePath('my-app/app/routes/index.ts'),
+            candidateFindingCount: null,
           },
         ],
       },
