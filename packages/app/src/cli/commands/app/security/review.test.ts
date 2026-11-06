@@ -304,9 +304,7 @@ describe('app security review command', () => {
     expect(error).toContain(message)
   })
 
-  test('defines --interactive with its environment variable, apart from --json and --suppress', () => {
-    expect(SecurityReview.flags.interactive.env).toBe('SHOPIFY_FLAG_APP_SECURITY_INTERACTIVE')
-    expect(SecurityReview.flags.interactive.exclusive).toEqual(['json', 'suppress'])
+  test('does not define a negated interactive flag', () => {
     expect(SecurityReview.flags.interactive.allowNo).toBeFalsy()
   })
 

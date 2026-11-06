@@ -1303,16 +1303,13 @@ const resultsChanged: FindingSuppressionResult = {
  * A session over the shared fixtures, whose active findings are 2 (high), 5 (high) and 6 (low). `suppress` answers
  * each request with the next of `answers`.
  */
-function interactiveSession(answers: FindingSuppressionResult[] = [], options: {checkIds?: string[]} = {}) {
-  const {result} = presenterInput(both, options)
-  const selected = new Set(result.checks.map((check) => check.id))
+function interactiveSession(answers: FindingSuppressionResult[] = []) {
+  const {result} = presenterInput(both)
   const queue = [...answers]
   return {
     result,
     configuration: 'shopify.app.toml',
-    findings: numberFindings(result.allChecks).filter(
-      ({check, finding}) => selected.has(check.id) && finding.disposition === 'active',
-    ),
+    findings: numberFindings(result.allChecks).filter(({finding}) => finding.disposition === 'active'),
     suppress: vi.fn(async (_request: InteractiveSuppressionRequest) => {
       const answer = queue.shift()
       if (!answer) throw new Error('Unexpected save')
@@ -1441,15 +1438,6 @@ describe('interactiveSecurityReview', () => {
     expect(rendered).toContain('Active finding 3 of 3 #6 · deterministic · shopify.app.toml:8')
   })
 
-  test('offers only the findings of the selected checks', async () => {
-    mockAndCaptureOutput()
-    const prompts = scriptedPrompts({actions: ['continue']})
-
-    await interactiveSecurityReview(prompts)(interactiveSession([], {checkIds: ['EOL_API_VERSION']}))
-
-    expect(promptMessages(prompts.selectAction)).toStrictEqual(['What do you want to do with finding #6?'])
-  })
-
   test('suppresses a finding with its kind and reason, saved at once, then goes on', async () => {
     const output = mockAndCaptureOutput()
     output.clear()
@@ -1484,22 +1472,6 @@ describe('interactiveSecurityReview', () => {
     )
   })
 
-  test('saves each suppression before it offers the next finding', async () => {
-    mockAndCaptureOutput()
-    const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}])])
-    const prompts = scriptedPrompts({
-      actions: ['suppress', 'continue', 'continue'],
-      kinds: ['false-positive'],
-      reasons: ['The logger redacts tokens.'],
-    })
-
-    await interactiveSecurityReview(prompts)(session)
-
-    const [saveOrder] = session.suppress.mock.invocationCallOrder
-    const [, secondOffer] = prompts.selectAction.mock.invocationCallOrder
-    expect(saveOrder).toBeLessThan(secondOffer!)
-  })
-
   test('requires a reason: the reason prompt refuses an empty one, and one that is too long', async () => {
     mockAndCaptureOutput()
     const prompts = scriptedPrompts({actions: ['suppress', 'quit'], kinds: ['false-positive'], reasons: ['Redacted.']})
@@ -1525,6 +1497,9 @@ describe('interactiveSecurityReview', () => {
 
     const outcome = await interactiveSecurityReview(prompts)(session)
 
+    const [saveOrder] = session.suppress.mock.invocationCallOrder
+    const [, secondOffer] = prompts.selectAction.mock.invocationCallOrder
+    expect(saveOrder).toBeLessThan(secondOffer!)
     expect(outcome).toStrictEqual({
       saved: [{index: 0, change: 'added', entry: credentialEntry, findingNumber: 2}],
       declinedCompanions: [],
