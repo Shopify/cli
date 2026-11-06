@@ -1297,10 +1297,11 @@ describe('saveAppSecuritySuppressions', () => {
 
   test('re-attaches an entry by replacing its code in place, and leaves every other byte of the file as it is', async () => {
     await inTemporaryDirectory(async (directory) => {
+      // The file can't hold unknown keys, so `$schema` and an entry with its keys in another order stand for them.
       const original = {
+        $schema: './shopify.app-security.schema.json',
         schema_version: 1,
-        generator: 'a later CLI',
-        suppressions: [agentEntry, {...deterministicEntry, reviewed_by: 'ana'}],
+        suppressions: [agentEntry, Object.fromEntries(Object.entries(deterministicEntry).reverse())],
       }
       const originalText = `${JSON.stringify(original, null, 2)}\n`
       await writeSuppressionsFile(directory, originalText)
