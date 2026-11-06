@@ -75,7 +75,7 @@ export const appSecurityBlockingSchema = zod
       .int()
       .nonnegative()
       .describe(
-        "The number of checks with active findings at or above that severity. Suppressed and superseded findings don't count. Always 0 for none.",
+        "The number of checks with an active finding and a severity at or above that level. Suppressed and superseded findings don't count. Always 0 for none.",
       ),
   })
   .strict()

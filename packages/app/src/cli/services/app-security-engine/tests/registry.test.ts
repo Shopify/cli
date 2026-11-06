@@ -1,5 +1,5 @@
 import {loadChecks} from '../checks/index.js'
-import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
+import {assertRegistryInvariants, getRegistry, reportingSourcesByCheckId} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, DETERMINISTIC_RULES} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {describe, expect, test} from 'vitest'
@@ -49,6 +49,17 @@ describe('authoritative registry', () => {
   test('has catalog documentation for every deterministic rule', () => {
     const catalogIds = new Set(RULE_CATALOG.map((entry) => entry.id))
     expect(DETERMINISTIC_RULES.filter((entry) => !catalogIds.has(entry.id))).toEqual([])
+  })
+})
+
+describe('reportingSourcesByCheckId', () => {
+  test('maps every check ID in the registry to the sources that report it', () => {
+    const sources = reportingSourcesByCheckId()
+
+    expect(sources.get('COMMITTED_SECRET')).toEqual(new Set(['deterministic', 'agent']))
+    expect(sources.get('SQL_INJECTION')).toEqual(new Set(['agent']))
+    expect(sources.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')).toEqual(new Set(['deterministic']))
+    expect([...sources.keys()].sort()).toEqual([...new Set(getRegistry().map((entry) => entry.id))].sort())
   })
 })
 

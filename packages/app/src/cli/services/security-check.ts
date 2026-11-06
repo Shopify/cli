@@ -85,6 +85,8 @@ type ScannedSecurityCheck = {
     /** Checks with an active deterministic finding at or above the level. Zero for `none`. */
     blockedChecks: number
   }
+  /** True when deterministic-findings.json was written without code excerpts, which would have made it too large. */
+  codeExcerptsOmitted?: boolean
 } & SecurityCheckResolution
 
 /**
@@ -182,7 +184,7 @@ export default async function securityCheck(
 
   // Read before the scan, so an invalid file fails the command before it replaces any results file.
   const suppressionEntries = await dependencies.readSuppressions(appDirectory)
-  const execution = withReadableFindings(await dependencies.execute(scanOptions))
+  const {execution, codeExcerptsOmitted} = withReadableFindings(await dependencies.execute(scanOptions))
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resolution.resultsKey, {
     deterministicFindings: execution.deterministicFindings,
@@ -206,12 +208,18 @@ export default async function securityCheck(
     checks,
     suppressions,
     blocking: {level: options.blocking, blockedChecks: blockedCheckCount(checks, options.blocking)},
+    ...(codeExcerptsOmitted ? {codeExcerptsOmitted} : {}),
   }
 }
 
 /** Excerpts must not prevent a result from being read, or make live and stored results differ. */
-function withReadableFindings(execution: AppSecurityExecution): AppSecurityExecution {
-  if (encodedArtifactSize(execution.deterministicFindings) <= MAX_ARTIFACT_FILE_SIZE_BYTES) return execution
+function withReadableFindings(execution: AppSecurityExecution): {
+  execution: AppSecurityExecution
+  codeExcerptsOmitted: boolean
+} {
+  if (encodedArtifactSize(execution.deterministicFindings) <= MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    return {execution, codeExcerptsOmitted: false}
+  }
   const deterministicFindings = withoutCodeExcerpts(execution.deterministicFindings)
   if (encodedArtifactSize(deterministicFindings) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
     throw new AbortError(
@@ -220,16 +228,19 @@ function withReadableFindings(execution: AppSecurityExecution): AppSecurityExecu
     )
   }
   return {
-    ...execution,
-    deterministicFindings,
-    scan: {
-      ...execution.scan,
-      issues: execution.scan.issues.map(({code_excerpt: _excerpt, evidence, ...issue}) => ({
-        ...issue,
-        ...(evidence === undefined
-          ? {}
-          : {evidence: evidence.map(({code_excerpt: _evidenceExcerpt, ...item}) => item)}),
-      })),
+    execution: {
+      ...execution,
+      deterministicFindings,
+      scan: {
+        ...execution.scan,
+        issues: execution.scan.issues.map(({code_excerpt: _excerpt, evidence, ...issue}) => ({
+          ...issue,
+          ...(evidence === undefined
+            ? {}
+            : {evidence: evidence.map(({code_excerpt: _evidenceExcerpt, ...item}) => item)}),
+        })),
+      },
     },
+    codeExcerptsOmitted: true,
   }
 }

@@ -10,7 +10,7 @@ import {
   repositoryIgnoredPaths,
 } from './path-rules.js'
 import {findRepositoryMarker} from './repository-marker.js'
-import {isSecretFile} from '../rules/secret-rules.js'
+import {isExcerptBlockedFile} from '../rules/secret-rules.js'
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
@@ -672,7 +672,11 @@ function readRepositoryText(absolutePath: string): string | undefined {
 /** Reads excerpt text, excluding binary files and secret files under either their cited or resolved name. */
 export function readRepositoryTextFile(absolutePath: string): string | undefined {
   const result = readRepositoryFile(absolutePath)
-  if (!result.ok || isSecretFile(normalizeCliPath(absolutePath)) || isSecretFile(normalizeCliPath(result.path)))
+  if (
+    !result.ok ||
+    isExcerptBlockedFile(normalizeCliPath(absolutePath)) ||
+    isExcerptBlockedFile(normalizeCliPath(result.path))
+  )
     return undefined
   return isProbablyBinary(result.content) ? undefined : result.content.toString()
 }
@@ -787,6 +791,16 @@ function isSensitiveFile(path: string): boolean {
     fileName.startsWith('Dockerfile.') ||
     fileName.startsWith('Containerfile.')
   )
+}
+
+/** Source code, by its extension in any case. A value assigned in it is an expression unless it's quoted. */
+export function isSourceCodeFile(path: string): boolean {
+  return extname(path).toLowerCase() in SOURCE_LANGUAGES
+}
+
+/** A file that the secret scan reads and that isn't source code, such as configuration, where any line can hold one. */
+export function isSensitiveConfigFile(path: string): boolean {
+  return !isSourceCodeFile(path) && (isSensitiveFile(path) || SECRET_TEXT_EXTENSIONS.has(extname(path).toLowerCase()))
 }
 
 function isProbablyBinary(content: Buffer): boolean {

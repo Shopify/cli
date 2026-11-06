@@ -14,10 +14,19 @@ export interface SuppressionEntry {
   kind: SuppressionKind
   /** Relative to the app directory, with `/`. */
   path: string
-  /** Text of the flagged code. Without it, the entry covers every finding of the check in the file. */
+  /**
+   * Text of the flagged code, matched against the code excerpt that the results file saved with the finding. Without
+   * it, the entry covers every finding of the check in the file. A results file that would be larger than 5 MB with
+   * excerpts is saved without them, and results written before excerpts existed have none: then the entry matches only
+   * the finding's message, and can go stale.
+   */
   code?: string
   reason: string
-  /** App configuration file names, such as shopify.app.toml, or client IDs. */
+  /**
+   * App configuration file names, such as shopify.app.toml, which match a run of that configuration without
+   * `--client-id`, or client IDs passed with `--client-id`. The entry applies when one of them names the run's results
+   * key.
+   */
   configurations: string[]
 }
 
@@ -121,10 +130,10 @@ interface ScoredCandidate {
  * 1. The candidates are the findings of the entry's source and check in the entry's path, when one of the entry's
  *    configurations names the run's results key.
  * 2. Without `code`, every candidate matches.
- * 3. With `code`, a candidate matches when the normalized text occurs in its captured code (`occursInCode`) or in its
- *    message.
- * 4. When more than one candidate matches, those where the text occurs in both the code and the message are kept. When
- *    more than one is still left, or none, the entry is ambiguous and matches nothing.
+ * 3. With `code`, a candidate matches when the normalized text occurs in its captured code (`occursInCode`). A
+ *    candidate without captured code (`hasCapturedCode`) matches when the text occurs in its message instead.
+ * 4. When more than one candidate matches, those where the text also occurs in the message are kept. When more than
+ *    one is still left, or none, the entry is ambiguous and matches nothing.
  * 5. An entry that matches nothing is stale when its source's result for the check is executed, and not evaluated
  *    otherwise. When a stale entry's file is gone and exactly one finding of its source and check at another path
  *    holds its text, that path is the entry's likely new path. When its file still exists, its likely finding is the
@@ -274,7 +283,9 @@ function normalizeSuppressionText(text: string): string {
 
 /**
  * A configuration names a results key: an app configuration file name without its `.toml` extension, as `check`
- * names the results directory of that configuration, or a client ID as it is.
+ * names the results directory of that configuration without `--client-id`, or a client ID as it is, as `--client-id`
+ * names it. So a file name doesn't apply to a run with `--client-id`, and the client ID in the configuration file
+ * doesn't apply to a run without it.
  */
 function configurationResultsKey(configuration: string): string {
   return configuration.endsWith('.toml') ? configuration.slice(0, -'.toml'.length) : configuration
@@ -308,9 +319,10 @@ function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
   const text = normalizeSuppressionText(entry.code)
   // Text that is only whitespace, commas and semicolons names nothing.
   if (text === '') return matchOrMiss([], check)
-  const matches = candidates
-    .map(({finding, index}): ScoredCandidate => ({index, ...textOccurrence(text, finding, entry.path)}))
-    .filter(({inCode, inMessage}) => inCode || inMessage)
+  const matches = candidates.flatMap(({finding, index}): ScoredCandidate[] => {
+    const occurrence = textOccurrence(text, finding, entry.path)
+    return isTextMatch(occurrence, finding, entry.path) ? [{index, ...occurrence}] : []
+  })
   if (matches.length <= 1) return matchOrMiss(matches, check)
 
   const inCodeAndMessage = matches.filter(({inCode, inMessage}) => inCode && inMessage)
@@ -322,7 +334,8 @@ function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
 
 /**
  * The likely new path of a stale entry with `code`: the path of the one finding of the entry's check, at another path,
- * whose code or message holds the entry's text, as rule 3 compares it. Undefined when no finding or several do.
+ * that rule 3 would match there: its code holds the entry's text, or its message does when it has no captured code.
+ * Undefined when no finding or several do.
  */
 function likelyNewPath(entry: SuppressionEntry, check: StoredCheck): string | undefined {
   if (entry.code === undefined) return undefined
@@ -332,8 +345,7 @@ function likelyNewPath(entry: SuppressionEntry, check: StoredCheck): string | un
   for (const finding of check.findings) {
     const path = normalizePath(finding.location.file)
     if (path === entry.path) continue
-    const {inCode, inMessage} = textOccurrence(text, finding, path)
-    if (!inCode && !inMessage) continue
+    if (!isTextMatch(textOccurrence(text, finding, path), finding, path)) continue
     if (likelyPath !== undefined) return undefined
     likelyPath = path
   }
@@ -348,6 +360,15 @@ function textOccurrence(text: string, finding: StoredFinding, path: string): Omi
   }
 }
 
+/** Messages are fixed per rule, so a finding with captured code matches by its code alone. */
+function isTextMatch(
+  {inCode, inMessage}: Omit<ScoredCandidate, 'index'>,
+  finding: StoredFinding,
+  path: string,
+): boolean {
+  return inCode || (inMessage && !hasCapturedCode(finding, path))
+}
+
 function matchOrMiss(matches: {index: number}[], check: StoredCheck): EntryMatch {
   if (matches.length > 0) return {status: 'matched', findingIndexes: matches.map(({index}) => index)}
   return {status: check.status === 'executed' ? 'stale' : 'not-evaluated', findingIndexes: []}
@@ -356,8 +377,7 @@ function matchOrMiss(matches: {index: number}[], check: StoredCheck): EntryMatch
 /**
  * Whether normalized text occurs in a finding's captured code: in its excerpt, where the occurrence must cover the
  * flagged line, so a statement that a reformat split over the lines around it still matches but a neighboring line
- * alone doesn't; or in one of its evidence lines in the same file. A finding without an excerpt, such as one without a
- * line or in an environment file, matches by its message alone.
+ * alone doesn't; or in one of its evidence lines in the same file.
  */
 function occursInCode(text: string, finding: StoredFinding, path: string): boolean {
   const {line} = finding.location
@@ -367,6 +387,18 @@ function occursInCode(text: string, finding: StoredFinding, path: string): boole
       evidence.code_excerpt !== undefined &&
       normalizePath(evidence.location.file) === path &&
       evidence.code_excerpt.some((excerptLine) => normalizeSuppressionText(excerptLine.text).includes(text)),
+  )
+}
+
+/**
+ * Whether a finding has code that `occursInCode` searches: an excerpt with a flagged line, or an evidence excerpt in the
+ * same file. A finding without, such as one without a line, in an environment file, or in results saved without
+ * excerpts, matches by its message alone.
+ */
+function hasCapturedCode(finding: StoredFinding, path: string): boolean {
+  if (finding.code_excerpt && finding.location.line !== undefined) return true
+  return finding.evidence.some(
+    (evidence) => evidence.code_excerpt !== undefined && normalizePath(evidence.location.file) === path,
   )
 }
 

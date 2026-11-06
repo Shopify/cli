@@ -993,7 +993,7 @@ describe('securityReview --suppress', () => {
         expect(error).toMatchObject({
           code: 'finding-not-suppressible',
           message:
-            "Finding 1 can't be suppressed: its entry would be invalid: check: not a known check ID. Nothing was saved.",
+            "Finding 1 can't be suppressed: its entry would be invalid: check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI. Nothing was saved.",
           tryMessage: `This version of the CLI has no ${source} check ${checkId}, so an entry for it by hand would make shopify.app-security.json invalid too. The results may be from another version of the CLI. To update them, ${update}.`,
           details: {findingNumber: 1},
         })
@@ -1019,7 +1019,11 @@ describe('securityReview --suppress', () => {
           securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies()),
         ).rejects.toMatchObject({
           code: 'suppressions-file-invalid',
-          details: {errors: ['suppressions[0].check: not a known check ID']},
+          details: {
+            errors: [
+              'suppressions[0].check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.',
+            ],
+          },
         })
       })
     },
