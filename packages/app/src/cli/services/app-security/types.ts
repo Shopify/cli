@@ -74,7 +74,9 @@ export const appSecurityBlockingSchema = zod
       .number()
       .int()
       .nonnegative()
-      .describe('The number of checks with findings at or above that severity. Always 0 for none.'),
+      .describe(
+        'The number of checks with an active finding and a severity at or above that level. Always 0 for none.',
+      ),
   })
   .strict()
   .describe('The --blocking policy and the checks that fail it.')

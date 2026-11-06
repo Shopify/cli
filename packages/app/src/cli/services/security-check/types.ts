@@ -35,7 +35,7 @@ export const appSecurityCheckJsonOutputSchema = defineJsonOutputSchema({
           valid: zod
             .boolean()
             .describe(
-              'Whether --blocking passed: no finding of the scan has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings.',
+              'Whether --blocking passed: no check of the scan has an active finding and a severity at or above the level. A finding that an entry of shopify.app-security.json suppresses is not active. blocking.blockedCheckCount counts the checks that fail, and --blocking none always passes. Run review --json for the findings.',
             ),
           app: appSecurityAppSchema,
           resultsDirectory: createAbsolutePathSchema().describe(

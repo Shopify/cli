@@ -43,7 +43,7 @@ const findingFields = () => ({
   disposition: zod
     .enum(['active', 'suppressed', 'superseded'])
     .describe(
-      "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces.",
+      "Whether the finding counts: active; suppressed, by the agent or by an entry of shopify.app-security.json, which can suppress deterministic findings too; or superseded, a deterministic finding that a check's prefer-agent agent result replaces.",
     ),
   location: appSecurityLocationSchema,
   message: zod.string().describe('What the finding is, redacted.'),
@@ -85,7 +85,9 @@ const appSecurityAgentFindingSchema = zod
       .object({justification: zod.string()})
       .strict()
       .nullable()
-      .describe('Why the agent suppressed the finding, or null when it is not suppressed.'),
+      .describe(
+        "Why the agent suppressed the finding, or null when the agent didn't suppress it. An entry of shopify.app-security.json can suppress the finding too, so a suppressed finding can have null here.",
+      ),
   })
   .strict()
   .describe('A finding from agent-findings.json.')
