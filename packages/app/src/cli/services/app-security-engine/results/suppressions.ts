@@ -15,7 +15,12 @@ export interface SuppressionEntry {
   kind: SuppressionKind
   /** Relative to the app directory, with `/`. */
   path: string
-  /** Text of the flagged code. Without it, the entry covers every finding of the check in the file. */
+  /**
+   * Text of the flagged code, matched against the code excerpt that the results file saved with the finding. Without
+   * it, the entry covers every finding of the check in the file. A results file that would be larger than 5 MB with
+   * excerpts is saved without them, and results written before excerpts existed have none: then the entry matches only
+   * the finding's message, and can go stale.
+   */
   code?: string
   reason: string
   /**
