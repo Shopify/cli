@@ -187,6 +187,18 @@ function redactUnrecognizedSecrets(line: string, sourceCode: boolean): string {
   return `${redacted}${withoutUrlPasswords.slice(position)}`
 }
 
+/** The index of the last of the ascending `values` that is at most `offset`, or -1 when none is. */
+function lastIndexAtOrBefore(values: ReadonlyArray<number>, offset: number): number {
+  let low = 0
+  let high = values.length - 1
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2)
+    if (values[middle]! <= offset) low = middle + 1
+    else high = middle - 1
+  }
+  return high
+}
+
 /**
  * Redact a text line by line, for excerpts that quote only some of its lines. A secret can span lines, so a line that
  * holds part of a match that spans lines becomes `[REDACTED LINE]`, even when the excerpt leaves out the line where the
@@ -202,7 +214,7 @@ export function redactLines(text: string, {sourceCode = false}: {sourceCode?: bo
     nextLineStart += line.length + 1
     return start
   })
-  const lineAt = (offset: number) => lineStarts.findLastIndex((start) => start <= offset)
+  const lineAt = (offset: number) => lastIndexAtOrBefore(lineStarts, offset)
   const matches = REDACTION_PATTERNS.flatMap((pattern) =>
     [...text.matchAll(new RegExp(pattern.regex.source, `${pattern.regex.flags}g`))].map((match) => ({
       pattern,
@@ -210,22 +222,34 @@ export function redactLines(text: string, {sourceCode = false}: {sourceCode?: bo
       end: match.index + match[0].length,
     })),
   )
-  // A header inside a complete private key block is redacted with the block, which ends at its footer.
-  const isInsideBlock = (offset: number) =>
-    matches.some(({pattern, start, end}) => !pattern.redactEntireInput && start <= offset && offset < end)
+  // A header inside a complete private key block is redacted with the block, which ends at its footer. An offset is
+  // inside a match when the furthest end of the matches that start at or before it is after it.
+  const spans = matches
+    .filter(({pattern}) => !pattern.redactEntireInput)
+    .sort((left, right) => left.start - right.start)
+  const spanStarts = spans.map(({start}) => start)
+  let furthestEnd = 0
+  const furthestEnds = spans.map(({end}) => {
+    furthestEnd = Math.max(furthestEnd, end)
+    return furthestEnd
+  })
+  const isInsideBlock = (offset: number) => {
+    const index = lastIndexAtOrBefore(spanStarts, offset)
+    return index >= 0 && furthestEnds[index]! > offset
+  }
   const redactedLines = new Set<number>()
-  const redactLineRange = (firstLine: number, lastLine: number) => {
-    for (let line = firstLine; line <= lastLine; line++) redactedLines.add(line)
+  for (const {start, end} of spans) {
+    if (!text.slice(start, end).includes('\n')) continue
+    const lastLine = lineAt(end - 1)
+    for (let line = lineAt(start); line <= lastLine; line++) redactedLines.add(line)
   }
-  for (const {pattern, start, end} of matches) {
-    if (pattern.redactEntireInput) {
-      if (!isInsideBlock(start)) redactLineRange(lineAt(start), lines.length - 1)
-    } else if (text.slice(start, end).includes('\n')) {
-      redactLineRange(lineAt(start), lineAt(end - 1))
-    }
-  }
+  // Headers are found in order, so the first one outside a block redacts every line that any later one would.
+  const firstUnterminatedHeader = matches.find(({pattern, start}) => pattern.redactEntireInput && !isInsideBlock(start))
+  const firstLineRedactedToTheEnd = firstUnterminatedHeader ? lineAt(firstUnterminatedHeader.start) : lines.length
   return lines.map((line, index) =>
-    redactedLines.has(index) ? '[REDACTED LINE]' : redactUnrecognizedSecrets(redactText(line), sourceCode),
+    index >= firstLineRedactedToTheEnd || redactedLines.has(index)
+      ? '[REDACTED LINE]'
+      : redactUnrecognizedSecrets(redactText(line), sourceCode),
   )
 }
 
