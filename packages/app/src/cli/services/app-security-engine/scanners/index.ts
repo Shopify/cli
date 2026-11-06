@@ -610,6 +610,8 @@ export function createCitedFileReader(
   gatheredPaths: ReadonlySet<string>,
 ): SourceTextReader {
   configureRepositoryReader({appDirectory, scanDirectories: directories, explicitInputs: new Set()})
+  // The repository reader is module state. The returned reader reads with this configuration only while nothing
+  // configures it again, such as a scan or `listGatheredPaths`, so create it after those and use it before any other.
   return (file) => {
     const path = resolvePath(appDirectory, file)
     return gatheredPaths.has(normalizePath(relativePath(appDirectory, path))) ? readRepositoryTextFile(path) : undefined
