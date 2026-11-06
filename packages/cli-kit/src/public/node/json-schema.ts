@@ -11,6 +11,13 @@ export type HandleInvalidAdditionalProperties = 'strip' | 'fail'
 
 type AjvError = ErrorObject<string, Record<string, unknown>>
 
+const comparisonDescriptions: {[comparison: string]: string} = {
+  '<=': 'less than or equal to',
+  '<': 'less than',
+  '>=': 'greater than or equal to',
+  '>': 'greater than',
+}
+
 /**
  * Normalises a JSON Schema by standardising it's internal implementation.
  *
@@ -168,21 +175,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
       const limit = error.params.limit
       const actualValue = getJsonSchemaErrorValue(subject, path)
 
-      let comparisonText = comparison
-      switch (comparison) {
-        case '<=':
-          comparisonText = 'less than or equal to'
-          break
-        case '<':
-          comparisonText = 'less than'
-          break
-        case '>=':
-          comparisonText = 'greater than or equal to'
-          break
-        case '>':
-          comparisonText = 'greater than'
-          break
-      }
+      const comparisonText = comparisonDescriptions[comparison] ?? comparison
 
       return {
         path,
