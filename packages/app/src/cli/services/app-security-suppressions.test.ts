@@ -956,18 +956,46 @@ describe('planSuppression', () => {
     expect(planSuppression(targetOf(document, 1), decision, resultsOf(document), [])).toStrictEqual({
       status: 'refused',
       problem: "its entry would be invalid: path: can't contain wildcards: name one file",
+      invalidFields: ['path'],
     })
   })
 
-  test('refuses a finding of a check that this CLI does not know, with the reason as the end of a sentence', () => {
-    const document = agentDocument('NOT_A_CHECK', [
-      agentFinding('app/routes/orders.tsx', 1, ['console.log(db.id)'], 'm'),
-    ])
+  test.each([
+    [
+      'a check ID that this CLI does not know',
+      'CREDENTIAL_LOGGING',
+      'check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI',
+    ],
+    [
+      'a check that only the other source reports',
+      'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
+      'check: agent checks in this version of Shopify CLI don\'t report MISSING_DEPENDENCY_SECURITY_AUTOMATION. Use "source": "deterministic", or upgrade Shopify CLI',
+    ],
+  ])(
+    'refuses a finding of %s, as results from another CLI version hold, and names the check field',
+    (_name, checkId, problem) => {
+      const document = agentDocument(checkId, [agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'm')])
 
-    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+      expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+        status: 'refused',
+        problem: `its entry would be invalid: ${problem}`,
+        invalidFields: ['check'],
+      })
+    },
+  )
+
+  test('names each invalid field once, in the order of the problems', () => {
+    const document = agentDocument('CREDENTIAL_LOGGING', [
+      agentFinding('app/routes/*.tsx', 3, routeLines.slice(0, 5), 'm'),
+    ])
+    // A reason of only spaces, longer than the limit, has two problems.
+    const blankReason = {kind: 'false-positive', reason: ' '.repeat(4_001)} as const
+
+    expect(planSuppression(targetOf(document, 0), blankReason, resultsOf(document), [])).toStrictEqual({
       status: 'refused',
       problem:
-        'its entry would be invalid: check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI',
+        "its entry would be invalid: path: can't contain wildcards: name one file; reason: must be at most 4000 characters; reason: must not be empty; check: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI",
+      invalidFields: ['path', 'reason', 'check'],
     })
   })
 
