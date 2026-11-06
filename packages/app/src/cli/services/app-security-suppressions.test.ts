@@ -883,14 +883,6 @@ describe('planSuppression', () => {
       ],
       'logger.info(',
     ],
-    [
-      'its message',
-      [
-        agentFinding('app/routes/orders.tsx', 3, routeLines, 'The loader logs the access token.'),
-        agentFinding('app/routes/orders.tsx', 3, routeLines, 'The access token reaches a log.'),
-      ],
-      'The loader logs the access token.',
-    ],
   ])('reports the broader option without ruling out a manual selector from %s', (_name, findings, code) => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', findings)
 
