@@ -15,6 +15,7 @@ export interface LogInput {
   'request-id'?: string
   'function-handle'?: string
   target?: string
+  'event-handle'?: string
   since?: string
   until?: string
   limit?: number
