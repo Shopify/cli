@@ -10,6 +10,7 @@ import {
   findManifestPaths,
   findDependencyAutomationInputs,
   gatherPaths,
+  readRepositoryTextFile,
 } from './discover.js'
 import {createPathRules} from './path-rules.js'
 import {
@@ -37,8 +38,9 @@ import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../scan-artifact/index.js'
+import {createCodeExcerpts, withCodeExcerpts, type SourceTextReader} from '../results/code-excerpt.js'
 import {getEngineVersion} from '../version.js'
-import {normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
@@ -561,6 +563,22 @@ function runnerContext(definition: DeterministicCheckDefinition, context: ScanCo
     : context
 }
 
+/** The contents the checks inspected, by the project-relative path that their findings name. */
+function scannedFileContents(context: ScanContext): Map<string, string> {
+  const files: {path: string; content?: string}[] = [
+    ...context.appTomls.map(({path, content}) => ({
+      path: relativePath(context.appRoot, path).replace(/\\/g, '/'),
+      content,
+    })),
+    ...context.extensions.flatMap((extension) => [extension, ...extension.files]),
+    ...context.sourceFiles,
+    ...context.sensitiveFiles,
+    ...context.manifests,
+    ...context.dependencyAutomation.files,
+  ]
+  return new Map(files.flatMap(({path, content}) => (content === undefined ? [] : [[path, content] as const])))
+}
+
 function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
   return Array.isArray(value) ? {issues: value} : value
 }
@@ -576,6 +594,17 @@ function gatherScanPaths(
     selectedAppConfigFilePath: appConfigFilePath,
     rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })
+}
+
+/**
+ * Reads the files that agent findings cite, for their code excerpts, with the scan's containment rules: a file is read
+ * only below one of `directories`, which are absolute real paths, never through a symbolic link that leaves it, within
+ * the size limit, and not when it's binary. Cited paths are relative to the app directory. Configures the repository
+ * reader, as a scan does.
+ */
+export function createCitedFileReader(appDirectory: string, directories: ReadonlyArray<string>): SourceTextReader {
+  configureRepositoryReader({appDirectory, scanDirectories: directories, explicitInputs: new Set()})
+  return (file) => readRepositoryTextFile(resolvePath(appDirectory, file))
 }
 
 /**
@@ -701,7 +730,11 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
   const versionById = new Map(
     [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
   )
-  issues = issues.map((issue) => redactIssue({...issue, rule_version: versionById.get(issue.id) ?? 1}))
+  const scannedContents = scannedFileContents(context)
+  const excerpts = createCodeExcerpts((file) => scannedContents.get(file))
+  issues = issues.map((issue) =>
+    redactIssue(withCodeExcerpts({...issue, rule_version: versionById.get(issue.id) ?? 1}, excerpts)),
+  )
   for (const execution of checksExecuted)
     execution.findings = issues.filter((issue) => issue.id === execution.id).length
 
