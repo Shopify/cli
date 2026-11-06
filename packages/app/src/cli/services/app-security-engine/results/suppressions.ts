@@ -86,10 +86,10 @@ interface ScoredCandidate {
  * 1. The candidates are the findings of the entry's source and check in the entry's path, when one of the entry's
  *    configurations names the run's results key.
  * 2. Without `code`, every candidate matches.
- * 3. With `code`, a candidate matches when the normalized text occurs in its captured code (`occursInCode`) or in its
- *    message.
- * 4. When more than one candidate matches, those where the text occurs in both the code and the message are kept. When
- *    more than one is still left, or none, the entry is ambiguous and matches nothing.
+ * 3. With `code`, a candidate matches when the normalized text occurs in its captured code (`occursInCode`). A
+ *    candidate without captured code (`hasCapturedCode`) matches when the text occurs in its message instead.
+ * 4. When more than one candidate matches, those where the text also occurs in the message are kept. When more than
+ *    one is still left, or none, the entry is ambiguous and matches nothing.
  * 5. An entry that matches nothing is stale when its source's result for the check is executed, and not evaluated
  *    otherwise.
  */
@@ -172,14 +172,13 @@ function matchEntry(entry: SuppressionEntry, check: StoredCheck): EntryMatch {
   // Text that is only whitespace, commas and semicolons names nothing.
   if (text === '') return matchOrMiss([], check)
   const matches = candidates
-    .map(
-      ({finding, index}): ScoredCandidate => ({
-        index,
-        inCode: occursInCode(text, finding, entry.path),
-        inMessage: normalizeSuppressionText(finding.message).includes(text),
-      }),
-    )
-    .filter(({inCode, inMessage}) => inCode || inMessage)
+    .flatMap(({finding, index}): ScoredCandidate[] => {
+      const inCode = occursInCode(text, finding, entry.path)
+      const inMessage = normalizeSuppressionText(finding.message).includes(text)
+      // Messages are fixed per rule, so a finding with captured code matches by its code alone.
+      const matched = inCode || (inMessage && !hasCapturedCode(finding, entry.path))
+      return matched ? [{index, inCode, inMessage}] : []
+    })
   if (matches.length <= 1) return matchOrMiss(matches, check)
 
   const inCodeAndMessage = matches.filter(({inCode, inMessage}) => inCode && inMessage)
@@ -195,8 +194,7 @@ function matchOrMiss(matches: {index: number}[], check: StoredCheck): EntryMatch
 /**
  * Whether normalized text occurs in a finding's captured code: in its excerpt, where the occurrence must cover the
  * flagged line, so a statement that a reformat split over the lines around it still matches but a neighboring line
- * alone doesn't; or in one of its evidence lines in the same file. A finding without an excerpt, such as one without a
- * line or in an environment file, matches by its message alone.
+ * alone doesn't; or in one of its evidence lines in the same file.
  */
 function occursInCode(text: string, finding: StoredFinding, path: string): boolean {
   const {line} = finding.location
@@ -206,6 +204,18 @@ function occursInCode(text: string, finding: StoredFinding, path: string): boole
       evidence.code_excerpt !== undefined &&
       normalizePath(evidence.location.file) === path &&
       evidence.code_excerpt.some((excerptLine) => normalizeSuppressionText(excerptLine.text).includes(text)),
+  )
+}
+
+/**
+ * Whether a finding has code that `occursInCode` searches: an excerpt with a flagged line, or an evidence excerpt in the
+ * same file. A finding without, such as one without a line, in an environment file, or in results saved without
+ * excerpts, matches by its message alone.
+ */
+function hasCapturedCode(finding: StoredFinding, path: string): boolean {
+  if (finding.code_excerpt && finding.location.line !== undefined) return true
+  return finding.evidence.some(
+    (evidence) => evidence.code_excerpt !== undefined && normalizePath(evidence.location.file) === path,
   )
 }
 

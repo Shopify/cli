@@ -576,6 +576,53 @@ describe('combineFindings', () => {
       ])
     })
 
+    test("doesn't match a finding with captured code by its message alone", () => {
+      // Deterministic messages are fixed per rule, so an entry written for one finding would hide another one.
+      const message = 'A non-literal value is written to an HTML, script, or evaluation sink.'
+      const written = finding({
+        location: {file: path, line: 40},
+        message,
+        code_excerpt: excerpt(40, '  banner.innerHTML = params.get("html")'),
+      })
+      const forwarded = finding({
+        location: {file: path, line: 50},
+        message,
+        evidence: [{location: {file: path, line: 52}, code_excerpt: excerpt(52, '  banner.innerHTML = html')}],
+      })
+
+      for (const coded of [written, forwarded]) {
+        const {checks, suppressions} = combineWith([entry({code: 'value'})], {
+          deterministic: [check({findings: [coded]})],
+        })
+
+        expect(dispositions(checks)).toEqual([{message, disposition: 'active'}])
+        expect(statuses(suppressions)).toEqual([{status: 'stale', count: 0}])
+      }
+    })
+
+    test("a match in one finding's code isn't made ambiguous by the message of another finding with code", () => {
+      const loggedValue = finding({
+        location: {file: path, line: 10},
+        message: 'A token is logged.',
+        code_excerpt: excerpt(10, '  console.log(value)'),
+      })
+      const mentionsValue = finding({
+        location: {file: path, line: 30},
+        message: 'A value reaches a log.',
+        code_excerpt: excerpt(30, '  console.log(order)'),
+      })
+
+      const {checks, suppressions} = combineWith([entry({code: 'value'})], {
+        deterministic: [check({findings: [loggedValue, mentionsValue]})],
+      })
+
+      expect(dispositions(checks)).toEqual([
+        {message: 'A token is logged.', disposition: 'suppressed'},
+        {message: 'A value reaches a log.', disposition: 'active'},
+      ])
+      expect(statuses(suppressions)).toEqual([{status: 'matched', count: 1}])
+    })
+
     test('an entry without code suppresses every finding of its check in its file, and nothing else', () => {
       const elsewhere = finding({location: {file: 'app/routes/other.tsx', line: 3}, message: 'Elsewhere.'})
 
@@ -635,7 +682,8 @@ describe('combineFindings', () => {
       expect(dispositions(checks).map(({disposition}) => disposition)).toEqual(['active', 'active'])
       expect(statuses(suppressions)).toEqual([
         {status: 'ambiguous', count: 0},
-        {status: 'ambiguous', count: 0},
+        // Text only in the messages matches neither finding, because both have captured code.
+        {status: 'stale', count: 0},
       ])
     })
 
