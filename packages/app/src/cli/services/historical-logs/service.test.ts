@@ -523,6 +523,61 @@ test('requests Sidekick events with exact shared filters and preserves native JS
   })
 })
 
+test.each(['SUCCESS', 'FAILURE', null, undefined])(
+  'requests UI extension errors with exact shared filters and preserves native JSON with status %s',
+  async (status) => {
+    const uiExtensionRecord = {
+      timestamp: record.timestamp,
+      type: 'UI_EXTENSION_ERROR',
+      shopMyshopifyDomain: 'example.myshopify.com',
+      ...(status === undefined ? {} : {resultStatus: status}),
+      target: 'purchase.checkout.block.render',
+      extensionRegistrationId: 'extension-registration-123',
+      extensionVersionId: 'extension-version-123',
+      extensionPlacementReference: 'checkout-block',
+      errorCode: 'EXTENSION_ERROR',
+      errorName: 'ExtensionError',
+      errorType: 'RuntimeError',
+      errorMessage: `Extension failed\n${'a'.repeat(150)}`,
+      userAgent: 'example-agent',
+    }
+    authorize()
+    logResponse([uiExtensionRecord])
+
+    const result = await retrieveLogs({
+      ...scope,
+      type: ['ui-extension'],
+      store: 'example',
+      status: 'failure',
+      target: 'purchase.checkout.block.render',
+    })
+
+    expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+      clientId,
+      types: ['UI_EXTENSION_ERROR'],
+      timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+      limit: 20,
+      filters: [
+        {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+        {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+        {field: 'TARGET', operator: 'EQUALS', value: 'purchase.checkout.block.render'},
+      ],
+    })
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
+    expect(result.logs).toEqual([uiExtensionRecord])
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderHistoricalLogs(result, true, 20)
+      expect(JSON.parse(stdout())).toEqual({
+        logs: [uiExtensionRecord],
+        ordering: 'subset-timestamp-asc',
+        limitations: [],
+      })
+      expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+      expect(stderr()).toBe('')
+    })
+  },
+)
+
 test('an empty successful search has no result-limit warning', async () => {
   authorize()
   logResponse([])
@@ -568,6 +623,7 @@ test('default mixed-type search shares one query and limit, preserving every pre
       'APP_BILLING_EVENT',
       'REST_REQUEST',
       'SIDEKICK_EVENT',
+      'UI_EXTENSION_ERROR',
     ],
     limit: 3,
     filters: [],
@@ -589,6 +645,7 @@ test('cross-type filters are sent together and an empty intersection is not an e
       'APP_BILLING_EVENT',
       'REST_REQUEST',
       'SIDEKICK_EVENT',
+      'UI_EXTENSION_ERROR',
     ],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
