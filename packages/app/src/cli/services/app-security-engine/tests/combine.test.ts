@@ -689,12 +689,13 @@ describe('combineFindings', () => {
         // Text only in the messages matches neither finding, because both have captured code.
         {status: 'stale', count: 0},
       ])
-      for (const result of suppressions) {
-        expect(result.candidate_locations).toEqual([
+      expect(suppressions.map((result) => result.candidate_locations)).toEqual([
+        [
           {file: path, line: 8},
           {file: path, line: 20},
-        ])
-      }
+        ],
+        undefined,
+      ])
     })
 
     test("an ambiguous entry's candidates are the findings that rule 4 kept, when it kept several", () => {
