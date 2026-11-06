@@ -1,6 +1,8 @@
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {parseAppToml} from '../scanners/discover.js'
+import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
+import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
@@ -10,8 +12,9 @@ import {
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
+import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {describe, expect, test} from 'vitest'
-import type {SourceFile} from '../rules/types.js'
+import type {ScanContext, SourceFile} from '../rules/types.js'
 
 const ACTIVE_IDS = [
   'MISSING_COMPLIANCE_WEBHOOKS',
@@ -38,6 +41,39 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
   content,
 })
 
+function configContext(configurations: {[fileName: string]: string}): ScanContext {
+  const appTomls = Object.entries(configurations).map(([fileName, content]) =>
+    parseAppToml(decodeToml(content), `/app/${fileName}`, content),
+  )
+  return {
+    appRoot: '/app',
+    appToml: appTomls[0] ?? null,
+    appTomls,
+    extensions: [],
+    sourceFiles: [],
+    manifests: [],
+    dependencyAutomation: {files: []},
+    sensitiveFiles: [],
+    capabilities: {
+      theme_app_extension: false,
+      app_embed: false,
+      embedded_app: false,
+      script_tags: false,
+      webhooks: false,
+      app_proxy: false,
+      storefront_metafield_writes: false,
+      has_backend: false,
+      declared_ip_allowlist: false,
+      checkout_extension: false,
+    },
+    detection: {framework: 'none', surface: 'config_only', languages: []},
+    reactRouterRoots: [],
+    otherAppDirectories: [],
+    sourceCandidates: [],
+    gitIgnoreListing: 'listed',
+  }
+}
+
 describe('deterministic rules product contract', () => {
   test('registers every active executable deterministic identity with a runnable definition', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
@@ -49,12 +85,12 @@ describe('deterministic rules product contract', () => {
   test('bumps deterministic versions when scanner behavior changes', () => {
     expect(DETERMINISTIC_CHECKS.get('REQUEST_CONTROLLED_ADMIN_CONTEXT')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('APP_PROXY_LIQUID_INJECTION')?.version).toBe(3)
-    expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('COMMITTED_SECRET')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('UNAUTHENTICATED_ENDPOINT')?.version).toBe(3)
-    expect(DETERMINISTIC_CHECKS.get('EOL_API_VERSION')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('EOL_API_VERSION')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('EXPIRING_OFFLINE_TOKEN')?.version).toBe(3)
-    expect(DETERMINISTIC_CHECKS.get('DEPRECATED_SCRIPT_TAG_SCOPE')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('DEPRECATED_SCRIPT_TAG_SCOPE')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_LOG_LEAKAGE')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_BROWSER_LEAKAGE')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')?.version).toBe(4)
@@ -85,12 +121,24 @@ describe('deterministic rules product contract', () => {
     )
     expect(parsed).toMatchObject({
       scopes: 'read_products,write_script_tags',
+      scopeKeys: new Map([
+        ['read_products', 'access_scopes.scopes'],
+        ['write_script_tags', 'access_scopes.required_scopes[0]'],
+      ]),
       apiVersion: '2023-07',
       redirectUrls: ['https://app.example/callback'],
       webhooks: [
-        {topics: ['shop/redact'], uri: 'pubsub://project:topic'},
-        {topics: ['customers/redact'], uri: 'https://app.example/customers/redact'},
-        {topics: ['customers/data_request'], uri: 'https://app.example/customers/data-request'},
+        {topics: ['shop/redact'], uri: 'pubsub://project:topic', uriKey: 'webhooks.subscriptions[0].uri'},
+        {
+          topics: ['customers/redact'],
+          uri: 'https://app.example/customers/redact',
+          uriKey: 'webhooks.privacy_compliance.customer_deletion_url',
+        },
+        {
+          topics: ['customers/data_request'],
+          uri: 'https://app.example/customers/data-request',
+          uriKey: 'webhooks.privacy_compliance.customer_data_request_url',
+        },
       ],
     })
   })
@@ -120,7 +168,9 @@ describe('deterministic rules product contract', () => {
       },
       '/app/shopify.app.toml',
     )
-    expect(parsed.webhooks).toEqual([{topics: ['orders/create'], uri: 'http://insecure.example/webhooks'}])
+    expect(parsed.webhooks).toEqual([
+      {topics: ['orders/create'], uri: 'http://insecure.example/webhooks', uriKey: 'webhooks.subscriptions[0].uri'},
+    ])
   })
 
   test('drops webhook subscriptions that are not CLI-shaped', () => {
@@ -146,7 +196,166 @@ describe('deterministic rules product contract', () => {
       },
       '/app/shopify.app.toml',
     )
-    expect(parsed.webhooks).toEqual([{topics: [], uri: 'http://insecure.example/webhooks'}])
+    expect(parsed.webhooks).toEqual([
+      {topics: [], uri: 'http://insecure.example/webhooks', uriKey: 'webhooks.subscriptions[0].uri'},
+    ])
+  })
+})
+
+describe('config finding locations', () => {
+  const insecureMessageEnd =
+    ' is not a conservative secure URL. Use a Shopify-relative path or an HTTPS URL with an exact host and path.'
+  const afterEndOfLife = new Date('2026-11-05T00:00:00.000Z')
+
+  test('gives each insecure callback URL its own line and a message that names its key', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Callbacks"
+
+[auth]
+redirect_urls = ["http://app.example/callback", "https://app.example/safe", "http://app.example/other"]
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  topics = ["orders/create"]
+  uri = "http://app.example/webhooks"
+
+  [[webhooks.subscriptions]]
+  topics = ["orders/update"]
+  uri = "http://app.example/webhooks"
+
+[webhooks.privacy_compliance]
+shop_deletion_url = "http://app.example/shop/redact"
+`,
+    })
+
+    const findings = insecureWebhookUrl.check(context)
+
+    expect(findings.map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml', line: 11},
+      {file: 'shopify.app.toml', line: 15},
+      {file: 'shopify.app.toml', line: 18},
+      {file: 'shopify.app.toml', line: 4},
+      {file: 'shopify.app.toml', line: 4},
+    ])
+    expect(findings.map(({message}) => message)).toEqual(
+      [
+        'Webhook URI at webhooks.subscriptions[0].uri',
+        'Webhook URI at webhooks.subscriptions[1].uri',
+        'Webhook URI at webhooks.privacy_compliance.shop_deletion_url',
+        'OAuth redirect URI at auth.redirect_urls[0]',
+        'OAuth redirect URI at auth.redirect_urls[2]',
+      ].map((start) => `${start}${insecureMessageEnd}`),
+    )
+  })
+
+  test('points the deprecated ScriptTag scope finding at the line that declares the scope', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Legacy scopes"
+# scopes = "write_script_tags"
+
+[access_scopes]
+scopes = "read_products,write_script_tags"
+`,
+      'shopify.app.staging.toml': `name = "Managed scopes"
+
+[access_scopes]
+required_scopes = [
+  "read_products",
+  "read_script_tags",
+  "write_script_tags",
+]
+`,
+    })
+
+    expect(
+      deprecatedScriptTagScope.check(context).map(({location, message}) => ({location, scope: message.split('"')[1]})),
+    ).toEqual([
+      {location: {file: 'shopify.app.toml', line: 5}, scope: 'write_script_tags'},
+      {location: {file: 'shopify.app.staging.toml', line: 6}, scope: 'read_script_tags'},
+      {location: {file: 'shopify.app.staging.toml', line: 7}, scope: 'write_script_tags'},
+    ])
+  })
+
+  test('points the end-of-life API version finding at the line of webhooks.api_version', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Old version"
+# api_version = "2024-01"
+
+[webhooks]
+api_version = "2024-01"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app/uninstalled"
+`,
+      'shopify.app.staging.toml': `name = "Dotted version"
+webhooks.api_version = "2023-10"
+`,
+      'shopify.app.production.toml': `name = "Supported version"
+
+[webhooks]
+api_version = "2026-10"
+`,
+    })
+
+    expect(
+      scanEolApiVersions(context, afterEndOfLife).map(({location, message}) => ({
+        location,
+        version: message.split(' ')[2],
+      })),
+    ).toEqual([
+      {location: {file: 'shopify.app.toml', line: 5}, version: '2024-01'},
+      {location: {file: 'shopify.app.staging.toml', line: 2}, version: '2023-10'},
+    ])
+  })
+
+  test('keeps a file-level end-of-life API version finding when the locator stops before the version', () => {
+    const context = configContext({
+      'shopify.app.toml': `"escaped\\u0020key" = "the locator stops here"
+
+[webhooks]
+api_version = "2024-01"
+`,
+    })
+
+    expect(scanEolApiVersions(context, afterEndOfLife).map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml'},
+    ])
+  })
+
+  test('keeps a file-level location when the configuration text is not available', () => {
+    const context = configContext({})
+    context.appTomls = [
+      parseAppToml(
+        {
+          access_scopes: {scopes: 'write_script_tags'},
+          auth: {redirect_urls: ['http://app.example/callback']},
+          webhooks: {api_version: '2024-01'},
+        },
+        '/app/shopify.app.toml',
+      ),
+    ]
+
+    expect(deprecatedScriptTagScope.check(context).map(({location}) => location)).toEqual([{file: 'shopify.app.toml'}])
+    expect(scanEolApiVersions(context, afterEndOfLife).map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml'},
+    ])
+    expect(insecureWebhookUrl.check(context).map(({location, message}) => ({location, message}))).toEqual([
+      {
+        location: {file: 'shopify.app.toml'},
+        message: `OAuth redirect URI at auth.redirect_urls[0]${insecureMessageEnd}`,
+      },
+    ])
+  })
+
+  test('keeps missing compliance webhooks at the file level', () => {
+    const context = configContext({
+      'shopify.app.toml': 'name = "No compliance"\n\n[webhooks]\napi_version = "2026-07"\n',
+    })
+
+    expect(missingComplianceWebhooks.check(context).map(({location}) => location)).toEqual([{file: 'shopify.app.toml'}])
   })
 })
 
