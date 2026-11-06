@@ -5709,8 +5709,9 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum severity of an active finding that causes a non-zero exit code: high, medium, or low.
-      Suppressed findings never count. Defaults to none, which never fails on findings.
+      [default: none] The minimum check severity that causes a non-zero exit code when the check has active findings:
+      high, medium, or low. Suppressed and superseded findings never count. Defaults to none, which never fails on
+      findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -5817,6 +5818,15 @@ DESCRIPTION
 
   With `--json`, the result describes the scan and the files it wrote, whether `--blocking` passed, and how the entries
   of `shopify.app-security.json` applied, but not the findings: run `shopify app security review --json` for those.
+
+  Findings that an entry of `shopify.app-security.json` in the app directory suppresses don't count for `--blocking`.
+  The results files still hold every finding. An entry applies to the results that its `configurations` name: an app
+  configuration file name, such as `shopify.app.toml`, names the results of that configuration without `--client-id`,
+  and a client ID names the results of a run with that `--client-id`. An entry's `code` matches the code excerpt that
+  the results file saves with the finding. A results file that would be larger than 5 MB with excerpts is saved without
+  them; then an entry with `code` matches only the finding's message, so it can go stale and leave the finding active.
+  The check reads `shopify.app-security.json` before it scans, so an invalid file stops the command before any results
+  file is replaced.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6024,7 +6034,7 @@ DESCRIPTION
           "blockedCheckCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "The number of checks with active findings at or above that severity. Suppressed and superseded findings don't count. Always 0 for none."
+            "description": "The number of checks with an active finding and a severity at or above that level. Suppressed and superseded findings don't count. Always 0 for none."
           }
         },
         "required": [
@@ -6661,6 +6671,13 @@ DESCRIPTION
   The document must include a `scope` with the `include_dirs`, `excludes` and `no_git_ignore` values of the `check` run
   it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
 
+  Each finding is stored with the redacted lines of code that it cites, read from the cited files that `check` scans
+  with that scope: files in the app directory and its extension and web directories, and in the `--include-dir`
+  directories that the latest `check` recorded when its `include_dirs` are the same. Files that `--exclude` or Git
+  ignores and files in `.git` are never read, and binary files and files that hold secrets, such as `.env`, are never
+  quoted. When the lines would make `agent-findings.json` larger than 5 MB, it's written without them and the command
+  warns.
+
   The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
   and exits with a non-zero code. It needs the results directory that `shopify app security check` creates.
 
@@ -6952,8 +6969,9 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum severity of an active finding that causes a non-zero exit code: high, medium, or low.
-      Suppressed findings never count. Defaults to none, which never fails on findings.
+      [default: none] The minimum check severity that causes a non-zero exit code when the check has active findings:
+      high, medium, or low. Suppressed and superseded findings never count. Defaults to none, which never fails on
+      findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -7037,11 +7055,16 @@ DESCRIPTION
   `shopify.app-security.json`, in the app directory, holds the findings that your team decided not to fix. Commit it, so
   that your team and CI use the same decisions. Each entry names a finding's source, check ID and file, and can name a
   `code` text of the finding. It has a kind, `false-positive` or `accepted-risk`, a reason, which is required, and the
-  app configurations it applies to. A finding that an entry matches is suppressed: it doesn't count for `--blocking`,
-  and it's always listed with its kind and reason. An entry that matches no finding is stale, and an entry whose code
-  matches more than one finding is ambiguous. Neither suppresses anything, and the review lists both, so you can remove
-  or update them. Entries for checks without a result, or for other app configurations, aren't evaluated. An invalid
-  file makes the command fail with every problem.
+  app configurations it applies to: app configuration file names, which apply without `--client-id`, or client IDs
+  passed with `--client-id`. A finding that an entry matches is suppressed: it doesn't count for `--blocking`, and it's
+  always listed with its kind and reason. Findings that the agent suppressed, and superseded deterministic findings,
+  which a check's prefer-agent agent result replaces, don't count either. An entry's `code` matches the code excerpt
+  that the results file saved with the finding. A results file that would be larger than 5 MB with excerpts is saved
+  without them, and results written before excerpts existed have none; then an entry with `code` matches only the
+  finding's message. An entry that matches no finding is stale, and an entry whose code matches more than one finding is
+  ambiguous. Neither suppresses anything, and the review lists both, so you can remove or update them. Entries for
+  checks without a result, or for other app configurations, aren't evaluated. An invalid file makes the command fail
+  with every problem.
 
   Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
   every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
@@ -7311,7 +7334,7 @@ DESCRIPTION
           "blockedCheckCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "The number of checks with active findings at or above that severity. Suppressed and superseded findings don't count. Always 0 for none."
+            "description": "The number of checks with an active finding and a severity at or above that level. Suppressed and superseded findings don't count. Always 0 for none."
           }
         },
         "required": [
