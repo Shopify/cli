@@ -14,7 +14,7 @@ import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/nod
 import clipboard from 'clipboardy'
 import {describe, expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
+import {mkdir, readFile, rm, stat, writeFile} from 'node:fs/promises'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
 import {resolve} from 'node:path'
 
@@ -674,6 +674,35 @@ describe('app security check --json command boundary', () => {
         },
       })
       await expect(fileExists(appSecurityArtifactPaths(directory, 'shopify.app').resultsDirectory)).resolves.toBe(false)
+    })
+  })
+
+  test('leaves the existing results files unchanged when shopify.app-security.json is invalid', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      const {deterministicFindingsPath, agentChecksPath} = appSecurityArtifactPaths(directory, 'shopify.app')
+      const resultsFiles = () =>
+        Promise.all(
+          [deterministicFindingsPath, agentChecksPath].map(async (path) => ({
+            path,
+            content: await readFile(path, 'utf8'),
+            modified: (await stat(path)).mtimeMs,
+          })),
+        )
+      await runJsonCommand(['--path', directory])
+      const before = await resultsFiles()
+      // A scan of the changed source would write other findings.
+      await writeFile(joinPath(directory, 'app', 'routes', 'index.ts'), 'export const loader = () => null\n')
+      await writeFile(
+        appSecuritySuppressionsPath(directory),
+        JSON.stringify({schema_version: 1, suppressions: [{...committedSecretEntry, reason: undefined}]}),
+      )
+
+      const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({error: {code: 'suppressions-file-invalid'}})
+      await expect(resultsFiles()).resolves.toEqual(before)
     })
   })
 
