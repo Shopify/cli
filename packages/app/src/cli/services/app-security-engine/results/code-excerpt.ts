@@ -1,4 +1,4 @@
-import {isSecretFile, redactLines} from '../rules/secret-rules.js'
+import {isExcerptBlockedFile, redactLines} from '../rules/secret-rules.js'
 import {isSensitiveConfigFile, isSourceCodeFile} from '../scanners/discover.js'
 import type {FindingsDocument, CodeExcerptLine, Issue} from '../types.js'
 
@@ -31,7 +31,7 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
   const linesByFile = new Map<string, string[] | undefined>()
   const redactedLinesOf = (file: string): string[] | undefined => {
     if (!linesByFile.has(file)) {
-      const text = isSecretFile(file) ? undefined : readSourceText(file)
+      const text = isExcerptBlockedFile(file) ? undefined : readSourceText(file)
       linesByFile.set(file, text === undefined ? undefined : excerptLines(text, isSourceCodeFile(file)))
     }
     return linesByFile.get(file)

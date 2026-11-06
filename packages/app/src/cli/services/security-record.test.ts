@@ -12,7 +12,7 @@ import {
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecuritySelection} from './app-security-selection.js'
@@ -495,8 +495,11 @@ describe('securityRecord', () => {
       ['.env', 'config.ts'],
       ['secrets.json', 'config.ts'],
       ['credentials.json', 'config.ts'],
+      ['.npmrc', 'config.ts'],
+      ['Secrets.json', 'config.ts'],
       ['source.ts', '.env'],
       ['source.ts', 'secrets.json'],
+      ['source.ts', 'server.pem'],
     ])('omits excerpts for target %s cited through %s', async (targetFile, citedFile) => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
@@ -515,6 +518,26 @@ describe('securityRecord', () => {
         expect(written).not.toContain(secret)
       })
     })
+
+    test.each(['.envrc', '.dev.vars', 'config/secrets.yml', '.npmrc', '.netrc', 'config/master.key', 'Secrets.json'])(
+      'omits excerpts for the secret file %s',
+      async (file) => {
+        await inTemporaryDirectory(async (directory) => {
+          const appRoot = await createApp(directory)
+          // No redaction pattern knows a bare value, so only leaving the file out keeps it out of the excerpt.
+          const secret = 'fedcba9876543210'.repeat(2)
+          await mkdir(dirname(joinPath(appRoot, file)))
+          await writeFile(joinPath(appRoot, file), `${secret}\n`)
+          const document = {...validDocument(), findings: [finding({file, line: 1, evidence: [{file, line: 1}]})]}
+
+          await record(appRoot, testDependencies(JSON.stringify(document)))
+
+          const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
+          expect(written).not.toContain('code_excerpt')
+          expect(written).not.toContain(secret)
+        })
+      },
+    )
 
     test('keeps excerpts for an in-root symlink to an ordinary source file', async () => {
       await inTemporaryDirectory(async (directory) => {

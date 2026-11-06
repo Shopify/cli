@@ -257,6 +257,19 @@ export function isSecretFile(path: string): boolean {
   return isEnvFile(path) || NAMED_SECRET_FILE_PATTERN.test(path)
 }
 
+/** Lowercase names of files that hold secrets, which the secret scan doesn't treat as secret files. */
+const EXCERPT_BLOCKED_FILE_PATTERN =
+  /(^|\/)(?:\.envrc|\.dev\.vars|secrets\.ya?ml|credentials\.ya?ml(?:\.enc)?|[^/]*\.(?:key|pem|p12)|\.npmrc|\.netrc|\.pypirc)$/
+
+/**
+ * Whether an excerpt must never quote the file: a secret file, or another file that holds secrets, by its name in any
+ * case, since a file system that ignores case reads a file by any case of its name.
+ */
+export function isExcerptBlockedFile(path: string): boolean {
+  const lowercasePath = path.toLowerCase()
+  return isSecretFile(lowercasePath) || EXCERPT_BLOCKED_FILE_PATTERN.test(lowercasePath)
+}
+
 /** Why a file git reports as untracked and ignored still reached this rule. */
 type IgnoredFileScanReason = 'nested-repository' | 'listing-failed' | 'unknown'
 

@@ -4,6 +4,7 @@ import {scanDirectory as scan} from './scan-directory.js'
 import {recordAgentFindings} from '../checks/index.js'
 import {
   SHOPIFY_SECRET_PATTERNS,
+  isExcerptBlockedFile,
   redactLines,
   redactMatch,
   redactText,
@@ -11,8 +12,9 @@ import {
   scanCommittedSecrets,
 } from '../rules/secret-rules.js'
 import {buildDeterministicFindings} from '../scan-artifact/index.js'
+import {createCitedFileReader} from '../scanners/index.js'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
-import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
+import {existsSync, mkdtempSync, writeFileSync, mkdirSync, realpathSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
@@ -392,6 +394,52 @@ describe('code excerpts never hold a secret', () => {
     const serialized = JSON.stringify(result.document)
     expect(serialized).not.toContain(PROBES.shopifyToken)
     expect(serialized).not.toContain(HEX32)
+  })
+
+  test.each([
+    '.envrc',
+    'app/.dev.vars',
+    'config/secrets.yml',
+    'config/secrets.yaml',
+    'config/credentials.yml',
+    'config/credentials.yaml.enc',
+    'config/master.key',
+    'certs/server.key',
+    'certs/server.pem',
+    'certs/client.p12',
+    '.npmrc',
+    '.netrc',
+    '.pypirc',
+    '.ENV',
+    '.Env.Local',
+    'Secrets.json',
+    'config/Credentials.JSON',
+    'config/Master.KEY',
+  ])('never quotes the secret file %s in an excerpt', (file) => {
+    expect(isExcerptBlockedFile(file)).toBe(true)
+  })
+
+  test.each([
+    'app/routes/token.tsx',
+    'app/secrets.server.ts',
+    'config/settings.yml',
+    'keys.ts',
+    'Dockerfile',
+    'README.md',
+  ])('quotes %s in an excerpt', (file) => {
+    expect(isExcerptBlockedFile(file)).toBe(false)
+  })
+
+  test.for([
+    ['.env', '.ENV'],
+    ['.env.local', '.ENV.local'],
+    ['secrets.json', 'Secrets.json'],
+    ['config/credentials.json', 'config/Credentials.JSON'],
+  ])('never reads %s for an excerpt when a finding cites it as %s', ([file, citedFile], {skip}) => {
+    const dir = realpathSync(removeAfterTest(makeApp({[file!]: `SHOPIFY_API_SECRET=${unprefixedSecret}\n`})))
+    skip(!existsSync(join(dir, citedFile!)), 'the file system is case-sensitive')
+
+    expect(createCitedFileReader(dir, [dir])(citedFile!)).toBeUndefined()
   })
 })
 

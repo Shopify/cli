@@ -491,6 +491,16 @@ describe('code excerpts', () => {
     })
   })
 
+  test.each(['Secrets.json', 'config/secrets.yml'])('a scan stores no excerpt in the secret file %s', async (file) => {
+    await inTemporaryDirectory(async (directory) => {
+      const document = await scanApp(directory, {[file]: `{"token": "${token}"}\n`})
+
+      const [secret] = committedSecrets(document)
+      expect(secret!.location).toEqual({file, line: 1})
+      expect(secret).not.toHaveProperty('code_excerpt')
+    })
+  })
+
   test('a scan stores no excerpt for a finding without a line', async () => {
     await inTemporaryDirectory(async (directory) => {
       const document = await scanApp(directory, {'.env': `SHOPIFY_API_SECRET=${token}\n`})
