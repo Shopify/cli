@@ -20,6 +20,7 @@ test('defaults to all supported types and a bounded shared limit', () => {
       {backend: 'APP_EVENT'},
       {backend: 'APP_BILLING_EVENT'},
       {backend: 'REST_REQUEST'},
+      {backend: 'SIDEKICK_EVENT'},
     ],
     limit: 20,
     filters: [],
@@ -121,6 +122,12 @@ test.each([
   [{order: 'desc'}, '--order requires --sort'],
 ] satisfies [LogInput, string][])('rejects unsupported query %j', (input, message) => {
   expect(() => prepareLogInput(input)).toThrow(message)
+})
+
+test('unsupported types list the supported selections', () => {
+  expect(() => prepareLogInput({type: 'unsupported'})).toThrow(
+    'Supported log types are webhook, graphql, function, app-event, app-billing-event, rest, and sidekick.',
+  )
 })
 
 test('preserves exact REST filter values without normalizing methods or paths', () => {

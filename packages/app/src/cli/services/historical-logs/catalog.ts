@@ -7,6 +7,7 @@ const logTypes = [
   {name: 'app-event', backend: 'APP_EVENT'},
   {name: 'app-billing-event', backend: 'APP_BILLING_EVENT'},
   {name: 'rest', backend: 'REST_REQUEST'},
+  {name: 'sidekick', backend: 'SIDEKICK_EVENT'},
 ] as const
 
 export const logFilters = [
@@ -42,7 +43,7 @@ function selectedLogType(value?: string) {
   if (!type)
     throw logError(
       'invalid-argument',
-      'Supported log types are webhook, graphql, function, app-event, app-billing-event, and rest.',
+      'Supported log types are webhook, graphql, function, app-event, app-billing-event, rest, and sidekick.',
     )
   return type
 }
