@@ -1,4 +1,5 @@
 import {loadChecks, recordAgentFindings, type RecordAgentFindingsOptions} from '../checks/index.js'
+import {MAX_EXCERPT_LINE_LENGTH} from '../results/code-excerpt.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
@@ -518,6 +519,20 @@ describe('recordAgentFindings code excerpts', () => {
           },
         ],
       },
+    ])
+  })
+
+  test(`cuts a line after ${MAX_EXCERPT_LINE_LENGTH} characters, never inside one`, () => {
+    // Each is two UTF-16 code units.
+    const lock = '\u{1F512}'
+    const padding = 'x'.repeat(MAX_EXCERPT_LINE_LENGTH - 1)
+    const {findings} = recordWithFiles([finding({file: 'app/long.ts', line: 1})], {
+      'app/long.ts': `${padding}${lock}${lock}tail\n${padding}${lock}\n`,
+    })
+
+    expect(findings[0]!.code_excerpt).toEqual([
+      {line: 1, text: `${padding}${lock}…`},
+      {line: 2, text: `${padding}${lock}`},
     ])
   })
 

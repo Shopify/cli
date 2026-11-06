@@ -5,7 +5,7 @@ import type {FindingsDocument, CodeExcerptLine, Issue} from '../types.js'
 /** How many lines above and below a finding's line its excerpt holds, when it holds more than the line. */
 const FINDING_CONTEXT_LINES = 2
 
-/** A longer line is cut, so a minified file can't make a results file too large to read. */
+/** A line with more characters is cut, so a minified file can't make a results file too large to read. */
 export const MAX_EXCERPT_LINE_LENGTH = 500
 
 /** Reads a file by its project-relative path. `undefined` when the file can't be read. */
@@ -52,11 +52,17 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
 
 /** The redacted lines, without line endings or the empty line after a final newline, each cut to length. */
 function excerptLines(text: string, sourceCode: boolean): string[] {
-  const lines = redactLines(text, {sourceCode}).map((line) => {
-    const content = line.replace(/\r$/, '')
-    return content.length > MAX_EXCERPT_LINE_LENGTH ? `${content.slice(0, MAX_EXCERPT_LINE_LENGTH)}…` : content
-  })
+  const lines = redactLines(text, {sourceCode}).map((line) => cutToLength(line.replace(/\r$/, '')))
   return text.endsWith('\n') ? lines.slice(0, -1) : lines
+}
+
+/** The line, cut after `MAX_EXCERPT_LINE_LENGTH` characters, which are code points, so a cut never splits one. */
+function cutToLength(line: string): string {
+  if (line.length <= MAX_EXCERPT_LINE_LENGTH) return line
+  const characters = Array.from(line)
+  return characters.length > MAX_EXCERPT_LINE_LENGTH
+    ? `${characters.slice(0, MAX_EXCERPT_LINE_LENGTH).join('')}…`
+    : line
 }
 
 /** The `code_excerpt` property when there is an excerpt, so the property is never written as `undefined`. */
