@@ -1,5 +1,4 @@
 import {
-  activeFindings,
   listGatheredPaths,
   scanApp,
   SEVERITY_RANK,
@@ -22,7 +21,9 @@ export type AppSecurityExecution = AppSecurityScan & {elapsedMilliseconds: numbe
 export function blockedCheckCount(checks: CombinedCheck[], blocking: AppSecurityBlockingLevel): number {
   if (blocking === 'none') return 0
   return checks.filter(
-    (check) => activeFindings(check).length > 0 && SEVERITY_RANK[check.severity] >= SEVERITY_RANK[blocking],
+    (check) =>
+      SEVERITY_RANK[check.severity] >= SEVERITY_RANK[blocking] &&
+      check.findings.some((finding) => finding.disposition === 'active'),
   ).length
 }
 
