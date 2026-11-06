@@ -493,6 +493,21 @@ describe('recordAgentFindings code excerpts', () => {
     expect(findings.map((stored) => stored.code_excerpt)).toEqual([lines(1, 3), lines(18, 20)])
   })
 
+  test('stores no excerpt for an empty file, and an empty line for a file of one empty line', () => {
+    const {findings} = recordWithFiles(
+      [
+        finding({file: 'app/empty.ts', line: 1, evidence: [{file: 'app/empty.ts', line: 1}]}),
+        finding({file: 'app/newline.ts', line: 1, evidence: [{file: 'app/newline.ts', line: 2}]}),
+      ],
+      {'app/empty.ts': '', 'app/newline.ts': '\n'},
+    )
+
+    expect(findings.map((stored) => [stored.code_excerpt, stored.evidence[0]!.code_excerpt])).toEqual([
+      [undefined, undefined],
+      [[{line: 1, text: ''}], undefined],
+    ])
+  })
+
   test("stores no excerpt for a line the file doesn't have, a file it can't read, or evidence without a line", () => {
     const {findings} = recordWithFiles(
       [

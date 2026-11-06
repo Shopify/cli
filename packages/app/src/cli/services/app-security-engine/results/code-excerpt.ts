@@ -50,8 +50,12 @@ export function createCodeExcerpts(readSourceText: SourceTextReader): CodeExcerp
   }
 }
 
-/** The redacted lines, without line endings or the empty line after a final newline, each cut to length. */
+/**
+ * The redacted lines, without line endings or the empty line after a final newline, each cut to length. An empty file
+ * has no lines.
+ */
 function excerptLines(text: string, sourceCode: boolean): string[] {
+  if (text === '') return []
   const lines = redactLines(text, {sourceCode}).map((line) => cutToLength(line.replace(/\r$/, '')))
   return text.endsWith('\n') ? lines.slice(0, -1) : lines
 }
