@@ -18,12 +18,12 @@ test('registers hidden retrieval alongside the legacy logs migration command', a
   expect(next.flags).toHaveProperty('since')
   expect(next.flags).toHaveProperty('limit')
   expect(next.flags.type).toMatchObject({
-    options: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest', 'sidekick'],
+    options: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest', 'sidekick', 'ui-extension'],
   })
   expect(next.flags['function-handle']).toMatchObject({env: 'SHOPIFY_FLAG_FUNCTION_HANDLE'})
   expect(next.flags.target).toMatchObject({
     env: 'SHOPIFY_FLAG_TARGET',
-    description: 'Exact Function execution or Sidekick event target; excludes other record types.',
+    description: 'Exact Function execution, Sidekick event, or UI extension target; excludes other record types.',
   })
   expect(next.flags['event-handle']).toMatchObject({env: 'SHOPIFY_FLAG_EVENT_HANDLE'})
   expect(next.flags.method).toMatchObject({env: 'SHOPIFY_FLAG_METHOD'})
@@ -67,7 +67,8 @@ test('direct text and JSON help remain available for the hidden command', async 
   expect(log.mock.calls.flat().join('\n')).toContain('app-billing-event')
   expect(log.mock.calls.flat().join('\n')).toContain('Exact app event or app billing event handle')
   expect(log.mock.calls.flat().join('\n')).toContain('sidekick')
-  expect(log.mock.calls.flat().join('\n')).toContain('Exact Function execution or Sidekick event target')
+  expect(log.mock.calls.flat().join('\n')).toContain('ui-extension')
+  expect(log.mock.calls.flat().join('\n')).toContain('Exact Function execution, Sidekick event, or UI extension target')
   expect(log.mock.calls.flat().join('\n')).toContain("Sorting isn't needed to establish completeness.")
   expect(result).toMatchObject({kind: 'command', command: {id: 'app:logs-next', hidden: true}})
 })
