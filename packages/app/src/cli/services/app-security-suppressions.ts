@@ -524,7 +524,7 @@ function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, r
 function entryProblems(entry: AppSecuritySuppression): string[] {
   const parsed = suppressionSchema.safeParse(entry)
   return [
-    ...(parsed.success ? [] : parsed.error.issues.map((issue) => describeIssue(issue).message)),
+    ...(parsed.success ? [] : parsed.error.issues.flatMap((issue) => describeIssue(issue).map(({message}) => message))),
     ...checkIdProblems([entry]).map((problem) => problem.message.replace(/^suppressions\[0\]\./, '')),
   ]
 }
