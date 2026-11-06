@@ -1,5 +1,22 @@
 # @shopify/cli
 
+## 5.1.0
+
+### Minor Changes
+
+- bf8287e: Add JSON lifecycle streaming to app and store GraphiQL commands.
+- f63ce4b: Support `theme language-server --json` and `--json-schema` while preserving native LSP output and stderr diagnostics.
+- ece75cb: Add finite Liquid console execution with repeated scripts, script files, and JSON output.
+
+### Patch Changes
+
+- d1d59da: Say which access a service account token lacks, or that it was revoked or expired, instead of "Ensure the token is correct and not expired" for both.
+- 572bb90: Auto-upgrade installs the exact version it checked instead of `@shopify/cli@latest`, so a stale version cache can no longer upgrade you to a new major version.
+- e2003df: `store create dev` no longer fails with "Unable to determine store creation status." when its first status check comes back empty. It keeps checking until the store is ready or the 5-minute timeout passes.
+- d332546: Treat HTTP 520 to 524 edge responses as gateway errors, like 502, 503 and 504
+- e5bcffe: Let `store delete` and `store info` find a store in the account's only organization, so a service account no longer needs `--organization-id` for stores it didn't create.
+- d418238: Keep tables on one line per row when the output isn't a terminal, and word the store-not-found advice for service account tokens.
+
 ## 5.0.0
 
 ### Major Changes
