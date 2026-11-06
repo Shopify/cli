@@ -263,6 +263,15 @@ export function parseSuppressionFlags(flags: {
   }
 }
 
+/**
+ * What is wrong with the reason of a new entry, worded as the file's validation words it, such as `must not be empty`,
+ * or undefined when the reason is valid.
+ */
+export function suppressionReasonProblem(reason: string): string | undefined {
+  const parsed = nonBlankText(MAX_JUSTIFICATION_LENGTH).safeParse(reason)
+  return parsed.success ? undefined : parsed.error.issues[0]?.message
+}
+
 /** The app configuration that an entry lists for the selection's results: the configuration's file name, or the client ID. */
 export function suppressionConfiguration(selection: AppSecuritySelection): string {
   if (selection.kind === 'no-config') return selection.clientId
