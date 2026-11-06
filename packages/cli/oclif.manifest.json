@@ -3921,7 +3921,7 @@
           "type": "option"
         },
         "event-handle": {
-          "description": "Exact app event handle; excludes non-app-event records.",
+          "description": "Exact app event or app billing event handle; excludes other record types.",
           "env": "SHOPIFY_FLAG_EVENT_HANDLE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4099,7 +4099,8 @@
             "webhook",
             "graphql",
             "function",
-            "app-event"
+            "app-event",
+            "app-billing-event"
           ],
           "type": "option"
         },

@@ -13,7 +13,13 @@ function window(input: Pick<LogInput, 'since' | 'until'> = {}) {
 
 test('defaults to all supported types and a bounded shared limit', () => {
   expect(prepareLogInput({})).toMatchObject({
-    types: [{backend: 'WEBHOOK'}, {backend: 'GRAPHQL_REQUEST'}, {backend: 'FUNCTION_RUN'}, {backend: 'APP_EVENT'}],
+    types: [
+      {backend: 'WEBHOOK'},
+      {backend: 'GRAPHQL_REQUEST'},
+      {backend: 'FUNCTION_RUN'},
+      {backend: 'APP_EVENT'},
+      {backend: 'APP_BILLING_EVENT'},
+    ],
     limit: 20,
     filters: [],
   })

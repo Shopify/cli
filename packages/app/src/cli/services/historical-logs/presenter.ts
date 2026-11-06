@@ -54,6 +54,7 @@ function logDetails(record: LogsResult['logs'][number]): unknown {
     case 'FUNCTION_RUN':
       return record.functionHandle ?? record.target
     case 'APP_EVENT':
+    case 'APP_BILLING_EVENT':
       return record.eventHandle
     default:
       return undefined
