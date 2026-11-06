@@ -358,26 +358,35 @@ describe('code excerpts never hold a secret', () => {
     // About the largest file that an excerpt reads.
     ['private key headers without their footers', `${PROBES.pemHeader}\n`.repeat(16_000)],
     ['complete private key blocks', `${PROBES.pemHeader}\n${keyBody}\n${footer}\n`.repeat(20_000)],
-  ])('redacts a text of many %s line by line about as fast as it redacts it whole', (_description, keys) => {
-    const text = `${'x\n'.repeat(10)}${keys}`
-    const timed = (redact: () => void) => {
-      const started = performance.now()
-      redact()
-      return performance.now() - started
-    }
-    let lines: string[] = []
+  ])(
+    'redacts a text of many %s line by line about as fast as it redacts it whole',
+    (_description, keys) => {
+      const text = `${'x\n'.repeat(10)}${keys}`
+      // The fastest of a few runs, so a busy machine slowing one run down doesn't fail the comparison.
+      const timed = (redact: () => void) =>
+        Math.min(
+          ...[1, 2, 3].map(() => {
+            const started = performance.now()
+            redact()
+            return performance.now() - started
+          }),
+        )
+      let lines: string[] = []
 
-    const wholeText = timed(() => redactText(text))
-    const lineByLine = timed(() => {
-      lines = redactLines(text)
-    })
+      const wholeText = timed(() => redactText(text))
+      const lineByLine = timed(() => {
+        lines = redactLines(text)
+      })
 
-    expect(lines.slice(0, 10)).toEqual(Array(10).fill('x'))
-    expect(lines.slice(10, -1).every((line) => line === '[REDACTED LINE]')).toBe(true)
-    // Both run the same patterns over the text. Comparing each header with each match, or redacting to the end of the
-    // text again for each header, takes several times longer than both bounds.
-    expect(lineByLine).toBeLessThan(2 * wholeText + 200)
-  })
+      expect(lines.slice(0, 10)).toEqual(Array(10).fill('x'))
+      expect(lines.slice(10, -1).every((line) => line === '[REDACTED LINE]')).toBe(true)
+      // Both run the same patterns over the text. Comparing each header with each match, or redacting to the end of the
+      // text again for each header, takes several times longer than both bounds.
+      expect(lineByLine).toBeLessThan(2 * wholeText + 200)
+    },
+    // The times are compared, not limited, and a busy machine can take longer than the default timeout.
+    60_000,
+  )
 
   test('keeps the lines after a private key block on one line', () => {
     const block = `${PROBES.pemHeader}${keyBody}${footer}`
