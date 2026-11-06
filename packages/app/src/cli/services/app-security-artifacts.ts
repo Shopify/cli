@@ -197,8 +197,17 @@ export async function readJsonArtifact(path: string): Promise<ReadArtifactResult
     // JSON is an untrusted artifact boundary.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'invalid', errors: [`Could not parse JSON: ${errorMessage(error)}`]}
+    return {status: 'invalid', errors: [`Could not parse JSON: ${withoutJsonExcerpt(errorMessage(error))}`]}
   }
+}
+
+/**
+ * V8's JSON.parse messages quote the text around the error, such as
+ * `Unexpected token 's', ..."code": shpat_"... is not valid JSON`. The file can hold secrets, and the message reaches
+ * terminals and CI logs, so the excerpt is cut.
+ */
+function withoutJsonExcerpt(message: string): string {
+  return message.replace(/, (\.\.\.)?".*"(\.\.\.)? is not valid JSON$/s, ' is not valid JSON')
 }
 
 /** The size in bytes of `value` once it's written as an artifact. */

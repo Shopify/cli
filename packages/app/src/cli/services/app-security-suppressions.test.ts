@@ -334,6 +334,20 @@ describe('readAppSecuritySuppressions', () => {
       })
     })
 
+    test('rejects JSON that does not parse without quoting the file', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const fakeToken = ['fake', 'token', '0'.repeat(16)].join('_')
+        await writeSuppressionsFile(directory, `{"schema_version": 1, "suppressions": [{"code": ${fakeToken}}]}`)
+
+        const error = await readError(directory)
+
+        expect((error.details as {errors: string[]}).errors).toStrictEqual([
+          expect.stringMatching(/^Could not parse JSON: /),
+        ])
+        expect(JSON.stringify([error.customSections, error.details])).not.toContain('fake_t')
+      })
+    })
+
     test.each([
       ['a later schema_version', 2, 'schema_version 2 needs a newer version of Shopify CLI'],
       ['a much later schema_version', 10, 'schema_version 10 needs a newer version of Shopify CLI'],

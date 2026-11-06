@@ -146,6 +146,25 @@ describe('readFindingsDocument', () => {
     })
   })
 
+  // Built at runtime so that the source holds no token-shaped literal for secret scanners to flag.
+  const fakeToken = ['fake', 'token', '0'.repeat(16)].join('_')
+
+  test.each([
+    ['an unquoted value', `{"checks": [{"quote": ${fakeToken}}]}`],
+    ['an unquoted value between line breaks', `{\n"checks":\n${fakeToken}\n}`],
+    ['text that is not JSON', `${fakeToken}=1\n`],
+  ])('returns invalid for %s without quoting the file', async (_name, content) => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      await writeFile(path, content)
+
+      const result = await readFindingsDocument(path, 'agent')
+
+      expect(result).toEqual({status: 'invalid', errors: [expect.stringMatching(/^Could not parse JSON: /)]})
+      expect(JSON.stringify(result)).not.toContain(fakeToken.slice(0, 6))
+    })
+  })
+
   test('returns invalid with every translation error, without the path', async () => {
     await inTemporaryDirectory(async (directory) => {
       const path = joinPath(directory, 'agent-findings.json')
