@@ -13,7 +13,15 @@ import {appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {combineFindings, type AgentFindingsDocument, type StoredFinding} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {chmod, fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  chmod,
+  fileExists,
+  fileRealPath,
+  inTemporaryDirectory,
+  mkdir,
+  readFile,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {readdir, stat} from 'node:fs/promises'

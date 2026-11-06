@@ -406,7 +406,9 @@ function codeCandidates(finding: StoredFinding): (string | undefined)[] {
   const wordsInMessage = (flaggedLine.text.match(/[\w$.:/@-]{3,}/g) ?? [])
     .filter((word) => finding.message.includes(word))
     .sort((left, right) => right.length - left.length)
-  return [...new Set([...windows, ...wordsInMessage])].filter((code) => code !== '' && code.length <= MAX_SNIPPET_LENGTH)
+  return [...new Set([...windows, ...wordsInMessage])].filter(
+    (code) => code !== '' && code.length <= MAX_SNIPPET_LENGTH,
+  )
 }
 
 function recordedCheckLookup(results: SuppressionResults) {
