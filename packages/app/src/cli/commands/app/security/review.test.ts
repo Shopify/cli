@@ -5,7 +5,7 @@ import {resolveAppSecurityCommands} from '../../../services/app-security-command
 import {appSecurityInstructions} from '../../../services/app-security-instructions.js'
 import {SUPPRESSION_KINDS} from '../../../services/app-security-suppressions.js'
 import securityReview from '../../../services/security-review.js'
-import {interactiveSecurityReview} from '../../../services/security-review-output.js'
+import {interactiveSecurityReview} from '../../../services/security-review-interactive.js'
 import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
 import {appSecurityReviewJsonOutputSchema} from '../../../services/security-review/types.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
@@ -18,7 +18,7 @@ import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-review.js')
 vi.mock('../../../services/security-review/result.js')
-vi.mock('../../../services/security-review-output.js')
+vi.mock('../../../services/security-review-interactive.js')
 
 /**
  * The arguments of the `review --suppress` command that the agent instructions show, for an app in the working

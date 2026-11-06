@@ -1,11 +1,13 @@
 import {
-  buildSecurityReviewAlerts,
-  buildSecurityReviewSummary,
   canPromptInteractiveReview,
   interactiveSecurityReview,
-  renderSecurityReview,
   type InteractiveReviewAction,
   type InteractiveReviewDependencies,
+} from './security-review-interactive.js'
+import {
+  buildSecurityReviewAlerts,
+  buildSecurityReviewSummary,
+  renderSecurityReview,
   type SecurityReviewPresenterInput,
 } from './security-review-output.js'
 import {
