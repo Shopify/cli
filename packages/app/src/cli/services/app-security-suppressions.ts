@@ -4,15 +4,17 @@ import {
   readJsonArtifact,
 } from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
-import {MAX_JUSTIFICATION_LENGTH, reportingSourcesByCheckId, type FindingsSource} from './app-security-engine/index.js'
+import {
+  MAX_JUSTIFICATION_LENGTH,
+  MAX_PATH_LENGTH,
+  MAX_SNIPPET_LENGTH,
+  reportingSourcesByCheckId,
+  type FindingsSource,
+} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const SUPPRESSIONS_SCHEMA_VERSION = 1
-
-/** The same limits `record` puts on a finding's file path and snippet. */
-const MAX_PATH_LENGTH = 1_024
-const MAX_CODE_LENGTH = 4_000
 
 const FINDINGS_SOURCES = ['deterministic', 'agent'] as const satisfies ReadonlyArray<FindingsSource>
 const SUPPRESSION_KINDS = ['false-positive', 'accepted-risk'] as const
@@ -66,7 +68,7 @@ const suppressionSchema = zod.object(
       if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
     }),
     // Without `code`, the entry covers every finding of the check in the file.
-    code: nonBlankText(MAX_CODE_LENGTH).optional(),
+    code: nonBlankText(MAX_SNIPPET_LENGTH).optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
     configurations: zod
       .array(

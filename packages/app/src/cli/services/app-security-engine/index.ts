@@ -36,7 +36,8 @@ export {
   summarizeCombinedChecks,
 } from './results/combine.js'
 export type {CombinedCheck, CombinedChecksSummary, CombinedFinding, SourceCheckResult} from './results/combine.js'
-export {MAX_JUSTIFICATION_LENGTH, recordAgentFindings} from './checks/index.js'
+export {recordAgentFindings} from './checks/index.js'
+export {MAX_JUSTIFICATION_LENGTH, MAX_PATH_LENGTH, MAX_SNIPPET_LENGTH} from './limits.js'
 export {reportingSourcesByCheckId} from './registry/index.js'
 export type {AgentChecks, RecordAgentFindingsOptions, RecordAgentFindingsResult} from './checks/index.js'
 export {
