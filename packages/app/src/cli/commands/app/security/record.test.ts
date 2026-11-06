@@ -66,7 +66,12 @@ async function createLinkedApp(
 }
 
 function recordedResult(appRoot: string) {
-  return {path: appSecurityArtifactPaths(appRoot, 'shopify.app').agentFindingsPath, checks: 2, findings: 3}
+  return {
+    path: appSecurityArtifactPaths(appRoot, 'shopify.app').agentFindingsPath,
+    checks: 2,
+    findings: 3,
+    suppressions: null,
+  }
 }
 
 describe('app security record command', () => {

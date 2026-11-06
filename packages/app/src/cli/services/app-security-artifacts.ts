@@ -98,6 +98,25 @@ export async function writeAgentFindings(
   return paths.agentFindingsPath
 }
 
+/**
+ * Replaces shopify.app-security.json atomically with `value` as two-space JSON and a trailing newline, the format of
+ * the results files. The file is committed, so it isn't private like the results: a new file is readable by others,
+ * and an existing one keeps its permissions. Unlike the results writers, this never touches `.shopify/`.
+ */
+export async function writeAppSecuritySuppressionsFile(appDirectory: string, value: unknown): Promise<string> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const contents = encodeArtifact(value)
+  if (Buffer.byteLength(contents, 'utf8') > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    throw new AbortError(
+      `${APP_SECURITY_SUPPRESSIONS_FILE_NAME} would be larger than 5 MB, so it wasn't changed.`,
+      'Remove entries that no longer apply, then run the command again.',
+    )
+  }
+  const existing = await lstatIfExists(path)
+  await writeAtomicArtifact(path, contents, existing ? existing.mode & 0o777 : 0o644)
+  return path
+}
+
 /** Whether the results directory for the key exists. */
 export async function resultsDirectoryExists(appDirectory: string, resultsKey: string): Promise<boolean> {
   const {resultsDirectory} = appSecurityArtifactPaths(appDirectory, resultsKey)
@@ -295,12 +314,12 @@ function refuseArtifactPath(path: string): never {
   )
 }
 
-async function writeAtomicArtifact(path: string, contents: string | Buffer): Promise<void> {
+async function writeAtomicArtifact(path: string, contents: string | Buffer, mode = 0o600): Promise<void> {
   await assertNotSymbolicLink(path)
   const temporaryPath = `${path}.${randomBytes(8).toString('hex')}.tmp`
   await assertNotSymbolicLink(temporaryPath)
   try {
-    await writeFile(temporaryPath, contents, {encoding: 'utf8', mode: 0o600})
+    await writeFile(temporaryPath, contents, {encoding: 'utf8', mode})
     await assertNotSymbolicLink(path)
     await rename(temporaryPath, path)
   } catch (error) {

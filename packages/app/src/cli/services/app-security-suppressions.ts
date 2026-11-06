@@ -2,25 +2,33 @@ import {
   APP_SECURITY_SUPPRESSIONS_FILE_NAME,
   appSecuritySuppressionsPath,
   readJsonArtifact,
+  writeAppSecuritySuppressionsFile,
 } from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {
   MAX_JUSTIFICATION_LENGTH,
   MAX_PATH_LENGTH,
   MAX_SNIPPET_LENGTH,
+  matchSuppressionEntries,
   reportingSourcesByCheckId,
+  type AgentFindingsDocument,
+  type DeterministicFindingsDocument,
   type FindingsSource,
+  type StoredFinding,
+  type SuppressionKind,
 } from './app-security-engine/index.js'
 import {isMissingFilesystemEntry} from './app-security-engine/scanners/filesystem-errors.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
+import type {AppSecuritySelection} from './app-security-selection.js'
 
 const SUPPRESSIONS_SCHEMA_VERSION = 1
 
 const FINDINGS_SOURCES = ['deterministic', 'agent'] as const satisfies ReadonlyArray<FindingsSource>
-const SUPPRESSION_KINDS = ['false-positive', 'accepted-risk'] as const
+/** The kinds of an entry, which `--kind` takes with the same spelling. */
+export const SUPPRESSION_KINDS = ['false-positive', 'accepted-risk'] as const
 
 // The schema's messages quote no value from the file, which can hold code from the app.
 const requiredString = () => zod.string({required_error: 'required', invalid_type_error: 'must be a string'})
@@ -231,4 +239,259 @@ export async function missingSuppressionPaths(
     }),
   )
   return paths.filter((_path, index) => missing[index])
+}
+
+/**
+ * Parses `--kind` and `--reason`, which give the kind and reason of a new entry. A problem is worded as the file's
+ * validation words it, after the flag's name, such as `--reason: must not be empty`.
+ */
+export function parseSuppressionFlags(flags: {
+  kind: string | undefined
+  reason: string | undefined
+}): {ok: true; decision: SuppressionDecision} | {ok: false; errors: string[]} {
+  const kind = choice(SUPPRESSION_KINDS).safeParse(flags.kind)
+  const reason = nonBlankText(MAX_JUSTIFICATION_LENGTH).safeParse(flags.reason)
+  if (kind.success && reason.success) return {ok: true, decision: {kind: kind.data, reason: reason.data}}
+  return {
+    ok: false,
+    errors: [
+      ...(kind.success ? [] : kind.error.issues.map((issue) => `--kind: ${issue.message}`)),
+      ...(reason.success ? [] : reason.error.issues.map((issue) => `--reason: ${issue.message}`)),
+    ],
+  }
+}
+
+/** The app configuration that an entry lists for the selection's results: the configuration's file name, or the client ID. */
+export function suppressionConfiguration(selection: AppSecuritySelection): string {
+  if (selection.kind === 'no-config') return selection.clientId
+  return selection.clientIdOverride ?? basename(selection.appConfigFilePath)
+}
+
+/** The stored results that a new entry must match, with the run's results key and the configuration that names it. */
+export interface SuppressionResults {
+  deterministic: DeterministicFindingsDocument | null
+  agent: AgentFindingsDocument | null
+  resultsKey: string
+  configuration: string
+}
+
+/** A stored finding to suppress. */
+export interface SuppressionTarget {
+  source: FindingsSource
+  checkId: string
+  /** The finding's index in the findings of its source's stored check. */
+  findingIndex: number
+  finding: StoredFinding
+}
+
+/** What a person or the agent decided about a finding. */
+export interface SuppressionDecision {
+  kind: SuppressionKind
+  reason: string
+}
+
+/** A change to shopify.app-security.json: append an entry, or add the run's configuration to an existing entry. */
+export type SuppressionChange =
+  | {type: 'add'; entry: AppSecuritySuppression}
+  | {type: 'add-configuration'; index: number; configuration: string}
+
+/**
+ * - `saved`: an entry of the file already suppresses the finding, so nothing changes.
+ * - `change`: the change that suppresses the finding, and only that finding.
+ * - `refused`: no entry can suppress the finding alone. `problem` says why, as the end of a sentence.
+ */
+type SuppressionPlan =
+  | {status: 'saved'; entryIndex: number}
+  | {status: 'change'; change: SuppressionChange}
+  | {status: 'refused'; problem: string}
+
+/**
+ * Lines before and after the flagged line that a candidate `code` covers, in the order the candidates widen: the line
+ * alone, then more of the statement around it, up to the two lines on each side that the excerpt holds.
+ */
+const CODE_WINDOWS: [number, number][] = [
+  [0, 0],
+  [-1, 0],
+  [0, 1],
+  [-1, 1],
+  [-2, 1],
+  [-1, 2],
+  [-2, 2],
+]
+
+/**
+ * Plans how to save a suppression for one finding of the current results. The new entry names the finding's source,
+ * check and path, the run's configuration, and `code` from the finding's redacted excerpt, never from a source file.
+ * A finding without a line gets no `code`. The plan holds only an entry that the matching of `review` and `check`
+ * applies to that finding and to no other one in the current results:
+ * 1. An entry that already suppresses the finding under this configuration leaves the file as it is.
+ * 2. An entry for another configuration that would suppress only this finding gets this configuration too.
+ * 3. Otherwise a new entry gets the shortest `code` that names the finding alone: its flagged line, then wider parts
+ *    of the statement, then a word of the line that the finding's message names (the matching keeps the finding whose
+ *    code and message both hold the text).
+ */
+export function planSuppression(
+  target: SuppressionTarget,
+  decision: SuppressionDecision,
+  results: SuppressionResults,
+  entries: AppSecuritySuppression[],
+): SuppressionPlan {
+  const savedIndex = matchingEntryIndex(entries, target, results)
+  if (savedIndex !== undefined) return {status: 'saved', entryIndex: savedIndex}
+
+  const path = normalizePath(target.finding.location.file)
+  // The keys in the order of the file's schema, which a new entry keeps.
+  const entryWithCode = (code: string | undefined): AppSecuritySuppression => ({
+    source: target.source,
+    check: target.checkId,
+    kind: decision.kind,
+    path,
+    ...(code === undefined ? {} : {code}),
+    reason: decision.reason,
+    configurations: [results.configuration],
+  })
+  const base = entryWithCode(undefined)
+  const problems = entryProblems(base)
+  if (problems.length > 0) {
+    return {status: 'refused', problem: `its entry would be invalid: ${problems.join('; ')}`}
+  }
+
+  const hasLine = target.finding.location.line !== undefined
+  const reusableIndex = entries.findIndex(
+    (entry) =>
+      entry.source === base.source &&
+      entry.check === base.check &&
+      entry.path === path &&
+      (entry.code !== undefined) === hasLine &&
+      matchesOnly({...entry, configurations: base.configurations}, target, results),
+  )
+  if (reusableIndex !== -1) {
+    return {
+      status: 'change',
+      change: {type: 'add-configuration', index: reusableIndex, configuration: results.configuration},
+    }
+  }
+
+  const codes = codeCandidates(target.finding)
+  if (codes.length === 0) {
+    return {status: 'refused', problem: 'the results hold no code for its line, so no entry can name it alone'}
+  }
+  const entry = codes.map(entryWithCode).find((candidate) => matchesOnly(candidate, target, results))
+  if (entry) return {status: 'change', change: {type: 'add', entry}}
+  return {
+    status: 'refused',
+    problem: hasLine
+      ? `every code from its lines also names another finding of ${target.checkId} in ${path}`
+      : `it has no line, so its entry would cover every finding of ${target.checkId} in ${path}, and there are several`,
+  }
+}
+
+/** The `code` candidates in the order `planSuppression` tries them: `undefined` alone for a finding without a line. */
+function codeCandidates(finding: StoredFinding): (string | undefined)[] {
+  const {line} = finding.location
+  if (line === undefined) return [undefined]
+  const excerpt = finding.code_excerpt ?? []
+  const flaggedLine = excerpt.find((excerptLine) => excerptLine.line === line)
+  if (!flaggedLine) return []
+
+  const windows = CODE_WINDOWS.map(([before, after]) =>
+    excerpt
+      .filter((excerptLine) => excerptLine.line >= line + before && excerptLine.line <= line + after)
+      .map((excerptLine) => excerptLine.text.trim())
+      .filter((text) => text !== '')
+      .join(' '),
+  )
+  const wordsInMessage = (flaggedLine.text.match(/[\w$.:/@-]{3,}/g) ?? [])
+    .filter((word) => finding.message.includes(word))
+    .sort((left, right) => right.length - left.length)
+  return [...new Set([...windows, ...wordsInMessage])].filter((code) => code !== '' && code.length <= MAX_SNIPPET_LENGTH)
+}
+
+function recordedCheckLookup(results: SuppressionResults) {
+  return (source: FindingsSource, checkId: string) => results[source]?.checks.find((check) => check.id === checkId)
+}
+
+/** The index of the first entry that suppresses the target in the current results, if any. */
+function matchingEntryIndex(
+  entries: AppSecuritySuppression[],
+  target: SuppressionTarget,
+  results: SuppressionResults,
+): number | undefined {
+  const matches = matchSuppressionEntries({entries, resultsKey: results.resultsKey}, recordedCheckLookup(results))
+  return matches.entryFor(target.source, target.checkId, target.findingIndex)?.index
+}
+
+/** Whether the entry matches the target, and no other finding, in the current results. */
+function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, results: SuppressionResults): boolean {
+  const matches = matchSuppressionEntries(
+    {entries: [entry], resultsKey: results.resultsKey},
+    recordedCheckLookup(results),
+  )
+  const [result] = matches.entries
+  return (
+    result?.status === 'matched' &&
+    result.matched_finding_count === 1 &&
+    matches.entryFor(target.source, target.checkId, target.findingIndex) !== undefined
+  )
+}
+
+/** The problems that the file's validation would report for this entry, without the `suppressions[n].` prefix. */
+function entryProblems(entry: AppSecuritySuppression): string[] {
+  const parsed = suppressionSchema.safeParse(entry)
+  return [
+    ...(parsed.success ? [] : parsed.error.issues.map((issue) => describeIssue(issue).message)),
+    ...checkIdProblems([entry]).map((problem) => problem.message.replace(/^suppressions\[0\]\./, '')),
+  ]
+}
+
+/** An entry of shopify.app-security.json as `saveAppSecuritySuppressions` left it. */
+export interface SavedSuppression {
+  /** The entry's index in the file, from 0. */
+  index: number
+  /** `added` for a new entry, `configuration-added` for an existing entry that got the run's configuration. */
+  change: 'added' | 'configuration-added'
+  entry: AppSecuritySuppression
+}
+
+/**
+ * Applies the changes to `<app directory>/shopify.app-security.json` in one atomic write, creating the file with
+ * schema_version 1 when it doesn't exist. Refuses an invalid file with the error of `readAppSecuritySuppressions`, and
+ * writes nothing. New entries go at the end. Every other key, value and order stays as the file has them, in two-space
+ * JSON with a trailing newline, so a file in that format changes only where an entry is added or extended.
+ */
+export async function saveAppSecuritySuppressions(
+  appDirectory: string,
+  changes: SuppressionChange[],
+): Promise<{path: string; saved: SavedSuppression[]}> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const file = await readJsonArtifact(path)
+  if (file.status === 'invalid') abortInvalidSuppressionsFile(path, file.errors)
+  const document: unknown =
+    file.status === 'missing' ? {schema_version: SUPPRESSIONS_SCHEMA_VERSION, suppressions: []} : file.value
+  const parsed = parseSuppressionsFile(document)
+  if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
+
+  // The file is valid, so its entries are objects with a configurations array. They're edited as the file holds them,
+  // with any keys that the reader drops.
+  const fileEntries: unknown[] =
+    isJsonObject(document) && Array.isArray(document.suppressions) ? document.suppressions : []
+  const saved = changes.map((change): SavedSuppression => {
+    if (change.type === 'add') {
+      fileEntries.push(change.entry)
+      return {index: fileEntries.length - 1, change: 'added', entry: change.entry}
+    }
+    const fileEntry = fileEntries[change.index]
+    if (isJsonObject(fileEntry) && Array.isArray(fileEntry.configurations)) {
+      fileEntry.configurations.push(change.configuration)
+    }
+    const entry = parsed.suppressions[change.index]!
+    return {
+      index: change.index,
+      change: 'configuration-added',
+      entry: {...entry, configurations: [...entry.configurations, change.configuration]},
+    }
+  })
+
+  await writeAppSecuritySuppressionsFile(appDirectory, document)
+  return {path, saved}
 }

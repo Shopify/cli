@@ -5,9 +5,9 @@
  * types: read the git state, scan, record agent findings with excerpts of the files they cite, translate
  * a stored findings document (deterministic-findings.json or agent-findings.json, which share the
  * converged FindingsDocument schema), combine the two result files and the suppressions into per-check
- * results, keep the scan issues whose findings are still active and group them for display, and look up
- * which sources can report a check ID. The stored documents' Zod schemas are exported too, so other schemas
- * compose them rather than re-declare them.
+ * results, match suppression entries against stored findings, keep the scan issues whose findings are still
+ * active and group them for display, and look up which sources can report a check ID. The stored documents' Zod
+ * schemas are exported too, so other schemas compose them rather than re-declare them.
  * Keep scanners, registries, validators, redaction, and the rest of the stored-schema details inside the engine.
  */
 export {getAgentInstructions, getEngineVersion, scanApp} from './run.js'
@@ -43,12 +43,12 @@ export type {
   CombinedFindings,
   SourceCheckResult,
 } from './results/combine.js'
+export {matchSuppressionEntries} from './results/suppressions.js'
 export type {
   FindingSuppression,
   SuppressionEntry,
   SuppressionEntryResult,
   SuppressionEntryStatus,
-  SuppressionKind,
   SuppressionNotEvaluatedReason,
 } from './results/suppressions.js'
 export {recordAgentFindings} from './checks/index.js'
@@ -84,4 +84,5 @@ export type {
   StoredCheckStatus,
   StoredEvidence,
   StoredFinding,
+  SuppressionKind,
 } from './types.js'

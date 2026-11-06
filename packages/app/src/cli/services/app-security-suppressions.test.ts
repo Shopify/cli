@@ -1,14 +1,22 @@
 import {
   missingSuppressionPaths,
+  parseSuppressionFlags,
+  planSuppression,
   readAppSecuritySuppressions,
+  saveAppSecuritySuppressions,
+  suppressionConfiguration,
   type AppSecuritySuppression,
+  type SuppressionResults,
+  type SuppressionTarget,
 } from './app-security-suppressions.js'
 import {appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
+import {combineFindings, type AgentFindingsDocument, type StoredFinding} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {chmod, fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {chmod, fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+import {readdir, stat} from 'node:fs/promises'
 
 const deterministicEntry: AppSecuritySuppression = {
   source: 'deterministic',
@@ -393,6 +401,397 @@ describe('missingSuppressionPaths', () => {
       ]
 
       await expect(missingSuppressionPaths(appDirectory, entries)).resolves.toEqual(['../backend/removed.ts'])
+    })
+  })
+})
+
+describe('parseSuppressionFlags', () => {
+  test('takes --kind with the spelling of the file, and keeps --reason as typed', () => {
+    expect(parseSuppressionFlags({kind: 'false-positive', reason: 'A test fixture.'})).toStrictEqual({
+      ok: true,
+      decision: {kind: 'false-positive', reason: 'A test fixture.'},
+    })
+    expect(parseSuppressionFlags({kind: 'accepted-risk', reason: ' Kept for now. '})).toStrictEqual({
+      ok: true,
+      decision: {kind: 'accepted-risk', reason: ' Kept for now. '},
+    })
+  })
+
+  test.each([
+    ['a missing kind', {kind: undefined, reason: 'r'}, ['--kind: required (false-positive or accepted-risk)']],
+    ['an unknown kind', {kind: 'wont_fix', reason: 'r'}, ['--kind: must be false-positive or accepted-risk']],
+    [
+      'a kind spelled with an underscore',
+      {kind: 'false_positive', reason: 'r'},
+      ['--kind: must be false-positive or accepted-risk'],
+    ],
+    ['a missing reason', {kind: 'false-positive', reason: undefined}, ['--reason: required']],
+    ['an empty reason', {kind: 'false-positive', reason: ''}, ['--reason: must not be empty']],
+    ['a reason of only spaces', {kind: 'false-positive', reason: '  '}, ['--reason: must not be empty']],
+    [
+      'a reason longer than the file allows',
+      {kind: 'false-positive', reason: 'x'.repeat(4_001)},
+      ['--reason: must be at most 4000 characters'],
+    ],
+    [
+      'both flags missing',
+      {kind: undefined, reason: undefined},
+      ['--kind: required (false-positive or accepted-risk)', '--reason: required'],
+    ],
+  ])('rejects %s with the words of the file validation', (_name, flags, errors) => {
+    expect(parseSuppressionFlags(flags)).toStrictEqual({ok: false, errors})
+  })
+})
+
+describe('suppressionConfiguration', () => {
+  test("names the selected configuration's file, or the client ID that names the results", () => {
+    const config = {kind: 'config', appDirectory: '/app', appConfigFilePath: '/app/shopify.app.staging.toml'} as const
+
+    expect(suppressionConfiguration(config)).toBe('shopify.app.staging.toml')
+    expect(suppressionConfiguration({...config, clientIdOverride: 'flag-client-id'})).toBe('flag-client-id')
+    expect(
+      suppressionConfiguration({kind: 'no-config', appDirectory: '/app', clientId: 'abc', clientIdSource: 'flag'}),
+    ).toBe('abc')
+  })
+})
+
+/** An agent finding at `line` of `file`, with the lines around it as its excerpt. */
+function agentFinding(file: string, line: number, lines: string[], message: string): StoredFinding {
+  return {
+    location: {file, line},
+    message,
+    evidence: [{location: {file, line}}],
+    code_excerpt: lines
+      .map((text, index) => ({line: index + 1, text}))
+      .filter((excerptLine) => Math.abs(excerptLine.line - line) <= 2),
+  }
+}
+
+/** An agent document with one executed check that holds these findings. */
+function agentDocument(checkId: string, findings: StoredFinding[]): AgentFindingsDocument {
+  return {
+    schema_version: 1,
+    source: 'agent',
+    engine: {name: 'shopify-app-security', version: '4.9.0'},
+    generated_at: '2026-09-01T11:00:00.000Z',
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    checks: [
+      {
+        id: checkId,
+        version: 1,
+        status: 'executed',
+        snapshot: {title: checkId, severity: 'high', description: '', current_version: 1, precedence: 'union'},
+        findings,
+      },
+    ],
+  }
+}
+
+function resultsOf(document: AgentFindingsDocument, configuration = 'shopify.app.toml'): SuppressionResults {
+  return {deterministic: null, agent: document, resultsKey: 'shopify.app', configuration}
+}
+
+function targetOf(document: AgentFindingsDocument, findingIndex: number): SuppressionTarget {
+  const [check] = document.checks
+  return {source: 'agent', checkId: check!.id, findingIndex, finding: check!.findings[findingIndex]!}
+}
+
+const decision = {kind: 'false-positive', reason: 'The logger redacts tokens.'} as const
+
+const routeLines = [
+  'export async function loader({request}) {',
+  '  const {session} = await authenticate.admin(request)',
+  '  console.log(session.accessToken)',
+  '  return null',
+  '}',
+  'export async function action({request}) {',
+  '  const {session} = await authenticate.admin(request)',
+  '  logger.info(',
+  '    session.accessToken,',
+  '  )',
+  '  console.log(session.accessToken)',
+  '  return null',
+  '}',
+]
+
+describe('planSuppression', () => {
+  test('names the finding by its flagged line, under the configuration of the results', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
+    ])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+      status: 'change',
+      change: {
+        type: 'add',
+        entry: {
+          source: 'agent',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'false-positive',
+          path: 'app/routes/orders.tsx',
+          code: 'console.log(session.accessToken)',
+          reason: 'The logger redacts tokens.',
+          configurations: ['shopify.app.toml'],
+        },
+      },
+    })
+  })
+
+  test('widens the code to more of the statement when the flagged line also names another finding', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, routeLines, 'The access token reaches a log.'),
+      agentFinding('app/routes/orders.tsx', 11, routeLines, 'The access token reaches a log.'),
+    ])
+
+    const plans = [0, 1].map((index) => planSuppression(targetOf(document, index), decision, resultsOf(document), []))
+
+    expect(plans).toMatchObject([
+      {
+        status: 'change',
+        change: {entry: {code: 'const {session} = await authenticate.admin(request) console.log(session.accessToken)'}},
+      },
+      // `)` and `return null` follow the first finding's line too, so the code needs the line before the `)`.
+      {
+        status: 'change',
+        change: {entry: {code: 'session.accessToken, ) console.log(session.accessToken) return null'}},
+      },
+    ])
+    // Each entry suppresses its own finding, and no other one.
+    for (const [index, plan] of plans.entries()) {
+      const entry = plan.status === 'change' && plan.change.type === 'add' ? plan.change.entry : undefined
+      const {checks, suppressions} = combineFindings({
+        deterministic: null,
+        agent: document,
+        suppressions: {entries: [entry!], resultsKey: 'shopify.app'},
+      })
+      expect(suppressions[0]).toMatchObject({status: 'matched', matched_finding_count: 1})
+      expect(checks[0]!.findings.map((finding) => finding.disposition)).toStrictEqual(
+        index === 0 ? ['suppressed', 'active'] : ['active', 'suppressed'],
+      )
+    }
+  })
+
+  test('names a finding by a word of its line that its message names, when another finding shares the line', () => {
+    const lines = ['[access_scopes]', 'scopes = "write_script_tags,read_orders"']
+    const document = agentDocument('SCOPE_OVER_REQUEST', [
+      agentFinding('shopify.app.toml', 2, lines, 'The app requests write_script_tags but never uses script tags.'),
+      agentFinding('shopify.app.toml', 2, lines, 'The app requests read_orders but never reads orders.'),
+    ])
+
+    expect(planSuppression(targetOf(document, 1), decision, resultsOf(document), [])).toMatchObject({
+      status: 'change',
+      change: {type: 'add', entry: {path: 'shopify.app.toml', code: 'read_orders'}},
+    })
+  })
+
+  test('refuses a finding that no code can name alone', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
+      agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
+    ])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+      status: 'refused',
+      problem:
+        'every code from its lines also names another finding of CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx',
+    })
+  })
+
+  test('refuses a finding with a line but no captured code, and writes no code for a finding without a line', () => {
+    const [withoutExcerpt] = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      {location: {file: 'app/routes/orders.tsx', line: 3}, message: 'm', evidence: []},
+    ]).checks
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', withoutExcerpt!.findings)
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toStrictEqual({
+      status: 'refused',
+      problem: 'the results hold no code for its line, so no entry can name it alone',
+    })
+
+    const fileLevel = agentDocument('MISSING_TENANT_ISOLATION', [
+      {location: {file: 'app/db.server.ts'}, message: 'm', evidence: []},
+    ])
+    expect(planSuppression(targetOf(fileLevel, 0), decision, resultsOf(fileLevel), [])).toMatchObject({
+      status: 'change',
+      change: {type: 'add', entry: {path: 'app/db.server.ts'}},
+    })
+    const plan = planSuppression(targetOf(fileLevel, 0), decision, resultsOf(fileLevel), [])
+    expect(plan.status === 'change' && plan.change.type === 'add' && 'code' in plan.change.entry).toBe(false)
+  })
+
+  test('normalizes the path that the finding records, and refuses one that an entry cannot name', () => {
+    const lines = routeLines.slice(0, 5)
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('./app/routes/orders.tsx', 3, lines, 'm'),
+      agentFinding('app/routes/*.tsx', 3, lines, 'm'),
+    ])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toMatchObject({
+      status: 'change',
+      change: {entry: {path: 'app/routes/orders.tsx'}},
+    })
+    expect(planSuppression(targetOf(document, 1), decision, resultsOf(document), [])).toStrictEqual({
+      status: 'refused',
+      problem: "its entry would be invalid: path: can't contain wildcards: name one file",
+    })
+  })
+
+  test('leaves the file as it is when an entry already suppresses the finding under these results', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'm'),
+    ])
+    const pathEntry: AppSecuritySuppression = {
+      source: 'agent',
+      check: 'CREDENTIAL_LOG_LEAKAGE',
+      kind: 'accepted-risk',
+      path: 'app/routes/orders.tsx',
+      reason: 'Local development only.',
+      configurations: ['shopify.app.toml'],
+    }
+
+    expect(
+      planSuppression(targetOf(document, 0), decision, resultsOf(document), [agentEntry, pathEntry]),
+    ).toStrictEqual({status: 'saved', entryIndex: 1})
+  })
+
+  test('adds the configuration to the entry that suppresses the same finding for another configuration', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'm'),
+    ])
+    const stagingEntry: AppSecuritySuppression = {
+      source: 'agent',
+      check: 'CREDENTIAL_LOG_LEAKAGE',
+      kind: 'accepted-risk',
+      path: 'app/routes/orders.tsx',
+      code: 'console.log(session.accessToken)',
+      reason: 'Local development only.',
+      configurations: ['shopify.app.staging.toml'],
+    }
+
+    expect(
+      planSuppression(targetOf(document, 0), decision, resultsOf(document), [agentEntry, stagingEntry]),
+    ).toStrictEqual({
+      status: 'change',
+      change: {type: 'add-configuration', index: 1, configuration: 'shopify.app.toml'},
+    })
+  })
+
+  test('keeps matching the entry after unrelated edits move the line', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 3, routeLines, 'The access token reaches a log.'),
+    ])
+    const plan = planSuppression(targetOf(document, 0), decision, resultsOf(document), [])
+    const entry = plan.status === 'change' && plan.change.type === 'add' ? plan.change.entry : undefined
+    const movedLines = ['import {logger} from "./logger"', '', ...routeLines]
+    const moved = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 5, movedLines, 'The access token reaches a log.'),
+    ])
+
+    const {checks, suppressions} = combineFindings({
+      deterministic: null,
+      agent: moved,
+      suppressions: {entries: [entry!], resultsKey: 'shopify.app'},
+    })
+
+    expect(suppressions[0]).toMatchObject({status: 'matched', matched_finding_count: 1})
+    expect(checks[0]!.findings[0]).toMatchObject({location: {line: 5}, disposition: 'suppressed'})
+  })
+})
+
+describe('saveAppSecuritySuppressions', () => {
+  const newEntry: AppSecuritySuppression = {
+    source: 'deterministic',
+    check: 'EOL_API_VERSION',
+    kind: 'accepted-risk',
+    path: 'shopify.app.toml',
+    code: 'api_version = "2024-01"',
+    reason: 'The upgrade ships with the next release.',
+    configurations: ['shopify.app.toml'],
+  }
+
+  test('creates the file with schema_version 1, as two-space JSON with a trailing newline, outside .shopify', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const saved = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}])
+
+      const path = appSecuritySuppressionsPath(directory)
+      expect(saved).toStrictEqual({path, saved: [{index: 0, change: 'added', entry: newEntry}]})
+      await expect(readFile(path)).resolves.toBe(
+        `${JSON.stringify({schema_version: 1, suppressions: [newEntry]}, null, 2)}\n`,
+      )
+      await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([newEntry])
+      await expect(fileExists(joinPath(directory, '.shopify'))).resolves.toBe(false)
+      // The write is atomic: no temporary file is left.
+      await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
+    })
+  })
+
+  test('appends entries and adds configurations, keeping every other entry and key as the file has them', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const original = {
+        schema_version: 1,
+        generator: 'a later CLI',
+        suppressions: [{...deterministicEntry, reviewed_by: 'ana'}, agentEntry],
+      }
+      const originalText = `${JSON.stringify(original, null, 2)}\n`
+      await writeSuppressionsFile(directory, originalText)
+
+      const {saved} = await saveAppSecuritySuppressions(directory, [
+        {type: 'add-configuration', index: 0, configuration: 'shopify.app.staging.toml'},
+        {type: 'add', entry: newEntry},
+      ])
+
+      const text = await readFile(appSecuritySuppressionsPath(directory))
+      const expected = {
+        ...original,
+        suppressions: [
+          {
+            ...original.suppressions[0],
+            configurations: ['shopify.app.toml', 'shopify.app.staging.toml'],
+          },
+          agentEntry,
+          newEntry,
+        ],
+      }
+      expect(text).toBe(`${JSON.stringify(expected, null, 2)}\n`)
+      // The untouched entry is the same text, byte for byte.
+      expect(text).toContain(JSON.stringify(agentEntry, null, 2).replaceAll('\n', '\n    '))
+      expect(saved).toStrictEqual([
+        {
+          index: 0,
+          change: 'configuration-added',
+          entry: {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.staging.toml']},
+        },
+        {index: 2, change: 'added', entry: newEntry},
+      ])
+    })
+  })
+
+  test('refuses to write into an invalid file, and leaves it as it is', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const invalid = suppressionsJson([{...deterministicEntry, kind: 'wont_fix'}])
+      await writeSuppressionsFile(directory, invalid)
+
+      const error: unknown = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}]).catch(
+        (error: unknown) => error,
+      )
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect((error as AbortError).code).toBe('suppressions-file-invalid')
+      expect((error as AbortError).details).toMatchObject({
+        errors: ['suppressions[0].kind: must be false-positive or accepted-risk'],
+      })
+      await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(invalid)
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('keeps the permissions of an existing file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = await writeSuppressionsFile(directory, suppressionsJson([]))
+      await chmod(path, 0o640)
+
+      await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}])
+
+      expect((await stat(path)).mode & 0o777).toBe(0o640)
     })
   })
 })
