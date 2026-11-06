@@ -16484,9 +16484,9 @@ Validate the theme.
 
 ```
 USAGE
-  $ shopify theme check [--auth-alias <value>] [-a] [-C <value>] [-e <value>...] [--fail-level
-    crash|error|suggestion|style|warning|info] [-j | --init | -v | --print | --list] [--json-schema] [--no-color]
-    [--no-input] [-o text|json] [--path <value>] [--verbose]
+  $ shopify theme check [--allow-custom-checks] [--auth-alias <value>] [-a] [-C <value>] [-e <value>...]
+    [--fail-level crash|error|suggestion|style|warning|info] [-j | --init | -v | --print | --list] [--json-schema]
+    [--no-color] [--no-input] [-o text|json] [--path <value>] [--verbose]
 
 FLAGS
   -C, --config=<value>
@@ -16517,6 +16517,11 @@ FLAGS
   -v, --version
       Print Theme Check version
       [env: SHOPIFY_FLAG_VERSION]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -16905,6 +16910,11 @@ FLAGS
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
       https://example.myshopify.com).
       [env: SHOPIFY_FLAG_STORE]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -17349,8 +17359,9 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [-j] [--json-schema] [--no-color]
-    [--no-input] [--password <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
+  $ shopify theme delete [--allow-custom-checks] [--auth-alias <value>] [-d] [-e <value>...] [-f] [-j]
+    [--json-schema] [--no-color] [--no-input] [--password <value>] [--path <value>] [-a] [-s <value>] [-t <value>...]
+    [--verbose]
 
 FLAGS
   -a, --show-all
@@ -17382,6 +17393,11 @@ FLAGS
   -t, --theme=<value>...
       Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -17769,11 +17785,11 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [-a] [--auth-alias <value>] [-e <value>...] [--error-overlay silent|default] [--host
-    <value>] [-x <value>...] [-j] [--json-schema] [--listing <value>] [--live-reload hot-reload|full-page|off]
-    [--no-color] [--no-input] [-n] [--notify <value>] [-o <value>...] [--open] [--password <value>] [--path <value>]
-    [--port <value>] [--reconciliation-strategy keep-local|keep-remote|abort --theme-editor-sync]
-    [--standard-events-inspector] [-s <value>] [--store-password <value>] [-t <value>] [--verbose]
+  $ shopify theme dev [--allow-custom-checks] [-a] [--auth-alias <value>] [-e <value>...] [--error-overlay
+    silent|default] [--host <value>] [-x <value>...] [-j] [--json-schema] [--listing <value>] [--live-reload
+    hot-reload|full-page|off] [--no-color] [--no-input] [-n] [--notify <value>] [-o <value>...] [--open] [--password
+    <value>] [--path <value>] [--port <value>] [--reconciliation-strategy keep-local|keep-remote|abort
+    --theme-editor-sync] [--standard-events-inspector] [-s <value>] [--store-password <value>] [-t <value>] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -17809,6 +17825,11 @@ FLAGS
   -x, --ignore=<value>...
       Skip hot reloading any files that match the specified pattern.
       [env: SHOPIFY_FLAG_IGNORE]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -18370,8 +18391,8 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [--no-color]
-    [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme info [--allow-custom-checks] [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema]
+    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -18394,6 +18415,11 @@ FLAGS
   -t, --theme=<value>
       Theme ID or name of the remote theme.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -18936,12 +18962,18 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
+  $ shopify theme language-server [--allow-custom-checks] [--auth-alias <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--verbose]
 
 FLAGS
   -j, --json
       Accepted for consistency. Preserves native LSP output and stderr diagnostics.
       [env: SHOPIFY_FLAG_JSON]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -19171,9 +19203,9 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [--auth-alias <value>] [-e <value>...] [--id <value>] [-j] [--json-schema] [--name
-    <value>] [--no-color] [--no-input] [--password <value>] [--path <value>] [--role live|unpublished|development] [-s
-    <value>] [--verbose]
+  $ shopify theme list [--allow-custom-checks] [--auth-alias <value>] [-e <value>...] [--id <value>] [-j]
+    [--json-schema] [--name <value>] [--no-color] [--no-input] [--password <value>] [--path <value>] [--role
+    live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -19188,6 +19220,11 @@ FLAGS
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
       https://example.myshopify.com).
       [env: SHOPIFY_FLAG_STORE]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -19527,8 +19564,8 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--no-input]
-    [--password <value>] [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme metafields pull [--allow-custom-checks] [--auth-alias <value>] [-e <value>...] [-j] [--json-schema]
+    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -19543,6 +19580,11 @@ FLAGS
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
       https://example.myshopify.com).
       [env: SHOPIFY_FLAG_STORE]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -19928,8 +19970,9 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [-j] [--json-schema] [-l] [--no-color]
-    [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme open [--allow-custom-checks] [--auth-alias <value>] [-d] [-E] [-e <value>...] [-j]
+    [--json-schema] [-l] [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -E, --editor
@@ -19960,6 +20003,11 @@ FLAGS
   -t, --theme=<value>
       Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -20402,9 +20450,9 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--no-input]
-    [--open] [--overrides <value>] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [-t
-    <value>] [--verbose]
+  $ shopify theme preview [--allow-custom-checks] [--auth-alias <value>] [-e <value>...] [-j] [--json-schema]
+    [--no-color] [--no-input] [--open] [--overrides <value>] [--password <value>] [--path <value>] [--preview-id
+    <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -20423,6 +20471,11 @@ FLAGS
   -t, --theme=<value>
       Theme ID or name of the remote theme.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -20762,6 +20815,11 @@ FLAGS
   -t, --theme=<value>
       Theme ID or name of the remote theme.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -21233,8 +21291,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [-j] [--json-schema] [--no-color]
-    [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme publish [--allow-custom-checks] [--auth-alias <value>] [-e <value>...] [-f] [-j] [--json-schema]
+    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -21257,6 +21315,11 @@ FLAGS
   -t, --theme=<value>
       Theme ID or name of the remote theme. Required if non interactive.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -21607,9 +21670,9 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [-j] [--json-schema] [-l]
-    [--no-color] [--no-input] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>]
-    [--verbose]
+  $ shopify theme pull [--allow-custom-checks] [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [-j]
+    [--json-schema] [-l] [--no-color] [--no-input] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s
+    <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -21651,6 +21714,11 @@ FLAGS
       Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using
       wildcards.
       [env: SHOPIFY_FLAG_IGNORE]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -22107,6 +22175,11 @@ FLAGS
       wildcards.
       [env: SHOPIFY_FLAG_IGNORE]
 
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
+
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -22542,8 +22615,9 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [-l] [-n <value>]
-    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme rename [--allow-custom-checks] [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema]
+    [-l] [-n <value>] [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -d, --development
@@ -22574,6 +22648,11 @@ FLAGS
   -t, --theme=<value>
       Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -22923,8 +23002,8 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--listing <value>]
-    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme share [--allow-custom-checks] [--auth-alias <value>] [-e <value>...] [-j] [--json-schema]
+    [--listing <value>] [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -22939,6 +23018,11 @@ FLAGS
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
       https://example.myshopify.com).
       [env: SHOPIFY_FLAG_STORE]
+
+  --[no-]allow-custom-checks
+      Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
+      checks. Only command-line arguments or the process environment can enable this.
+      [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
