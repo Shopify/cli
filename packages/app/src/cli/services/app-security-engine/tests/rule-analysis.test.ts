@@ -491,8 +491,22 @@ describe('EOL_API_VERSION quarterly lifecycle', () => {
     const findings = scanEolApiVersions(
       context({
         appTomls: [
-          {raw: {}, path: '/app/shopify.app.toml', apiVersion: '2025-04', redirectUrls: [], webhooks: []},
-          {raw: {}, path: '/app/shopify.app.production.toml', apiVersion: '2025-07', redirectUrls: [], webhooks: []},
+          {
+            raw: {},
+            path: '/app/shopify.app.toml',
+            apiVersion: '2025-04',
+            scopeKeys: new Map(),
+            redirectUrls: [],
+            webhooks: [],
+          },
+          {
+            raw: {},
+            path: '/app/shopify.app.production.toml',
+            apiVersion: '2025-07',
+            scopeKeys: new Map(),
+            redirectUrls: [],
+            webhooks: [],
+          },
         ],
         files: [
           source(
