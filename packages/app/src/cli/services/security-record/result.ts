@@ -14,12 +14,19 @@ import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {InlineToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import type {RecordedSuppressions, SecurityRecordOptions, SecurityRecordResult} from '../security-record.js'
 
-/** Presents a recorded document as JSON, or in the terminal. */
+/** Presents a recorded document as JSON, or in the terminal, after a warning on stderr when it has no code excerpts. */
 export function renderSecurityRecordResult(
   result: SecurityRecordResult,
   options: SecurityRecordOptions,
   format: 'json' | 'text',
 ): void {
+  if (result.codeExcerptsOmitted) {
+    renderWarning({
+      headline:
+        'agent-findings.json was written without code excerpts, because with them it would be larger than 5 MB.',
+      body: 'Record fewer or shorter findings to keep them.',
+    })
+  }
   if (format === 'json') {
     outputResult(appSecurityRecordJsonOutputSchema.encode(appSecurityRecordResult(result, options)))
     return

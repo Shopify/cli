@@ -14,6 +14,8 @@ export default class SecurityRecord extends BaseCommand {
 
 The document must include a \`scope\` with the \`include_dirs\`, \`excludes\` and \`no_git_ignore\` values of the \`check\` run it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
 
+Each finding is stored with the redacted lines of code that it cites, read from the cited files that \`check\` scans with that scope: files in the app directory and its extension and web directories, and in the \`--include-dir\` directories that the latest \`check\` recorded when its \`include_dirs\` are the same. Files that \`--exclude\` or Git ignores and files in \`.git\` are never read, and binary files and files that hold secrets, such as \`.env\`, are never quoted. When the lines would make \`agent-findings.json\` larger than 5 MB, it's written without them and the command warns.
+
 The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. It needs the results directory that \`shopify app security check\` creates.
 
 A finding's \`suppression\` needs a \`justification\` and a \`kind\`, \`false-positive\` or \`accepted-risk\`. The command saves each suppression as an entry of \`shopify.app-security.json\` in the app directory, so it also applies to later results, and says how many it saved. Review and commit that file. A suppression that no entry can name alone is reported, and applies to the recorded findings only. Run \`shopify app security review\` to see the findings with every suppression applied.

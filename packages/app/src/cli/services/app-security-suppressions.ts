@@ -18,6 +18,7 @@ import {
   type SuppressionKind,
 } from './app-security-engine/index.js'
 import {isMissingFilesystemEntry} from './app-security-engine/scanners/filesystem-errors.js'
+import {isValidFormatAppConfigurationFileName} from '../models/app/config-file-naming.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -32,7 +33,8 @@ const FINDINGS_SOURCES = ['deterministic', 'agent'] as const satisfies ReadonlyA
 /** The kinds of an entry, which `--kind` takes with the same spelling. */
 export const SUPPRESSION_KINDS = ['false-positive', 'accepted-risk'] as const
 
-// The schema's messages quote no value from the file, which can hold code from the app.
+// The schema's messages quote no value from the file, which can hold code from the app. Only unknown keys are named,
+// shortened.
 const requiredString = () => zod.string({required_error: 'required', invalid_type_error: 'must be a string'})
 
 const choice = <TValues extends Readonly<[string, ...string[]]>>(values: TValues) =>
@@ -54,6 +56,8 @@ const nonBlankText = (maxLength: number) =>
 function pathProblem(path: string): string | undefined {
   if (path === '') return 'must not be empty'
   if (path.length > MAX_PATH_LENGTH) return `must be at most ${MAX_PATH_LENGTH} characters`
+  if (path.includes('\0')) return "can't contain a NUL character"
+  if (path.trim() !== path) return 'must not start or end with whitespace'
   if (path.includes('\\')) return 'must use / as the separator'
   if (path.startsWith('/') || /^[a-zA-Z]:/.test(path)) return 'must be relative to the app directory'
   // Brackets stay allowed: React Router route files use them as escapes, as in app/routes/sitemap[.]xml.tsx.
@@ -67,11 +71,18 @@ function pathProblem(path: string): string | undefined {
   return undefined
 }
 
-/** An app configuration's file name, or a client ID: a single path component, as results keys are. */
-const isConfigurationName = (name: string): boolean =>
-  name !== '' && name !== '.' && name !== '..' && !/[\\/]/.test(name)
+/**
+ * An entry names each app configuration it applies to by its file name (`shopify.app.toml` or
+ * `shopify.app.<name>.toml`), or by a client ID passed with `--client-id`: a token without dots, whitespace, or path
+ * separators. Any other name could never match.
+ */
+function configurationProblem(name: string): string | undefined {
+  if (name.trim() !== name) return 'must not start or end with whitespace'
+  if (isValidFormatAppConfigurationFileName(name) || /^[^\s./\\]+$/.test(name)) return undefined
+  return 'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
+}
 
-const suppressionSchema = zod.object(
+const suppressionSchema = zod.strictObject(
   {
     source: choice(FINDINGS_SOURCES),
     check: requiredString().min(1, 'must not be empty'),
@@ -80,15 +91,21 @@ const suppressionSchema = zod.object(
       const problem = pathProblem(path)
       if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
     }),
-    // Without `code`, the entry covers every finding of the check in the file.
-    code: nonBlankText(MAX_SNIPPET_LENGTH).optional(),
+    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs another
+    // character. Without `code`, the entry covers every finding of the check in the file.
+    code: nonBlankText(MAX_SNIPPET_LENGTH)
+      .refine(
+        (code) => code.trim() === '' || /[^\s,;]/.test(code),
+        'must contain more than whitespace, commas, and semicolons',
+      )
+      .optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
     configurations: zod
       .array(
-        requiredString().refine(
-          isConfigurationName,
-          'must be an app configuration file name, such as shopify.app.toml, or a client ID',
-        ),
+        requiredString().superRefine((name, context) => {
+          const problem = configurationProblem(name)
+          if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
+        }),
         {required_error: 'required', invalid_type_error: 'must be an array'},
       )
       .min(1, 'must list at least one app configuration'),
@@ -97,11 +114,14 @@ const suppressionSchema = zod.object(
 )
 
 /**
- * The Zod schema for schema_version 1 of shopify.app-security.json. Unknown keys are stripped, as in the results
- * files, so a later CLI can add optional fields that this one ignores. Whether `check` is a check ID that `source`
- * can report depends on the registry, so `parseSuppressionsFile` checks that separately.
+ * The Zod schema for schema_version 1 of shopify.app-security.json. Unknown keys are rejected, not stripped: dropping
+ * a misspelled `code`, or a field that a later CLI adds to narrow an entry, would make the entry cover more findings
+ * than its author wrote. A later field bumps schema_version instead, which this CLI rejects. `$schema` is allowed for
+ * editors. Whether `check` is a check ID that `source` can report depends on the registry, so `parseSuppressionsFile`
+ * checks that separately.
  */
-const suppressionsFileSchema = zod.object({
+const suppressionsFileSchema = zod.strictObject({
+  $schema: zod.string({invalid_type_error: 'must be a string'}).optional(),
   schema_version: zod.literal(SUPPRESSIONS_SCHEMA_VERSION),
   suppressions: zod.array(suppressionSchema, {required_error: 'required', invalid_type_error: 'must be an array'}),
 })
@@ -129,8 +149,22 @@ function describeJsonType(value: unknown): string {
   return typeof value
 }
 
-/** Renders a Zod issue as `path: message`, such as `suppressions[2].reason: must not be empty`. */
-function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem {
+/** Unknown keys are quoted in messages, so each is cut to this many characters. */
+const MAX_QUOTED_KEY_LENGTH = 40
+
+/** Names an unknown key, and the known key it differs from only in case, as in `Code` for `code`. */
+function describeUnknownKey(key: string, knownKeys: string[]): string {
+  const shortKey = key.length > MAX_QUOTED_KEY_LENGTH ? `${key.slice(0, MAX_QUOTED_KEY_LENGTH)}\u2026` : key
+  const knownKey = knownKeys.find((candidate) => candidate.toLowerCase() === key.toLowerCase())
+  const hint = knownKey === undefined ? '' : `. Did you mean ${JSON.stringify(knownKey)}?`
+  return `unknown key ${JSON.stringify(shortKey)}${hint}`
+}
+
+/**
+ * Renders a Zod issue as `path: message`, such as `suppressions[2].reason: must not be empty`. Unknown keys get one
+ * problem each.
+ */
+function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem[] {
   const path = issue.path
     .map((segment, index) => {
       if (typeof segment === 'number') return `[${segment}]`
@@ -138,15 +172,22 @@ function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem {
     })
     .join('')
   const [field, entryIndex] = issue.path
-  return {
+  const problem = (message: string): SuppressionsFileProblem => ({
     entryIndex: field === 'suppressions' && typeof entryIndex === 'number' ? entryIndex : -1,
-    message: path === '' ? issue.message : `${path}: ${issue.message}`,
+    message: path === '' ? message : `${path}: ${message}`,
+  })
+  if (issue.code === zod.ZodIssueCode.unrecognized_keys) {
+    // The file and its entries are the only objects, and the file's own issues have an empty path.
+    const knownKeys = Object.keys(path === '' ? suppressionsFileSchema.shape : suppressionSchema.shape)
+    return issue.keys.map((key) => problem(describeUnknownKey(key, knownKeys)))
   }
+  return [problem(issue.message)]
 }
 
 /**
  * The problems with each entry's `check`: it must be a check ID in the registry, and the entry's `source` must be
  * able to report it. Only entries whose `check` is a non-empty string are checked; the schema reports the others.
+ * A newer CLI can add a check, or a source for one, so the messages name upgrading as well as fixing the entry.
  */
 function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
   if (!Array.isArray(entries)) return []
@@ -155,15 +196,40 @@ function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
     if (!isJsonObject(entry) || typeof entry.check !== 'string' || entry.check === '') return []
     const label = `suppressions[${entryIndex}].check`
     const sources = reportingSources.get(entry.check)
-    if (!sources) return [{entryIndex, message: `${label}: not a known check ID`}]
+    if (!sources) {
+      const message = `${label}: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.`
+      return [{entryIndex, message}]
+    }
     if (!isFindingsSource(entry.source) || sources.has(entry.source)) return []
     const otherSources = [...sources].join(' or ')
     return [
       {
         entryIndex,
-        message: `${label}: ${entry.source} checks don't report ${entry.check}. Use "source": "${otherSources}".`,
+        message: `${label}: ${entry.source} checks in this version of Shopify CLI don't report ${entry.check}. Use "source": "${otherSources}", or upgrade Shopify CLI.`,
       },
     ]
+  })
+}
+
+/**
+ * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code), and the
+ * same set of app configurations. Only one of them could apply, so a duplicate is a problem even when its kind or
+ * reason differs. Only entries that are valid on their own are compared; the schema reports the others.
+ */
+function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
+  if (!Array.isArray(entries)) return []
+  const firstIndexByMatch = new Map<string, number>()
+  return entries.flatMap((entry: unknown, entryIndex): SuppressionsFileProblem[] => {
+    const parsed = suppressionSchema.safeParse(entry)
+    if (!parsed.success) return []
+    const {source, check, path, code, configurations} = parsed.data
+    const match = JSON.stringify([source, check, path, code ?? null, [...new Set(configurations)].sort()])
+    const firstIndex = firstIndexByMatch.get(match)
+    if (firstIndex === undefined) {
+      firstIndexByMatch.set(match, entryIndex)
+      return []
+    }
+    return [{entryIndex, message: `suppressions[${entryIndex}]: duplicates suppressions[${firstIndex}]`}]
   })
 }
 
@@ -172,14 +238,24 @@ function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
   if (!isJsonObject(value)) {
     return {ok: false, errors: [`expected a JSON object, received ${describeJsonType(value)}`]}
   }
-  if (value.schema_version !== SUPPRESSIONS_SCHEMA_VERSION) {
-    return {ok: false, errors: [`schema_version must be ${SUPPRESSIONS_SCHEMA_VERSION}`]}
+  const schemaVersion = value.schema_version
+  if (schemaVersion !== SUPPRESSIONS_SCHEMA_VERSION) {
+    // A later schema_version comes from a newer CLI; any other value is a mistake in the file.
+    const isLater =
+      typeof schemaVersion === 'number' &&
+      Number.isSafeInteger(schemaVersion) &&
+      schemaVersion > SUPPRESSIONS_SCHEMA_VERSION
+    const error = isLater
+      ? `schema_version ${schemaVersion} needs a newer version of Shopify CLI`
+      : `schema_version must be ${SUPPRESSIONS_SCHEMA_VERSION}`
+    return {ok: false, errors: [error]}
   }
 
   const parsed = suppressionsFileSchema.safeParse(value)
   const problems = [
-    ...(parsed.success ? [] : parsed.error.issues.map(describeIssue)),
+    ...(parsed.success ? [] : parsed.error.issues.flatMap(describeIssue)),
     ...checkIdProblems(value.suppressions),
+    ...duplicateProblems(value.suppressions),
   ].sort((left, right) => left.entryIndex - right.entryIndex)
   if (!parsed.success || problems.length > 0) {
     return {ok: false, errors: problems.map((problem) => problem.message)}
@@ -187,11 +263,16 @@ function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
   return {ok: true, suppressions: parsed.data.suppressions}
 }
 
+/** A file of up to 5 MB can have tens of thousands of problems, so the error lists only this many. */
+const MAX_LISTED_PROBLEMS = 50
+
 /**
- * Aborts with one error that lists every problem under the file's path. `details` repeats the absolute path and the
- * problems for JSON output.
+ * Aborts with one error that lists the first 50 problems under the file's path, then the count of the others.
+ * `details` repeats the absolute path and the same list for JSON output.
  */
-function abortInvalidSuppressionsFile(path: string, errors: string[]): never {
+function abortInvalidSuppressionsFile(path: string, problems: string[]): never {
+  const unlisted = problems.length - MAX_LISTED_PROBLEMS
+  const errors = unlisted > 0 ? [...problems.slice(0, MAX_LISTED_PROBLEMS), `\u2026and ${unlisted} more`] : problems
   const error = new AbortError(
     `The app security suppressions could not be loaded because ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} is invalid.`,
     null,
@@ -205,8 +286,8 @@ function abortInvalidSuppressionsFile(path: string, errors: string[]): never {
 
 /**
  * Reads `<app directory>/shopify.app-security.json`. A missing file means no suppressions. An invalid file (JSON
- * that doesn't parse, an unknown schema_version, or any invalid entry) aborts with one error that lists every
- * problem, so nothing in it applies. The entries keep the file's order, so an entry's index is its index in the file.
+ * that doesn't parse, an unknown schema_version, or any invalid entry) aborts with one error that lists its
+ * problems, so nothing in it applies. The entries keep the file's order, so an entry's index is its index in the file.
  */
 export async function readAppSecuritySuppressions(appDirectory: string): Promise<AppSecuritySuppression[]> {
   const path = appSecuritySuppressionsPath(appDirectory)
@@ -452,7 +533,7 @@ function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, r
 function entryProblems(entry: AppSecuritySuppression): string[] {
   const parsed = suppressionSchema.safeParse(entry)
   return [
-    ...(parsed.success ? [] : parsed.error.issues.map((issue) => describeIssue(issue).message)),
+    ...(parsed.success ? [] : parsed.error.issues.flatMap((issue) => describeIssue(issue).map(({message}) => message))),
     ...checkIdProblems([entry]).map((problem) => problem.message.replace(/^suppressions\[0\]\./, '')),
   ]
 }
