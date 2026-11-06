@@ -12,7 +12,13 @@ import {
 } from './app-security-suppressions.js'
 import {appSecuritySuppressionsPath} from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
-import {combineFindings, type AgentFindingsDocument, type StoredFinding} from './app-security-engine/index.js'
+import {
+  combineFindings,
+  type AgentFindingsDocument,
+  type DeterministicFindingsDocument,
+  type StoredFinding,
+} from './app-security-engine/index.js'
+import {deterministicFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
   chmod,
@@ -927,6 +933,67 @@ describe('planSuppression', () => {
       status: 'change',
       change: {type: 'add-configuration', index: 1, configuration: 'shopify.app.toml'},
     })
+  })
+
+  test('plans a deterministic entry for a finding that a prefer-agent result supersedes, which check then leaves out', () => {
+    // A stored finding has the same shape in both sources.
+    const finding = agentFinding(
+      'app/routes/orders.tsx',
+      3,
+      routeLines.slice(0, 5),
+      'accessToken flows into console.log.',
+    )
+    const deterministic: DeterministicFindingsDocument = {
+      ...deterministicFindingsDocument,
+      checks: [
+        {
+          id: 'CREDENTIAL_LOG_LEAKAGE',
+          version: 1,
+          status: 'executed',
+          snapshot: {title: 'CREDENTIAL_LOG_LEAKAGE', severity: 'high', description: '', current_version: 1},
+          findings: [finding],
+        },
+      ],
+    }
+    // A newer prefer-agent result with no finding in the file, so no agent finding has the deterministic one as a companion.
+    const [agentCheck] = agentDocument('CREDENTIAL_LOG_LEAKAGE', []).checks
+    const agent: AgentFindingsDocument = {
+      ...agentDocument('CREDENTIAL_LOG_LEAKAGE', []),
+      checks: [{...agentCheck!, snapshot: {...agentCheck!.snapshot, precedence: 'prefer-agent'}}],
+    }
+    const target: SuppressionTarget = {
+      source: 'deterministic',
+      checkId: 'CREDENTIAL_LOG_LEAKAGE',
+      findingIndex: 0,
+      finding,
+    }
+
+    const plan = planSuppression(
+      target,
+      decision,
+      {deterministic, agent, resultsKey: 'shopify.app', configuration: 'shopify.app.toml'},
+      [],
+    )
+
+    expect(plan).toMatchObject({
+      status: 'change',
+      change: {type: 'add', entry: {source: 'deterministic', code: 'console.log(session.accessToken)'}},
+    })
+    const entry = plan.status === 'change' && plan.change.type === 'add' ? plan.change.entry : undefined
+    const suppressions = {entries: [entry!], resultsKey: 'shopify.app'}
+    // `review` combines both results: the finding stays superseded, and the entry matched it.
+    const reviewed = combineFindings({deterministic, agent, suppressions})
+    // `check` reads the deterministic results alone: the entry suppresses the finding.
+    const checked = combineFindings({deterministic, agent: null, suppressions})
+    expect(reviewed.checks[0]!.findings).toMatchObject([
+      {disposition: 'superseded', suppressed_by: {origin: 'file', entry_index: 0}},
+    ])
+    expect(checked.checks[0]!.findings).toMatchObject([
+      {disposition: 'suppressed', suppressed_by: {origin: 'file', entry_index: 0}},
+    ])
+    for (const {suppressions: results} of [reviewed, checked]) {
+      expect(results[0]).toMatchObject({status: 'matched', matched_finding_count: 1})
+    }
   })
 
   test('keeps matching the entry after unrelated edits move the line', () => {

@@ -977,6 +977,37 @@ describe('app security review --suppress command boundary', () => {
   }
   const suppressFlags = ['--kind', 'accepted-risk', '--reason', 'The upgrade ships with the next release.']
 
+  /** The deterministic results with the excerpt that `check` captures for the CREDENTIAL_LOG_LEAKAGE finding. */
+  const deterministicWithCredentialExcerpt: DeterministicFindingsDocument = {
+    ...deterministicFindings,
+    checks: deterministicFindings.checks.map((check) => ({
+      ...check,
+      findings: check.findings.map((finding) =>
+        check.id === 'CREDENTIAL_LOG_LEAKAGE'
+          ? {
+              ...finding,
+              code_excerpt: [
+                {line: 4, text: '  const {session} = await authenticate.admin(request)'},
+                {line: 5, text: '  console.log(session.accessToken)'},
+                {line: 6, text: '  return null'},
+              ],
+            }
+          : finding,
+      ),
+    })),
+  }
+  /**
+   * The agent results without a CREDENTIAL_LOG_LEAKAGE finding: the prefer-agent result supersedes the deterministic
+   * finding, and no agent finding has it as a companion.
+   */
+  const agentWithoutCredentialFindings: AgentFindingsDocument = {
+    ...agentFindings,
+    checks: agentFindings.checks.map((check) =>
+      check.id === 'CREDENTIAL_LOG_LEAKAGE' ? {...check, findings: []} : check,
+    ),
+  }
+  const supersededFiles = {deterministic: deterministicWithCredentialExcerpt, agent: agentWithoutCredentialFindings}
+
   test('--json saves the entry, then writes the review with the finding suppressed and the saved entry', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await createApp(directory, {deterministic: deterministicWithExcerpts})
@@ -1065,6 +1096,93 @@ describe('app security review --suppress command boundary', () => {
       expect(text).toContain('suppressions[0] · finding 2 · added deterministic EOL_API_VERSION in shopify.app.toml')
       expect(text).toContain('Next steps • Review and commit shopify.app-security.json.')
       expect(text.indexOf('Saved 1 suppression')).toBeGreaterThan(text.indexOf('Results digest'))
+    })
+  })
+
+  test('--json saves an entry for a superseded deterministic finding by its number, then refuses it as suppressed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, supersededFiles)
+      const before = JSON.parse((await runJsonCommand(['--path', directory])).stdout)
+      const [superseded] = before.checks[0].findings
+
+      const saved = await runJsonCommand([
+        '--path',
+        directory,
+        '--suppress',
+        String(superseded.number),
+        ...suppressFlags,
+        '--results-digest',
+        before.resultsDigest,
+      ])
+      const fileAfterSave = await readFile(appSecuritySuppressionsPath(appDirectory))
+      const again = await runJsonCommand([
+        '--path',
+        directory,
+        '--suppress',
+        String(superseded.number),
+        ...suppressFlags,
+      ])
+
+      expect(before.checks[0].id).toBe('CREDENTIAL_LOG_LEAKAGE')
+      expect(superseded).toMatchObject({
+        number: 1,
+        source: 'deterministic',
+        disposition: 'superseded',
+        suppression: null,
+      })
+      expect(saved.exitCode).toBe(0)
+      const document = JSON.parse(saved.stdout)
+      expect(document.savedSuppressions).toStrictEqual({
+        filePath: resolve(appDirectory, 'shopify.app-security.json'),
+        entries: [
+          {
+            index: 0,
+            change: 'added',
+            source: 'deterministic',
+            check: 'CREDENTIAL_LOG_LEAKAGE',
+            kind: 'accepted-risk',
+            path: resolve(appDirectory, 'app', 'routes', 'orders.tsx'),
+            code: 'console.log(session.accessToken)',
+            reason: 'The upgrade ships with the next release.',
+            configurations: ['shopify.app.toml'],
+            findingNumber: 1,
+          },
+        ],
+        companionFindingNumbers: [],
+      })
+      expect(document.checks[0].findings[0]).toMatchObject({
+        number: 1,
+        disposition: 'superseded',
+        suppression: {origin: 'file', entryIndex: 0, kind: 'accepted-risk'},
+      })
+      expect(document.suppressions.entries).toMatchObject([{index: 0, status: 'matched', matchedFindingCount: 1}])
+      expect(again.exitCode).toBe(1)
+      expect(JSON.parse(again.stdout)).toMatchObject({
+        error: {
+          code: 'finding-not-suppressible',
+          message:
+            'Finding 1 is already suppressed by suppressions[0] in shopify.app-security.json. Nothing was saved.',
+          details: {findingNumber: 1, disposition: 'superseded'},
+        },
+      })
+      await expect(readFile(appSecuritySuppressionsPath(appDirectory))).resolves.toBe(fileAfterSave)
+    })
+  })
+
+  test('without --json, says that check --blocking counts the superseded finding that it saved', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, supersededFiles)
+
+      const result = await runCommand(['--path', directory, '--suppress', '1', ...suppressFlags])
+
+      expect(result.exitCode).toBe(0)
+      const text = boxText(result.stderr)
+      expect(text).toContain(
+        'suppressions[0] · finding 1 · added deterministic CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx',
+      )
+      expect(text).toContain(
+        'The agent result supersedes finding 1 in the review, but check --blocking, which reads no agent results, counts it. This entry suppresses it for check --blocking.',
+      )
     })
   })
 

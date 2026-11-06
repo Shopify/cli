@@ -916,6 +916,102 @@ describe('app security check --json command boundary', () => {
     })
   })
 
+  test('passes --blocking after review --suppress saves an entry for a superseded finding that no agent finding anchors', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await writeFile(
+        joinPath(directory, 'app', 'routes', 'index.ts'),
+        'export async function loader({request}) {\n  const {session} = await authenticate.admin(request)\n  console.log(session.accessToken)\n  return null\n}\n',
+      )
+      await runJsonCommand(['--path', directory])
+      const {agentFindingsPath} = appSecurityArtifactPaths(await fileRealPath(directory), 'shopify.app')
+      await writeFile(
+        agentFindingsPath,
+        JSON.stringify({
+          schema_version: 1,
+          source: 'agent',
+          engine: {name: 'shopify-app-security', version: '4.9.0'},
+          // Newer than the scan, so the prefer-agent result supersedes the deterministic finding.
+          generated_at: new Date(Date.now() + 60_000).toISOString(),
+          scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+          // The agent found nothing, so no agent finding anchors a companion for the deterministic one.
+          checks: [
+            {
+              id: 'CREDENTIAL_LOG_LEAKAGE',
+              version: 1,
+              status: 'executed',
+              snapshot: {
+                title: 'Credential reaches a log sink',
+                severity: 'high',
+                description: 'Detects direct credential flows to console and logger sinks.',
+                current_version: 1,
+                precedence: 'prefer-agent',
+              },
+              findings: [],
+            },
+          ],
+        }),
+      )
+      const before = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+      const credentialCheck = (review: {checks: {id: string; findings: unknown[]}[]}) =>
+        review.checks.find((check) => check.id === 'CREDENTIAL_LOG_LEAKAGE')
+      const [superseded] = credentialCheck(before)!.findings as {number: number; disposition: string}[]
+      const blocked = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      const suppressed = await runJsonCommand(
+        [
+          '--path',
+          directory,
+          '--suppress',
+          String(superseded!.number),
+          '--kind',
+          'accepted-risk',
+          '--reason',
+          'Logged only in local development.',
+          '--results-digest',
+          before.resultsDigest,
+        ],
+        SecurityReview,
+      )
+      const passed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const after = JSON.parse((await runJsonCommand(['--path', directory], SecurityReview)).stdout)
+
+      expect(superseded).toMatchObject({disposition: 'superseded', suppression: null})
+      expect(JSON.parse(blocked.stdout)).toMatchObject({valid: false, blocking: {blockedCheckCount: 1}})
+      expect(suppressed.exitCode).toBe(0)
+      expect(JSON.parse(suppressed.stdout).savedSuppressions).toMatchObject({
+        entries: [
+          {
+            index: 0,
+            change: 'added',
+            source: 'deterministic',
+            check: 'CREDENTIAL_LOG_LEAKAGE',
+            code: 'console.log(session.accessToken)',
+            kind: 'accepted-risk',
+            reason: 'Logged only in local development.',
+            findingNumber: superseded!.number,
+          },
+        ],
+        companionFindingNumbers: [],
+      })
+      expect(passed.exitCode).toBe(0)
+      expect(JSON.parse(passed.stdout)).toMatchObject({
+        valid: true,
+        blocking: {blockedCheckCount: 0},
+        suppressions: {entries: [{status: 'matched', matchedFindingCount: 1}]},
+      })
+      // The review still shows the finding as superseded, with the entry that suppresses it for check --blocking.
+      expect(credentialCheck(after)!.findings).toMatchObject([
+        {
+          number: superseded!.number,
+          disposition: 'superseded',
+          suppression: {origin: 'file', entryIndex: 0, kind: 'accepted-risk'},
+        },
+      ])
+      expect(after.suppressions.entries).toMatchObject([{index: 0, status: 'matched', matchedFindingCount: 1}])
+    })
+  })
+
   test('an entry naming the configuration file applies without --client-id, one naming a client ID only with it', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)

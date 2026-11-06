@@ -78,6 +78,15 @@ describe('app security review command', () => {
     expect(SecurityReview.description).toContain('https://shopify.dev/docs/api/shopify-cli#usage-reporting')
   })
 
+  test('says that --suppress and --interactive can suppress a superseded deterministic finding by its number', () => {
+    expect(SecurityReview.descriptionWithMarkdown).toContain(
+      "A superseded deterministic finding can also be suppressed by its own number, for example when the agent result has no finding in its file: the review doesn't count it, but `check --blocking` does, and the output says so.",
+    )
+    expect(SecurityReview.descriptionWithMarkdown).toContain(
+      'After the active findings, the review offers in the same way each superseded deterministic finding that `check --blocking` still counts',
+    )
+  })
+
   test('does not require linked app context', () => {
     expect(SecurityReview.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityReview.prototype).not.toBeInstanceOf(AppLinkedCommand)

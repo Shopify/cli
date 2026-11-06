@@ -1,7 +1,13 @@
 import {APP_SECURITY_SUPPRESSIONS_FILE_NAME} from './app-security-artifacts.js'
 import {countLabel} from './app-security-format.js'
 import {suppressionReasonProblem} from './app-security-suppressions.js'
-import {interactiveFindingAlert, listedNumbers, renderAlert, savedNowAlert} from './security-review-output.js'
+import {
+  interactiveFindingAlert,
+  listedNumbers,
+  renderAlert,
+  savedNowAlert,
+  supersededFindingNumbers,
+} from './security-review-output.js'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -55,9 +61,11 @@ const defaultInteractiveReviewDependencies: InteractiveReviewDependencies = {
 /**
  * The session of `review --interactive`: for each active finding, most severe first, it shows the finding in full and
  * offers Suppress, Continue or Quit. Suppress asks for the kind and a reason and saves the entry at once; then, for an
- * agent finding with superseded deterministic companions, it asks separately whether to suppress them too. Aborts at
- * once when the terminal can't prompt, so the command fails before it reads anything, and never prompts in CI,
- * without a terminal, or with `--no-input`.
+ * agent finding with superseded deterministic companions, it asks separately whether to suppress them too. After the
+ * active findings, when there are any, it offers in the same way the superseded deterministic findings that
+ * `check --blocking` still counts and that the session didn't already ask about as companions. Aborts at once when the
+ * terminal can't prompt, so the command fails before it reads anything, and never prompts in CI, without a terminal,
+ * or with `--no-input`.
  */
 export function interactiveSecurityReview(
   dependencies: InteractiveReviewDependencies = defaultInteractiveReviewDependencies,
@@ -72,8 +80,37 @@ export function interactiveSecurityReview(
   }
   return async (session) => {
     renderAlert(interactiveReviewIntroAlert(session))
-    return reviewFindings(session, dependencies)
+    const active = await reviewFindings(
+      session,
+      dependencies,
+      {findings: session.findings, label: 'Active'},
+      {
+        saved: [],
+        declinedCompanions: [],
+        ending: 'finished',
+      },
+    )
+    if (active.ending !== 'finished') return active
+    const superseded = undecidedFindings(session.supersededFindings, active)
+    if (superseded.length === 0) return active
+    renderAlert(supersededFindingsIntroAlert(superseded))
+    return reviewFindings(session, dependencies, {findings: superseded, label: 'Superseded'}, active)
   }
+}
+
+/** The findings that one part of the session offers, and how each finding's box counts them. */
+interface ReviewRound {
+  findings: NumberedFinding[]
+  label: 'Active' | 'Superseded'
+}
+
+/** The findings that the session didn't save or decline as the companions of an agent finding. */
+function undecidedFindings(findings: NumberedFinding[], outcome: InteractiveReviewOutcome): NumberedFinding[] {
+  const decided = new Set([
+    ...outcome.saved.map(({findingNumber}) => findingNumber),
+    ...outcome.declinedCompanions.flatMap(({companionNumbers}) => companionNumbers),
+  ])
+  return findings.filter(({number}) => !decided.has(number))
 }
 
 /** What the session did for one finding. */
@@ -91,10 +128,17 @@ const NO_DECISION: FindingDecision = {saved: [], declinedCompanionNumbers: [], r
 async function reviewFindings(
   session: InteractiveReviewSession,
   dependencies: InteractiveReviewDependencies,
+  round: ReviewRound,
+  previous: InteractiveReviewOutcome,
 ): Promise<InteractiveReviewOutcome> {
-  const outcome: InteractiveReviewOutcome = {saved: [], declinedCompanions: [], ending: 'finished'}
-  for (const [position, numbered] of session.findings.entries()) {
-    renderAlert(interactiveFindingAlert(numbered, position + 1, session.findings.length))
+  const outcome: InteractiveReviewOutcome = {
+    saved: [...previous.saved],
+    declinedCompanions: [...previous.declinedCompanions],
+    ending: 'finished',
+  }
+  for (const [position, numbered] of round.findings.entries()) {
+    const progress = `${round.label} finding ${position + 1} of ${round.findings.length}`
+    renderAlert(interactiveFindingAlert(numbered, progress))
     // Each answer and save must finish before the next finding is offered.
     // eslint-disable-next-line no-await-in-loop
     const action = await dependencies.selectAction(interactiveActionPrompt(numbered))
@@ -132,14 +176,15 @@ async function suppressInteractively(
   const finding = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: false})
   if (finding.status === 'refused') return showRefusal(finding.refusal)
   const {saved, companionNumbers} = finding.savedSuppressions
-  renderAlert(savedNowAlert(saved))
+  const supersededNumbers = supersededFindingNumbers(session.result)
+  renderAlert(savedNowAlert(saved, supersededNumbers))
   if (companionNumbers.length === 0) return {...NO_DECISION, saved}
 
   const confirmed = await dependencies.confirmCompanions(companionsPrompt(numbered, companionNumbers))
   if (!confirmed) return {...NO_DECISION, saved, declinedCompanionNumbers: companionNumbers}
   const companions = await session.suppress({findingNumber: numbered.number, decision, includeSuperseded: true})
   if (companions.status === 'refused') return {...showRefusal(companions.refusal), saved}
-  renderAlert(savedNowAlert(companions.savedSuppressions.saved))
+  renderAlert(savedNowAlert(companions.savedSuppressions.saved, supersededNumbers))
   return {...NO_DECISION, saved: [...saved, ...companions.savedSuppressions.saved]}
 }
 
@@ -167,6 +212,21 @@ function interactiveReviewIntroAlert({findings, configuration}: InteractiveRevie
     options: {
       headline: `Reviewing ${countLabel(findings.length, 'active finding')} for ${configuration}, most severe first.`,
       body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop. The suppressions you save are kept when you quit.`,
+    },
+  }
+}
+
+/** Why the session offers the superseded findings, before the first of them. */
+function supersededFindingsIntroAlert(findings: NumberedFinding[]): SecurityReviewAlert {
+  const one = findings.length === 1
+  const pronoun = one ? 'it' : 'them'
+  return {
+    type: 'info',
+    options: {
+      headline: `Reviewing ${countLabel(findings.length, 'superseded finding')} that check --blocking still counts.`,
+      body: `An agent result supersedes ${
+        one ? 'this deterministic finding' : 'these deterministic findings'
+      }, so the review doesn't count ${pronoun}. But check --blocking, which reads no agent results, still counts ${pronoun}, so a CI gate that runs it can fail. Choose Suppress, Continue or Quit for each finding, as before.`,
     },
   }
 }

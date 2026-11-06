@@ -6989,8 +6989,8 @@ FLAGS
       [env: SHOPIFY_FLAG_APP_SECURITY_INCLUDE_SUPERSEDED]
 
   --interactive
-      Go through the active findings one at a time, most severe first, and choose Suppress, Continue or Quit for each.
-      Needs an interactive terminal.
+      Go through the active findings one at a time, most severe first, then the superseded findings that check --blocking
+      still counts, and choose Suppress, Continue or Quit for each. Needs an interactive terminal.
       [env: SHOPIFY_FLAG_APP_SECURITY_INTERACTIVE]
 
   --json-schema
@@ -7074,16 +7074,20 @@ DESCRIPTION
   that finding, then shows the review with the finding suppressed. Review and commit the file. When the finding is an
   agent finding that supersedes a deterministic finding of the same check in the same file, `check --blocking` still
   counts the deterministic finding, because it reads no agent results: the output names it, and `--include-superseded`
-  suppresses it too, with the same kind and reason.
+  suppresses it too, with the same kind and reason. A superseded deterministic finding can also be suppressed by its own
+  number, for example when the agent result has no finding in its file: the review doesn't count it, but `check
+  --blocking` does, and the output says so.
 
   Use `--interactive` in a terminal to go through the active findings one at a time, most severe first, each shown in
   full with its number. For each finding, choose Suppress, Continue or Quit. Suppress asks whether the finding is a
   false positive or an accepted risk, and for a reason, which is required. Then it saves the entry at once, as
   `--suppress` does. When the finding has superseded deterministic findings that `check --blocking` still counts, it
   asks separately whether to suppress them too. Continue leaves the finding active. Quit stops the review and keeps what
-  you saved. At the end, the command shows the review with the findings you suppressed, and lists the entries it saved.
-  `--interactive` never prompts in CI, without a terminal, or with `--no-input`: it fails before it reads anything. It
-  can't be combined with `--json` or `--suppress`.
+  you saved. After the active findings, the review offers in the same way each superseded deterministic finding that
+  `check --blocking` still counts, when there are any, apart from the ones it already asked about. At the end, the
+  command shows the review with the findings you suppressed, and lists the entries it saved. `--interactive` never
+  prompts in CI, without a terminal, or with `--no-input`: it fails before it reads anything. It can't be combined with
+  `--json` or `--suppress`.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.

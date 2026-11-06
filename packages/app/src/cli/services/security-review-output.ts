@@ -148,6 +148,7 @@ export function renderAlert(alert: SecurityReviewAlert): void {
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
   const {checks, filter, suppressions} = input.result
   const numberOf: FindingNumberLookup = (finding) => input.result.findingNumbers.get(finding)!
+  const supersededNumbers = supersededFindingNumbers(input.result)
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
   const passedOrNotApplicable = checks.filter(
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
@@ -166,15 +167,31 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
     ...(suppressed ? [suppressedFindingsAlert(suppressed)] : []),
     ...(unappliedEntries ? [unappliedEntriesAlert(unappliedEntries)] : []),
     summaryAlert(buildSecurityReviewSummary(input)),
-    ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions)] : []),
-    ...(input.interactiveReview ? [interactiveReviewOutcomeAlert(input.interactiveReview)] : []),
+    ...(input.savedSuppressions ? [savedSuppressionsAlert(input.savedSuppressions, supersededNumbers)] : []),
+    ...(input.interactiveReview ? [interactiveReviewOutcomeAlert(input.interactiveReview, supersededNumbers)] : []),
   ]
 }
 
 type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
 
-/** One saved entry: its index, the finding it was saved for and the change, then what it holds. */
-function savedEntrySection({index, change, entry, findingNumber}: NumberedSavedSuppression): AlertCustomSection {
+/**
+ * The numbers of the superseded findings of every check. An entry doesn't change a finding's disposition, so a
+ * superseded finding stays superseded after its entry is saved.
+ */
+export function supersededFindingNumbers(result: SecurityReviewResult): ReadonlySet<number> {
+  return new Set(
+    [...result.findingNumbers].flatMap(([finding, number]) => (finding.disposition === 'superseded' ? [number] : [])),
+  )
+}
+
+/**
+ * One saved entry: its index, the finding it was saved for and the change, then what it holds. For a superseded
+ * finding, a last line says why it needs an entry.
+ */
+function savedEntrySection(
+  {index, change, entry, findingNumber}: NumberedSavedSuppression,
+  supersededNumbers: ReadonlySet<number>,
+): AlertCustomSection {
   return {
     title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
     body: [
@@ -184,8 +201,13 @@ function savedEntrySection({index, change, entry, findingNumber}: NumberedSavedS
       ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
       {subdued: `\nReason: ${entry.reason}`},
       {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
+      ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
     ],
   }
+}
+
+function supersededEntryLine(findingNumber: number): string {
+  return `The agent result supersedes finding ${findingNumber} in the review, but check --blocking, which reads no agent results, counts it. This entry suppresses it for check --blocking.`
 }
 
 const COMMIT_SUPPRESSIONS_STEP: AlertCustomSection = {
@@ -198,8 +220,11 @@ function savedHeadline(saved: SavedSuppression[]): string {
 }
 
 /** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
-function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressions): SecurityReviewAlert {
-  const entrySections = saved.map(savedEntrySection)
+function savedSuppressionsAlert(
+  {saved, companionNumbers}: SavedReviewSuppressions,
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
+  const entrySections = saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers))
   const companionSections: AlertCustomSection[] =
     companionNumbers.length === 0
       ? []
@@ -226,14 +251,13 @@ function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressio
 /** The finding in full, with its evidence and reasoning, in the box of its check. */
 export function interactiveFindingAlert(
   {number, check, finding}: NumberedFinding,
-  position: number,
-  total: number,
+  progress: string,
 ): SecurityReviewAlert {
   return {
     type: check.severity === 'high' ? 'error' : 'warning',
     options: {
       headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
-      body: {subdued: `Active finding ${position} of ${total}`},
+      body: {subdued: progress},
       ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
       customSections: [findingSection(finding, number, true)],
     },
@@ -241,16 +265,24 @@ export function interactiveFindingAlert(
 }
 
 /** What one decision saved, shown at once. */
-export function savedNowAlert(saved: NumberedSavedSuppression[]): SecurityReviewAlert {
-  return {type: 'success', options: {headline: savedHeadline(saved), customSections: saved.map(savedEntrySection)}}
+export function savedNowAlert(
+  saved: NumberedSavedSuppression[],
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
+  return {
+    type: 'success',
+    options: {
+      headline: savedHeadline(saved),
+      customSections: saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers)),
+    },
+  }
 }
 
 /** After the review: everything the session saved, the companions left out, how it ended, and the next step. */
-function interactiveReviewOutcomeAlert({
-  saved,
-  declinedCompanions,
-  ending,
-}: InteractiveReviewOutcome): SecurityReviewAlert {
+function interactiveReviewOutcomeAlert(
+  {saved, declinedCompanions, ending}: InteractiveReviewOutcome,
+  supersededNumbers: ReadonlySet<number>,
+): SecurityReviewAlert {
   const endingLines = {
     finished: undefined,
     quit: 'You quit the review. The suppressions you saved are kept.',
@@ -273,7 +305,11 @@ function interactiveReviewOutcomeAlert({
     options: {
       headline: savedHeadline(saved),
       ...body,
-      customSections: [...saved.map(savedEntrySection), ...declinedSections, COMMIT_SUPPRESSIONS_STEP],
+      customSections: [
+        ...saved.map((savedEntry) => savedEntrySection(savedEntry, supersededNumbers)),
+        ...declinedSections,
+        COMMIT_SUPPRESSIONS_STEP,
+      ],
     },
   }
 }
