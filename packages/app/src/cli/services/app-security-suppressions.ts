@@ -11,6 +11,7 @@ import {
   reportingSourcesByCheckId,
   type FindingsSource,
 } from './app-security-engine/index.js'
+import {isValidFormatAppConfigurationFileName} from '../models/app/config-file-naming.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -42,6 +43,8 @@ const nonBlankText = (maxLength: number) =>
 function pathProblem(path: string): string | undefined {
   if (path === '') return 'must not be empty'
   if (path.length > MAX_PATH_LENGTH) return `must be at most ${MAX_PATH_LENGTH} characters`
+  if (path.includes('\0')) return "can't contain a NUL character"
+  if (path.trim() !== path) return 'must not start or end with whitespace'
   if (path.includes('\\')) return 'must use / as the separator'
   if (path.startsWith('/') || /^[a-zA-Z]:/.test(path)) return 'must be relative to the app directory'
   // Brackets stay allowed: React Router route files use them as escapes, as in app/routes/sitemap[.]xml.tsx.
@@ -55,9 +58,16 @@ function pathProblem(path: string): string | undefined {
   return undefined
 }
 
-/** An app configuration's file name, or a client ID: a single path component, as results keys are. */
-const isConfigurationName = (name: string): boolean =>
-  name !== '' && name !== '.' && name !== '..' && !/[\\/]/.test(name)
+/**
+ * An entry names each app configuration it applies to by its file name (`shopify.app.toml` or
+ * `shopify.app.<name>.toml`), or by a client ID passed with `--client-id`: a token without dots, whitespace, or path
+ * separators. Any other name could never match.
+ */
+function configurationProblem(name: string): string | undefined {
+  if (name.trim() !== name) return 'must not start or end with whitespace'
+  if (isValidFormatAppConfigurationFileName(name) || /^[^\s./\\]+$/.test(name)) return undefined
+  return 'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
+}
 
 const suppressionSchema = zod.strictObject(
   {
@@ -68,15 +78,21 @@ const suppressionSchema = zod.strictObject(
       const problem = pathProblem(path)
       if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
     }),
-    // Without `code`, the entry covers every finding of the check in the file.
-    code: nonBlankText(MAX_SNIPPET_LENGTH).optional(),
+    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs another
+    // character. Without `code`, the entry covers every finding of the check in the file.
+    code: nonBlankText(MAX_SNIPPET_LENGTH)
+      .refine(
+        (code) => code.trim() === '' || /[^\s,;]/.test(code),
+        'must contain more than whitespace, commas, and semicolons',
+      )
+      .optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
     configurations: zod
       .array(
-        requiredString().refine(
-          isConfigurationName,
-          'must be an app configuration file name, such as shopify.app.toml, or a client ID',
-        ),
+        requiredString().superRefine((name, context) => {
+          const problem = configurationProblem(name)
+          if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
+        }),
         {required_error: 'required', invalid_type_error: 'must be an array'},
       )
       .min(1, 'must list at least one app configuration'),

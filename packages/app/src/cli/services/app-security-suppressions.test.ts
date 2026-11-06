@@ -26,6 +26,9 @@ const agentEntry: AppSecuritySuppression = {
   configurations: ['shopify.app.toml', 'shopify.app.production.toml'],
 }
 
+const CONFIGURATION_PROBLEM =
+  'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
+
 async function writeSuppressionsFile(appDirectory: string, contents: string): Promise<string> {
   const path = appSecuritySuppressionsPath(appDirectory)
   await writeFile(path, contents)
@@ -269,6 +272,12 @@ describe('readAppSecuritySuppressions', () => {
       ['a Windows drive path', 'C:/app/session.ts', 'suppressions[0].path: must be relative to the app directory'],
       ['backslashes', 'test\\fixtures\\session.ts', 'suppressions[0].path: must use / as the separator'],
       ['an empty path', '', 'suppressions[0].path: must not be empty'],
+      ...[' app/session.ts', 'app/session.ts ', 'app/session.ts\n'].map((path) => [
+        `the path ${JSON.stringify(path)}, with whitespace around it`,
+        path,
+        'suppressions[0].path: must not start or end with whitespace',
+      ]),
+      ['a NUL character', 'app/session\u0000.ts', "suppressions[0].path: can't contain a NUL character"],
       ...['./test/session.ts', 'test//session.ts', 'test/../session.ts', 'test/', '..'].map((path) => [
         `the unnormalized path ${path}`,
         path,
@@ -300,18 +309,48 @@ describe('readAppSecuritySuppressions', () => {
         {configurations: []},
         'suppressions[0].configurations: must list at least one app configuration',
       ],
-      [
-        'a configuration path',
-        {configurations: ['shopify.app.toml', 'config/shopify.app.toml']},
-        'suppressions[0].configurations[1]: must be an app configuration file name, such as shopify.app.toml, or a client ID',
-      ],
+      ...[';', ' , ', ',;\n'].map((code) => [
+        `the code ${JSON.stringify(code)}`,
+        {code},
+        'suppressions[0].code: must contain more than whitespace, commas, and semicolons',
+      ]),
     ])('rejects %s', async (_name, changes, problem) => {
       await expect(entryProblems(changes)).resolves.toStrictEqual([problem])
     })
 
-    test('accepts a client ID as a configuration', async () => {
+    test.each([
+      ['a configuration path', 'config/shopify.app.toml'],
+      ['a configuration name without .toml', 'shopify.app.production'],
+      ['a file name that is not an app configuration', 'shopify.app.toml.bak'],
+      ['an app configuration file name with a space', 'shopify.app.my store.toml'],
+      ['a name with a dot that is not an app configuration', 'production.toml'],
+      ['a client ID with a space', 'client id'],
+      ['an empty name', ''],
+    ])('rejects %s as a configuration', async (_name, configuration) => {
+      await expect(entryProblems({configurations: ['shopify.app.toml', configuration]})).resolves.toStrictEqual([
+        `suppressions[0].configurations[1]: ${CONFIGURATION_PROBLEM}`,
+      ])
+    })
+
+    test.each([' shopify.app.toml', 'shopify.app.toml ', '1234567890abcdef\t'])(
+      'rejects the configuration %j, with whitespace around it',
+      async (configuration) => {
+        await expect(entryProblems({configurations: [configuration]})).resolves.toStrictEqual([
+          'suppressions[0].configurations[0]: must not start or end with whitespace',
+        ])
+      },
+    )
+
+    test('accepts app configuration file names and client IDs as configurations', async () => {
       await inTemporaryDirectory(async (directory) => {
-        const entry = {...agentEntry, configurations: ['1234567890abcdef1234567890abcdef']}
+        const configurations = [
+          'shopify.app.toml',
+          'shopify.app.production.toml',
+          'shopify.app.my-store_2.toml',
+          '1234567890abcdef1234567890abcdef',
+          'test-client-id',
+        ]
+        const entry = {...agentEntry, configurations}
         await writeSuppressionsFile(directory, suppressionsJson([entry]))
 
         await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([entry])
