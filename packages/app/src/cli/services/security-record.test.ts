@@ -669,6 +669,48 @@ describe('securityRecord', () => {
       })
     })
 
+    test('rejects oversized suppression output before replacing the recorded findings', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createAppWithRoute(directory)
+        await record(appRoot, testDependencies(documentWith([])))
+        const previousFindings = await readFile(artifactPaths(appRoot).agentFindingsPath)
+        const file = {schema_version: 1, suppressions: [], padding: ''}
+        const emptySize = Buffer.byteLength(`${JSON.stringify(file, null, 2)}\n`)
+        file.padding = 'x'.repeat(5_000_000 - emptySize - 10)
+        const previousSuppressions = `${JSON.stringify(file, null, 2)}\n`
+        await writeFile(appSecuritySuppressionsPath(appRoot), previousSuppressions)
+        const dependencies = testDependencies(documentWith([finding({line: 3, suppression})]))
+
+        await expect(record(appRoot, dependencies)).rejects.toThrow('would be larger than 5 MB')
+
+        expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
+        await expect(readFile(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(previousFindings)
+        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(previousSuppressions)
+        await expect(fileExists(`${appSecuritySuppressionsPath(appRoot)}.lock`)).resolves.toBe(false)
+      })
+    })
+
+    test('reports a partial write if suppressions change after the findings were recorded', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createAppWithRoute(directory)
+        const dependencies = testDependencies(documentWith([finding({line: 3, suppression})]))
+        const edited = JSON.stringify({schema_version: 1, suppressions: [], editor: 'changed'})
+        dependencies.writeAgentFindings = async (...args) => {
+          const path = await writeAgentFindings(...args)
+          await writeFile(appSecuritySuppressionsPath(appRoot), edited)
+          return path
+        }
+
+        await expect(record(appRoot, dependencies)).rejects.toMatchObject({
+          code: 'suppressions-save-failed',
+          cause: {code: 'suppressions-file-changed'},
+        })
+        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(edited)
+        expect((await readRecorded(appRoot)).checks[0]?.findings[0]?.suppression).toStrictEqual(suppression)
+        await expect(fileExists(`${appSecuritySuppressionsPath(appRoot)}.lock`)).resolves.toBe(false)
+      })
+    })
+
     test('lists the --client-id as the configuration of a new entry', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createAppWithRoute(directory)

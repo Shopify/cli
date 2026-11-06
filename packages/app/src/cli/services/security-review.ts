@@ -315,6 +315,7 @@ async function suppressFinding(
   const {path, saved} = await saveAppSecuritySuppressions(
     selection.appDirectory,
     changes.map(({change}) => change),
+    entries,
   )
   return {
     path,

@@ -711,7 +711,7 @@ describe('saveAppSecuritySuppressions', () => {
 
   test('creates the file with schema_version 1, as two-space JSON with a trailing newline, outside .shopify', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const saved = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}])
+      const saved = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], [])
 
       const path = appSecuritySuppressionsPath(directory)
       expect(saved).toStrictEqual({path, saved: [{index: 0, change: 'added', entry: newEntry}]})
@@ -735,10 +735,14 @@ describe('saveAppSecuritySuppressions', () => {
       const originalText = `${JSON.stringify(original, null, 2)}\n`
       await writeSuppressionsFile(directory, originalText)
 
-      const {saved} = await saveAppSecuritySuppressions(directory, [
-        {type: 'add-configuration', index: 0, configuration: 'shopify.app.staging.toml'},
-        {type: 'add', entry: newEntry},
-      ])
+      const {saved} = await saveAppSecuritySuppressions(
+        directory,
+        [
+          {type: 'add-configuration', index: 0, configuration: 'shopify.app.staging.toml'},
+          {type: 'add', entry: newEntry},
+        ],
+        [deterministicEntry, agentEntry],
+      )
 
       const text = await readFile(appSecuritySuppressionsPath(directory))
       const expected = {
@@ -771,7 +775,7 @@ describe('saveAppSecuritySuppressions', () => {
       const invalid = suppressionsJson([{...deterministicEntry, kind: 'wont_fix'}])
       await writeSuppressionsFile(directory, invalid)
 
-      const error: unknown = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}]).catch(
+      const error: unknown = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], []).catch(
         (error: unknown) => error,
       )
 
@@ -789,9 +793,105 @@ describe('saveAppSecuritySuppressions', () => {
       const path = await writeSuppressionsFile(directory, suppressionsJson([]))
       await chmod(path, 0o640)
 
-      await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}])
+      await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], [])
 
       expect((await stat(path)).mode & 0o777).toBe(0o640)
+    })
+  })
+
+  test.each(['reorder', 'delete'] as const)(
+    'refuses a stale entry index after %s without changing the file',
+    async (change) => {
+      await inTemporaryDirectory(async (directory) => {
+        const expected = [deterministicEntry, agentEntry]
+        const changed = change === 'reorder' ? [...expected].reverse() : [agentEntry]
+        const text = suppressionsJson(changed)
+        await writeSuppressionsFile(directory, text)
+
+        await expect(
+          saveAppSecuritySuppressions(
+            directory,
+            [{type: 'add-configuration', index: 0, configuration: 'shopify.app.staging.toml'}],
+            expected,
+          ),
+        ).rejects.toMatchObject({code: 'suppressions-file-changed'})
+
+        await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(text)
+        await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
+      })
+    },
+  )
+
+  test('validates new entries before the other artifact is written', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      let called = false
+      await expect(
+        saveAppSecuritySuppressions(directory, [{type: 'add', entry: {...newEntry, reason: ''}}], [], async () => {
+          called = true
+        }),
+      ).rejects.toMatchObject({code: 'suppressions-file-invalid'})
+      expect(called).toBe(false)
+      await expect(readdir(directory)).resolves.toStrictEqual([])
+    })
+  })
+
+  test('releases the lock and preserves the file if the other artifact write fails', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const original = suppressionsJson([])
+      await writeSuppressionsFile(directory, original)
+      const error = new Error('The other artifact could not be written')
+      await expect(
+        saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], [], async () => {
+          throw error
+        }),
+      ).rejects.toBe(error)
+      await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(original)
+      await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
+      await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], [])
+      await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([newEntry])
+    })
+  })
+
+  test('refuses an external edit during preparation and keeps its content', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const edited = suppressionsJson([agentEntry])
+      await expect(
+        saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], [], async () => {
+          await writeSuppressionsFile(directory, edited)
+        }),
+      ).rejects.toMatchObject({code: 'suppressions-file-changed'})
+      await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(edited)
+      await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
+    })
+  })
+
+  test('does not let a concurrent writer overwrite the prepared save', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      let signalPrepared!: () => void
+      const prepared = new Promise<void>((resolve) => {
+        signalPrepared = resolve
+      })
+      let resume!: () => void
+      const continueSave = new Promise<void>((resolve) => {
+        resume = resolve
+      })
+      const first = saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], [], async () => {
+        signalPrepared()
+        await continueSave
+      })
+      // Observe failures while the other save is in progress.
+      const firstResult = first.catch((error: unknown) => error)
+      try {
+        await prepared
+        await expect(
+          saveAppSecuritySuppressions(directory, [{type: 'add', entry: agentEntry}], []),
+        ).rejects.toMatchObject({code: 'ELOCKED'})
+      } finally {
+        resume()
+      }
+      await expect(firstResult).resolves.toMatchObject({saved: [{entry: newEntry}]})
+      await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([newEntry])
+      await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
     })
   })
 })

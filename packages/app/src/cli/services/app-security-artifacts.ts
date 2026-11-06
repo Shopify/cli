@@ -99,11 +99,15 @@ export async function writeAgentFindings(
 }
 
 /**
- * Replaces shopify.app-security.json atomically with `value` as two-space JSON and a trailing newline, the format of
+ * Prepares the validated bytes for an atomic replacement of shopify.app-security.json, returning its commit function.
+ * Serializes `value` as two-space JSON and a trailing newline, the format of
  * the results files. The file is committed, so it isn't private like the results: a new file is readable by others,
  * and an existing one keeps its permissions. Unlike the results writers, this never touches `.shopify/`.
  */
-export async function writeAppSecuritySuppressionsFile(appDirectory: string, value: unknown): Promise<string> {
+export async function prepareAppSecuritySuppressionsFile(
+  appDirectory: string,
+  value: unknown,
+): Promise<() => Promise<string>> {
   const path = appSecuritySuppressionsPath(appDirectory)
   const contents = encodeArtifact(value)
   if (Buffer.byteLength(contents, 'utf8') > MAX_ARTIFACT_FILE_SIZE_BYTES) {
@@ -113,8 +117,11 @@ export async function writeAppSecuritySuppressionsFile(appDirectory: string, val
     )
   }
   const existing = await lstatIfExists(path)
-  await writeAtomicArtifact(path, contents, existing ? existing.mode & 0o777 : 0o644)
-  return path
+  await assertNotSymbolicLink(path)
+  return async () => {
+    await writeAtomicArtifact(path, contents, existing ? existing.mode & 0o777 : 0o644)
+    return path
+  }
 }
 
 /** Whether the results directory for the key exists. */

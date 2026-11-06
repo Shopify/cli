@@ -2,7 +2,7 @@ import {
   APP_SECURITY_SUPPRESSIONS_FILE_NAME,
   appSecuritySuppressionsPath,
   readJsonArtifact,
-  writeAppSecuritySuppressionsFile,
+  prepareAppSecuritySuppressionsFile,
 } from './app-security-artifacts.js'
 import {projectAppSecurityPath} from './app-security/result.js'
 import {
@@ -22,6 +22,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
+import lockfile from 'proper-lockfile'
+import {isDeepStrictEqual} from 'node:util'
 import type {AppSecuritySelection} from './app-security-selection.js'
 
 const SUPPRESSIONS_SCHEMA_VERSION = 1
@@ -456,42 +458,72 @@ export interface SavedSuppression {
 /**
  * Applies the changes to `<app directory>/shopify.app-security.json` in one atomic write, creating the file with
  * schema_version 1 when it doesn't exist. Refuses an invalid file with the error of `readAppSecuritySuppressions`, and
- * writes nothing. New entries go at the end. Every other key, value and order stays as the file has them, in two-space
+ * writes nothing. Checks the entries used to plan the changes and serializes CLI writers with a file lock.
+ * Validates the final bytes before `beforeCommit`, then commits those same bytes. New entries go at the end. Every
+ * other key, value and order stays as the file has them, in two-space
  * JSON with a trailing newline, so a file in that format changes only where an entry is added or extended.
  */
 export async function saveAppSecuritySuppressions(
   appDirectory: string,
   changes: SuppressionChange[],
+  expectedEntries: AppSecuritySuppression[],
+  beforeCommit?: () => Promise<void>,
 ): Promise<{path: string; saved: SavedSuppression[]}> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const release = await lockfile.lock(appDirectory, {lockfilePath: `${path}.lock`})
+  try {
+    const document = await readSuppressionDocument(appDirectory)
+    const parsed = parseSuppressionsFile(document)
+    if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
+    if (!isDeepStrictEqual(parsed.suppressions, expectedEntries)) abortChangedSuppressions()
+
+    const updated = copySuppressionDocument(document)
+    const saved = changes.map((change): SavedSuppression => {
+      if (change.type === 'add') {
+        updated.suppressions.push(change.entry)
+        return {index: updated.suppressions.length - 1, change: 'added', entry: change.entry}
+      }
+      const entry = updated.suppressions[change.index]
+      if (!entry) abortChangedSuppressions()
+      entry.configurations.push(change.configuration)
+      return {index: change.index, change: 'configuration-added', entry: suppressionSchema.parse(entry)}
+    })
+    const validated = parseSuppressionsFile(updated)
+    if (!validated.ok) abortInvalidSuppressionsFile(path, validated.errors)
+    const commit = await prepareAppSecuritySuppressionsFile(appDirectory, updated)
+    await beforeCommit?.()
+    // The lock serializes CLI writers. Also refuse edits made by an editor while another artifact was written.
+    if (!isDeepStrictEqual(await readSuppressionDocument(appDirectory), document)) abortChangedSuppressions()
+    await commit()
+    return {path, saved}
+  } finally {
+    await release()
+  }
+}
+
+// Keep unknown fields at both levels when a newer CLI has added them to the committed file.
+const rawSuppressionsFileSchema = suppressionsFileSchema
+  .extend({suppressions: zod.array(suppressionSchema.passthrough())})
+  .passthrough()
+
+function copySuppressionDocument(value: unknown): zod.infer<typeof rawSuppressionsFileSchema> {
+  rawSuppressionsFileSchema.parse(value)
+  // Zod reorders known and unknown keys. Clone the validated input to retain the committed file's key order.
+  return structuredClone(value) as zod.infer<typeof rawSuppressionsFileSchema>
+}
+
+async function readSuppressionDocument(appDirectory: string): Promise<unknown> {
   const path = appSecuritySuppressionsPath(appDirectory)
   const file = await readJsonArtifact(path)
   if (file.status === 'invalid') abortInvalidSuppressionsFile(path, file.errors)
-  const document: unknown =
-    file.status === 'missing' ? {schema_version: SUPPRESSIONS_SCHEMA_VERSION, suppressions: []} : file.value
-  const parsed = parseSuppressionsFile(document)
-  if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
+  return file.status === 'missing' ? {schema_version: SUPPRESSIONS_SCHEMA_VERSION, suppressions: []} : file.value
+}
 
-  // The file is valid, so its entries are objects with a configurations array. They're edited as the file holds them,
-  // with any keys that the reader drops.
-  const fileEntries: unknown[] =
-    isJsonObject(document) && Array.isArray(document.suppressions) ? document.suppressions : []
-  const saved = changes.map((change): SavedSuppression => {
-    if (change.type === 'add') {
-      fileEntries.push(change.entry)
-      return {index: fileEntries.length - 1, change: 'added', entry: change.entry}
-    }
-    const fileEntry = fileEntries[change.index]
-    if (isJsonObject(fileEntry) && Array.isArray(fileEntry.configurations)) {
-      fileEntry.configurations.push(change.configuration)
-    }
-    const entry = parsed.suppressions[change.index]!
-    return {
-      index: change.index,
-      change: 'configuration-added',
-      entry: {...entry, configurations: [...entry.configurations, change.configuration]},
-    }
-  })
-
-  await writeAppSecuritySuppressionsFile(appDirectory, document)
-  return {path, saved}
+function abortChangedSuppressions(): never {
+  const error = new AbortError(
+    'The app security suppressions changed before they could be saved.',
+    'Run the command again to use the current suppressions file.',
+  )
+  error.code = 'suppressions-file-changed'
+  throw error
 }

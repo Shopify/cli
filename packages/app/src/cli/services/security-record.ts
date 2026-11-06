@@ -20,6 +20,7 @@ import {
   readAppSecuritySuppressions,
   saveAppSecuritySuppressions,
   suppressionConfiguration,
+  type AppSecuritySuppression,
   type SavedSuppression,
   type SuppressionChange,
   type SuppressionResults,
@@ -170,15 +171,39 @@ export default async function securityRecord(
   }
 
   const suppressions = await planAgentSuppressions(selection, document)
-  const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
-  const saved =
-    suppressions && suppressions.changes.length > 0
-      ? (await saveAppSecuritySuppressions(selection.appDirectory, suppressions.changes)).saved
-      : []
+  let path: string | undefined
+  const writeFindings = async () => {
+    path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
+  }
+  let saved: SavedSuppression[] = []
+  try {
+    if (suppressions && suppressions.changes.length > 0) {
+      saved = (
+        await saveAppSecuritySuppressions(
+          selection.appDirectory,
+          suppressions.changes,
+          suppressions.entries,
+          writeFindings,
+        )
+      ).saved
+    } else {
+      await writeFindings()
+    }
+  } catch (error) {
+    if (path === undefined) throw error
+    const partialWrite = new AbortError(
+      'Agent findings were recorded, but the suppressions could not be saved.',
+      'Review the results and run record again to save the suppressions.',
+    )
+    partialWrite.cause = error
+    partialWrite.code = 'suppressions-save-failed'
+    partialWrite.details = {findingsPath: path, suppressionsPath: appSecuritySuppressionsPath(selection.appDirectory)}
+    throw partialWrite
+  }
   const findings = document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
   return {
-    path,
+    path: path!,
     checks: document.checks.length,
     findings,
     suppressions: suppressions
@@ -201,7 +226,12 @@ export default async function securityRecord(
 async function planAgentSuppressions(
   selection: AppSecuritySelection,
   document: AgentFindingsDocument,
-): Promise<{changes: SuppressionChange[]; alreadySaved: number; notSaved: RecordedSuppressions['notSaved']} | null> {
+): Promise<{
+  entries: AppSecuritySuppression[]
+  changes: SuppressionChange[]
+  alreadySaved: number
+  notSaved: RecordedSuppressions['notSaved']
+} | null> {
   const targets = document.checks.flatMap((check) =>
     check.findings.flatMap((finding, findingIndex) =>
       finding.suppression?.kind === undefined
@@ -231,6 +261,7 @@ async function planAgentSuppressions(
     plan: planSuppression({source: 'agent', ...target}, {kind, reason}, results, entries),
   }))
   return {
+    entries,
     changes: plans.flatMap(({plan}) => (plan.status === 'change' ? [plan.change] : [])),
     alreadySaved: plans.filter(({plan}) => plan.status === 'saved').length,
     notSaved: plans.flatMap(({target, plan}) =>
