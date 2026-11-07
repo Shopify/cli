@@ -169,6 +169,47 @@ describe('reviewAppSecurityResults', () => {
   })
 
   describe('--blocking', () => {
+    test.each(['needs_review', 'definite', undefined] as const)(
+      'uses deterministic confidence %s to decide whether a finding blocks',
+      (confidence) => {
+        const check = deterministicFindingsDocument.checks[0]!
+        const finding = {...check.findings[0]!, confidence}
+        const deterministic = {...deterministicFindingsDocument, checks: [{...check, findings: [finding]}]}
+
+        expect(review({deterministic}, {blocking: 'high'}).blocking.blockedChecks).toBe(
+          confidence === 'needs_review' ? 0 : 1,
+        )
+        const mixed = {...deterministic, checks: [{...check, findings: [finding, check.findings[0]!]}]}
+        expect(review({deterministic: mixed}, {blocking: 'high'}).blocking.blockedChecks).toBe(1)
+      },
+    )
+
+    test.each([
+      ['prefer-agent', '2026-09-01T11:00:00.000Z', 'prefer-agent'],
+      ['prefer-agent', '2026-09-01T09:00:00.000Z', 'union'],
+      ['union', '2026-09-01T11:00:00.000Z', 'union'],
+    ] as const)('keeps agent findings blocking with %s at %s', (precedence, generatedAt, appliedPrecedence) => {
+      const check = deterministicFindingsDocument.checks[0]!
+      const deterministic: DeterministicFindingsDocument = {
+        ...deterministicFindingsDocument,
+        checks: [{...check, findings: [{...check.findings[0]!, confidence: 'needs_review'}]}],
+      }
+      const agentCheck = agentFindingsDocument.checks[0]!
+      const agent: AgentFindingsDocument = {
+        ...agentFindingsDocument,
+        generated_at: generatedAt,
+        checks: [{...agentCheck, snapshot: {...agentCheck.snapshot, precedence}}],
+      }
+
+      const result = review({deterministic, agent}, {blocking: 'high'})
+      expect(result.checks[0]!.applied_precedence).toBe(appliedPrecedence)
+      expect(result.blocking.blockedChecks).toBe(1)
+      expect(
+        review({deterministic, agent: {...agent, checks: [{...agent.checks[0]!, findings: []}]}}, {blocking: 'high'})
+          .blocking.blockedChecks,
+      ).toBe(0)
+    })
+
     test('never breaches at none', () => {
       expect(review(both, {blocking: 'none'}).blocking).toEqual({level: 'none', blockedChecks: 0})
     })

@@ -28,6 +28,7 @@ import {
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
+import {scanStorefrontUnsafeEval} from '../rules/storefront-unsafe-eval.js'
 import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
 import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
@@ -171,6 +172,11 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   {
     ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 4),
     analysisMode: 'regex',
+    extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
+  },
+  {
+    ...jsCheck('STOREFRONT_UNSAFE_EVAL', (context) => scanStorefrontUnsafeEval(themeFiles(context)), 'theme'),
+    analysisMode: 'ast',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
   {

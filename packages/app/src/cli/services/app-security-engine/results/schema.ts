@@ -52,7 +52,7 @@ export const storedFindingSchema = zod.object({
   evidence: zod.array(storedEvidenceSchema),
   snippet: zod.string().optional(),
   fix: fixSchema.optional(),
-  confidence: zod.enum(['high', 'medium', 'low']).optional(),
+  confidence: zod.enum(['definite', 'needs_review', 'high', 'medium', 'low']).optional(),
   reasoning: zod.string().optional(),
   suppression: zod.object({justification: zod.string()}).optional(),
 })

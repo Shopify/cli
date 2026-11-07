@@ -169,6 +169,15 @@ importers:
 
   packages/app:
     dependencies:
+      '@babel/parser':
+        specifier: 7.29.7
+        version: 7.29.7
+      '@babel/traverse':
+        specifier: 7.29.7
+        version: 7.29.7
+      '@babel/types':
+        specifier: 7.29.7
+        version: 7.29.7
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.14.2)
@@ -242,6 +251,9 @@ importers:
         specifier: 8.21.0
         version: 8.21.0
     devDependencies:
+      '@types/babel__traverse':
+        specifier: 7.28.0
+        version: 7.28.0
       '@types/diff':
         specifier: ^5.0.3
         version: 5.2.3

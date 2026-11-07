@@ -5709,8 +5709,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum confirmed finding severity that causes a non-zero exit code: high, medium, or low.
+      Defaults to none. Deterministic findings marked as needing review don't block.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -5829,7 +5829,7 @@ DESCRIPTION
           },
           "valid": {
             "type": "boolean",
-            "description": "Whether --blocking passed: no finding of the scan has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings."
+            "description": "Whether --blocking passed: no finding of the scan, excluding those needing review, has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings."
           },
           "app": {
             "$ref": "#/definitions/AppSecurityApp"
@@ -6627,8 +6627,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
-      none, which never fails on findings.
+      [default: none] The minimum confirmed finding severity that causes a non-zero exit code: high, medium, or low.
+      Defaults to none. Deterministic findings marked as needing review don't block.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -6697,7 +6697,7 @@ DESCRIPTION
       },
       "valid": {
         "type": "boolean",
-        "description": "Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes."
+        "description": "Whether --blocking passed: no check in checks has an active blocking finding and a severity at or above the level. Deterministic findings needing review and unresolved status alone don't fail it, and --blocking none always passes."
       },
       "app": {
         "$ref": "#/definitions/AppSecurityApp"
@@ -7465,6 +7465,21 @@ DESCRIPTION
               "$ref": "#/definitions/AppSecurityEvidence"
             }
           },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "definite",
+                  "needs-review"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the finding is definite or needs agent review. Findings needing review don't block. Null when not recorded."
+          },
           "fix": {
             "anyOf": [
               {
@@ -7511,6 +7526,7 @@ DESCRIPTION
           "message",
           "snippet",
           "evidence",
+          "confidence",
           "fix"
         ],
         "additionalProperties": false,

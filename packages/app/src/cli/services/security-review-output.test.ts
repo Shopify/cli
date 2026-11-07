@@ -604,6 +604,20 @@ describe('buildSecurityReviewAlerts', () => {
     ])
   })
 
+  test.each([
+    ['needs_review', 'needs review'],
+    ['definite', 'definite'],
+  ] as const)('shows deterministic confidence %s', (confidence, label) => {
+    const check = deterministicFindingsDocument.checks[0]!
+    const deterministic = {
+      ...deterministicFindingsDocument,
+      checks: [{...check, findings: [{...check.findings[0]!, confidence}]}],
+    }
+    const [alert] = buildSecurityReviewAlerts(presenterInput({deterministic, agent: null}))
+
+    expect(alert!.options.customSections![0]!.body).toContainEqual({subdued: `\nConfidence: ${label}`})
+  })
+
   test("links the check's docs page from its box", () => {
     const docsUrl = 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version'
     const deterministic = {

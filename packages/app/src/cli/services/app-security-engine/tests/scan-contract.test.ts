@@ -1,7 +1,8 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
-import {scanDirectory as scan} from './scan-directory.js'
-import {buildAgentChecks} from '../checks/index.js'
+import {scanDirectory as scan, scanAppDirectory} from './scan-directory.js'
+import {buildAgentChecks, recordAgentFindings} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
+import {combineFindings, isCheckPassed} from '../results/combine.js'
 import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {afterEach, describe, expect, test} from 'vitest'
@@ -233,6 +234,7 @@ describe('framework and surface detection', () => {
       (execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
     )!
     const themeUnsafe = theme.scan.checks_executed.find((execution) => execution.id === 'UNSAFE_INNERHTML')!
+    const themeUnsafeEval = theme.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_UNSAFE_EVAL')!
     expect(themeRequestCheck.status).toBe('not_applicable')
     expect(themeRequestCheck.inspected_files).toEqual([])
     expect(themeUnsafe.status).toBe('executed')
@@ -240,6 +242,7 @@ describe('framework and surface detection', () => {
       'extensions/theme/assets/widget.mjs',
       'extensions/theme/blocks/app.liquid',
     ])
+    expect(themeUnsafeEval).toMatchObject({status: 'unresolved', findings: 0})
 
     const mixed = await scan(
       await app({
@@ -265,6 +268,69 @@ describe('framework and surface detection', () => {
       'extensions/theme/blocks/app.liquid',
     ])
     expect(mixed.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML')).toHaveLength(2)
+  })
+
+  test('detects unsafe eval in theme assets and inline Liquid scripts only', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'extensions/theme/shopify.extension.toml': 'type = "theme"\n',
+      'extensions/theme/assets/widget.js': 'window.eval("render()")',
+      'extensions/theme/blocks/app.liquid': '<p>eval(code)</p><script>setTimeout("run()", 1)</script>',
+    })
+    const result = await scan(directory)
+
+    expect(result.issues.filter((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toHaveLength(2)
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_UNSAFE_EVAL')).toMatchObject({
+      status: 'unresolved',
+      findings: 2,
+      inspected_files: ['extensions/theme/assets/widget.js', 'extensions/theme/blocks/app.liquid'],
+    })
+  })
+
+  test('requires a recorded storefront review to resolve deterministic candidates', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'extensions/theme/shopify.extension.toml': 'type = "theme"\n',
+      'extensions/theme/assets/widget.js': 'if (false) eval("render()")',
+    })
+    const {deterministicFindings, agentChecks} = await scanAppDirectory(directory)
+    const id = 'STOREFRONT_UNSAFE_EVAL'
+    expect(agentChecks.checks.find((check) => check.id === id)).toBeDefined()
+    const before = combineFindings({deterministic: deterministicFindings, agent: null}).find(
+      (check) => check.id === id,
+    )!
+    expect(before.status).toBe('unresolved')
+    expect(isCheckPassed(before)).toBe(false)
+    expect(before.findings).toHaveLength(1)
+
+    for (const status of ['unresolved', 'executed'] as const) {
+      const recorded = recordAgentFindings(
+        {
+          schema_version: 1,
+          scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+          checks_executed: [
+            {
+              check_id: id,
+              check_version: 1,
+              status,
+              ...(status === 'unresolved'
+                ? {reason: {code: 'missing_production_artifact', message: 'Production dependencies need review'}}
+                : {}),
+            },
+          ],
+          findings: [],
+        },
+        {engineVersion: deterministicFindings.engine.version},
+      )
+      if (!recorded.ok) throw new Error(recorded.errors.join('; '))
+      const after = combineFindings({deterministic: deterministicFindings, agent: recorded.document}).find(
+        (check) => check.id === id,
+      )!
+      expect(after.status).toBe(status)
+      expect(after.applied_precedence).toBe('prefer-agent')
+      expect(after.findings.map((finding) => finding.disposition)).toEqual(['superseded'])
+      expect(isCheckPassed(after)).toBe(status === 'executed')
+    }
   })
 
   test('requires the Shopify React Router package and reports unsupported app languages', async () => {

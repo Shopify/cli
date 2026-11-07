@@ -242,6 +242,7 @@ function eolApiVersionJson(appDirectory: string) {
     findings: [
       {
         source: 'deterministic',
+        confidence: null,
         disposition: 'active',
         location: {filePath: resolve(appDirectory, 'shopify.app.toml'), line: 8, column: null},
         message: 'api_version 2024-01 is past its support window.',
@@ -339,6 +340,7 @@ describe('app security review command boundary', () => {
             findings: [
               {
                 source: 'deterministic',
+                confidence: null,
                 disposition: 'active',
                 location: {filePath: resolve(appDirectory, 'app', 'routes', 'orders.tsx'), line: 5, column: 3},
                 message: 'accessToken flows into console.log.',
@@ -415,6 +417,7 @@ describe('app security review command boundary', () => {
             findings: [
               {
                 source: 'deterministic',
+                confidence: null,
                 disposition: 'superseded',
                 location: {filePath: resolve(appDirectory, 'app', 'routes', 'orders.tsx'), line: 5, column: 3},
                 message: 'accessToken flows into console.log.',

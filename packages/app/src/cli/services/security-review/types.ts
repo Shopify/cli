@@ -55,6 +55,12 @@ const appSecurityDeterministicFindingSchema = zod
   .object({
     source: zod.literal('deterministic'),
     ...findingFields(),
+    confidence: zod
+      .enum(['definite', 'needs-review'])
+      .nullable()
+      .describe(
+        "Whether the finding is definite or needs agent review. Findings needing review don't block. Null when not recorded.",
+      ),
     fix: zod
       .object({
         description: zod.string(),
@@ -246,7 +252,7 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
       valid: zod
         .boolean()
         .describe(
-          'Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes.',
+          "Whether --blocking passed: no check in checks has an active blocking finding and a severity at or above the level. Deterministic findings needing review and unresolved status alone don't fail it, and --blocking none always passes.",
         ),
       app: appSecurityAppSchema,
       resultsDirectory: createAbsolutePathSchema().describe('The absolute path of the results directory.'),

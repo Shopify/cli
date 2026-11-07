@@ -337,6 +337,7 @@ describe('renderSecurityReviewResult as JSON', () => {
           findings: [
             {
               source: 'deterministic',
+              confidence: null,
               disposition: 'superseded',
               location: {filePath: appPath('app/routes/orders.tsx'), line: 12, column: 5},
               message: 'accessToken flows into console.log.',
@@ -624,6 +625,7 @@ describe('renderSecurityReviewResult as JSON', () => {
     ['high', 'high'],
     ['medium', 'medium'],
     ['low', 'low'],
+    ['needs_review', null],
   ] as const)('maps agent confidence %s to %s', async (confidence, expected) => {
     const finding: StoredFinding = {
       location: {file: 'app/routes/orders.tsx', line: 3},
@@ -635,6 +637,25 @@ describe('renderSecurityReviewResult as JSON', () => {
 
     await expect(firstCheck({deterministic: null, agent})).resolves.toMatchObject({
       findings: [{source: 'agent', confidence: expected}],
+    })
+  })
+
+  test.each([
+    ['definite', 'definite'],
+    ['needs_review', 'needs-review'],
+    [undefined, null],
+    ['high', null],
+  ] as const)('projects deterministic confidence %s as %s', async (confidence, expected) => {
+    const finding: StoredFinding = {
+      location: {file: 'app/a.ts', line: 1},
+      message: 'A finding.',
+      evidence: [],
+      confidence,
+    }
+    const deterministic = deterministicDocument({checks: [deterministicCheck({findings: [finding]})]})
+
+    await expect(firstCheck({deterministic, agent: null})).resolves.toMatchObject({
+      findings: [{source: 'deterministic', confidence: expected}],
     })
   })
 

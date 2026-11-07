@@ -92,13 +92,15 @@ function scopeDiffers({deterministic, agent}: AppSecurityResults['sources']): bo
 }
 
 /**
- * A check blocks when it has an active finding and its severity is at or above the level, whatever its status.
- * Unresolved status alone never blocks: an unresolved check without active findings passes the gate.
+ * A check blocks when it has a confirmed active finding at or above the level, whatever its status. Candidate-only
+ * deterministic findings marked needs_review do not block. Unresolved status alone never blocks.
  */
 function countBlockedChecks(checks: CombinedCheck[], level: AppSecurityBlockingLevel): number {
   if (level === 'none') return 0
   return checks.filter(
-    (check) => activeFindings(check).length > 0 && SEVERITY_RANK[check.severity] >= SEVERITY_RANK[level],
+    (check) =>
+      SEVERITY_RANK[check.severity] >= SEVERITY_RANK[level] &&
+      activeFindings(check).some((finding) => finding.source === 'agent' || finding.confidence !== 'needs_review'),
   ).length
 }
 
