@@ -123,7 +123,7 @@ export type LogType =
   /** A UI extension error. */
   | 'UI_EXTENSION_ERROR'
   /** A webhook delivery. */
-  | 'WEBHOOK_DELIVERY';
+  | 'WEBHOOK';
 
 /** The input fields for a time range of up to 7 days within the last 30 days. logQueryLimits returns these limits. */
 export type TimestampRangeInput = {
