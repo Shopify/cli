@@ -39,10 +39,14 @@ const PUBLIC_API_VERSIONS_QUERY = `
  * Runs the version-discovery GraphQL query against the Admin API. Errors are classified
  * the same way as the execute-phase request: 401/404 trigger a stored-auth re-auth flow,
  * 402 / fetch-aborts surface as user-facing `AbortError`s.
+ *
+ * The version list only changes when Shopify releases a new API version, so a successful
+ * response is cached per store and token for a day. Pass `useCache: false` to skip the cache.
  */
 export async function fetchPublicApiVersions(input: {
   adminSession: AdminSession
   session: StoredStoreAppSession
+  useCache?: boolean
 }): Promise<ApiVersion[]> {
   try {
     const response = await graphqlRequest<PublicApiVersionsResponse>({
@@ -51,6 +55,7 @@ export async function fetchPublicApiVersions(input: {
       url: adminUrl(input.adminSession.storeFqdn, 'unstable', input.adminSession),
       token: input.adminSession.token,
       responseOptions: {handleErrors: false},
+      ...(input.useCache === false ? {} : {cacheOptions: {cacheTTL: {hours: 24}}}),
     })
     return response.publicApiVersions
   } catch (error) {

@@ -91,6 +91,24 @@ describe('prepareAdminStoreGraphQLContext', () => {
     expect(fetchPublicApiVersions).not.toHaveBeenCalled()
   })
 
+  test('checks a fresh version list before rejecting a version missing from the cached one', async () => {
+    vi.mocked(fetchPublicApiVersions)
+      .mockResolvedValueOnce([{handle: '2025-10', supported: true}])
+      .mockResolvedValueOnce([
+        {handle: '2026-01', supported: true},
+        {handle: '2025-10', supported: true},
+      ])
+
+    const result = await prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: '2026-01'})
+
+    expect(result.version).toBe('2026-01')
+    expect(fetchPublicApiVersions).toHaveBeenLastCalledWith({
+      adminSession: {token: 'token', storeFqdn: store},
+      session: storedSession,
+      useCache: false,
+    })
+  })
+
   test('throws when the requested API version is invalid', async () => {
     await expect(prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: '1999-01'})).rejects.toThrow(
       'Invalid API version',
