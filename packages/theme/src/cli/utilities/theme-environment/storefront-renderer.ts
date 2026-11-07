@@ -1,4 +1,5 @@
 import {DevServerSession, DevServerRenderContext} from './types.js'
+import {storefrontFetch} from './storefront-fetch.js'
 import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
 import {parseCookies, serializeCookies} from './cookies.js'
 import {createFetchError} from '../errors.js'
@@ -39,8 +40,7 @@ export async function render(session: DevServerSession, context: DevServerRender
 
     const bodyParams = storefrontReplaceTemplatesParams(context)
 
-    // eslint-disable-next-line no-restricted-globals
-    response = await fetch(url, {
+    response = await storefrontFetch(url, {
       method: 'POST',
       body: bodyParams,
       redirect: 'manual',
@@ -51,8 +51,7 @@ export async function render(session: DevServerSession, context: DevServerRender
   } else {
     outputDebug(`→ Rendering ${url}...`)
 
-    // eslint-disable-next-line no-restricted-globals
-    response = await fetch(url, {
+    response = await storefrontFetch(url, {
       method: context.method,
       redirect: 'manual',
       headers: requestHeaders,
