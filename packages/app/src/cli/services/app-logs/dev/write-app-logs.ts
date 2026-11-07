@@ -26,7 +26,9 @@ export const writeAppLogsToFile = async ({
 }): Promise<AppLogFile> => {
   const identifier = randomUUID().substring(0, 6)
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
-  const fileName = `${formattedTimestamp}_${appLog.source_namespace}_${appLog.source}_${identifier}.json`
+  const fileName = `${formattedTimestamp}_${sanitizeFilenameSegment(appLog.source_namespace)}_${sanitizeFilenameSegment(
+    appLog.source,
+  )}_${identifier}.json`
   const logContent = toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName})
   const fullOutputPath = joinPath(logsDir, fileName)
 
@@ -42,6 +44,15 @@ export const writeAppLogsToFile = async ({
     stdout.write(`Error while writing log to file: ${error as string}\n`)
     throw error
   }
+}
+
+// `source` and `source_namespace` arrive from the app logs API, so they are outside the CLI's
+// trust boundary. They are interpolated into a filename that is joined onto the logs directory,
+// where a path separator or a `..` segment would place the written log outside that directory.
+// Only the characters the CLI actually emits in these fields are kept, so legitimate values are
+// unchanged while anything path-significant is neutralised before the join.
+function sanitizeFilenameSegment(segment: string): string {
+  return segment.replace(/[^a-zA-Z0-9_-]/g, '-')
 }
 
 function formatTimestampToFilename(logTimestamp: string): string {
