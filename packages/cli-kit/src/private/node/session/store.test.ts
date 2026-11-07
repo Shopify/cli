@@ -1,12 +1,30 @@
 import {Sessions} from './schema.js'
-import {store, fetch, remove, getSessionAlias, setSessionAlias, findSessionByAlias} from './store.js'
-import {getSessions, removeSessions, setSessions, removeCurrentSessionId} from '../conf-store.js'
+import {
+  store,
+  storeSession,
+  fetch,
+  remove,
+  removeSession,
+  getSessionAlias,
+  setSessionAlias,
+  findSessionByAlias,
+} from './store.js'
+import {
+  getCurrentSessionId,
+  getSessionStoreLockPath,
+  getSessions,
+  removeSessions,
+  setSessions,
+  removeCurrentSessionId,
+} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import lockfile from 'proper-lockfile'
 
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 vi.mock('../conf-store.js')
 vi.mock('../../../public/node/context/fqdn.js')
+vi.mock('proper-lockfile')
 
 const mockSessions: Sessions = {
   'identity.fqdn.com': {
@@ -37,6 +55,8 @@ const mockSessions: Sessions = {
 describe('session store', () => {
   beforeEach(() => {
     vi.mocked(identityFqdn).mockResolvedValue('identity.fqdn.com')
+    vi.mocked(getSessionStoreLockPath).mockReturnValue('/tmp/shopify-cli-kit-test')
+    vi.mocked(lockfile.lock).mockResolvedValue(vi.fn())
   })
 
   describe('store', () => {
@@ -46,6 +66,89 @@ describe('session store', () => {
 
       // Then
       expect(setSessions).toHaveBeenCalledWith(JSON.stringify(mockSessions))
+    })
+  })
+
+  describe('storeSession', () => {
+    test('updates one session while preserving the latest sessions for other accounts', async () => {
+      // Given
+      const otherFqdn = 'other.identity.com'
+      const latestSessions: Sessions = {
+        ...mockSessions,
+        [otherFqdn]: mockSessions['identity.fqdn.com']!,
+      }
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(latestSessions))
+      const updatedSession = {
+        ...mockSessions['identity.fqdn.com']!.user1!,
+        identity: {...mockSessions['identity.fqdn.com']!.user1!.identity, accessToken: 'updated-token'},
+      }
+
+      // When
+      await storeSession('identity.fqdn.com', 'user1', updatedSession)
+
+      // Then
+      const storedSessions = JSON.parse(vi.mocked(setSessions).mock.calls[0]![0]) as Sessions
+      expect(storedSessions['identity.fqdn.com']!.user1!.identity.accessToken).toBe('updated-token')
+      expect(storedSessions['identity.fqdn.com']!.user2).toEqual(
+        JSON.parse(JSON.stringify(mockSessions['identity.fqdn.com']!.user2)),
+      )
+      expect(storedSessions[otherFqdn]).toEqual(JSON.parse(JSON.stringify(latestSessions[otherFqdn])))
+    })
+  })
+
+  describe('removeSession', () => {
+    test('removes only the matching session and preserves other accounts', async () => {
+      // Given
+      const otherFqdn = 'other.identity.com'
+      vi.mocked(getSessions).mockReturnValue(
+        JSON.stringify({...mockSessions, [otherFqdn]: mockSessions['identity.fqdn.com']}),
+      )
+
+      // When
+      const removed = await removeSession('identity.fqdn.com', 'user1', mockSessions['identity.fqdn.com']!.user1)
+
+      // Then
+      expect(removed).toBe(true)
+      const storedSessions = JSON.parse(vi.mocked(setSessions).mock.calls[0]![0]) as Sessions
+      expect(storedSessions['identity.fqdn.com']!.user1).toBeUndefined()
+      expect(storedSessions['identity.fqdn.com']!.user2).toEqual(
+        JSON.parse(JSON.stringify(mockSessions['identity.fqdn.com']!.user2)),
+      )
+      expect(storedSessions[otherFqdn]).toEqual(JSON.parse(JSON.stringify(mockSessions['identity.fqdn.com'])))
+    })
+
+    test('clears the current session id when removing that session', async () => {
+      // Given
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
+      vi.mocked(getCurrentSessionId).mockReturnValue('user1')
+
+      // When
+      await removeSession('identity.fqdn.com', 'user1', mockSessions['identity.fqdn.com']!.user1)
+
+      // Then
+      expect(removeCurrentSessionId).toHaveBeenCalledOnce()
+    })
+
+    test('keeps a session that another process has already refreshed', async () => {
+      // Given
+      const refreshedSessions: Sessions = {
+        ...mockSessions,
+        'identity.fqdn.com': {
+          ...mockSessions['identity.fqdn.com'],
+          user1: {
+            ...mockSessions['identity.fqdn.com']!.user1!,
+            identity: {...mockSessions['identity.fqdn.com']!.user1!.identity, refreshToken: 'rotated-token'},
+          },
+        },
+      }
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(refreshedSessions))
+
+      // When
+      const removed = await removeSession('identity.fqdn.com', 'user1', mockSessions['identity.fqdn.com']!.user1)
+
+      // Then
+      expect(removed).toBe(false)
+      expect(setSessions).not.toHaveBeenCalled()
     })
   })
 
