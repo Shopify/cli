@@ -10,6 +10,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 beforeEach(() => vi.stubEnv('CI', ''))
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   vi.unstubAllEnvs()
 })
 
@@ -42,7 +43,7 @@ describe('ensureDirectoryConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: true},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -61,7 +62,7 @@ describe('ensureDirectoryConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: false},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
 
     const confirmed = await ensureDirectoryConfirmed(false)
@@ -103,7 +104,7 @@ describe('ensureLiveThemeConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: true},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
   })
 
@@ -131,35 +132,41 @@ describe('ensureLiveThemeConfirmed', () => {
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
   })
 
-  test('does not prompt for confirmation if acting on a live theme and allowLive flag is true', async () => {
-    // Given
-    await ensureLiveThemeConfirmed(liveTheme, 'start development mode', true)
-
-    // Then
-    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-  })
-
-  test('requires --allow-live when input is disabled', async () => {
+  test('allows a live theme with --allow-live when prompting is unavailable', async () => {
     vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
-
-    const confirmation = ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
-
-    await expect(confirmation).rejects.toThrow(
-      "Can't start development mode on the live theme when user input is unavailable.",
-    )
-    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-  })
-
-  test('preserves existing behavior for a live theme in a non-interactive environment', async () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: false},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: false},
     })
 
-    const result = await ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
+    const result = await ensureLiveThemeConfirmed(liveTheme, 'start development mode', true)
 
     expect(result).toBe(true)
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    {name: 'input is disabled', stdin: true, stderr: true, noInput: 'true'},
+    {name: 'stdin is redirected', stdin: false, stderr: true},
+    {name: 'stderr is redirected', stdin: true, stderr: false},
+    {name: 'CI is enabled', stdin: true, stderr: true, ci: 'true'},
+  ])('requires --allow-live when $name', async ({stdin, stderr, noInput, ci}) => {
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', noInput ?? '')
+    vi.stubEnv('CI', ci ?? '')
+    vi.stubGlobal('process', {
+      ...process,
+      stdin: {...process.stdin, isTTY: stdin},
+      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: stderr},
+    })
+
+    const confirmation = ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
+
+    await expect(confirmation).rejects.toMatchObject({
+      message: "Can't start development mode on the live theme when user input is unavailable.",
+      tryMessage: 'Use `--allow-live` to confirm that you want to continue.',
+    })
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,5 @@
 import List from './list.js'
+import {projectMigratableSubscription} from '../../../services/subscription-migrations/result-codec.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {MigrationListProtocolError} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
@@ -249,7 +250,7 @@ describe('subscription migration list command output integration', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('writes exactly one complete versioned JSON document after every page succeeds', async () => {
+  test('writes exactly one complete JSON document after every page succeeds', async () => {
     const pageOne = [subscription('gid://shopify/Shop/1'), subscription('gid://shopify/Shop/2')]
     const pageTwo = [subscription('gid://shopify/Shop/3')]
     vi.mocked(getMigratableSubscriptionPage)
@@ -273,17 +274,19 @@ describe('subscription migration list command output integration', () => {
     expect(jsonWrite).toBeGreaterThan(lastPageRequest)
 
     const output = stdoutWrites()[0]!
-    expect(output).toBe(JSON.stringify({schemaVersion: 1, subscriptions: [...pageOne, ...pageTwo]}, null, 2))
-    expect(JSON.parse(output)).toEqual({schemaVersion: 1, subscriptions: [...pageOne, ...pageTwo]})
+    expect(output).toBe(
+      JSON.stringify({subscriptions: [...pageOne, ...pageTwo].map(projectMigratableSubscription)}, null, 2),
+    )
+    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo].map(projectMigratableSubscription)})
   })
 
-  test('writes an empty versioned JSON document when there are no subscriptions', async () => {
+  test('writes an empty JSON document when there are no subscriptions', async () => {
     vi.mocked(getMigratableSubscriptionPage).mockResolvedValue(page([]))
 
     await List.run(['--json'])
 
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(stdoutWrites()[0]!)).toEqual({schemaVersion: 1, subscriptions: []})
+    expect(JSON.parse(stdoutWrites()[0]!)).toEqual({subscriptions: []})
   })
 
   test('writes no JSON at all when a later page fails', async () => {

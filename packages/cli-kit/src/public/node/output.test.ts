@@ -49,14 +49,14 @@ describe('Output helpers', () => {
     try {
       renderCommandEventAsJson({
         type: 'diagnostic',
-        timestamp: '2026-08-26T12:00:00.000Z',
+        timestamp: '2026-08-26T12:00:00Z',
         level: 'error',
         message: 'One item could not be uploaded',
       })
 
       expect(stdout).not.toHaveBeenCalled()
       expect(stderr.mock.calls.map(([chunk]) => chunk).join('')).toBe(
-        '{"type":"diagnostic","timestamp":"2026-08-26T12:00:00.000Z","level":"error","message":"One item could not be uploaded"}\n',
+        '{"type":"diagnostic","timestamp":"2026-08-26T12:00:00Z","level":"error","message":"One item could not be uploaded"}\n',
       )
       expect(process.exitCode).toBe(exitCode)
     } finally {
@@ -177,13 +177,13 @@ describe('JSON command diagnostics', () => {
     const sink = vi.fn()
     if (level === 'debug') isVerboseMock.mockReturnValue(true)
 
-    runWithCommandEvents({sink, outputMode: 'json', clock: () => new Date('2026-08-26T12:00:00.000Z')}, () =>
+    runWithCommandEvents({sink, outputMode: 'json', clock: () => new Date('2026-08-26T12:00:00Z')}, () =>
       output('Diagnostic message'),
     )
 
     expect(sink).toHaveBeenCalledWith({
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level,
       message: 'Diagnostic message',
     })

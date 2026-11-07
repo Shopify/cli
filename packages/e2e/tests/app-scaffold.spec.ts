@@ -8,7 +8,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 test.describe('App scaffold', () => {
-  test('init creates a react-router app and builds', async ({cli, env, browserPage}) => {
+  test('init creates a react-router app and builds', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -33,7 +33,7 @@ test.describe('App scaffold', () => {
       const initOutput = initResult.stdout + initResult.stderr
       expect(initOutput).toContain('is ready for you to build!')
       const appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       // Step 2: Verify the app directory was created with expected files
       expect(fs.existsSync(appDir)).toBe(true)
@@ -51,7 +51,7 @@ test.describe('App scaffold', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,
@@ -61,7 +61,7 @@ test.describe('App scaffold', () => {
     }
   })
 
-  test('init creates an extension-only app', async ({cli, env, browserPage}) => {
+  test('init creates an extension-only app', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -81,7 +81,7 @@ test.describe('App scaffold', () => {
       expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
         0,
       )
-      appUrl = devDashboardAppUrl(initResult.appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir: initResult.appDir, orgId: env.orgId})
       expect(fs.existsSync(initResult.appDir)).toBe(true)
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
@@ -89,7 +89,7 @@ test.describe('App scaffold', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,
@@ -99,7 +99,7 @@ test.describe('App scaffold', () => {
     }
   })
 
-  test('generates extensions and builds', async ({cli, env, browserPage}) => {
+  test('generates extensions and builds', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -121,7 +121,7 @@ test.describe('App scaffold', () => {
         0,
       )
       const appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       const extensionConfigs = [
         {name: 'test-subscription-link', template: 'subscription_link_extension'},
@@ -147,7 +147,7 @@ test.describe('App scaffold', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,

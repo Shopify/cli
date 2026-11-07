@@ -15,9 +15,9 @@ describe('store open command', () => {
   })
 
   test('selects JSON presentation', async () => {
-    const result = {store: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: false}
+    const result = {storeDomain: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: false}
     vi.mocked(openStore).mockResolvedValue(result)
-    await StoreOpen.run(['--store', result.store, '--json'])
+    await StoreOpen.run(['--store', result.storeDomain, '--json'])
     expect(renderOpenStoreResult).toHaveBeenCalledWith(result, 'json')
   })
 

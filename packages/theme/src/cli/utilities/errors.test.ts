@@ -6,9 +6,11 @@ import {
   extractFetchErrorInfo,
 } from './errors.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 
+vi.mock('@shopify/cli-kit/node/analytics')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -30,6 +32,14 @@ describe('errors', () => {
         headline: 'Test Headline',
         body: 'test error',
       })
+    })
+
+    test('renders nothing for AbortSilentError', () => {
+      renderThrownError('Test Headline', new AbortSilentError())
+
+      expect(renderError).not.toHaveBeenCalled()
+      expect(renderFatalError).not.toHaveBeenCalled()
+      expect(recordError).not.toHaveBeenCalled()
     })
   })
 

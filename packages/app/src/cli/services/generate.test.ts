@@ -1,5 +1,6 @@
 import generate from './generate.js'
 import {generateExtensionTemplate} from './generate/extension.js'
+import {renderGenerateExtensionResult} from './generate/extension/result.js'
 import {loadApp} from '../models/app/loader.js'
 import {
   testAppLinked,
@@ -64,7 +65,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({
+    const result = await generate({
       directory: '/',
       reset: false,
       app,
@@ -73,6 +74,19 @@ describe('generate', () => {
       specifications,
       developerPlatformClient,
     })
+
+    expect(outputInfo.info()).toBe('')
+    expect(result).toEqual({
+      status: 'success',
+      extension: {
+        directory: joinPath('extensions', 'name'),
+        extensionTemplate: expect.objectContaining({identifier: 'subscription_ui'}),
+        name: 'subscription_ui',
+        flavor: 'vanilla-js',
+      },
+      packageManager: 'yarn',
+    })
+    renderGenerateExtensionResult(result)
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -94,7 +108,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({
+    const result = await generate({
       directory: '/',
       reset: false,
       app,
@@ -103,6 +117,7 @@ describe('generate', () => {
       specifications,
       developerPlatformClient,
     })
+    renderGenerateExtensionResult(result)
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -124,7 +139,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({
+    const result = await generate({
       directory: '/',
       reset: false,
       app,
@@ -133,6 +148,7 @@ describe('generate', () => {
       specifications,
       developerPlatformClient,
     })
+    renderGenerateExtensionResult(result)
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -232,12 +248,14 @@ describe('generate', () => {
     await expect(got).rejects.toThrow(/Invalid extension type/)
   })
 
-  test('throws error if trying to generate with an unsupported flavor', async () => {
-    // Given
-    await mockSuccessfulCommandExecution('cart_checkout_validation')
+  test.each([
+    {template: 'theme_app_extension', flavor: 'liquid'},
+    {template: 'cart_transform', flavor: 'wasm'},
+    {template: undefined, flavor: 'liquid'},
+  ])('accepts $flavor from template metadata with template=$template', async ({template, flavor}) => {
+    await mockSuccessfulCommandExecution(template ?? 'theme_app_extension')
 
-    // When
-    const got = generate({
+    await generate({
       directory: '/',
       reset: false,
       app,
@@ -245,13 +263,57 @@ describe('generate', () => {
       remoteApp,
       specifications,
       developerPlatformClient,
-      template: 'cart_checkout_validation',
-      flavor: 'unknown',
+      template,
+      flavor,
     })
 
-    // Then
-    await expect(got).rejects.toThrow(/Invalid template for extension type/)
+    expect(generateExtensionPrompts).toHaveBeenCalledWith(
+      expect.objectContaining({templateType: template, extensionFlavor: flavor}),
+    )
   })
+
+  test.each([
+    {template: 'cart_checkout_validation', flavor: '', possibleFlavors: 'rust'},
+    {template: 'cart_checkout_validation', flavor: 'unknown', possibleFlavors: 'rust'},
+    {template: 'cart_checkout_validation', flavor: 'react', possibleFlavors: 'rust'},
+    {
+      template: undefined,
+      flavor: '',
+      possibleFlavors: 'rust, wasm, vanilla-js, react, typescript-react, typescript, liquid',
+    },
+    {
+      template: undefined,
+      flavor: 'unknown',
+      possibleFlavors: 'rust, wasm, vanilla-js, react, typescript-react, typescript, liquid',
+    },
+  ])(
+    'rejects $flavor with template=$template before prompting or generating',
+    async ({template, flavor, possibleFlavors}) => {
+      // Given
+      await mockSuccessfulCommandExecution('cart_checkout_validation')
+
+      // When
+      const got = generate({
+        directory: '/',
+        reset: false,
+        app,
+        project: testProject(),
+        remoteApp,
+        specifications,
+        developerPlatformClient,
+        template,
+        flavor,
+      })
+
+      // Then
+      await expect(got).rejects.toMatchObject({
+        message: 'Invalid extension flavor',
+        tryMessage: `Expected flavor to be one of the following: ${possibleFlavors}.`,
+      })
+      expect(generateExtensionPrompts).not.toHaveBeenCalled()
+      expect(generateExtensionTemplate).not.toHaveBeenCalled()
+    },
+  )
 })
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {

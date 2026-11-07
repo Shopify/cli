@@ -1,5 +1,6 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions} from '../../services/dev.js'
+import {dev, DevOptions, withDevSession} from '../../services/dev.js'
+import {appDevOutputSchema} from '../../services/dev/schema.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
@@ -7,7 +8,7 @@ import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends AppLinkedCommand {
@@ -19,11 +20,21 @@ export default class Dev extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
 
+  static jsonOutputSchema = appDevOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
+    // The selected configuration is used with the app identified by --client-id.
+    'client-id': Flags.string({
+      hidden: false,
+      description:
+        'The Client ID of your app. Use with --config to run dev with that configuration for a different app than the one it is linked to.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+    }),
     store: Flags.string({
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
@@ -135,35 +146,39 @@ export default class Dev extends AppLinkedCommand {
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-      storeCreationMode: 'selection-option',
+
+    return withDevSession({...appContextResult, json: flags.json}, async (devInstance) => {
+      const store = await storeContext({
+        appContextResult,
+        storeFqdn: flags.store,
+        forceReselectStore: flags.reset,
+        storeCreationMode: 'selection-option',
+      })
+
+      const devOptions: DevOptions = {
+        ...appContextResult,
+        store,
+        directory: flags.path,
+        update: !flags['no-update'],
+        unsafeValidation: flags['unsafe-validation'],
+        skipDependenciesInstallation: flags['skip-dependencies-installation'],
+        commandConfig: this.config,
+        subscriptionProductUrl: flags['subscription-product-url'],
+        checkoutCartUrl: flags['checkout-cart-url'],
+        theme: flags.theme,
+        themeExtensionPort: flags['theme-app-extension-port'],
+        storePassword: flags['store-password'],
+        notify: flags.notify,
+        graphiqlPort: flags['graphiql-port'],
+        graphiqlKey: flags['graphiql-key'],
+        // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
+        installMkcert: flags['install-mkcert'],
+        tunnel: tunnelMode,
+        devInstance,
+      }
+
+      await dev(devOptions)
+      return {app: appContextResult.app}
     })
-
-    const devOptions: DevOptions = {
-      ...appContextResult,
-      store,
-      directory: flags.path,
-      update: !flags['no-update'],
-      unsafeValidation: flags['unsafe-validation'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig: this.config,
-      subscriptionProductUrl: flags['subscription-product-url'],
-      checkoutCartUrl: flags['checkout-cart-url'],
-      theme: flags.theme,
-      themeExtensionPort: flags['theme-app-extension-port'],
-      storePassword: flags['store-password'],
-      notify: flags.notify,
-      graphiqlPort: flags['graphiql-port'],
-      graphiqlKey: flags['graphiql-key'],
-      // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
-      installMkcert: flags['install-mkcert'],
-      tunnel: tunnelMode,
-    }
-
-    await dev(devOptions)
-    return {app: appContextResult.app}
   }
 }

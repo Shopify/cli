@@ -1,14 +1,18 @@
-import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {ThemeCheckResult} from './check/types.js'
+import {withThemeCheckDiagnostics} from './check/diagnostics.js'
+import {fileExists, fileRealPath, isDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {outputResult, outputInfo, outputSuccess, outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {uniq} from '@shopify/cli-kit/common/array'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
+  themeCheckRun,
   Severity,
   applyFixToString,
   autofix,
   loadConfig,
+  ModernIdentifiers,
   type FixApplicator,
   type Offense,
   type Theme,
@@ -20,24 +24,6 @@ type OffenseMap = Record<string, Offense[]>
 
 /** The contents of every theme file, keyed by its normalized uri. */
 type ThemeSourcesByUri = Map<string, string>
-
-interface TransformedOffense {
-  check: string
-  severity: string
-  start_row: number
-  start_column: number
-  end_row: number
-  end_column: number
-  message: string
-}
-
-interface TransformedOffenseMap {
-  path: string
-  offenses: TransformedOffense[]
-  errorCount: number
-  warningCount: number
-  infoCount: number
-}
 
 type SeverityCounts = Partial<{
   [Severity.ERROR]: number
@@ -58,10 +44,28 @@ function isMissingThemeCheckConfigFile(error: unknown, configPath: string) {
   )
 }
 
-export async function withThemeCheckConfigErrorHandling<T>(
+/**
+ * Theme Check reads the config with `readFile`, which fails with an EISDIR error that often has no `path`,
+ * so a directory is detected before loading instead of being matched after the failure.
+ */
+async function assertThemeCheckConfigIsNotDirectory(configPath: string | undefined) {
+  if (configPath === undefined || ModernIdentifiers.some((identifier) => identifier === configPath)) return
+  // isDirectory throws on a missing path, so missing files are left to the not-found handling.
+  if (!(await fileExists(configPath))) return
+  // isDirectory doesn't follow symlinks, so resolve them first.
+  if (!(await isDirectory(await fileRealPath(configPath)))) return
+
+  throw new AbortError(
+    `Theme Check config must be a file, but ${configPath} is a directory.`,
+    'Pass the path to a .theme-check.yml file to --config, or omit --config to use the .theme-check.yml in your theme root. To choose the theme directory, use --path.',
+  )
+}
+
+async function withThemeCheckConfigErrorHandling<T>(
   configPath: string | undefined,
   operation: () => Promise<T>,
 ): Promise<T> {
+  await assertThemeCheckConfigIsNotDirectory(configPath)
   try {
     return await operation()
   } catch (error) {
@@ -87,7 +91,7 @@ function failLevelToSeverity(failLevel: FailLevel): Severity | undefined {
   }
 }
 
-function severityToLabel(severity: Severity) {
+function severityToLabel(severity: Severity): 'error' | 'warning' | 'info' {
   switch (severity) {
     case Severity.ERROR:
       return 'error'
@@ -248,7 +252,7 @@ export function renderOffensesText(
   })
 }
 
-export function formatOffensesJson(offensesByFile: OffenseMap, environment?: string): TransformedOffenseMap[] {
+export function formatOffensesJson(offensesByFile: OffenseMap, environment?: string): ThemeCheckResult {
   return Object.entries(offensesByFile).map(([path, offenses]) => {
     const transformedOffenses = offenses.map((offense: Offense) => {
       return {
@@ -279,13 +283,12 @@ export function formatOffensesJson(offensesByFile: OffenseMap, environment?: str
  * Handles the process exit based on the offenses and fail level.
  */
 export function handleExit(offenses: Offense[], failLevel: FailLevel) {
-  // If there is no fail level set, exit with 0
-  if (!failLevel) process.exit(0)
+  process.exit(themeCheckHasBlockingIssues(offenses, failLevel) ? 1 : 0)
+}
 
-  const failSeverity = failLevelToSeverity(failLevel)
-  const shouldFail = failSeverity !== undefined && offenses.some((offense) => offense.severity <= failSeverity)
-
-  process.exit(shouldFail ? 1 : 0)
+export function themeCheckHasBlockingIssues(offenses: Offense[], failLevel: FailLevel): boolean {
+  const failSeverity = failLevel ? failLevelToSeverity(failLevel) : undefined
+  return failSeverity !== undefined && offenses.some((offense) => offense.severity <= failSeverity)
 }
 
 /**
@@ -415,4 +418,16 @@ export function isExtendedWriteStream(stream: NodeJS.WriteStream): stream is Ext
     (stream as HandleObject)._handle !== null &&
     typeof (stream as HandleWithSetBlocking)._handle.setBlocking === 'function'
   )
+}
+
+export async function checkTheme(path: string, config?: string, environment?: string) {
+  const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
+    withThemeCheckDiagnostics(() =>
+      themeCheckRun(path, config, (message) => {
+        if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
+      }),
+    ),
+  )
+  const result = formatOffensesJson(sortOffenses(offenses), environment)
+  return {result, offenses, theme}
 }

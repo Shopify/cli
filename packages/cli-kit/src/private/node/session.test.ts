@@ -20,6 +20,11 @@ import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {
+  automationTokenAuthMethod,
+  automationTokenVariable,
+  automationTokenVariablesProblem,
+} from './session/automation-token.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
@@ -113,6 +118,7 @@ vi.mock('./session/exchange')
 vi.mock('./session/scopes')
 vi.mock('./session/store')
 vi.mock('./session/validate')
+vi.mock('./session/automation-token')
 vi.mock('../../public/node/api/partners.js')
 vi.mock('../../public/node/api/business-platform.js')
 vi.mock('../../store')
@@ -150,6 +156,37 @@ beforeEach(() => {
     currentUserAccount: {
       email: 'user@example.com',
     },
+  })
+})
+
+describe('ensureAuthenticated with automation token variables', () => {
+  test('fails before logging in when the automation token variables are invalid', async () => {
+    // Given
+    vi.mocked(automationTokenVariablesProblem).mockReturnValue({
+      message: 'SHOPIFY_APP_AUTOMATION_TOKEN is set but empty.',
+      tryMessage: 'Set it to an automation token, or unset it to log in with your Shopify account.',
+    })
+
+    // When
+    const got = ensureAuthenticated(defaultApplications)
+
+    // Then
+    await expect(got).rejects.toThrow('SHOPIFY_APP_AUTOMATION_TOKEN is set but empty.')
+    expect(fetchSessions).not.toHaveBeenCalled()
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
+  })
+
+  test('refuses to log in while the service account token is set', async () => {
+    // Given
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
+
+    // When
+    const got = ensureAuthenticated(defaultApplications)
+
+    // Then
+    await expect(got).rejects.toThrow("This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.")
+    expect(fetchSessions).not.toHaveBeenCalled()
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
   })
 })
 
@@ -627,6 +664,7 @@ describe('getLastSeenAuthMethod', () => {
   test('returns partners_token if there is a partners token in the environment', async () => {
     // Given
     vi.mocked(getAppAutomationToken).mockReturnValue('partners-token-456')
+    vi.mocked(automationTokenAuthMethod).mockReturnValue('partners_token')
 
     // When
     const method = await getLastSeenAuthMethod()
@@ -634,6 +672,18 @@ describe('getLastSeenAuthMethod', () => {
     // Then
     expect(method).toBe('partners_token')
     expect(getCurrentSessionId).toHaveBeenCalledOnce()
+  })
+
+  test('returns service_account_token if the service account token is in the environment', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('service-account-token-789')
+    vi.mocked(automationTokenAuthMethod).mockReturnValue('service_account_token')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('service_account_token')
   })
 
   test('returns custom_app_token if there is a theme token in the environment and doesnt start with shptka_', async () => {

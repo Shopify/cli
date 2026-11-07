@@ -12,11 +12,15 @@ export interface AppSecurityResultsSources {
 }
 
 /**
- * The results `loadAppSecurityResults` would return for `appRoot` if its result files held these documents,
- * without touching the filesystem. Each call combines afresh, so tests share no state through it.
+ * The results `loadAppSecurityResults` would return for `appDirectory` and `resultsKey` if its result files held
+ * these documents, without touching the filesystem. Each call combines afresh, so tests share no state through it.
  */
-export function appSecurityResultsFor(appRoot: string, sources: AppSecurityResultsSources): AppSecurityResults {
-  const paths = appSecurityArtifactPaths(appRoot)
+export function appSecurityResultsFor(
+  appDirectory: string,
+  resultsKey: string,
+  sources: AppSecurityResultsSources,
+): AppSecurityResults {
+  const paths = appSecurityArtifactPaths(appDirectory, resultsKey)
   return {
     sources: {
       deterministic: sources.deterministic

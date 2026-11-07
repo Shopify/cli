@@ -12,6 +12,8 @@ export default class HelpCommand extends Command {
 
   static descriptionWithMarkdown = 'Display help for Shopify CLI'
 
+  static jsonOutputSchema = helpJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static usage = `help [command] [flags]`
@@ -27,10 +29,6 @@ export default class HelpCommand extends Command {
   }
 
   static strict = false
-
-  static get jsonOutputSchema() {
-    return helpJsonOutputSchema
-  }
 
   async run(): Promise<void> {
     const {argv, flags} = await this.parse(HelpCommand)

@@ -7,6 +7,7 @@ import {
 import {outputWarn} from './output.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {beforeEach, describe, expect, test} from 'vitest'
+import {Ajv} from 'ajv'
 import type {CommandEvent} from '../common/command-events.js'
 
 const outputMock = mockAndCaptureOutput()
@@ -31,14 +32,33 @@ describe('commandEventOutputSchema', () => {
         CommandProgressEvent: {
           properties: {
             status: {enum: ['started', 'updated', 'retrying', 'completed', 'failed']},
-            current: {type: 'number', minimum: 0},
-            total: {type: 'number', minimum: 0},
+            current: {type: 'integer', minimum: 0},
+            total: {type: 'integer', minimum: 0},
           },
           required: ['type', 'timestamp', 'status', 'operation'],
           additionalProperties: false,
         },
       },
     })
+  })
+
+  test('enforces timestamp precision and integer counts in the published JSON Schema', () => {
+    const validate = new Ajv({formats: {'date-time': true}}).compile(commandEventOutputSchema.jsonSchema)
+    const diagnostic = {type: 'diagnostic', timestamp: '2026-08-26T12:00:00Z', level: 'info', message: 'Ready'}
+    const progress = {type: 'progress', timestamp: diagnostic.timestamp, operation: 'upload', status: 'updated'}
+
+    for (const event of [diagnostic, progress]) {
+      expect(validate(event)).toBe(true)
+      for (const timestamp of ['2026-08-26T12:00:00.000Z', '2026-08-26T12:00:00+00:00']) {
+        expect(validate({...event, timestamp})).toBe(false)
+      }
+    }
+    for (const field of ['current', 'total']) {
+      expect(validate({...progress, [field]: 0})).toBe(true)
+      expect(validate({...progress, [field]: 1.5})).toBe(false)
+      expect(validate({...progress, [field]: -1})).toBe(false)
+    }
+    expect(validate({...diagnostic, code: ''})).toBe(false)
   })
 })
 
@@ -48,7 +68,7 @@ describe('renderCommandEvent', () => {
 
     renderCommandEvent({
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level: 'error',
       message: 'One item could not be uploaded',
     })
@@ -60,7 +80,7 @@ describe('renderCommandEvent', () => {
   test('uses the operation as a fallback for progress without a message', () => {
     renderCommandEvent({
       type: 'progress',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       operation: 'upload',
       status: 'started',
     })
@@ -70,7 +90,7 @@ describe('renderCommandEvent', () => {
   test('renders debug diagnostics to stderr through the debug output path', () => {
     renderCommandEvent({
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level: 'debug',
       message: 'Resolving store',
     })
@@ -83,7 +103,7 @@ describe('renderCommandEvent', () => {
   test('renders info diagnostics to stderr through the info output path', () => {
     renderCommandEvent({
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level: 'info',
       message: 'Store resolved',
     })
@@ -96,7 +116,7 @@ describe('renderCommandEvent', () => {
   test('renders warning diagnostics to stderr through the warning output path', () => {
     renderCommandEvent({
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level: 'warning',
       message: 'Using a fallback',
     })
@@ -111,7 +131,7 @@ describe('renderCommandEvent', () => {
       type: 'progress' as const,
       operation: 'upload',
       status: 'updated' as const,
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       message: 'Uploading files',
       current: 2,
       total: 10,
@@ -126,7 +146,7 @@ describe('renderCommandEvent', () => {
       type: 'progress',
       operation: 'upload',
       status: 'updated',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       message: 'Uploading files',
       current: 2,
       total: 10,
@@ -138,7 +158,7 @@ describe('renderCommandEventAsJson', () => {
   test.each(['retrying', 'failed'] as const)('renders %s progress as JSON', (status) => {
     const event: CommandEvent = {
       type: 'progress',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       operation: 'upload',
       status,
       message: 'Uploading files',
@@ -156,7 +176,7 @@ describe('renderCommandEventAsJson', () => {
     {type: 'diagnostic', level: 'info', message: 'Extra field', extra: true},
     {type: 'diagnostic', level: 'info', message: 'Invalid timestamp', timestamp: 'invalid'},
   ])('rejects invalid events before writing JSON: %j', (event) => {
-    expect(() => renderCommandEventAsJson({timestamp: '2026-08-26T12:00:00.000Z', ...event} as CommandEvent)).toThrow()
+    expect(() => renderCommandEventAsJson({timestamp: '2026-08-26T12:00:00Z', ...event} as CommandEvent)).toThrow()
 
     expect(outputMock.info()).toBe('')
   })
@@ -164,7 +184,7 @@ describe('renderCommandEventAsJson', () => {
   test('renders non-fatal error diagnostics as JSON', () => {
     const event: CommandEvent = {
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level: 'error',
       message: 'One item could not be uploaded',
     }
@@ -179,14 +199,14 @@ describe('renderCommandEventAsJson', () => {
       type: 'progress',
       operation: 'upload',
       status: 'updated',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       message: 'Uploading files',
       current: 2,
       total: 10,
     })
 
     expect(outputMock.info()).toBe(
-      '{"type":"progress","timestamp":"2026-08-26T12:00:00.000Z","status":"updated","operation":"upload","message":"Uploading files","current":2,"total":10}',
+      '{"type":"progress","timestamp":"2026-08-26T12:00:00Z","status":"updated","operation":"upload","message":"Uploading files","current":2,"total":10}',
     )
     expect(outputMock.debug()).toBe('')
     expect(outputMock.warn()).toBe('')
@@ -197,7 +217,7 @@ describe('renderCommandEventAsJson', () => {
       {
         outputMode: 'json',
         sink: renderCommandEventAsJson,
-        clock: () => new Date('2026-08-26T12:00:00.000Z'),
+        clock: () => new Date('2026-08-26T12:00:00.999Z'),
       },
       () => outputWarn('Using a fallback'),
     )
@@ -206,7 +226,7 @@ describe('renderCommandEventAsJson', () => {
       type: 'diagnostic',
       level: 'warning',
       message: 'Using a fallback',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
     })
   })
 })

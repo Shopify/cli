@@ -55,10 +55,11 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 export async function installGlobalShopifyCLI(packageManager: PackageManager): Promise<void> {
   const {outputInfo} = await import('./output.js')
   const {exec} = await import('./system.js')
+  const {jsonOutputEnabled} = await import('./environment.js')
   const args =
     packageManager === 'yarn' ? ['global', 'add', '@shopify/cli@latest'] : ['install', '-g', '@shopify/cli@latest']
   outputInfo(`Running ${packageManager} ${args.join(' ')}...`)
-  await exec(packageManager, args, {stdio: 'inherit'})
+  await exec(packageManager, args, jsonOutputEnabled() ? {} : {stdio: 'inherit'})
 }
 
 export interface InstallGlobalCLIPromptResult {

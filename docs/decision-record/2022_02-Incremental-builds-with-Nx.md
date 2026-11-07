@@ -15,7 +15,7 @@ The same idea can also be leveraged in [continuous integration](https://nx.dev/c
 By doing so we also shorten the CI cycles.
 
 
-### Alernatives considered
+### Alternatives considered
 
 Instead of using Nx,
 we could have implemented incremental builds and selective task execution ourselves by parsing and extracting information from the graph,

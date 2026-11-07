@@ -1,18 +1,21 @@
-import {themeComponent} from '../utilities/theme-ui.js'
+import {ThemePublishResult} from './publish/types.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themePublish} from '@shopify/cli-kit/node/themes/api'
 import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 interface PublishServiceOptions {
   theme: string | undefined
   force: boolean
-  environment?: string
 }
 
-export async function publish(adminSession: AdminSession, options: PublishServiceOptions, multiEnvironment?: boolean) {
+export async function publish(
+  adminSession: AdminSession,
+  options: PublishServiceOptions,
+  multiEnvironment?: boolean,
+): Promise<ThemePublishResult | undefined> {
   const themeToPublish = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to publish',
     filter: {
@@ -24,6 +27,14 @@ export async function publish(adminSession: AdminSession, options: PublishServic
 
   const previewUrl = themePreviewUrl({...themeToPublish, role: 'live'} as Theme, adminSession)
 
+  if (themeToPublish.role === 'live') {
+    return {
+      data: {status: 'success', changed: false, theme: {...themeToPublish, shop: adminSession.storeFqdn}},
+      originalTheme: themeToPublish,
+      previewUrl,
+    }
+  }
+
   if (!options.force && !multiEnvironment) {
     const accept = await renderConfirmationPrompt({
       message: `Do you want to make '${themeToPublish.name}' the new live theme on ${adminSession.storeFqdn}?`,
@@ -33,21 +44,11 @@ export async function publish(adminSession: AdminSession, options: PublishServic
     if (!accept) return
   }
 
-  await themePublish(themeToPublish.id, adminSession)
-
-  renderSuccess({
-    headline: options.environment ? `Environment: ${options.environment}` : undefined,
-    body: [
-      'The theme',
-      ...themeComponent(themeToPublish),
-      'is now live at',
-      {
-        link: {
-          label: previewUrl,
-          url: previewUrl,
-        },
-      },
-      {char: '.'},
-    ],
-  })
+  // The API helper rejects missing themes and user errors before returning.
+  const publishedTheme = (await themePublish(themeToPublish.id, adminSession))!
+  return {
+    data: {status: 'success', changed: true, theme: {...publishedTheme, shop: adminSession.storeFqdn}},
+    originalTheme: themeToPublish,
+    previewUrl,
+  }
 }

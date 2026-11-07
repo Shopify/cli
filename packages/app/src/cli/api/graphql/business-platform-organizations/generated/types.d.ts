@@ -30,6 +30,10 @@ export type Scalars = {
   BusinessUserID: { input: any; output: any; }
   /** The ID for a BusinessUsersImport. */
   BusinessUsersImportID: { input: any; output: any; }
+  /** The ID for a CoMarketingAttachment. */
+  CoMarketingAttachmentID: { input: any; output: any; }
+  /** The ID for a CoMarketingBudgetLine. */
+  CoMarketingBudgetLineID: { input: any; output: any; }
   /** The ID for a CollaboratorRelationship. */
   CollaboratorRelationshipID: { input: any; output: any; }
   /** A signed decimal number, which supports arbitrary precision and is serialized as a string. */

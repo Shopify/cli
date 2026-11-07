@@ -20,6 +20,8 @@ export default class StoreBulkExecute extends StoreCommand {
 
   Use [\`store bulk status\`](https://shopify.dev/docs/api/shopify-cli/store/store-bulk-status) to check the status of your bulk operations.`
 
+  static jsonOutputSchema = executeBulkOperationJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -33,10 +35,6 @@ export default class StoreBulkExecute extends StoreCommand {
     ...jsonFlag,
     store: storeFlags.store,
     ...bulkOperationFlags,
-  }
-
-  static get jsonOutputSchema() {
-    return executeBulkOperationJsonOutputSchema
   }
 
   async run(): Promise<void> {
@@ -54,11 +52,7 @@ export default class StoreBulkExecute extends StoreCommand {
       ...(flags.version && {version: flags.version}),
     })
     const format = flags.json ? 'json' : 'text'
-    logBulkOperationStart(
-      'Starting bulk operation.',
-      {storeFqdn: input.adminSession.storeFqdn, version: input.version},
-      format,
-    )
+    logBulkOperationStart('Starting bulk operation.', {storeFqdn: input.adminSession.storeFqdn, version: input.version})
     const result = await executeBulkOperation(input)
     await renderExecuteBulkOperationResult(result, {format, watch: input.watch, outputFile: flags['output-file']})
   }

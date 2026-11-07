@@ -1,7 +1,8 @@
-import {autoUpgradeStatus} from './constants.js'
-import {getAutoUpgradeEnabled} from '@shopify/cli-kit/node/upgrade'
+import {getAutoUpgradeStatus} from '../../../services/commands/config/autoupgrade/index.js'
+import {presentAutoUpgradeResult} from '../../../services/commands/config/autoupgrade/result.js'
+import {autoUpgradeJsonOutputSchema} from '../../../services/commands/config/autoupgrade/types.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class AutoupgradeStatus extends Command {
   static summary = 'Check whether auto-upgrade is enabled, disabled, or not yet configured.'
@@ -13,14 +14,18 @@ export default class AutoupgradeStatus extends Command {
   Run \`shopify config autoupgrade on\` or \`shopify config autoupgrade off\` to configure it.
 `
 
+  static jsonOutputSchema = autoUpgradeJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
+  static flags = {
+    ...globalFlags,
+    ...jsonFlag,
+  }
+
   async run(): Promise<void> {
-    const enabled = getAutoUpgradeEnabled()
-    if (enabled) {
-      renderInfo({body: autoUpgradeStatus.on})
-    } else {
-      renderInfo({body: autoUpgradeStatus.off})
-    }
+    const {flags} = await this.parse(AutoupgradeStatus)
+    const result = getAutoUpgradeStatus()
+    presentAutoUpgradeResult(result, flags.json ? 'json' : 'text')
   }
 }

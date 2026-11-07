@@ -1,8 +1,14 @@
 import {deriveGraphiQLKey, resolveGraphiQLKey, setupGraphiQLServer, TokenProvider} from './server.js'
 import {getAvailableTCPPort} from '../tcp.js'
+import {supportedApiVersions} from '../api/admin.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {Server} from 'http'
 import {Writable} from 'stream'
+
+vi.mock('../api/admin.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../api/admin.js')>()
+  return {...original, supportedApiVersions: vi.fn(async () => ['2024-10'])}
+})
 
 describe('deriveGraphiQLKey', () => {
   test('returns a 64-character hex string', () => {
@@ -85,6 +91,22 @@ describe('setupGraphiQLServer', () => {
     await new Promise<void>((resolve) => server.on('listening', () => resolve()))
     return {url: `http://localhost:${port}`}
   }
+
+  test('refreshes credentials and retries API-version loading while the server is running', async () => {
+    vi.mocked(supportedApiVersions).mockRejectedValueOnce(new Error('Token expired'))
+    const tokenProvider = {
+      getToken: vi.fn(async () => 'access-token'),
+      refreshToken: vi.fn(async () => 'refreshed-token'),
+    }
+    const {url} = await startServer({tokenProvider})
+
+    const response = await fetch(`${url}/graphiql/status`)
+
+    await expect(response.json()).resolves.toMatchObject({status: 'OK'})
+    expect(tokenProvider.refreshToken).toHaveBeenCalledTimes(1)
+    expect(tokenProvider.getToken).toHaveBeenCalledTimes(2)
+    expect(supportedApiVersions).toHaveBeenCalledTimes(2)
+  })
 
   test('rejects mutations with HTTP 400 when protectMutations is true', async () => {
     const tokenProvider: TokenProvider = {getToken: vi.fn(async () => 'access-token')}
@@ -215,5 +237,55 @@ describe('setupGraphiQLServer', () => {
     expect(body).toContain('GraphiQL Explorer - Authentication Required')
     expect(body).not.toContain('Install your app to access GraphiQL')
     expect(body).not.toContain('id="app-install-button"')
+  })
+
+  describe('initial query and variables', () => {
+    function inlineScriptValue(body: string, name: 'query' | 'variables'): string {
+      const match = new RegExp(`^\\s*${name}: (.*),$`, 'm').exec(body)
+      if (!match) throw new Error(`No ${name} property in the rendered page`)
+      return match[1]!
+    }
+
+    async function renderPage(params: {query?: string; variables?: string}) {
+      const tokenProvider: TokenProvider = {getToken: async () => 'access-token'}
+      const {url} = await startServer({tokenProvider, key: 'k'})
+      const search = new URLSearchParams({key: 'k', ...params})
+      const response = await fetch(`${url}/graphiql?${search.toString()}`)
+      expect(response.status).toBe(200)
+      return response.text()
+    }
+
+    test('keeps markup in the variables inside the inline script', async () => {
+      const variables = '{"note": "</script><p id=\\"injected\\">&amp;</p>"}'
+
+      const body = await renderPage({variables})
+
+      expect(body).not.toContain('<p id="injected">')
+      const rendered = inlineScriptValue(body, 'variables')
+      expect(rendered).not.toMatch(/[<>&]/)
+      expect(JSON.parse(rendered)).toBe(variables)
+    })
+
+    test('keeps markup in the query inside the inline script', async () => {
+      const query = 'query { shop { name } } # </script><p id="injected">'
+
+      const body = await renderPage({query})
+
+      expect(body).not.toContain('<p id="injected">')
+      const rendered = inlineScriptValue(body, 'query')
+      expect(rendered).not.toMatch(/[<>&]/)
+      expect(JSON.parse(rendered)).toBe(query)
+    })
+
+    test('preserves ordinary query and variables values', async () => {
+      const query = 'query Product($id: ID!) {\n  product(id: $id) { title }\n}'
+      const variables = '{"id": "gid://shopify/Product/1", "title": "Caf\u00e9 \u2028 line"}'
+
+      const body = await renderPage({query, variables})
+
+      expect(JSON.parse(inlineScriptValue(body, 'query'))).toBe(query.replace(/\n/g, '\\n'))
+      expect(JSON.parse(inlineScriptValue(body, 'variables'))).toBe(variables)
+      expect(inlineScriptValue(body, 'variables')).not.toContain('\u2028')
+    })
   })
 })

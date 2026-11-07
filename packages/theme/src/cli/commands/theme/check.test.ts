@@ -3,6 +3,8 @@ import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {themeCheckRun, Theme, Config as ThemeConfig, Offense} from '@shopify/theme-check-node'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, mkdir, symlink} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/theme-check-node')
 const CommandConfig = new Config({root: __dirname})
@@ -20,9 +22,10 @@ describe('Check', () => {
 
     async function run(argv: string[]) {
       await CommandConfig.load()
-      const check = new Check([`--path=${path}`, ...argv], CommandConfig)
-
-      await check.run()
+      await inTemporaryDirectory(async (directory) => {
+        const check = new Check([`--path=${directory}`, ...argv], CommandConfig)
+        await check.run()
+      })
     }
 
     test('should change config to "theme-check:recommended" when ":default" is inputted', async () => {
@@ -92,6 +95,31 @@ describe('Check', () => {
 
       await expect(result).rejects.toBeInstanceOf(AbortError)
       await expect(result).rejects.toThrowError(`Theme Check config file not found: ${config}`)
+    })
+
+    test('reports a directory passed as the config as an expected error', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const result = runThemeCheck(path, 'text', directory)
+
+        await expect(result).rejects.toBeInstanceOf(AbortError)
+        await expect(result).rejects.toThrowError(`Theme Check config must be a file, but ${directory} is a directory.`)
+        expect(themeCheckRun).not.toHaveBeenCalled()
+      })
+    })
+
+    test('reports a symlink to a directory passed as the config as an expected error', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const configDirectory = joinPath(directory, 'config')
+        const config = joinPath(directory, 'config-link')
+        await mkdir(configDirectory)
+        await symlink(configDirectory, config)
+
+        const result = runThemeCheck(path, 'text', config)
+
+        await expect(result).rejects.toBeInstanceOf(AbortError)
+        await expect(result).rejects.toThrowError(`Theme Check config must be a file, but ${config} is a directory.`)
+        expect(themeCheckRun).not.toHaveBeenCalled()
+      })
     })
 
     test('does not treat a missing extended config as a missing explicitly configured file', async () => {

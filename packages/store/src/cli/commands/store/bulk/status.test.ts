@@ -31,7 +31,7 @@ describe('store bulk status command', () => {
   test('selects JSON presentation', async () => {
     await StoreBulkStatus.run(['--store', 'shop.myshopify.com', '--json'])
     expect(renderBulkOperationStatusResult).toHaveBeenCalledWith({operations: []}, 'json')
-    expect(logBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object), 'json')
+    expect(logBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object))
     expect(StoreBulkStatus.jsonOutputSchema).toBeDefined()
     expect(StoreBulkStatus.flags.json).toBeDefined()
   })

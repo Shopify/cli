@@ -6,6 +6,7 @@ import {
   fileExists,
   fileExistsSync,
   glob,
+  inTemporaryDirectory,
   isDirectory,
   readFileSync,
   writeFileSync,
@@ -14,8 +15,9 @@ import {AbortError} from './error.js'
 import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {execa} from 'execa'
-
+import {lt} from 'semver'
 import ignore from 'ignore'
+import type {ExecOptions} from './system.js'
 
 export interface GitLogEntry {
   hash: string
@@ -344,6 +346,97 @@ export async function ensureGitIsPresentOrAbort(): Promise<void> {
         'git',
         'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git',
       )}`,
+    )
+  }
+}
+
+/**
+ * Parses the version from Git's documented `git version <version>` output shape.
+ *
+ * @param versionOutput - The complete output from `git --version`.
+ * @returns A semantic version, or undefined when the output doesn't have Git's expected shape.
+ */
+function parseGitVersion(versionOutput: string): string | undefined {
+  const match = /^git version (?<version>\d+\.\d+\.\d+)(?<suffix>[.\s-].*)?$/.exec(versionOutput.trim())
+  const version = match?.groups?.version
+  if (!version) return undefined
+
+  const releaseCandidate = /^(?:\.rc|-rc\.?)(?<number>\d+)(?:[.\s-].*)?$/.exec(match.groups?.suffix ?? '')
+  const releaseCandidateNumber = releaseCandidate?.groups?.number
+  // Git writes release candidates as `.rcN`; some distributions use `-rcN` or SemVer's `-rc.N`.
+  return releaseCandidateNumber ? `${version}-rc.${releaseCandidateNumber}` : version
+}
+
+export interface GitVersionCheckOptions {
+  /** The directory to run Git in. A version manager can select a different Git for each working directory. */
+  cwd?: string
+}
+
+/**
+ * Aborts when Git isn't installed, can't run, reports an unrecognized version, or is older than the required minimum.
+ * Git runs in the working directory but outside any repository there, so a repository's configuration can't affect
+ * the check.
+ *
+ * @param minimumVersion - The oldest supported Git version, in semantic version format.
+ * @param options - Where to run Git.
+ */
+export async function ensureGitVersionIsAtLeast(
+  minimumVersion: string,
+  options: GitVersionCheckOptions = {},
+): Promise<void> {
+  // When trace2 logs configuration parameters, even `git --version` reads the configuration of the repository it
+  // finds, so a corrupt repository would fail the check. An empty Git directory keeps Git out of that repository,
+  // while the working directory still selects the Git that a version manager picks.
+  const versionOutput = await inTemporaryDirectory((emptyGitDirectory) =>
+    captureGitVersionOutput(minimumVersion, {cwd: options.cwd, env: {GIT_DIR: emptyGitDirectory}}),
+  )
+
+  const installedVersion = parseGitVersion(versionOutput)
+  if (!installedVersion) {
+    outputDebug(
+      outputContent`Unrecognized git --version output: ${outputToken.raw(JSON.stringify(versionOutput.slice(0, 200)))}`,
+    )
+    throw new AbortError(
+      `Couldn't determine the installed Git version.`,
+      `Install Git ${minimumVersion} or later, then try again.`,
+    )
+  }
+
+  if (lt(installedVersion, minimumVersion)) {
+    throw new AbortError(
+      `Git ${minimumVersion} or later is required, but version ${installedVersion} is installed.`,
+      `Upgrade Git to version ${minimumVersion} or later, then try again.`,
+    )
+  }
+}
+
+/**
+ * Runs `git --version`, turning a failure to run Git into an error that names the required version.
+ *
+ * @param minimumVersion - The oldest supported Git version, for the error message.
+ * @param execOptions - Where and with which environment to run Git.
+ * @returns The output of `git --version`.
+ */
+async function captureGitVersionOutput(minimumVersion: string, execOptions: ExecOptions): Promise<string> {
+  const {captureOutput} = await import('./system.js')
+  try {
+    return await captureOutput('git', ['--version'], execOptions)
+  } catch (error) {
+    // Refusing an unsafe `git` in the working directory already explains itself.
+    if (error instanceof AbortError) throw error
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      throw new AbortError(
+        `Git ${minimumVersion} or later is required, but Git isn't installed.`,
+        `Install Git ${minimumVersion} or later, then try again.`,
+      )
+    }
+    const reason = error instanceof Error ? error.message : String(error)
+    outputDebug(outputContent`Couldn't run git --version: ${outputToken.raw(reason)}`)
+    const gitError =
+      error instanceof Error && 'stderr' in error && typeof error.stderr === 'string' ? error.stderr.trim() : ''
+    throw new AbortError(
+      gitError ? `Couldn't run Git to check its version: ${gitError}` : `Couldn't run Git to check its version.`,
+      `Check that Git ${minimumVersion} or later is installed and can run, then try again.`,
     )
   }
 }

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import {FieldObject, Metafield, MetafieldOwners, MetaObject, ValidationRule} from './dcdd.js'
+import {ImportDeclarativeDefinitionsResult, ImportCustomDataDefinitionsResult} from './declarative-definitions/types.js'
 import {OrganizationApp, OrganizationStore} from '../../../models/organization.js'
 import {
   MetafieldDefinitions,
@@ -21,11 +22,11 @@ import {
 import {CurrentAppConfiguration} from '../../../models/app/app.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {AdminSession, ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
 import {updateTomlValues} from '@shopify/toml-patch'
-import {renderInfo, renderSingleTask, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask, renderTasks} from '@shopify/cli-kit/node/ui'
 import {isEmpty} from '@shopify/cli-kit/common/object'
 
 interface ImportDeclarativeDefinitionsOptions {
@@ -187,12 +188,14 @@ export function processDeclarativeDefinitionNodes(
   }
 }
 
-export async function importDeclarativeDefinitions(options: ImportDeclarativeDefinitionsOptions) {
+export async function importDeclarativeDefinitions(
+  options: ImportDeclarativeDefinitionsOptions,
+): Promise<ImportDeclarativeDefinitionsResult> {
   const adminSession = await createAdminApiSessionForShop(options)
-  const shopName = adminSession.storeFqdn
-
-  let metafieldNodes: MetafieldNodesInput[] = await loadMetafieldNodes(adminSession)
-  let metaobjectNodes: MetaobjectForImportFragment[] = await loadMetaobjectNodes(adminSession)
+  const metafields = await loadMetafieldNodes(adminSession)
+  const metaobjects = await loadMetaobjectNodes(adminSession)
+  let metafieldNodes = metafields.nodes
+  let metaobjectNodes = metaobjects.nodes
 
   if (!options.includeExistingDeclaredDefinitions) {
     metafieldNodes = filterOutDeclaredMetafields(metafieldNodes, options.appConfiguration)
@@ -204,7 +207,14 @@ export async function importDeclarativeDefinitions(options: ImportDeclarativeDef
     metaobjectNodes,
   )
 
-  renderConversionSummary(metafieldCount, metaobjectCount, shopName, tomlContent)
+  return {
+    status: 'success',
+    storeDomain: adminSession.storeFqdn,
+    metafieldCount,
+    metaobjectCount,
+    tomlContent,
+    skippedSections: [...metafields.skippedSections, ...metaobjects.skippedSections],
+  }
 }
 
 type ConvertedMetafield =
@@ -218,64 +228,10 @@ type ConvertedMetafield =
       status: 'not_app_reserved'
     }
 
-function renderConversionSummary(
-  metafieldCount: number,
-  metaobjectCount: number,
-  shopName: string,
-  tomlContent: string,
-) {
-  renderInfo({
-    headline: 'Conversion to TOML complete.',
-    body: [
-      'Converted',
-      {
-        warn: `${metafieldCount} metafields`,
-      },
-      'and',
-      {
-        warn: `${metaobjectCount} metaobjects`,
-      },
-      'from',
-      {
-        warn: shopName,
-      },
-      'into TOML, ready for you to copy.',
-    ],
-    orderedNextSteps: true,
-    nextSteps: [
-      'Review the suggested TOML carefully before applying.',
-      [
-        'Missing sections? Make sure your app has the required access scopes to load metafields and metaobjects (e.g.',
-        {
-          command: 'read_customers',
-        },
-        'to load customer metafields,',
-        {
-          command: 'read_metaobject_definitions',
-        },
-        'to load metaobjects.)',
-      ],
-      [
-        'Missing definitions? Only metafields and metaobjects that are app-reserved (using',
-        {
-          command: '$app',
-        },
-        ') will be converted.',
-      ],
-      [
-        "When you're ready, add the generated TOML to your app's configuration file and test out changes with the",
-        {
-          command: 'shopify app dev',
-        },
-        'command.',
-      ],
-    ],
-  })
-
-  renderTomlStringWithFormatting(tomlContent)
-}
-
-async function loadMetafieldNodes(adminSession: AdminSession): Promise<MetafieldNodesInput[]> {
+async function loadMetafieldNodes(adminSession: AdminSession): Promise<{
+  nodes: MetafieldNodesInput[]
+  skippedSections: ImportCustomDataDefinitionsResult['skippedSections']
+}> {
   const metafieldLoadResults: {
     metafields: PaginatedQueryResult<MetafieldForImportFragment>
     ownerType: MetafieldOwners
@@ -304,21 +260,25 @@ async function loadMetafieldNodes(adminSession: AdminSession): Promise<Metafield
     })),
   )
 
-  return metafieldLoadResults
-    .map(({metafields, ownerType, graphQLOwner}) => {
-      if (metafields.status === 'ok') {
-        return {
-          ownerType,
-          items: metafields.items,
-          graphQLOwner,
+  return {
+    nodes: metafieldLoadResults
+      .map(({metafields, ownerType, graphQLOwner}) => {
+        if (metafields.status === 'ok') {
+          return {ownerType, items: metafields.items, graphQLOwner}
         }
-      }
-      return null
-    })
-    .filter((item) => item !== null)
+        return null
+      })
+      .filter((item) => item !== null),
+    skippedSections: metafieldLoadResults
+      .filter(({metafields}) => metafields.status === 'scope_error')
+      .map(({graphQLOwner}) => ({type: 'metafields', ownerType: graphQLOwner})),
+  }
 }
 
-async function loadMetaobjectNodes(adminSession: AdminSession): Promise<MetaobjectForImportFragment[]> {
+async function loadMetaobjectNodes(adminSession: AdminSession): Promise<{
+  nodes: MetaobjectForImportFragment[]
+  skippedSections: ImportCustomDataDefinitionsResult['skippedSections']
+}> {
   const metaobjects = await renderSingleTask({
     title: outputContent`Loading ${outputToken.green('metaobjects')}`,
     task: async () => {
@@ -332,7 +292,9 @@ async function loadMetaobjectNodes(adminSession: AdminSession): Promise<Metaobje
       })
     },
   })
-  return metaobjects.status === 'ok' ? metaobjects.items : []
+  return metaobjects.status === 'ok'
+    ? {nodes: metaobjects.items, skippedSections: []}
+    : {nodes: [], skippedSections: [{type: 'metaobjects'}]}
 }
 
 function filterOutDeclaredMetafields(
@@ -689,19 +651,6 @@ function getValidationValuesForPatch(validations: ValidationRule) {
       actualValue,
     }
   })
-}
-
-export function renderTomlStringWithFormatting(tomlContent: string) {
-  const lines = tomlContent.split('\n')
-  for (const line of lines) {
-    if (line.match(/^\s*\[/)) {
-      outputInfo(outputContent`${outputToken.green(line)}`)
-    } else if (line.match(/^\s*#/)) {
-      outputInfo(outputContent`${outputToken.gray(line)}`)
-    } else {
-      outputInfo(outputContent`${line}`)
-    }
-  }
 }
 
 function graphQLToAdminAccess(

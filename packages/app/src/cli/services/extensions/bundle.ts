@@ -8,6 +8,7 @@ import {copyFile, glob, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, parsePath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
@@ -58,12 +59,18 @@ interface BundleOptions {
 export async function bundleExtension(options: BundleOptions, processEnv = process.env) {
   const esbuildOptions = getESBuildOptions(options, processEnv)
   const context = await esContext(esbuildOptions)
-  const result = await context.rebuild()
-  onResult(result, options)
-
-  await writeMetafile(result, options.outputPath)
-
-  await context.dispose()
+  try {
+    const result = await context.rebuild()
+    onResult(result, options)
+    await writeMetafile(result, options.outputPath)
+  } catch (error) {
+    if (commandEventOutputMode() === 'json' && error instanceof Error) {
+      options.stderr.write(`${error.message}\n`)
+    }
+    throw error
+  } finally {
+    await context.dispose()
+  }
 }
 
 export async function bundleThemeExtension(
@@ -157,7 +164,7 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
     bundle: true,
     define,
     jsx: 'automatic',
-    logLevel: options.logLevel ?? 'error',
+    logLevel: commandEventOutputMode() === 'json' ? 'silent' : (options.logLevel ?? 'error'),
     loader: {
       '.esnext': 'ts',
       '.js': 'jsx',

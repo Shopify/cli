@@ -7,12 +7,13 @@ import * as confStore from '../../../private/node/conf-store.js'
 import {inTemporaryDirectory} from '../fs.js'
 import {LocalStorage} from '../local-storage.js'
 import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
-import {nonRandomUUID} from '../crypto.js'
+import {nonRandomUUID, sha256} from '../crypto.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import * as system from '../system.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {parse} from 'graphql'
 import {setupServer} from 'msw/node'
 import {graphql, HttpResponse} from 'msw'
 
@@ -89,6 +90,15 @@ const handlers = [
       },
     )
   }),
+  mockApi.query('FailsWithUnauthorizedAndNoBody', () => {
+    // A gateway's 401 has no GraphQL body, so the typed `HttpResponse.json` doesn't fit here.
+    return new HttpResponse(null, {
+      status: 401,
+      headers: {
+        'x-request-id': 'unauthorized-request-id',
+      },
+    })
+  }),
   mockApi.query('FailsWithBadRequest', () => {
     return HttpResponse.json(
       {
@@ -131,6 +141,87 @@ afterEach(() => {
 })
 
 describe('graphqlRequest', () => {
+  test.each([false, true])('retries a throttled nullable query (typed document: %s)', async (useTypedDocument) => {
+    const receivedVariables: unknown[] = []
+    const data = {appsConnection: {edges: [{node: {id: 'app-123'}}]}}
+    server.use(
+      mockApi.query('ListApps', ({variables}) => {
+        receivedVariables.push(variables)
+        if (receivedVariables.length === 1) {
+          return HttpResponse.json(
+            {
+              data: {appsConnection: null},
+              errors: [{message: 'Throttled', path: ['appsConnection'], extensions: {code: 'THROTTLED'}}],
+            },
+            {headers: {'Retry-After': '0'}},
+          )
+        }
+        return HttpResponse.json({data})
+      }),
+    )
+    const query =
+      'query ListApps($query: String) { appsConnection(query: $query, first: 50) { edges { node { id } } } }'
+    const variables = {query: 'title:example'}
+    const options = {api: 'mockApi', url: mockedAddress, variables}
+    const result = useTypedDocument
+      ? await graphqlRequestDoc({...options, query: parse(query)})
+      : await graphqlRequest({...options, query})
+
+    expect(result).toEqual(data)
+    expect(receivedVariables).toEqual([variables, variables])
+  })
+
+  test('retries only the throttled mutation request with its original variables', async () => {
+    const receivedVariables: unknown[] = []
+    server.use(
+      mockApi.mutation('CreateAppVersion', ({variables}) => {
+        receivedVariables.push(variables)
+        if (receivedVariables.length === 1) {
+          return HttpResponse.json(
+            {errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}]},
+            {headers: {'Retry-After': '0'}},
+          )
+        }
+        return HttpResponse.json({data: {appVersionCreate: {version: {id: 'created-version'}}}})
+      }),
+    )
+    const variables = {appId: 'test-app'}
+    const result = await graphqlRequest({
+      api: 'mockApi',
+      url: mockedAddress,
+      query: 'mutation CreateAppVersion($appId: ID!) { appVersionCreate(appId: $appId) { version { id } } }',
+      variables,
+    })
+
+    expect(result).toEqual({appVersionCreate: {version: {id: 'created-version'}}})
+    expect(receivedVariables).toEqual([variables, variables])
+  })
+
+  test('does not repeat a mutation when a throttled response contains partial data', async () => {
+    let requestCount = 0
+    server.use(
+      mockApi.mutation('CreateAppVersion', () => {
+        requestCount++
+        return HttpResponse.json(
+          {
+            data: {appVersionCreate: {version: {id: 'created-version'}}},
+            errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}],
+          },
+          {headers: {'Retry-After': '0'}},
+        )
+      }),
+    )
+    await expect(
+      graphqlRequest({
+        api: 'mockApi',
+        url: mockedAddress,
+        query: 'mutation CreateAppVersion { appVersionCreate { version { id } } }',
+      }),
+    ).rejects.toThrow('Throttled')
+
+    expect(requestCount).toBe(1)
+  })
+
   test('calls debugLogRequestInfo once', async () => {
     let headers: any
     server.events.on('request:start', ({request}) => {
@@ -306,6 +397,70 @@ describe('graphqlRequest', () => {
 
     await expect(res).rejects.toThrow('not authorized')
     expect(requestCount).toBe(2)
+  })
+
+  describe('a 401 that survives the token refresh', () => {
+    const query = 'query FailsWithUnauthorizedAndNoBody { example(secret: $secret) }'
+    const variables = {secret: 'do-not-print-me'}
+
+    test('reports the status without the request when no token refresh function is provided', async () => {
+      const res = graphqlRequest({query, api: 'mockApi', url: mockedAddress, token: mockToken, variables})
+
+      await expect(res).rejects.toMatchObject({
+        statusCode: 401,
+        message:
+          'The mockApi GraphQL API responded unsuccessfully with the HTTP status 401.\n\nRequest ID: unauthorized-request-id',
+      })
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+    })
+
+    test('reports the status without the request when the token cannot be refreshed', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: undefined})},
+      })
+
+      await expect(res).rejects.toMatchObject({statusCode: 401})
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+    })
+
+    test('reports the status without the request when the refreshed token is rejected too', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+      })
+
+      let requestCount = 0
+      server.events.on('request:start', () => {
+        requestCount++
+      })
+
+      await expect(res).rejects.toMatchObject({statusCode: 401})
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+      expect(requestCount).toBe(2)
+    })
+
+    test('keeps the raw error when the caller handles errors itself', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        responseOptions: {handleErrors: false},
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+      })
+
+      await expect(res).rejects.toMatchObject({response: {status: 401}})
+    })
   })
 
   test('Fails without retry when bad request when unauthorized handler is provided', async () => {
@@ -640,10 +795,11 @@ describe('graphqlRequest with caching', () => {
       await expect(seventhRes).resolves.toEqual({MutationName: {example: 'new-value'}})
       expect(requestCount).toBe(6)
 
-      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${CLI_KIT_VERSION}-extra`
-      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-extra`
-      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-other-extra`
-      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-`
+      const principalHash = sha256(JSON.stringify([mockedAddress, mockToken])).toString('hex')
+      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-extra`
+      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-extra`
+      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-other-extra`
+      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-`
 
       expect(cacheStore.get('cache')![firstKey]).toEqual({
         value: '{"MutationName":{"example":"variables"}}',
@@ -663,6 +819,55 @@ describe('graphqlRequest with caching', () => {
       })
 
       expect(Object.keys(cacheStore.get('cache')!).length).toBe(4)
+    })
+    vi.useRealTimers()
+  })
+
+  test('does not share a cached response across tokens or endpoints', async () => {
+    vi.useFakeTimers()
+    await inTemporaryDirectory(async (dir) => {
+      let requestCount = 0
+      server.events.on('request:start', () => {
+        requestCount++
+      })
+      const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
+      const cachedRequest = async (options: {url: string; token: string}) => {
+        const response = graphqlRequest({
+          query: 'mutation MutationName($some: String!) { example }',
+          api: 'mockApi',
+          url: options.url,
+          token: options.token,
+          variables: mockVariables,
+          cacheOptions: {cacheTTL: {hours: 1}, cacheStore},
+        })
+        await vi.runAllTimersAsync()
+        return response
+      }
+
+      // Given a cached response for one token and endpoint
+      await expect(cachedRequest({url: mockedAddress, token: mockToken})).resolves.toEqual({
+        MutationName: {example: 'variables'},
+      })
+      expect(requestCount).toBe(1)
+
+      // When the same query and variables are sent with another token, or to another endpoint
+      await cachedRequest({url: mockedAddress, token: 'other-token'})
+      await cachedRequest({url: `${mockedAddress}?other-endpoint=1`, token: mockToken})
+
+      // Then each one is sent to the API instead of reading the first response
+      expect(requestCount).toBe(3)
+
+      // And a repeated request with the original token and endpoint still uses its own cache entry
+      await cachedRequest({url: mockedAddress, token: mockToken})
+      expect(requestCount).toBe(3)
+
+      // And the raw tokens are not part of any cache key
+      const keys = Object.keys(cacheStore.get('cache')!)
+      expect(keys.length).toBe(3)
+      for (const key of keys) {
+        expect(key).not.toContain(mockToken)
+        expect(key).not.toContain('other-token')
+      }
     })
     vi.useRealTimers()
   })

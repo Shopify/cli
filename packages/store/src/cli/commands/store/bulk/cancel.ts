@@ -14,6 +14,8 @@ export default class StoreBulkCancel extends StoreCommand {
 
   Run \`shopify store auth\` first to create stored auth for the store.`
 
+  static jsonOutputSchema = cancelBulkOperationJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com --id 123456789']
@@ -25,19 +27,11 @@ export default class StoreBulkCancel extends StoreCommand {
     id: requiredBulkOperationIdFlag,
   }
 
-  static get jsonOutputSchema() {
-    return cancelBulkOperationJsonOutputSchema
-  }
-
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreBulkCancel)
     const format = flags.json ? 'json' : 'text'
     const adminSession = await prepareBulkAdminContext(flags.store)
-    logBulkOperationStart(
-      'Canceling bulk operation.',
-      {storeFqdn: adminSession.storeFqdn, operationId: flags.id},
-      format,
-    )
+    logBulkOperationStart('Canceling bulk operation.', {storeFqdn: adminSession.storeFqdn, operationId: flags.id})
     const result = await cancelBulkOperation({
       adminSession,
       operationId: flags.id,

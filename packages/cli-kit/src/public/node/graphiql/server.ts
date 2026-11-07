@@ -5,7 +5,8 @@ import {performActionWithRetryAfterRecovery} from '../../common/retry.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {AbortError} from '../error.js'
 import {adminUrl, supportedApiVersions} from '../api/admin.js'
-import {fetch} from '../http.js'
+import {fetch, requestMode} from '../http.js'
+import {maxRequestTimeForNetworkCallsMs} from '../environment.js'
 import {renderLiquidTemplate} from '../liquid.js'
 import {outputDebug} from '../output.js'
 import {containsMutation} from '../graphql.js'
@@ -17,6 +18,7 @@ import {
   getRequestHeader,
   getRequestHeaders,
   readBody,
+  sendError,
   setResponseHeader,
   setResponseStatus,
   toNodeListener,
@@ -56,6 +58,23 @@ export function resolveGraphiQLKey(providedKey: string | undefined, apiSecret: s
 
 const require = createRequire(import.meta.url)
 
+/**
+ * Serializes a value as JSON that is safe to place inside an inline `<script>` element.
+ * `JSON.stringify` alone leaves `<`, `>` and `&` as-is, so a value could close the script element early. Escaping
+ * them (and the U+2028/U+2029 line separators) as `\uXXXX` sequences keeps the JavaScript value identical.
+ *
+ * @param value - The value to serialize.
+ * @returns A JSON string that can be interpolated into an inline script.
+ */
+function serializeForInlineScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
 class TokenRefreshError extends AbortError {
   constructor() {
     super('Failed to refresh credentials. Check that your app is installed, and try again.')
@@ -69,13 +88,14 @@ class TokenRefreshError extends AbortError {
  * - `getToken` may return a cached token; the proxy calls it for every request.
  * - `refreshToken` (optional) is invoked when the upstream Admin API returns 401.
  * When omitted, the proxy falls back to calling `getToken` again on 401.
+ * - Both operations receive a cancellation signal to pass to token requests.
  *
  * Implementations must throw `TokenRefreshError` (or any thrown error) when the
  * token cannot be obtained; the proxy renders the unauthorized template in that case.
  */
 export interface TokenProvider {
-  getToken: () => Promise<string>
-  refreshToken?: () => Promise<string>
+  getToken: (signal?: AbortSignal) => Promise<string>
+  refreshToken?: (signal?: AbortSignal) => Promise<string>
 }
 
 /**
@@ -109,6 +129,10 @@ export interface SetupGraphiQLServerOptions {
    * interactive UI.
    */
   protectMutations?: boolean
+  /** Called for request failures that leave the server available for subsequent requests. */
+  onRequestError?: (message: string) => void
+  /** Routes diagnostics through command events and leaves readiness output to the session. */
+  json?: boolean
 }
 
 export const MUTATIONS_BLOCKED_MESSAGE = 'Mutations are disabled. Re-run with --allow-mutations to enable mutations.'
@@ -126,23 +150,38 @@ export const MUTATIONS_BLOCKED_MESSAGE = 'Mutations are disabled. Re-run with --
 export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server {
   const {stdout, port, storeFqdn, tokenProvider, key: providedKey, appContext, protectMutations = false} = options
   const key = resolveGraphiQLServerKey(providedKey, appContext, storeFqdn)
-  outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
+  const debug = (message: string) => (options.json ? outputDebug(message) : outputDebug(message, stdout))
+  const requests = new AbortController()
+  const requestSignal = () => AbortSignal.any([requests.signal, AbortSignal.timeout(maxRequestTimeForNetworkCallsMs())])
+  const reportRequestError = (message: string) => {
+    if (!requests.signal.aborted) options.onRequestError?.(message)
+  }
+  debug(`Setting up GraphiQL HTTP server on port ${port}...`)
 
-  const app = createApp()
+  const app = createApp({
+    onError: options.json
+      ? (error, event) => {
+          reportRequestError('GraphiQL could not complete the HTTP request.')
+          return sendError(event, error)
+        }
+      : undefined,
+  })
   const router = createRouter()
 
   const refreshUpstreamToken = async (): Promise<string> => {
+    requests.signal.throwIfAborted()
     try {
-      outputDebug('refreshing token', stdout)
-      return await (tokenProvider.refreshToken ?? tokenProvider.getToken)()
+      debug('refreshing token')
+      return await (tokenProvider.refreshToken ?? tokenProvider.getToken)(requestSignal())
     } catch (_error) {
       throw new TokenRefreshError()
     }
   }
 
   const currentToken = async (): Promise<string> => {
+    requests.signal.throwIfAborted()
     try {
-      return await tokenProvider.getToken()
+      return await tokenProvider.getToken(requestSignal())
     } catch (_error) {
       throw new TokenRefreshError()
     }
@@ -150,7 +189,14 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     return performActionWithRetryAfterRecovery(
-      async () => supportedApiVersions({storeFqdn, token: await currentToken()}),
+      async () =>
+        supportedApiVersions(
+          {storeFqdn, token: await currentToken()},
+          {
+            ...requestMode(),
+            useAbortSignal: requestSignal,
+          },
+        ),
       refreshUpstreamToken,
     )
   }
@@ -201,6 +247,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         return {status: 'OK', storeFqdn, appName: appContext?.appName, appUrl: appContext?.appUrl}
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
+        reportRequestError('GraphiQL could not authenticate with the Admin API.')
         return {status: 'UNAUTHENTICATED'}
       }
     }),
@@ -209,7 +256,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   router.get(
     '/graphiql',
     defineEventHandler(async (event) => {
-      outputDebug('Handling /graphiql request', stdout)
+      debug('Handling /graphiql request')
 
       const query = getQuery(event)
 
@@ -228,6 +275,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         apiVersions = await fetchApiVersionsWithTokenRefresh()
       } catch (err) {
         if (err instanceof TokenRefreshError) {
+          reportRequestError('GraphiQL could not load the Admin API versions.')
           return renderLiquidTemplate(unauthorizedTemplate({hasAppContext: Boolean(appContext)}), {
             previewUrl: appContext?.appUrl ?? '',
             storeFqdn,
@@ -259,8 +307,8 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         {
           url,
           defaultQueries: [{query: defaultQuery}],
-          query: queryParam ? JSON.stringify(queryParam) : undefined,
-          variables: variables ? JSON.stringify(variables) : undefined,
+          query: queryParam ? serializeForInlineScript(queryParam) : undefined,
+          variables: variables ? serializeForInlineScript(variables) : undefined,
         },
       )
     }),
@@ -269,7 +317,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   router.post(
     '/graphiql/graphql.json',
     defineEventHandler(async (event) => {
-      outputDebug('Handling /graphiql/graphql.json request', stdout)
+      debug('Handling /graphiql/graphql.json request')
 
       const query = getQuery(event)
 
@@ -283,6 +331,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         const body = await readBody(event)
 
         if (protectMutations && isMutationRequestBody(body)) {
+          reportRequestError(MUTATIONS_BLOCKED_MESSAGE)
           setResponseStatus(event, 400)
           return {errors: [{message: MUTATIONS_BLOCKED_MESSAGE}]}
         }
@@ -305,20 +354,23 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
             method: 'POST',
             headers,
             body: reqBody,
+            signal: requestSignal(),
           })
         }
 
         let result = await runRequest(await currentToken())
         if (result.status === 401) {
-          outputDebug('Token expired, fetching new token', stdout)
+          debug('Token expired, fetching new token')
           result = await runRequest(await refreshUpstreamToken())
         }
 
         setResponseHeader(event, 'Content-Type', 'application/json')
         setResponseStatus(event, result.status)
+        if (!result.ok) reportRequestError(`GraphiQL Admin API request failed with HTTP ${result.status}.`)
         return result.json()
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: unknown) {
+        reportRequestError('GraphiQL could not complete the Admin API request.')
         setResponseStatus(event, 500)
         if (error instanceof Error) {
           return {errors: [error.message]}
@@ -331,7 +383,10 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   app.use(router)
 
   const server = createServer(toNodeListener(app))
-  server.listen(port, 'localhost', () => stdout.write(`GraphiQL server started on port ${port}`))
+  server.once('close', () => requests.abort())
+  server.listen(port, 'localhost', () => {
+    if (!options.json) stdout.write(`GraphiQL server started on port ${port}`)
+  })
   return server
 }
 

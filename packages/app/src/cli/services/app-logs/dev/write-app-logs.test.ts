@@ -1,5 +1,5 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
+import {AppLogData, FunctionRunLog} from '../types.js'
 import camelcaseKeys from '../camelcase-keys.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -102,7 +102,7 @@ describe('writeAppLogsToFile', () => {
   })
 })
 
-function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload | any): string {
+function expectedLogDataFromAppEvent(event: AppLogData, payload: unknown): string {
   const {cursor: _, ...eventWithoutCursor} = event
 
   const data: any = camelcaseKeys({

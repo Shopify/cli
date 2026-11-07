@@ -1,7 +1,8 @@
 import {clearCache} from '../cli.js'
 import {currentProcessIsGlobal} from '../is-global.js'
 import {showMultipleCLIWarningIfNeeded} from '../multiple-installation-warning.js'
-import {mockAndCaptureOutput} from '../testing/output.js'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '../testing/output.js'
+import {runWithCommandEventsForCommand} from '../command-events.js'
 import {globalCLIVersion, localCLIVersion} from '../version.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {describe, beforeEach, test, vi, expect} from 'vitest'
@@ -43,6 +44,25 @@ describe('showMultipleCLIWarningIfNeeded', () => {
       "
     `)
     mockOutput.clear()
+  })
+
+  test('emits the installation warning as a JSON diagnostic on stderr', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(localCLIVersion).mockResolvedValue('3.70.0')
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json'], () =>
+        showMultipleCLIWarningIfNeeded('path', {'@shopify/cli': '3.70.0'}),
+      )
+
+      expect(stdout()).toBe('')
+      expect(JSON.parse(stderr())).toMatchObject({
+        type: 'diagnostic',
+        level: 'info',
+        message: expect.stringContaining('Two Shopify CLI installations found'),
+      })
+      expect(JSON.parse(stderr()).message).toContain('https://shopify.dev/docs/apps/build/cli-for-apps')
+    })
   })
 
   test('shows warning if using local CLI but app has global dependency', async () => {

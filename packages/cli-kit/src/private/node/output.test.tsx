@@ -46,16 +46,16 @@ describe('logging during an Ink task', () => {
 
     try {
       await vi.waitFor(() => expect(writes.join('')).toContain('Preparing the result'))
-      expect(writes.join('')).toContain('▀')
+      expect(unstyled(writes.join(''))).toContain('S>')
       const beforeLog = writes.length
 
       log('Prepared an item')
 
-      // Clear both UI lines and their trailing newline before writing the log.
+      // Clear the UI line and its trailing newline before writing the log.
       const logWrites = writes.slice(beforeLog)
       const messageIndex = logWrites.findIndex((write) => write.includes('Prepared an item'))
       expect(messageIndex).toBeGreaterThan(0)
-      expect(logWrites[messageIndex - 1]).toBe(ansiEscapes.eraseLines(3))
+      expect(logWrites[messageIndex - 1]).toBe(ansiEscapes.eraseLines(2))
       expect(unstyled(logWrites[messageIndex]!)).toBe('Prepared an item\n')
       expect(logWrites[messageIndex + 1]).toContain('Preparing the result')
 
@@ -68,7 +68,7 @@ describe('logging during an Ink task', () => {
       await instance.waitUntilExit()
 
       const cleanup = writes.slice(afterLog).join('')
-      expect(cleanup).toContain(ansiEscapes.eraseLines(3))
+      expect(cleanup).toContain(ansiEscapes.eraseLines(2))
       expect(unstyled(cleanup).trim()).toBe('')
     } finally {
       finishTask()

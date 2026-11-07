@@ -1,5 +1,87 @@
 # @shopify/app
 
+## 5.0.0
+
+### Major Changes
+
+- 4282952: Remove `app logs` and `app logs sources`; use `app dev` to stream Function logs and save them to `.shopify/logs`.
+
+### Minor Changes
+
+- 587b14d: Record `app dev` sessions, preview status, and JSONL logs so agents can reuse a running session.
+- 62d961a: Improve `app security check` accuracy and safely scan untrusted repositories; add `--print-instructions`, deprecate `--yes`, and require Git 2.38.0 or later for Git operations.
+- e71ac0e: Add typed JSON output to `app security` commands.
+- 5d5d91c: Let theme app extensions declare the network origins they contact with `[extensions.capabilities.network_access] allowed_sources` in `shopify.extension.toml`.
+- 62d961a: Add typed JSON output across CLI commands; update scripts for the new schemas with `--json-schema`, read `store execute` query results from `.data`, and use `--no-watch` with `app function replay --json`.
+
+### Patch Changes
+
+- 30fbfab: Reduce `app dev` file watching by excluding Cargo `target` directories, Function build output, `.shopify` files, and editor temporary files.
+- 62d961a: Fix lost Shop scopes in `app config link`, legacy Checkout and POS extension migration detection, and UI extension builds with multiple `should_render` targets.
+- adb6a43: Have coding agents run `app security` commands with `--json --no-input` and read their results instead of parsing terminal output.
+- 12cc647: Exit 0 instead of failing when you decline to scan without app configuration in `app security check`.
+- 525289f: Report clipboard failures in `app security instructions --copy` as errors, and in `app security check` as warnings, instead of crashing.
+- e3d8ebb: Report app security results files with out-of-range values as invalid.
+- 62d961a: Fix development theme previews on stores with market subfolders when using account authentication, improve Theme Access authentication, keep pulled files inside the theme directory, and support browser identity verification.
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [c86f804]
+- Updated dependencies [bcbaec8]
+- Updated dependencies [730d051]
+- Updated dependencies [87cc186]
+- Updated dependencies [62d961a]
+- Updated dependencies [e85a56f]
+- Updated dependencies [62d961a]
+- Updated dependencies [349478a]
+  - @shopify/cli-kit@5.0.0
+  - @shopify/plugin-cloudflare@5.0.0
+  - @shopify/theme@5.0.0
+  - @shopify/organizations@5.0.0
+
+## 4.9.0
+
+### Minor Changes
+
+- b36c592: Add a JSON output schema for `app versions list` and clarify its missing-app error.
+- 3793fab: Add typed JSON output with organization status, shop count, and URL to `organization list`.
+- a80a926: Support owner types in UI extension metafield configuration.
+- 574a949: Allow `--config` and `--client-id` together on `app deploy`, `app dev`, and `app dev clean` to use the selected configuration with a different app
+- 265ada1: Allow Flow trigger lifecycle callback `url`s to be relative to the app's `application_url`
+- 5658023: Support `input_variables` on function targets, alongside the extension-level `[input.variables]`
+- 3385c63: Move `app import-extensions` and `app import-custom-data-definitions` under the new `app import` topic; the old paths still work but are deprecated
+- ba84763: Add `shopify app security` commands to check an app's source code for Shopify-specific security issues. `check` runs deterministic rules and generates checks for your coding agent to investigate, `record` saves the agent's findings, `review` shows the combined results, `instructions` prints the workflow for a coding agent, and `clean` removes local results.
+- a1c34f0: Add an `--unsafe-validation` flag to `shopify app dev`.
+
+### Patch Changes
+
+- ebd7430: Refer to `shopify app security` results and instructions as an app security check instead of the title-cased "App Security"
+- 73ad604: Stop reporting a missing configured asset path and a missing extension build output as unknown CLI bugs during app build
+- f1b8250: Clarify `app config link` flags and recommend `--file-name` when both `--config` and `--client-id` are provided
+- e2e1eec: Fix unchanged event subscriptions appearing as updates during app deploy and avoid redundant subscription API versions when linking config.
+- 93cc4d8: Recover gracefully when pnpm blocks dependency build scripts during `app generate extension`: clean up the partially generated extension and explain how to approve the builds
+- fa5989a: Emit info and warning banners as JSON diagnostics on stderr in JSON mode.
+- f6700aa: Bump Shopify/theme-tools packages
+- Updated dependencies [9945ebf]
+- Updated dependencies [267c622]
+- Updated dependencies [9832404]
+- Updated dependencies [fa5989a]
+- Updated dependencies [83fe8a2]
+- Updated dependencies [065cd24]
+- Updated dependencies [b5d1f33]
+- Updated dependencies [f6700aa]
+- Updated dependencies [02fbf6e]
+- Updated dependencies [ab16257]
+- Updated dependencies [46dcc14]
+- Updated dependencies [58d1f09]
+- Updated dependencies [fd4a5db]
+- Updated dependencies [667c628]
+- Updated dependencies [2a9b3a4]
+  - @shopify/cli-kit@4.9.0
+  - @shopify/theme@4.9.0
+  - @shopify/organizations@4.9.0
+  - @shopify/plugin-cloudflare@4.9.0
+
 ## 4.8.0
 
 ### Minor Changes

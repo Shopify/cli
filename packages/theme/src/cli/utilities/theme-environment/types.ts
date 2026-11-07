@@ -73,6 +73,9 @@ export type ReconciliationStrategy = 'keep-local' | 'keep-remote' | 'abort'
  * Maintains the state of local and remote assets in theme development server.
  */
 export interface DevServerContext {
+  /** Stops work owned by a theme dev session. */
+  signal?: AbortSignal
+
   /**
    * Authentication session for development server operations.
    */

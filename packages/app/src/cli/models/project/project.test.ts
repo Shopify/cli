@@ -1,5 +1,6 @@
-import {Project} from './project.js'
+import {NoAppConfigurationFoundError, Project} from './project.js'
 import {describe, expect, test} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 
@@ -119,6 +120,18 @@ describe('Project', () => {
     test('throws when no app config files found', async () => {
       await inTemporaryDirectory(async (dir) => {
         await expect(Project.load(dir)).rejects.toThrow()
+      })
+    })
+
+    test('throws a NoAppConfigurationFoundError, an AbortError, when no app config file is at or above the directory', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const error = await Project.load(dir).catch((caught: unknown) => caught)
+
+        expect(error).toBeInstanceOf(NoAppConfigurationFoundError)
+        expect(error).toBeInstanceOf(AbortError)
+        expect((error as AbortError).message).toBe(
+          `Could not find a Shopify app configuration file. Looked in ${dir} and parent directories.`,
+        )
       })
     })
 

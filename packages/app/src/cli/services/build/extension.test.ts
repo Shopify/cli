@@ -10,6 +10,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import * as fs from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -61,7 +63,15 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toEqual({
+        status: 'success',
+        function: {
+          handle: extension.configuration.handle ?? null,
+          name: extension.name,
+          directory: resolve(tmpDir),
+          wasmPath: null,
+        },
+      })
 
       // Then
       expect(exec).toHaveBeenCalledWith('./scripts/build.sh', ['argument'], {
@@ -109,7 +119,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(buildJSFunction).toHaveBeenCalledWith(extension, {
@@ -138,7 +148,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(exec).toHaveBeenCalledWith('./scripts/build.sh', ['argument'], {
@@ -167,7 +177,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(runWasmOpt).toHaveBeenCalled()
@@ -190,7 +200,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(runTrampoline).toHaveBeenCalled()
@@ -214,7 +224,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(runWasmOpt).not.toHaveBeenCalled()
@@ -269,7 +279,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(buildJSFunction).toHaveBeenCalledWith(extension, {
@@ -313,7 +323,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(buildGraphqlTypes).toHaveBeenCalledWith(extension, {
@@ -360,7 +370,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(buildGraphqlTypes).toHaveBeenCalledWith(extension, {
@@ -406,7 +416,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(buildGraphqlTypes).not.toHaveBeenCalled()
@@ -442,7 +452,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(exec).toHaveBeenCalledWith('make', ['build'], {
@@ -469,7 +479,7 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({status: 'success'})
 
       // Then
       expect(validateSchemaApiVersion).toHaveBeenCalledWith({
@@ -501,7 +511,15 @@ describe('buildFunctionExtension', () => {
           app,
           environment: 'production',
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toEqual({
+        status: 'success',
+        function: {
+          handle: extension.configuration.handle ?? null,
+          name: extension.name,
+          directory: resolve(tmpDir),
+          wasmPath: resolve(customPath),
+        },
+      })
 
       // Then
       expect(fs.fileExistsSync(customPath)).toBe(true)

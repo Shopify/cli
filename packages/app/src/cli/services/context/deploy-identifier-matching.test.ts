@@ -81,7 +81,7 @@ function remoteWebhookModule(
   return {
     registrationId: title,
     registrationUuid: uuid,
-    registrationTitle: title,
+    handle: title,
     type: 'webhook_subscription',
     config,
     specification: {
@@ -150,7 +150,7 @@ beforeAll(async () => {
   REMOTE_EXTENSION_A = {
     registrationId: EXTENSION_A.uid,
     registrationUuid: 'remote-uuid-a',
-    registrationTitle: 'Remote Extension A',
+    handle: 'Remote Extension A',
     type: 'checkout_post_purchase',
     config: await EXTENSION_A.deployConfig({apiKey: REMOTE_APP.apiKey, appConfiguration: APP.configuration}),
     specification: {
@@ -164,7 +164,7 @@ beforeAll(async () => {
   REMOTE_EXTENSION_DELETED = {
     registrationId: 'deleted-uid',
     registrationUuid: 'deleted-uuid',
-    registrationTitle: 'Deleted Extension',
+    handle: 'Deleted Extension',
     type: 'checkout_post_purchase',
     config: {},
     specification: {
@@ -178,7 +178,7 @@ beforeAll(async () => {
   REMOTE_CONFIG_EXTENSION = {
     registrationId: CONFIG_EXTENSION.uid,
     registrationUuid: 'remote-config-uuid',
-    registrationTitle: 'Point of Sale',
+    handle: 'Point of Sale',
     type: 'point_of_sale',
     config: {},
     specification: {
@@ -207,7 +207,7 @@ describe('classifyDeployExtensionChanges', () => {
       changes.map((change) => ({
         status: change.status,
         local: change.local?.localIdentifier,
-        remote: change.remote?.registrationTitle,
+        remote: change.remote?.handle,
       })),
     ).toEqual([
       {status: 'unchanged', local: EXTENSION_A.localIdentifier, remote: 'Remote Extension A'},
@@ -300,7 +300,7 @@ describe('classifyDeployExtensionChanges', () => {
     const remoteConfigLikeExtension = {
       registrationId: 'remote-config-id',
       registrationUuid: 'remote-config-uuid',
-      registrationTitle: 'Remote Config-Like Extension',
+      handle: 'Remote Config-Like Extension',
       type: 'unknown_remote_type',
       config: {},
       specification: {
@@ -379,7 +379,7 @@ describe('classifyDeployExtensionChanges', () => {
     const remoteDataModule = {
       registrationId: dataExtension.uid,
       registrationUuid: 'data-uuid',
-      registrationTitle: 'Data',
+      handle: 'Data',
       type: 'data',
       config: {
         product: {enabled: false},
@@ -510,21 +510,23 @@ describe('classifyDeployExtensionChanges', () => {
         new ExtensionInstance({
           specification: appEventsSpec,
           configuration: {
+            handle,
             events: {
               api_version: '2024-01',
-              subscription: {handle, topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
+              subscription: {topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
             },
           } as BaseConfigType,
           configurationPath: '/app/shopify.app.toml',
           directory: '/app',
         }),
     )
+    expect(localEvents.map((extension) => extension.uid)).toEqual(['order-notifier', 'product-sync'])
     const remoteEvents = await Promise.all(
       localEvents.map(
         async (extension): Promise<AppModuleVersion> => ({
           registrationId: extension.uid,
           registrationUuid: `${extension.uid}-uuid`,
-          registrationTitle: extension.handle,
+          handle: extension.handle,
           type: 'events',
           config: await extension.deployConfig({apiKey: REMOTE_APP.apiKey, appConfiguration: APP.configuration}),
           specification: {
@@ -560,7 +562,7 @@ describe('classifyDeployExtensionChanges', () => {
     const pendingRemote = {
       registrationId: '',
       registrationUuid: 'pending-uuid',
-      registrationTitle: EXTENSION_A.handle,
+      handle: EXTENSION_A.handle,
       type: 'checkout_post_purchase',
       config: {},
       specification: {
@@ -595,7 +597,7 @@ describe('classifyDeployExtensionChanges', () => {
     const pendingRemote = {
       registrationId: '',
       registrationUuid: 'pending-uuid',
-      registrationTitle: 'extension-with-spaces',
+      handle: 'extension-with-spaces',
       type: 'checkout_post_purchase',
       config: {},
       specification: {
@@ -624,7 +626,7 @@ describe('classifyDeployExtensionChanges', () => {
     const remoteWithUid = {
       registrationId: 'some-other-uid',
       registrationUuid: 'remote-uuid',
-      registrationTitle: EXTENSION_A.handle,
+      handle: EXTENSION_A.handle,
       type: 'checkout_post_purchase',
       config: {},
       specification: {
@@ -641,7 +643,7 @@ describe('classifyDeployExtensionChanges', () => {
     })
 
     expect(changes).toMatchObject([
-      {status: 'deleted', remote: {registrationTitle: EXTENSION_A.handle}},
+      {status: 'deleted', remote: {handle: EXTENSION_A.handle}},
       {status: 'created', local: {localIdentifier: EXTENSION_A.localIdentifier}},
     ])
   })
@@ -651,7 +653,7 @@ describe('classifyDeployExtensionChanges', () => {
       ({
         registrationId: '',
         registrationUuid,
-        registrationTitle: EXTENSION_A.handle,
+        handle: EXTENSION_A.handle,
         type: 'checkout_post_purchase',
         config: {},
         specification: {
@@ -741,7 +743,7 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
     const remoteEventsModule: AppModuleVersion = {
       registrationId: eventsExtension.uid,
       registrationUuid: 'events-uuid',
-      registrationTitle: 'Events',
+      handle: 'Events',
       type: 'events',
       config: {
         events: {
@@ -824,17 +826,17 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
     })
   })
 
-  test('runs extension migrations before classifying the app version', async () => {
+  test.each(['checkout_ui', 'pos_ui'])('migrates %s before deploy and preserves its UUID', async (type) => {
     const legacyRemoteExtension = {
       uuid: 'legacy-uuid-a',
       id: '',
       title: EXTENSION_TO_MIGRATE.localIdentifier,
-      type: 'CHECKOUT_UI_EXTENSION',
+      type,
     }
     const migratedModule = {
       registrationId: EXTENSION_TO_MIGRATE.uid,
       registrationUuid: legacyRemoteExtension.uuid,
-      registrationTitle: 'Legacy UI',
+      handle: 'Legacy UI',
       type: 'ui_extension',
       config: await EXTENSION_TO_MIGRATE.deployConfig({apiKey: REMOTE_APP.apiKey, appConfiguration: APP.configuration}),
       specification: {
@@ -857,7 +859,7 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
       activeAppVersion: () => Promise.resolve(activeAppVersion),
     })
 
-    await ensureDeployIdentifiersFromAppVersion(
+    const identifiers = await ensureDeployIdentifiersFromAppVersion(
       deployOptions({
         app: testApp({...APP, allExtensions: [EXTENSION_TO_MIGRATE]}),
         developerPlatformClient,
@@ -882,6 +884,9 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
         }),
       }),
     )
+    expect(identifiers.appModuleUuids).toStrictEqual({
+      [EXTENSION_TO_MIGRATE.localIdentifier]: legacyRemoteExtension.uuid,
+    })
   })
 
   test('aborts when extension migration is declined', async () => {

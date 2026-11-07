@@ -91,6 +91,8 @@ export async function getStorefrontSessionCookies(
   return {...cookieRecord, ...additionalCookies}
 }
 
+const MAX_PREVIEW_REDIRECTS = 1
+
 async function sessionEssentialCookie(storeUrl: string, themeId: string, headers: Record<string, string>, retries = 1) {
   const params = new URLSearchParams({
     preview_theme_id: themeId,
@@ -142,7 +144,50 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
     return sessionEssentialCookie(storeUrl, themeId, headers, retries + 1)
   }
 
-  return shopifyEssential
+  return followPreviewRedirects(response, url, shopifyEssential, requestHeaders)
+}
+
+/**
+ * SFR may redirect before it stores the preview theme, e.g. when every market
+ * uses a subfolder. Follow same-origin redirects that still carry
+ * preview_theme_id so the session ends up previewing the theme.
+ */
+async function followPreviewRedirects(
+  response: Response,
+  url: string,
+  shopifyEssential: string,
+  headers: Record<string, string>,
+  hops = 0,
+): Promise<string> {
+  const location = response.headers.get('location')
+  if (!location || hops >= MAX_PREVIEW_REDIRECTS) return shopifyEssential
+
+  const nextUrl = new URL(location, url)
+  if (nextUrl.origin !== new URL(url).origin || !nextUrl.searchParams.has('preview_theme_id')) {
+    return shopifyEssential
+  }
+
+  const nextResponse = await shopifyFetch(nextUrl.toString(), {
+    method: 'HEAD',
+    redirect: 'manual',
+    headers: {...headers, Cookie: serializeCookies({_shopify_essential: shopifyEssential})},
+  })
+
+  const setCookies = nextResponse.headers.raw()['set-cookie'] ?? []
+  const nextShopifyEssential = getCookie(setCookies, '_shopify_essential')
+  if (!nextShopifyEssential) {
+    outputDebug(
+      `Preview redirect to ${nextUrl.pathname} did not set a new _shopify_essential cookie; keeping the previous one.`,
+    )
+  }
+
+  return followPreviewRedirects(
+    nextResponse,
+    nextUrl.toString(),
+    nextShopifyEssential ?? shopifyEssential,
+    headers,
+    hops + 1,
+  )
 }
 
 async function enrichSessionWithStorefrontPassword(

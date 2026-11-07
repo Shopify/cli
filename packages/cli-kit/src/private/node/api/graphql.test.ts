@@ -1,8 +1,36 @@
-import {extractGraphQLErrorMessages, errorHandler} from './graphql.js'
+import {debugLogRequestInfo, extractGraphQLErrorMessages, errorHandler, extractGraphQLErrors} from './graphql.js'
 import {GraphQLClientError} from './headers.js'
 import {AbortError} from '../../../public/node/error.js'
+import {runWithCommandEventsForCommand} from '../../../public/node/command-events.js'
+import {withCapturedStandardStreams} from '../../../public/node/testing/output.js'
+import * as localContext from '../../../public/node/context/local.js'
 import {ClientError} from 'graphql-request'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+
+test('masks webhook secrets in diagnostics without changing request variables', async () => {
+  const verbose = vi.spyOn(localContext, 'isVerbose').mockReturnValue(true)
+  const variables = {sharedSecret: 'CURRENT_SECRET', shared_secret: 'LEGACY_SECRET'}
+  try {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json'], () =>
+        debugLogRequestInfo(
+          'Webhooks',
+          'mutation { cliTesting { success } }',
+          'https://example.com/graphql',
+          variables,
+        ),
+      )
+      expect(stdout()).toBe('')
+      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'debug'})
+      expect(stderr()).toContain('*****')
+      expect(stderr()).not.toContain('CURRENT_SECRET')
+      expect(stderr()).not.toContain('LEGACY_SECRET')
+    })
+  } finally {
+    verbose.mockRestore()
+  }
+  expect(variables).toEqual({sharedSecret: 'CURRENT_SECRET', shared_secret: 'LEGACY_SECRET'})
+})
 
 describe('extractGraphQLErrorMessages', () => {
   test('returns undefined for undefined errors', () => {
@@ -188,5 +216,25 @@ describe('errorHandler', () => {
     const handler = errorHandler('App Management')
     const error = new Error('something else')
     expect(handler(error)).toBe(error)
+  })
+})
+
+describe('extractGraphQLErrors', () => {
+  const graphQLErrors = [{message: 'Challenge Required', extensions: {code: 'CHALLENGE_REQUIRED'}}]
+  const clientError = new ClientError(
+    {status: 200, headers: new Map(), errors: graphQLErrors} as unknown as ClientError['response'],
+    {query: 'query {}'},
+  )
+
+  test('returns the same GraphQL errors before and after errorHandler maps the error', () => {
+    const mappedError = errorHandler('Admin')(clientError, 'req-123')
+
+    expect(mappedError).toBeInstanceOf(GraphQLClientError)
+    expect(extractGraphQLErrors(clientError)).toEqual(graphQLErrors)
+    expect(extractGraphQLErrors(mappedError)).toEqual(graphQLErrors)
+  })
+
+  test('returns no GraphQL errors for an error that is not a GraphQL error', () => {
+    expect(extractGraphQLErrors(new AbortError('Network error'))).toEqual([])
   })
 })

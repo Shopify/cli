@@ -1,6 +1,6 @@
 ---
 id: UNAUTHENTICATED_ENDPOINT
-version: 2
+version: 3
 severity: high
 precedence: union
 ---

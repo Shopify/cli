@@ -3,15 +3,16 @@ import {
   presentMigrationCancellationResult,
   presentMigrationSubmissionResult,
 } from './result-presenter.js'
+import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
 import type {
+  MigrationCancellationResult,
   MigrationSubmission,
   MigrationSubmissionResult,
-} from '../../../services/subscription-migrations/submit-migration-plan.js'
+} from '../../../services/subscription-migrations/types.js'
 
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
@@ -33,7 +34,7 @@ function submission(): MigrationSubmission {
       {
         batchIndex: 0,
         batchPayloadDigest: 'batch-digest',
-        operation: operation('operation-one'),
+        operation: operation('gid://shopify/AppSubscriptionMigrationOperation/operation-one'),
       },
     ],
   }
@@ -55,29 +56,32 @@ describe('migration submission result presenter', () => {
 
     expect(exitCode).toBe(0)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({schemaVersion: 1, ...value})
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(result),
+    )
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
   test('outputs exactly one operation failure JSON document without invoking a fatal renderer', () => {
     const value = submission()
-    value.operations[0]!.operation = operation('operation-one', 'FAILED')
+    value.operations[0]!.operation = operation(
+      'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+      'FAILED',
+    )
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failure: {type: 'operations', operationIds: ['operation-one']},
+      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
     }
 
     const exitCode = presentMigrationSubmissionResult(result, {json: true, watch: true})
 
     expect(exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      ...value,
-      failure: {type: 'operations', operationIds: ['operation-one']},
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(result),
+    )
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
   })
@@ -92,13 +96,16 @@ describe('migration submission result presenter', () => {
     const rendered = JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])
     expect(rendered).toContain('Subscription migrations scheduled.')
     expect(rendered).not.toContain('idempotency')
-    expect(rendered).toContain('operation-one')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/operation-one')
     expect(outputResult).not.toHaveBeenCalled()
   })
 
   test('renders terminal operations for watched human success', () => {
     const value = submission()
-    value.operations[0]!.operation = operation('operation-one', 'COMPLETED')
+    value.operations[0]!.operation = operation(
+      'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+      'COMPLETED',
+    )
     const result: MigrationSubmissionResult = {status: 'success', submission: value}
 
     const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: true})
@@ -106,7 +113,7 @@ describe('migration submission result presenter', () => {
     expect(exitCode).toBe(0)
     expect(renderInfo).toHaveBeenCalledWith({
       headline: 'Subscription migration operations.',
-      body: ['operation-one: COMPLETED (0/2 settled)'],
+      body: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one: COMPLETED (0/2 settled)'],
     })
     expect(renderSuccess).not.toHaveBeenCalled()
   })
@@ -116,7 +123,7 @@ describe('migration submission result presenter', () => {
 
     expect(renderSuccess).toHaveBeenCalledOnce()
     const rendered = JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])
-    expect(rendered).toContain('operation-one')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/operation-one')
     expect(rendered).not.toContain('idempotency')
   })
 
@@ -125,13 +132,16 @@ describe('migration submission result presenter', () => {
     value.operations.push({
       batchIndex: 1,
       batchPayloadDigest: 'batch-digest-two',
-      operation: operation('operation-two', 'COMPLETED'),
+      operation: operation('gid://shopify/AppSubscriptionMigrationOperation/operation-two', 'COMPLETED'),
     })
-    value.operations[0]!.operation = operation('operation-one', 'FAILED')
+    value.operations[0]!.operation = operation(
+      'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+      'FAILED',
+    )
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failure: {type: 'operations', operationIds: ['operation-one']},
+      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
     }
 
     const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: true})
@@ -141,9 +151,9 @@ describe('migration submission result presenter', () => {
     const rendered = JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])
     expect(rendered).not.toContain('idempotency')
     expect(rendered).toContain('Failed operation IDs')
-    expect(rendered).toContain('operation-one')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/operation-one')
     expect(rendered).toContain('FAILED')
-    expect(rendered).toContain('operation-two')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/operation-two')
     expect(rendered).toContain('COMPLETED')
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderInfo).not.toHaveBeenCalled()
@@ -155,7 +165,7 @@ describe('migration submission result presenter', () => {
     value.operations.push({
       batchIndex: 1,
       batchPayloadDigest: 'batch-digest-two',
-      operation: operation('operation-two'),
+      operation: operation('gid://shopify/AppSubscriptionMigrationOperation/operation-two'),
     })
     const result: MigrationSubmissionResult = {
       status: 'failed',
@@ -176,8 +186,8 @@ describe('migration submission result presenter', () => {
     expect(renderWarning).toHaveBeenCalledOnce()
     const rendered = JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])
     expect(rendered).not.toContain('idempotency')
-    expect(rendered).toContain('operation-one')
-    expect(rendered).toContain('operation-two')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/operation-one')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/operation-two')
     expect(rendered).toContain('Batch index: 2')
     expect(rendered).toContain('Rejected remaining shops')
     expect(rendered).toContain('Invalid plan')
@@ -185,37 +195,78 @@ describe('migration submission result presenter', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('reports a failed submission without claiming operations were accepted', () => {
-    const value = submission()
-    value.operations = []
-    const result: MigrationSubmissionResult = {
-      status: 'failed',
-      submission: value,
-      failure: {
-        type: 'submission',
-        batchIndex: 0,
-        userErrors: [{message: 'App not found', field: ['apiKey']}],
-      },
+  test.each([false, true])(
+    'throws a fatal error for a failed submission without accepted work with json=%s',
+    (json) => {
+      const value = {...submission(), operations: []}
+      const result: MigrationSubmissionResult = {
+        status: 'failed',
+        submission: value,
+        failure: {
+          type: 'submission',
+          batchIndex: 0,
+          userErrors: [
+            {message: 'App not found', field: ['apiKey']},
+            {message: 'Invalid plan', field: null},
+          ],
+        },
+      }
+      expect(() => presentMigrationSubmissionResult(result, {json, watch: false})).toThrow(
+        expect.objectContaining({
+          message: 'Subscription migration submission failed.\nApp not found\nInvalid plan',
+          details: {
+            batchIndex: 0,
+            userErrors: [
+              {message: 'App not found', fieldPath: ['apiKey']},
+              {message: 'Invalid plan', fieldPath: null},
+            ],
+          },
+        }),
+      )
+      expect(outputResult).not.toHaveBeenCalled()
+    },
+  )
+
+  test('writes a declined confirmation result and exits zero', () => {
+    const result = {
+      status: 'cancelled' as const,
+      changed: false as const,
+      action: 'schedule' as const,
+      reason: 'Confirmation declined.',
     }
-
-    const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: false})
-
-    expect(exitCode).toBe(1)
-    expect(renderWarning).toHaveBeenCalledWith(
-      expect.objectContaining({headline: 'Subscription migration submission failed.'}),
-    )
-    expect(JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])).not.toContain('operations were accepted')
+    expect(presentMigrationSubmissionResult(result, {json: true, watch: false})).toBe(0)
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(result)
   })
 })
 
 describe('migration cancellation result presenter', () => {
+  test.each([false, true])('throws a fatal error for one failed cancellation with json=%s', (json) => {
+    const result: MigrationCancellationResult = {
+      outcomes: [
+        {
+          status: 'failed',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/one',
+          operation: null,
+          userErrors: [{message: 'Operation not found', field: ['id']}],
+        },
+      ],
+    }
+    expect(() => presentMigrationCancellationResult(result, {json})).toThrow('Operation not found')
+    expect(outputResult).not.toHaveBeenCalled()
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
   test('outputs exactly one JSON document and reports failure', () => {
     const result: MigrationCancellationResult = {
       outcomes: [
-        {status: 'success', operationId: 'one', operation: operation('one', 'CANCELED')},
+        {
+          status: 'success',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/one',
+          operation: operation('gid://shopify/AppSubscriptionMigrationOperation/one', 'CANCELED'),
+        },
         {
           status: 'failed',
-          operationId: 'two',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/two',
           operation: null,
           userErrors: [{message: 'Already completed', field: ['id']}],
         },
@@ -227,8 +278,29 @@ describe('migration cancellation result presenter', () => {
     expect(exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      outcomes: result.outcomes,
+      status: 'partial',
+      operations: result.outcomes.map((outcome) => ({
+        status: outcome.status,
+        operationGid: outcome.operationId,
+        operation:
+          outcome.operation === null
+            ? null
+            : {
+                gid: outcome.operation.id,
+                status: outcome.operation.status,
+                total: outcome.operation.total,
+                results: outcome.operation.results.edges.map(({node}) => ({shopGid: node.shopId, code: node.code})),
+              },
+        ...(outcome.status === 'failed' && 'userErrors' in outcome
+          ? {
+              error: {
+                type: 'abort',
+                message: outcome.userErrors.map(({message}) => message).join('; '),
+                details: {userErrors: outcome.userErrors.map(({message, field}) => ({message, fieldPath: field}))},
+              },
+            }
+          : {}),
+      })),
     })
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
@@ -237,11 +309,15 @@ describe('migration cancellation result presenter', () => {
   test('renders successful and failed cancellations together without discarding returned operations', () => {
     const result: MigrationCancellationResult = {
       outcomes: [
-        {status: 'success', operationId: 'one', operation: operation('one', 'CANCELED')},
+        {
+          status: 'success',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/one',
+          operation: operation('gid://shopify/AppSubscriptionMigrationOperation/one', 'CANCELED'),
+        },
         {
           status: 'failed',
-          operationId: 'two',
-          operation: operation('two', 'COMPLETED'),
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/two',
+          operation: operation('gid://shopify/AppSubscriptionMigrationOperation/two', 'COMPLETED'),
           userErrors: [
             {message: 'Already completed', field: ['id']},
             {message: 'Cancellation denied', field: null},
@@ -255,9 +331,9 @@ describe('migration cancellation result presenter', () => {
     expect(exitCode).toBe(1)
     expect(renderWarning).toHaveBeenCalledOnce()
     const rendered = JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])
-    expect(rendered).toContain('one')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/one')
     expect(rendered).toContain('CANCELED')
-    expect(rendered).toContain('two')
+    expect(rendered).toContain('gid://shopify/AppSubscriptionMigrationOperation/two')
     expect(rendered).toContain('COMPLETED')
     expect(rendered).toContain('Already completed')
     expect(rendered).toContain('Cancellation denied')
@@ -266,14 +342,22 @@ describe('migration cancellation result presenter', () => {
 
   test('renders all successful cancellations and reports success', () => {
     const result: MigrationCancellationResult = {
-      outcomes: [{status: 'success', operationId: 'one', operation: operation('one', 'CANCELED')}],
+      outcomes: [
+        {
+          status: 'success',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/one',
+          operation: operation('gid://shopify/AppSubscriptionMigrationOperation/one', 'CANCELED'),
+        },
+      ],
     }
 
     const exitCode = presentMigrationCancellationResult(result, {json: false})
 
     expect(exitCode).toBe(0)
     expect(renderSuccess).toHaveBeenCalledOnce()
-    expect(JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])).toContain('one')
+    expect(JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])).toContain(
+      'gid://shopify/AppSubscriptionMigrationOperation/one',
+    )
     expect(renderWarning).not.toHaveBeenCalled()
   })
 })

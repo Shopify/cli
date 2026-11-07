@@ -22,7 +22,8 @@ export async function writeOrOutputStoreExecuteResult(
   outputFile?: string,
   format: StoreExecuteOutputFormat = 'text',
 ): Promise<void> {
-  const serializedResult = storeExecuteJsonOutputSchema.encode(result)
+  const serializedResult =
+    format === 'json' ? storeExecuteJsonOutputSchema.encode(result) : JSON.stringify(result.data, null, 2)
 
   if (outputFile) {
     await writeFile(outputFile, serializedResult)

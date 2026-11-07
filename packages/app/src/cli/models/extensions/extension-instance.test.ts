@@ -320,6 +320,42 @@ describe('contextValue', async () => {
 
     expect(got).toEqual('')
   })
+
+  test('uses the specification target when one is resolved', () => {
+    const specification = createConfigExtensionSpecification({
+      identifier: 'custom',
+      schema: BaseSchema,
+      transformConfig: {},
+      getTarget: (config) => `target-${config.name}`,
+    })
+
+    const instance = new ExtensionInstance({
+      specification,
+      configuration: {name: 'example'},
+      configurationPath: '/app/shopify.app.toml',
+      directory: '/app',
+    })
+
+    expect(instance.contextValue).toBe('target-example')
+  })
+
+  test('falls back to the single targeting entry when the specification returns no target', () => {
+    const specification = createConfigExtensionSpecification({
+      identifier: 'custom',
+      schema: BaseSchema,
+      transformConfig: {},
+      getTarget: () => undefined,
+    })
+
+    const instance = new ExtensionInstance({
+      specification,
+      configuration: {targeting: [{target: 'admin.product.item.action'}]} as BaseConfigType,
+      configurationPath: '/app/shopify.app.toml',
+      directory: '/app',
+    })
+
+    expect(instance.contextValue).toBe('admin.product.item.action')
+  })
 })
 
 describe('isFlow', async () => {
@@ -337,6 +373,52 @@ describe('isFlow', async () => {
     const got = extensionInstance.isFlow
 
     expect(got).toBe(false)
+  })
+})
+
+describe('specification identity', () => {
+  test.each(['single', 'uuid', 'dynamic'] as const)(
+    'uses the specification identity before the %s strategy',
+    (uidStrategy) => {
+      const specification = createConfigExtensionSpecification({
+        identifier: 'custom',
+        schema: BaseSchema,
+        uidStrategy,
+        transformConfig: {},
+        getIdentity: (config) => ({handle: `custom-${config.name}`, uid: `uid-${config.name}`}),
+      })
+
+      const instance = new ExtensionInstance({
+        specification,
+        configuration: {name: 'example'},
+        configurationPath: '/app/shopify.app.toml',
+        directory: '/app',
+      })
+
+      expect(instance.handle).toBe('custom-example')
+      expect(instance.localIdentifier).toBe('custom-example')
+      expect(instance.uid).toBe('uid-example')
+      expect(instance.devUUID).toBe('dev-uid-example')
+    },
+  )
+
+  test('uses the declared strategy when the specification returns no identity', () => {
+    const specification = createConfigExtensionSpecification({
+      identifier: 'custom',
+      schema: BaseSchema,
+      transformConfig: {},
+      getIdentity: () => undefined,
+    })
+
+    const instance = new ExtensionInstance({
+      specification,
+      configuration: {},
+      configurationPath: '/app/shopify.app.toml',
+      directory: '/app',
+    })
+
+    expect(instance.handle).toBe('custom')
+    expect(instance.uid).toBe('custom')
   })
 })
 

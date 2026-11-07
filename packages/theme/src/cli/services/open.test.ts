@@ -40,63 +40,25 @@ const options = {
 }
 
 describe('open', () => {
-  test('opens the preview URL', async () => {
-    // Given
+  test('returns theme details and URLs without opening a browser or rendering', async () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
 
-    // When
-    await open(session, options)
-
-    // Then
-    expect(openURL).toBeCalledWith('https://my-shop.myshopify.com?preview_theme_id=1')
-  })
-
-  test('opens the editor URL with `editor` flag', async () => {
-    // Given
-    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-
-    // When
-    await open(session, {...options, editor: true})
-
-    // Then
-    expect(openURL).toBeCalledWith('https://my-shop.myshopify.com/admin/themes/1/editor')
-  })
-
-  test('renders the theme links', async () => {
-    // Given
-    vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
-    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-
-    // When
-    await open(session, options)
-
-    // Then
-    expect(renderInfo).toBeCalledWith({
-      body: [
-        'Preview information for theme',
-        "'my theme'",
-        {subdued: '(#1)'},
-        '\n\n',
-        {
-          list: {
-            items: [
-              {
-                link: {
-                  label: 'Preview your theme',
-                  url: 'https://my-shop.myshopify.com?preview_theme_id=1',
-                },
-              },
-              {
-                link: {
-                  label: 'Customize your theme at the theme editor',
-                  url: 'https://my-shop.myshopify.com/admin/themes/1/editor',
-                },
-              },
-            ],
-          },
-        },
-      ],
+    await expect(open(session, options)).resolves.toEqual({
+      theme,
+      preview_url: 'https://my-shop.myshopify.com?preview_theme_id=1',
+      editor_url: 'https://my-shop.myshopify.com/admin/themes/1/editor',
     })
+    expect(openURL).not.toHaveBeenCalled()
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+
+  test('propagates theme selection failures', async () => {
+    const error = new Error('Theme not found')
+    vi.mocked(findOrSelectTheme).mockRejectedValue(error)
+
+    await expect(open(session, options)).rejects.toBe(error)
+    expect(openURL).not.toHaveBeenCalled()
+    expect(renderInfo).not.toHaveBeenCalled()
   })
 
   describe('findOrSelectTheme', () => {

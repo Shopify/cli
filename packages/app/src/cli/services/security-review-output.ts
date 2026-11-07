@@ -1,5 +1,4 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
-import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
 import {
   activeFindings,
@@ -8,6 +7,7 @@ import {
   isSuppressed,
   skippedFileCounts,
   summarizeCombinedChecks,
+  type AppSecurityScope,
   type CombinedCheck,
   type CombinedChecksSummary,
   type CombinedFinding,
@@ -49,10 +49,10 @@ interface ChecksWithFindingsRow {
   counts: string
 }
 
-/** A results file is either missing, or present with its relative age, commit and engine version. */
+/** A results file is either missing, or present with its relative age and engine version. */
 type ResultsFileRow =
-  | {name: string; updated: 'not found'; commit?: never; engine?: never}
-  | {name: string; updated: string; commit: string; engine: string}
+  | {name: string; updated: 'not found'; engine?: never}
+  | {name: string; updated: string; engine: string}
 
 /** The summary closes with the next steps, or with the Blocking line when `--blocking` is breached. */
 type SecurityReviewSummaryClosing =
@@ -69,6 +69,9 @@ type SecurityReviewSummary = {
   /** Present when a filtered check shows both sources because its agent result is stale. */
   staleAgentResults?: string
   coverage?: string
+  /** The latest scan's directories and scope, and the scope the agent reported. Empty without any results file. */
+  scopeLines: string[]
+  scopeNote?: string
   resultsFiles: {directory: string; rows: ResultsFileRow[]}
 } & SecurityReviewSummaryClosing
 
@@ -91,7 +94,7 @@ const FILE_NAMES: Record<FindingsSource, string> = {
   agent: 'agent-findings.json',
 }
 const CONCISE_REASONING_LINES = 3
-const SHORT_COMMIT_LENGTH = 7
+const SCOPE_DIFFERS_NOTE = 'Agent findings were recorded for a different scope than the latest scan.'
 /** Marks a check whose `prefer-agent` agent result is older than the deterministic one, so both sources count. */
 const STALE_AGENT_RESULT_MARKER = 'agent result stale'
 const STALE_AGENT_RESULT_EXPLANATION = 'The agent result is older than the deterministic result, so both are shown.'
@@ -144,8 +147,10 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
     otherChecks: otherChecksLines(summary),
     ...(staleChecks > 0 ? {staleAgentResults: staleAgentResultsLine(staleChecks)} : {}),
     ...(deterministic ? {coverage: coverageLine(deterministic)} : {}),
+    scopeLines: scopeLines(result.sources),
+    ...(result.scopeDiffers ? {scopeNote: SCOPE_DIFFERS_NOTE} : {}),
     resultsFiles: {
-      directory: appSecurityArtifactPaths(result.appRoot).artifactDirectory,
+      directory: result.resultsDirectory,
       rows: SOURCE_ORDER.map((source) => resultsFileRow(source, result.sources[source]?.document, input.now)),
     },
     ...(breached
@@ -176,7 +181,7 @@ function summaryAlertType(
 }
 
 function summaryHeadline(checks: CombinedCheck[], summary: CombinedChecksSummary, anyFilePresent: boolean): string {
-  if (!anyFilePresent) return 'No App Security results to review.'
+  if (!anyFilePresent) return 'No app security check results to review.'
   if (summary.withFindings === 0) return `No findings in ${countLabel(checks.length, 'check')}.`
   const unresolved = summary.unresolved > 0 ? ` ${countLabel(summary.unresolved, 'check')} unresolved.` : ''
   return `${checksWithFindingsLabel(summary)}.${unresolved}`
@@ -234,13 +239,33 @@ function coverageLine(document: DeterministicFindingsDocument): string {
   return `Deterministic coverage: ${countLabel(document.coverage.files_scanned, 'file')} scanned, ${skippedText}.${languagesText}`
 }
 
+function formatScope(scope: AppSecurityScope): string {
+  const flags = [
+    ...scope.include_dirs.map((includeDir) => `--include-dir ${includeDir}`),
+    ...scope.excludes.map((excludePattern) => `--exclude ${excludePattern}`),
+    ...(scope.no_git_ignore ? ['--no-git-ignore'] : []),
+  ]
+  return flags.length === 0 ? 'none' : flags.join(' ')
+}
+
+function scopeLines({deterministic, agent}: SecurityReviewResult['sources']): string[] {
+  return [
+    ...(deterministic
+      ? [
+          `Scan directories: ${deterministic.document.coverage.scan_directories.map(({directory}) => directory).join(', ')}`,
+          `Scan scope: ${formatScope(deterministic.document.coverage.scope)}`,
+        ]
+      : []),
+    ...(agent ? [`Scope reported by the agent: ${formatScope(agent.document.scope)}`] : []),
+  ]
+}
+
 function resultsFileRow(source: FindingsSource, document: FindingsDocument | undefined, now: Date): ResultsFileRow {
   const name = FILE_NAMES[source]
   if (!document) return {name, updated: 'not found'}
   return {
     name,
     updated: formatAge(document.generated_at, now),
-    commit: formatCommit(document.project),
     engine: document.engine.version,
   }
 }
@@ -249,13 +274,6 @@ function formatAge(timestamp: string, now: Date): string {
   const time = Date.parse(timestamp)
   if (Number.isNaN(time)) return 'unknown'
   return timeAgo(new Date(time), now)
-}
-
-/** The commit is abbreviated as git does, since the full hash doesn't fit the 80-column table. */
-function formatCommit(project: {commit: string | null; dirty: boolean | null}): string {
-  if (project.commit === null) return 'unknown'
-  const commit = project.commit.slice(0, SHORT_COMMIT_LENGTH)
-  return project.dirty ? `${commit} (uncommitted)` : commit
 }
 
 function nextSteps(
@@ -271,20 +289,22 @@ function nextSteps(
   const steps: TokenItem<InlineToken>[] = []
   // `check` rewrites deterministic-findings.json but never touches agent-findings.json; only the agent does.
   if (summary.withFindings > 0) {
-    steps.push([
-      'Fix the issues, then run',
-      checkCommand,
-      'again. Your coding agent can run it too, which also updates',
-      {filePath: FILE_NAMES.agent},
-      {char: '.'},
-    ])
+    const fixStep: InlineToken[] = ['Fix the issues, then run', checkCommand, 'again.']
+    if (result.sources.agent === null) {
+      steps.push(fixStep, 'For a deeper review, have your agent run the same command and record its findings.')
+    } else if (staleChecks > 0) {
+      // The stale step below says how to refresh the agent findings.
+      steps.push(fixStep)
+    } else {
+      steps.push([...fixStep, 'To refresh agent findings, have your agent run the command and record its findings.'])
+    }
   }
   // A stale check needs agent-findings.json, so this step never meets the deeper-review one.
   if (staleChecks > 0) {
     steps.push([
       'Agent results are older than the deterministic results. Have your coding agent run',
       checkCommand,
-      'to refresh them.',
+      'and record its findings again to refresh them.',
     ])
   } else if (summary.withFindings === 0 && result.sources.agent === null) {
     steps.push(['For a deeper review, have your coding agent run', checkCommand, {char: '.'}])
@@ -307,11 +327,13 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
   if (summary.otherChecks.length > 0) sections.push({title: 'Other checks', body: summary.otherChecks.join('\n')})
   if (summary.staleAgentResults) sections.push({body: summary.staleAgentResults})
   if (summary.coverage) sections.push({body: {subdued: summary.coverage}})
+  if (summary.scopeLines.length > 0) sections.push({body: {subdued: summary.scopeLines.join('\n')}})
+  if (summary.scopeNote) sections.push({body: summary.scopeNote})
   sections.push({
     title: `Results files in ${summary.resultsFiles.directory}`,
     body: {
       tabularData: [
-        ['', {subdued: 'Updated'}, {subdued: 'Commit'}, {subdued: 'Engine'}],
+        ['', {subdued: 'Updated'}, {subdued: 'Engine'}],
         ...summary.resultsFiles.rows.map(resultsFileCells),
       ],
     },
@@ -327,8 +349,8 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
 }
 
 function resultsFileCells(row: ResultsFileRow): InlineToken[] {
-  if (row.commit === undefined) return [row.name, {subdued: row.updated}]
-  return [row.name, row.updated, row.commit, row.engine]
+  if (row.engine === undefined) return [row.name, {subdued: row.updated}]
+  return [row.name, row.updated, row.engine]
 }
 
 /**
@@ -412,6 +434,7 @@ function checkWithFindingsAlert(check: CombinedCheck, verbose: boolean, now: Dat
     options: {
       headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
       ...(counts === '' ? {} : {body: {subdued: counts}}),
+      ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
       customSections: [
         ...sourceStatusSections(check, now),
         ...findings.map((finding) => findingSection(finding, verbose)),

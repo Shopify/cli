@@ -405,8 +405,8 @@ export async function runJavy(
 
   return exec(javy.path, args, {
     cwd: fun.directory,
-    stdout: 'inherit',
-    stderr: 'inherit',
+    stdout: options.stdout,
+    stderr: options.stderr,
     signal: options.signal,
   })
 }

@@ -81,7 +81,7 @@ describe('fetchOrganizationShop', () => {
 
     await fetchOrganizationShop({store: SHOP, organizationId: ORG_ID, noPrompt: true})
 
-    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true})
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true, allowAutomationToken: true})
   })
 
   test('throws when organization is missing', async () => {

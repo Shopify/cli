@@ -1,6 +1,7 @@
 import {
   appSecurityArtifactPaths,
   readFindingsDocument,
+  resultsDirectoryExists,
   type FindingsDocumentFor,
   type ReadArtifactResult,
 } from './app-security-artifacts.js'
@@ -9,6 +10,8 @@ import {
   resolveAppSecurityCommands,
   type AppSecurityCommands,
 } from './app-security-commands.js'
+import {projectAppSecurityPath} from './app-security/result.js'
+import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {
   combineFindings,
   type AgentFindingsDocument,
@@ -29,7 +32,7 @@ export interface AppSecurityResults {
   checks: CombinedCheck[]
 }
 
-/** One result file the reader rejected. Exposed as `error.details.invalidFiles` in JSON mode. */
+/** One result file the reader rejected. */
 interface InvalidResultsFile {
   source: FindingsSource
   path: string
@@ -41,13 +44,30 @@ interface LoadedSource<TDocument> {
   result: ReadArtifactResult<TDocument>
 }
 
+/** Aborts unless the selection's results directory exists. The next step is the `check` that creates it. */
+export async function requireResultsDirectory(selection: AppSecuritySelection, path: string): Promise<void> {
+  const key = resultsKey(selection)
+  if (await resultsDirectoryExists(selection.appDirectory, key)) return
+
+  const {scan} = resolveAppSecurityCommands(selection, path)
+  const error = new AbortError(
+    `No app security check results for ${key} in ${selection.appDirectory}.`,
+    `Run \`${formatAppSecurityCommand(scan)}\`.`,
+  )
+  error.code = 'results-directory-not-found'
+  throw error
+}
+
 /**
  * Reads both result files in parallel and combines them. A missing file is a valid state: the agent is
- * optional and `check` may not have run yet. An invalid file aborts with one error that lists every invalid
- * file and how to fix it.
+ * optional. An invalid file aborts with one error that lists every invalid file and how to fix it.
  */
-export async function loadAppSecurityResults(appRoot: string): Promise<AppSecurityResults> {
-  const paths = appSecurityArtifactPaths(appRoot)
+export async function loadAppSecurityResults(
+  selection: AppSecuritySelection,
+  path: string,
+): Promise<AppSecurityResults> {
+  await requireResultsDirectory(selection, path)
+  const paths = appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection))
   const [deterministic, agent] = await Promise.all([
     loadSource(paths.deterministicFindingsPath, 'deterministic'),
     loadSource(paths.agentFindingsPath, 'agent'),
@@ -56,7 +76,7 @@ export async function loadAppSecurityResults(appRoot: string): Promise<AppSecuri
   const invalidFiles = [invalidFile(deterministic, 'deterministic'), invalidFile(agent, 'agent')].filter(
     (file): file is InvalidResultsFile => file !== undefined,
   )
-  if (invalidFiles.length > 0) throw invalidResultsError(invalidFiles, resolveAppSecurityCommands(appRoot))
+  if (invalidFiles.length > 0) abortInvalidResults(invalidFiles, resolveAppSecurityCommands(selection, path))
 
   const deterministicSource = presentSource(deterministic)
   const agentSource = presentSource(agent)
@@ -87,21 +107,23 @@ function presentSource<TDocument>(loaded: LoadedSource<TDocument>): {path: strin
 }
 
 /**
- * One error for every invalid file: a next step per file with the command that regenerates it, `clean` as
- * the way to start over, and a section per file listing the reader's messages under the file's path.
+ * Aborts with one error for every invalid file: a next step per file with the command that regenerates it, `clean` as
+ * the way to start over, and a section per file listing the reader's messages under the file's path. `details.files`
+ * repeats each file's absolute path and messages for JSON output.
  */
-function invalidResultsError(invalidFiles: InvalidResultsFile[], commands: AppSecurityCommands): AbortError {
+function abortInvalidResults(invalidFiles: InvalidResultsFile[], commands: AppSecurityCommands): never {
   const message =
     invalidFiles.length === 1
-      ? 'The App Security results could not be loaded because a results file is invalid.'
-      : 'The App Security results could not be loaded because both results files are invalid.'
+      ? 'The app security check results could not be loaded because a results file is invalid.'
+      : 'The app security check results could not be loaded because both results files are invalid.'
   const nextSteps: TokenItem<InlineToken>[] = [
     ...invalidFiles.map((file) => regenerateResultsFileStep(file.source, commands, `${basename(file.path)}.`)),
     ['Or run', {command: formatAppSecurityCommand(commands.clean)}, 'to delete both results files and start over.'],
   ]
   const error = new AbortError(message, null, nextSteps, invalidFiles.map(invalidFileSection))
-  error.details = {invalidFiles}
-  return error
+  error.code = 'results-file-invalid'
+  error.details = {files: invalidFiles.map(({path, errors}) => ({path: projectAppSecurityPath(path), errors}))}
+  throw error
 }
 
 /**

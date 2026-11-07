@@ -31,7 +31,8 @@ import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 
 vi.mock('../../models/app/validation/multi-cli-warning.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
@@ -342,7 +343,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  test('generates a JS function', async () => {
+  test.each([false, true])('generates a JS function with JSON mode: %s', async (json) => {
     await withTemporaryApp(
       async (tmpDir) => {
         // Given
@@ -364,16 +365,45 @@ describe('initialize a extension', async () => {
           await file.mkdir(joinPath(destination, 'src'))
           await file.writeFile(joinPath(destination, 'src', 'index'), '')
         })
-        const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
+        const buildGraphqlTypesSpy = vi
+          .spyOn(functionBuild, 'buildGraphqlTypes')
+          .mockImplementation(async (_fun, options) => {
+            if (json) {
+              options.stdout.write('Generated GraphQL types.\n')
+              options.stderr.write('Type generation warning.\n')
+            } else {
+              expect(options.stdout).toBe(process.stdout)
+              expect(options.stderr).toBe(process.stderr)
+            }
+          })
 
         // When
-        const extensionDir = await createFromTemplate({
-          name,
-          extensionTemplate: specification,
-          extensionFlavor,
-          appDirectory: tmpDir,
-          specifications,
-        })
+        const generate = () =>
+          createFromTemplate({
+            name,
+            extensionTemplate: specification,
+            extensionFlavor,
+            appDirectory: tmpDir,
+            specifications,
+          })
+        const extensionDir = json
+          ? await withCapturedStandardStreams(async ({stdout, stderr}) => {
+              const directory = await runWithCommandEventsForCommand(['--json', '--no-input'], generate)
+              expect(stdout()).toBe('')
+              const events = stderr()
+                .trim()
+                .split('\n')
+                .map((line) => JSON.parse(line))
+              expect(events).toEqual(
+                expect.arrayContaining([
+                  expect.objectContaining({type: 'diagnostic', message: 'Generated GraphQL types.\n'}),
+                  expect.objectContaining({type: 'diagnostic', message: 'Type generation warning.\n'}),
+                  expect.objectContaining({type: 'progress', status: 'completed'}),
+                ]),
+              )
+              return directory
+            })
+          : await generate()
 
         // Then
         const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})

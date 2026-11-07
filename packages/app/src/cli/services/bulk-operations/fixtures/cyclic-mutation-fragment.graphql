@@ -1,0 +1,12 @@
+mutation {
+  productUpdate {
+    ...Errors
+  }
+}
+
+fragment Errors on ProductUpdatePayload {
+  errors: userErrors {
+    message
+  }
+  ...Errors
+}

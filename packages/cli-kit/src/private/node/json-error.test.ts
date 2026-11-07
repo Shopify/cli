@@ -16,6 +16,22 @@ function renderedDocument(error: Parameters<typeof renderFatalErrorAsJson>[0]): 
 }
 
 describe('renderFatalErrorAsJson', () => {
+  test.each([
+    new AbortError('Expected failure'),
+    new BugError('Unexpected failure'),
+    new ExternalError('External failure', 'npm', ['install']),
+  ])('preserves a stable error code for fatal error type $type', (error) => {
+    error.code = 'CONFIGURATION_INVALID'
+
+    expect(renderedDocument(error)).toMatchObject({error: {code: 'CONFIGURATION_INVALID'}})
+  })
+
+  test.each([undefined, '', 123, null])('omits unknown or invalid error codes: %j', (code) => {
+    const error = Object.assign(new AbortError('Expected failure'), {code})
+
+    expect(renderedDocument(error)).toEqual({error: {type: 'abort', message: 'Expected failure'}})
+  })
+
   test('includes only explicitly selected structured details', () => {
     const details = {errors: [{message: 'Invalid field', extensions: {code: 'UNDEFINED_FIELD'}}]}
     const error = Object.assign(new AbortError('GraphQL operation failed.'), {

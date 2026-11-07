@@ -1,13 +1,15 @@
 import {executeBulkOperationJsonOutputSchema, type ExecuteBulkOperationResult} from './types.js'
+import {bulkOperationJsonContext, toBulkOperationJson} from './json.js'
 import {
   formatBulkOperationStatus,
   resultsContainUserErrors,
   extractBulkOperationId,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {renderSuccess, renderInfo, renderError, renderWarning, type TokenItem} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {writeFile} from '@shopify/cli-kit/node/fs'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 
 export async function renderExecuteBulkOperationResult(
@@ -17,26 +19,51 @@ export async function renderExecuteBulkOperationResult(
   const {format, watch, outputFile} = options
   const {operation, userErrors, watchAborted, results} = result
   if (!operation && userErrors.length === 0) {
-    const warning = {
+    renderWarning({
       headline: 'Bulk operation not created successfully.',
       body: 'This is an unexpected error. Please try again later.',
-    }
-    if (format === 'json') outputWarn(`${warning.headline} ${warning.body}`)
-    else renderWarning(warning)
+    })
     throw new BugError('Bulk operation response returned null with no error message.')
   }
 
-  if (outputFile && results !== undefined) await writeFile(outputFile, results)
-
   if (format === 'json') {
-    outputResult(
-      executeBulkOperationJsonOutputSchema.encode({
-        ...result,
-        ...(outputFile && results !== undefined ? {results: undefined, outputFile} : {}),
-      }),
-    )
+    if (userErrors.length || (operation && ['FAILED', 'CANCELED', 'EXPIRED'].includes(operation.status))) {
+      const error = new AbortError('Bulk operation failed.')
+      error.details = {
+        ...bulkOperationJsonContext(result),
+        operation: operation ? toBulkOperationJson(operation) : null,
+        userErrors,
+      }
+      throw error
+    }
+    if (!operation) throw new BugError('Bulk operation response returned no operation.')
+
+    const partial = results !== undefined && resultsContainUserErrors(results)
+    let status: 'success' | 'partial' | 'cancelled' = partial ? 'partial' : 'success'
+    if (watchAborted) status = 'cancelled'
+    if (partial) process.exitCode = 1
+    if (outputFile && results === undefined && !watchAborted) {
+      throw new AbortError('No results are available to write to the output file.')
+    }
+    if (outputFile && results !== undefined) {
+      const path = resolvePath(outputFile)
+      await writeFile(path, results)
+      outputResult(executeBulkOperationJsonOutputSchema.encode({path, format: 'jsonl'}))
+    } else {
+      outputResult(
+        executeBulkOperationJsonOutputSchema.encode({
+          ...bulkOperationJsonContext(result),
+          status,
+          ...(watchAborted ? {reason: 'watch-aborted' as const} : {}),
+          operation: toBulkOperationJson(operation),
+          ...(results === undefined ? {} : {resultsJsonl: results}),
+        }),
+      )
+    }
     return
   }
+
+  if (outputFile && results !== undefined) await writeFile(outputFile, results)
 
   if (userErrors.length) {
     renderError({

@@ -1,10 +1,46 @@
 import {getListingFilePath, updateSettingsDataForListing, ensureListingExists} from './theme-listing.js'
 import {test, describe, expect} from 'vitest'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile, symlink, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('theme-listing', () => {
   describe('getListingFilePath', () => {
+    test('rejects a traversal component in a listing file key', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const themeDir = joinPath(tmpDir, 'theme')
+        await mkdir(themeDir)
+
+        await expect(getListingFilePath(themeDir, 'modern', 'templates/../outside.json')).rejects.toThrow(AbortError)
+      })
+    })
+
+    test.each(['', '.', '..', '../outside', '..\\outside', '/outside', 'C:\\outside'])(
+      'rejects unsafe listing name %s',
+      async (listingName) => {
+        await inTemporaryDirectory(async (tmpDir) => {
+          await mkdir(joinPath(tmpDir, 'theme'))
+          await expect(
+            getListingFilePath(joinPath(tmpDir, 'theme'), listingName, 'templates/index.json'),
+          ).rejects.toThrow(AbortError)
+        })
+      },
+    )
+
+    test('rejects a listing file symlink outside the theme', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const themeDir = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'outside.json')
+        const listingPath = joinPath(themeDir, 'listings/modern/templates/index.json')
+        await mkdir(joinPath(themeDir, 'listings/modern/templates'))
+        await writeFile(outsidePath, '{"secret":true}')
+        await symlink(outsidePath, listingPath)
+
+        await expect(getListingFilePath(themeDir, 'modern', 'templates/index.json')).rejects.toThrow(AbortError)
+        await expect(readFile(outsidePath)).resolves.toBe('{"secret":true}')
+      })
+    })
+
     test('returns listing file path when listing file exists', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -82,6 +118,19 @@ describe('theme-listing', () => {
   })
 
   describe('updateSettingsDataForListing', () => {
+    test('rejects a symlinked config directory outside the theme', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const themeDir = joinPath(tmpDir, 'theme')
+        const outsideDir = joinPath(tmpDir, 'outside')
+        await mkdir(themeDir)
+        await mkdir(outsideDir)
+        await writeFile(joinPath(outsideDir, 'settings_data.json'), '{"current":"Secret"}')
+        await symlink(outsideDir, joinPath(themeDir, 'config'))
+
+        await expect(updateSettingsDataForListing(themeDir, 'modern')).rejects.toThrow(AbortError)
+      })
+    })
+
     test('updates current preset to match listing name', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -153,6 +202,13 @@ describe('theme-listing', () => {
   })
 
   describe('ensureListingExists', () => {
+    test('rejects an unsafe listing name', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'theme'))
+        await expect(ensureListingExists(joinPath(tmpDir, 'theme'), '../outside')).rejects.toThrow(AbortError)
+      })
+    })
+
     test('resolves when the listing preset directory exists', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given

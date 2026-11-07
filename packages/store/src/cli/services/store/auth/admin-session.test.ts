@@ -1,7 +1,8 @@
 import {loadAdminSessionFromStoreAuth} from './admin-session.js'
 import {loadStoredStoreSession} from './session-lifecycle.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {ensureNoServiceAccountToken, setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./session-lifecycle.js')
@@ -43,5 +44,16 @@ describe('loadAdminSessionFromStoreAuth', () => {
     await expect(loadAdminSessionFromStoreAuth('preview.myshopify.com')).rejects.toThrow('missing session')
     expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
     expect(setLastSeenUserId).not.toHaveBeenCalled()
+  })
+
+  test('refuses to use stored store auth while the service account token is set', async () => {
+    vi.mocked(ensureNoServiceAccountToken).mockImplementation(() => {
+      throw new AbortError("This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.")
+    })
+
+    await expect(loadAdminSessionFromStoreAuth('shop.myshopify.com')).rejects.toThrow(
+      "This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.",
+    )
+    expect(loadStoredStoreSession).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,6 @@
-import {cancelBulkOperation} from './cancel-bulk-operation.js'
+import {renderCancelBulkOperationResult} from './cancel-result.js'
+import {logBulkOperationStart} from './progress.js'
+import {cancelBulkOperation as runCancelBulkOperation} from './cancel-bulk-operation.js'
 import {createAdminSessionAsApp, formatOperationInfo} from '../graphql/common.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
@@ -40,6 +42,25 @@ describe('cancelBulkOperation', () => {
     mockAndCaptureOutput().clear()
   })
 
+  test('returns the operation and user errors without presenting the result', async () => {
+    const operation = {id: operationId, status: 'CANCELING', createdAt: '2024-01-01T00:00:00Z', completedAt: null}
+    const userErrors = [{field: ['id'], message: 'Cannot cancel'}]
+    vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperationCancel: {bulkOperation: operation, userErrors}})
+    const output = mockAndCaptureOutput()
+
+    await expect(runCancelBulkOperation({storeFqdn, operationId, remoteApp: mockRemoteApp})).resolves.toEqual({
+      store: storeFqdn,
+      apiVersion: '2026-01',
+      operation,
+      userErrors,
+    })
+    expect(output.output()).toBe('')
+    expect(renderInfo).not.toHaveBeenCalled()
+    expect(renderError).not.toHaveBeenCalled()
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
   test('renders initial info message with operation details', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue({
       bulkOperationCancel: {
@@ -53,7 +74,12 @@ describe('cancelBulkOperation', () => {
       },
     })
 
-    await cancelBulkOperation({organization: mockOrganization, storeFqdn, operationId, remoteApp: mockRemoteApp})
+    await cancelAndPresentBulkOperation({
+      organization: mockOrganization,
+      storeFqdn,
+      operationId,
+      remoteApp: mockRemoteApp,
+    })
 
     expect(renderInfo).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -75,7 +101,12 @@ describe('cancelBulkOperation', () => {
       },
     })
 
-    await cancelBulkOperation({organization: mockOrganization, storeFqdn, operationId, remoteApp: mockRemoteApp})
+    await cancelAndPresentBulkOperation({
+      organization: mockOrganization,
+      storeFqdn,
+      operationId,
+      remoteApp: mockRemoteApp,
+    })
 
     expect(adminRequestDoc).toHaveBeenCalledWith({
       query: expect.any(Object),
@@ -119,7 +150,12 @@ describe('cancelBulkOperation', () => {
       },
     })
 
-    await cancelBulkOperation({organization: mockOrganization, storeFqdn, operationId, remoteApp: mockRemoteApp})
+    await cancelAndPresentBulkOperation({
+      organization: mockOrganization,
+      storeFqdn,
+      operationId,
+      remoteApp: mockRemoteApp,
+    })
 
     const rendererFn = {renderSuccess, renderWarning, renderInfo}[renderer]
     expect(rendererFn).toHaveBeenCalledWith(
@@ -137,7 +173,12 @@ describe('cancelBulkOperation', () => {
       },
     })
 
-    await cancelBulkOperation({organization: mockOrganization, storeFqdn, operationId, remoteApp: mockRemoteApp})
+    await cancelAndPresentBulkOperation({
+      organization: mockOrganization,
+      storeFqdn,
+      operationId,
+      remoteApp: mockRemoteApp,
+    })
 
     expect(renderError).toHaveBeenCalledWith({
       headline: 'Failed to cancel bulk operation.',
@@ -153,7 +194,12 @@ describe('cancelBulkOperation', () => {
       },
     })
 
-    await cancelBulkOperation({organization: mockOrganization, storeFqdn, operationId, remoteApp: mockRemoteApp})
+    await cancelAndPresentBulkOperation({
+      organization: mockOrganization,
+      storeFqdn,
+      operationId,
+      remoteApp: mockRemoteApp,
+    })
 
     expect(renderError).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -162,3 +208,12 @@ describe('cancelBulkOperation', () => {
     )
   })
 })
+
+async function cancelAndPresentBulkOperation(
+  input: Parameters<typeof runCancelBulkOperation>[0] & {organization: Organization},
+) {
+  logBulkOperationStart('Canceling bulk operation.', input, 'text')
+  const result = await runCancelBulkOperation(input)
+  renderCancelBulkOperationResult(result, input.operationId, 'text')
+  return result
+}

@@ -10,8 +10,14 @@ import {
   isAbsolute,
 } from 'pathe'
 import {fileURLToPath} from 'url'
+// eslint-disable-next-line no-restricted-imports -- Native containment must preserve literal POSIX backslashes.
+import {relative as nativeRelative, isAbsolute as nativeIsAbsolute, sep as nativeSeparator} from 'node:path'
 // eslint-disable-next-line n/prefer-global/url
 import type {URL} from 'url'
+
+interface IsSubpathOptions {
+  native?: boolean
+}
 
 /**
  * Joins a list of paths together.
@@ -144,13 +150,29 @@ export function relativizePath(path: string, dir: string = cwd()): string {
 }
 
 /**
- * Given 2 paths, it returns whether the second path is a subpath of the first path.
+ * Given 2 paths, it returns whether the second path is inside or equal to the first path.
+ *
+ * By default, paths are compared with pathe, which treats `\` as a separator
+ * on every platform. This behaviour is kept for backward compatibility.
+ *
+ * When `native` is true, paths are compared with the current OS's native path
+ * semantics, so literal backslashes on POSIX are preserved as filename
+ * characters. Use `native: true` for security or containment checks on
+ * resolved filesystem paths.
+ *
+ * Symbolic links are not resolved; use fileRealPath from the fs module first
+ * when checking physical containment.
  *
  * @param mainPath - The main path.
  * @param subpath - The subpath.
- * @returns Whether the subpath is a subpath of the main path.
+ * @param options - Comparison options. Set `native` to true to use the OS's native path semantics. Defaults to false.
+ * @returns Whether the subpath is inside or equal to the main path.
  */
-export function isSubpath(mainPath: string, subpath: string): boolean {
+export function isSubpath(mainPath: string, subpath: string, options: IsSubpathOptions = {native: false}): boolean {
+  if (options.native) {
+    const relativePath = nativeRelative(mainPath, subpath)
+    return relativePath !== '..' && !relativePath.startsWith(`..${nativeSeparator}`) && !nativeIsAbsolute(relativePath)
+  }
   const relativePath = relative(mainPath, subpath)
   return !relativePath.startsWith('..') && !isAbsolutePath(relativePath)
 }

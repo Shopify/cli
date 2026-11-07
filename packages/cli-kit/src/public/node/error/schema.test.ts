@@ -28,6 +28,23 @@ describe('JSON error output schema', () => {
     {type: 'abort' as const},
     {type: 'bug' as const},
     {type: 'external' as const, command: 'npm', args: ['install']},
+  ])('accepts an optional stable code on $type errors', (variant) => {
+    const document = {error: {...variant, message: 'Failed', code: 'CONFIGURATION_INVALID'}}
+    const validate = new Ajv().compile(jsonErrorOutputSchema.jsonSchema)
+
+    expect(JSON.parse(jsonErrorOutputSchema.encode(document))).toEqual(document)
+    expect(validate(document)).toBe(true)
+    for (const code of ['', 123, null]) {
+      const invalidDocument = {error: {...document.error, code}}
+      expect(() => jsonErrorOutputSchema.validate(invalidDocument)).toThrow()
+      expect(validate(invalidDocument)).toBe(false)
+    }
+  })
+
+  test.each([
+    {type: 'abort' as const},
+    {type: 'bug' as const},
+    {type: 'external' as const, command: 'npm', args: ['install']},
   ])('supports selected structured details on $type errors', (variant) => {
     const document = {
       error: {...variant, message: 'Failed', details: {errors: [{message: 'Invalid field', code: 'UNDEFINED_FIELD'}]}},

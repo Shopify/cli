@@ -59,7 +59,7 @@ import {
   appManagementRequestDoc,
 } from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 
@@ -1222,6 +1222,37 @@ describe('deploy', () => {
     })
   })
 
+  test.each([false, true])('keeps the created version when release is returned: %s', async (released) => {
+    vi.mocked(appManagementRequestDoc)
+      .mockResolvedValueOnce({
+        appVersionCreate: {
+          version: {id: 'gid://shopify/Version/1', metadata: {}, appModules: []},
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        appReleaseCreate: {
+          release: released ? {version: {id: 'gid://shopify/Version/1', metadata: {}}} : null,
+          userErrors: [],
+        },
+      })
+
+    const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/123',
+    })
+
+    expect(result.appDeploy.appVersion?.uuid).toBe('gid://shopify/Version/1')
+    expect(result.appDeploy.userErrors).toEqual(
+      released
+        ? []
+        : [{message: 'The API did not return a release for the created app version.', category: '', details: []}],
+    )
+  })
+
   test('handles version creation errors', async () => {
     // Given
     const mockResponse = {
@@ -1397,6 +1428,58 @@ describe('deploy', () => {
   })
 })
 
+describe('appVersionByTag', () => {
+  test.each([
+    {path: ['app'], categories: ['not_found']},
+    {path: ['versionByTag'], categories: ['not_found', 'access_denied']},
+  ])('preserves errors for $path with categories $categories', async ({path, categories}) => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    const error = Object.assign(new AbortError('Lookup failed.'), {
+      statusCode: 200,
+      errors: [{path, extensions: {app_errors: {errors: categories.map((category) => ({category}))}}}],
+    })
+    vi.mocked(appManagementRequestDoc).mockRejectedValueOnce(error)
+
+    await expect(client.appVersionByTag(testOrganizationApp(), 'invalid')).rejects.toBe(error)
+  })
+})
+
+describe('release', () => {
+  test.each([null, {version: {id: 'gid://shopify/Version/123', metadata: {}}}])(
+    'retains user errors with release response %j',
+    async (release) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const userError = {field: ['version'], message: 'Release failed.', category: 'validation', on: []}
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appReleaseCreate: {release, userErrors: [userError]}})
+
+      await expect(
+        client.release({
+          app: testOrganizationApp(),
+          version: {versionId: 'gid://shopify/Version/123', appVersionId: 123},
+        }),
+      ).resolves.toEqual({appRelease: {userErrors: [{...userError, details: []}]}})
+    },
+  )
+
+  test.each([{userErrors: []}, {userErrors: undefined}])(
+    'rejects a missing release without user errors ($userErrors)',
+    async ({userErrors}) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appReleaseCreate: {release: null, userErrors}})
+
+      await expect(
+        client.release({
+          app: testOrganizationApp(),
+          version: {versionId: 'gid://shopify/Version/123', appVersionId: 123},
+        }),
+      ).rejects.toThrow('The Developer Dashboard did not confirm the app version release.')
+    },
+  )
+})
+
 describe('appVersions', () => {
   test('preserves a missing app in the API response instead of dereferencing it', async () => {
     // Given
@@ -1565,6 +1648,7 @@ describe('AppManagementClient', () => {
         flags: [],
         developerPlatformClient: client,
       })
+      expect(businessPlatformOrganizationsRequestDoc).not.toHaveBeenCalled()
     })
   })
 })
@@ -1870,7 +1954,7 @@ describe('appExtensionRegistrations', () => {
   const createMockAppModuleVersion = (overrides: Partial<any> = {}) => ({
     registrationId: 'mock-registration-id',
     registrationUuid: 'mock-uuid',
-    registrationTitle: 'Mock Extension',
+    handle: 'Mock Extension',
     type: 'ui_extension',
     specification: {
       identifier: 'ui_extension',
@@ -1887,7 +1971,7 @@ describe('appExtensionRegistrations', () => {
     // Given
     const configModule = createMockAppModuleVersion({
       registrationId: BrandingSpecIdentifier,
-      registrationTitle: 'Config Extension',
+      handle: 'Config Extension',
       type: 'config_extension',
       specification: {
         identifier: BrandingSpecIdentifier,
@@ -1901,12 +1985,12 @@ describe('appExtensionRegistrations', () => {
 
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-1',
-      registrationTitle: 'Regular Extension',
+      handle: 'Regular Extension',
     })
 
     const dashboardManagedModule = createMockAppModuleVersion({
       registrationId: 'dashboard-1',
-      registrationTitle: 'Dashboard Extension',
+      handle: 'Dashboard Extension',
       specification: {
         identifier: 'dashboard_extension',
         name: 'Dashboard Extension',
@@ -1959,7 +2043,7 @@ describe('appExtensionRegistrations', () => {
     // Given
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-1',
-      registrationTitle: 'Extension from API',
+      handle: 'Extension from API',
     })
 
     // Mock the activeAppVersion method
@@ -1994,7 +2078,7 @@ describe('appExtensionRegistrations', () => {
     const configModules = configExtensionIds.map((id: string, index: number) =>
       createMockAppModuleVersion({
         registrationId: id,
-        registrationTitle: `Config Extension ${index}`,
+        handle: `Config Extension ${index}`,
         type: 'config_extension',
         specification: {
           identifier: id,
@@ -2043,7 +2127,7 @@ describe('appExtensionRegistrations', () => {
     // Given
     const moduleWithoutSpec = createMockAppModuleVersion({
       registrationId: 'no-spec-1',
-      registrationTitle: 'No Spec Extension',
+      handle: 'No Spec Extension',
       specification: undefined,
     })
 
@@ -2066,7 +2150,7 @@ describe('appExtensionRegistrations', () => {
       ...[BrandingSpecIdentifier, AppHomeSpecIdentifier].map((id: string) =>
         createMockAppModuleVersion({
           registrationId: id,
-          registrationTitle: `Config ${id}`,
+          handle: `Config ${id}`,
           type: 'config',
           specification: {
             identifier: id,
@@ -2081,16 +2165,16 @@ describe('appExtensionRegistrations', () => {
       // Regular CLI-managed extensions
       createMockAppModuleVersion({
         registrationId: 'cli-1',
-        registrationTitle: 'CLI Extension 1',
+        handle: 'CLI Extension 1',
       }),
       createMockAppModuleVersion({
         registrationId: 'cli-2',
-        registrationTitle: 'CLI Extension 2',
+        handle: 'CLI Extension 2',
       }),
       // Dashboard-managed extensions
       createMockAppModuleVersion({
         registrationId: 'dashboard-1',
-        registrationTitle: 'Dashboard Extension 1',
+        handle: 'Dashboard Extension 1',
         specification: {
           identifier: 'dashboard_ext',
           name: 'Dashboard Extension',
@@ -2102,7 +2186,7 @@ describe('appExtensionRegistrations', () => {
       }),
       createMockAppModuleVersion({
         registrationId: 'dashboard-2',
-        registrationTitle: 'Dashboard Extension 2',
+        handle: 'Dashboard Extension 2',
         specification: {
           identifier: 'dashboard_ext',
           name: 'Dashboard Extension',
@@ -2131,7 +2215,7 @@ describe('appExtensionRegistrations', () => {
     const configData = {name: 'Test Extension', enabled: true}
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-config',
-      registrationTitle: 'Extension With Config',
+      handle: 'Extension With Config',
       config: configData,
     })
 
@@ -2158,7 +2242,7 @@ describe('appExtensionRegistrations', () => {
     const contextData = 'some-context-value'
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-config-and-context',
-      registrationTitle: 'Extension With Config And Context',
+      handle: 'Extension With Config And Context',
       config: configData,
       target: contextData,
     })
@@ -2185,7 +2269,7 @@ describe('appExtensionRegistrations', () => {
   test('excludes activeVersion when config is not present', async () => {
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-without-config',
-      registrationTitle: 'Extension Without Config',
+      handle: 'Extension Without Config',
       config: undefined,
       target: 'some-context',
     })
@@ -2210,7 +2294,7 @@ describe('appExtensionRegistrations', () => {
     const configData = {name: 'Test Extension', enabled: false}
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-config-only',
-      registrationTitle: 'Extension With Config Only',
+      handle: 'Extension With Config Only',
       config: configData,
       target: undefined,
     })
@@ -2237,7 +2321,7 @@ describe('appExtensionRegistrations', () => {
     const configData = {}
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-empty-config',
-      registrationTitle: 'Extension With Empty Config',
+      handle: 'Extension With Empty Config',
       config: configData,
     })
 

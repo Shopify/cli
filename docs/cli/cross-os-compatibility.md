@@ -18,6 +18,8 @@ When implementing business logic that interacts with the OS, for example doing I
 
 ### Manual testing
 
+Use the Node and PNPM versions required by the repository. See [setup requirements](get-started.md#requirements).
+
 Please don't assume that a successful working workflow in the OS in which it was developed will yield success in other OSs. **We strongly recommend manually testing the workflow in other OSs**.
 
 #### Linux
@@ -25,9 +27,9 @@ Please don't assume that a successful working workflow in the OS in which it was
 After installing Ubuntu 22 then run:
 
 - `sudo apt-get update && sudo apt-get -y upgrade`
-- `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
+- `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -`
 - `sudo apt-get install -y git nodejs`
-- `curl -fsSL https://get.pnpm.io/install.sh | sh -`
+- `curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=10.11.1 sh -`
 
 You can clone the CLI repository:
 
@@ -41,10 +43,13 @@ Install all dependencies:
 pnpm install
 ```
 
-Now you can test creating an app and installing in your dev store:
+Run these commands from the CLI repository root to create an app in `../test-app`, generate an extension, and start the development server. Select a UI extension when prompted, then follow the development server prompts to select a development store:
 
 ```bash
-node bin/create-test-app.js -e ui
+pnpm nx build cli
+pnpm create-app --local --name test-app --path .. --template reactRouter --flavor javascript
+pnpm shopify app generate extension --path ../test-app
+pnpm shopify app dev --path ../test-app
 ```
 
 #### Windows
@@ -77,8 +82,11 @@ Install all dependencies:
 pnpm install
 ```
 
-Now you can test creating an app and installing in your dev store:
+Run these commands from the CLI repository root to create an app in `../test-app`, generate an extension, and start the development server. Select a UI extension when prompted, then follow the development server prompts to select a development store:
 
 ```bash
-node bin/create-test-app.js -e ui
+pnpm nx build cli
+pnpm create-app --local --name test-app --path .. --template reactRouter --flavor javascript
+pnpm shopify app generate extension --path ../test-app
+pnpm shopify app dev --path ../test-app
 ```

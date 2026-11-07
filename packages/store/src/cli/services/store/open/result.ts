@@ -9,7 +9,7 @@ export function renderOpenStoreResult(result: OpenStoreResult, format: 'text' | 
   }
 
   if (result.opened) {
-    renderInfo({headline: `Opening the storefront for ${result.store} in your browser.`})
+    renderInfo({headline: `Opening the storefront for ${result.storeDomain ?? result.url} in your browser.`})
     return
   }
 

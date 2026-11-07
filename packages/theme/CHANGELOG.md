@@ -1,5 +1,47 @@
 # @shopify/theme
 
+## 5.0.0
+
+### Major Changes
+
+- c86f804: Remove the `--poll` flag from `theme dev`. It has been deprecated since 3.61.0 and has had no effect since 3.70.0.
+
+### Patch Changes
+
+- 87cc186: Report a directory passed to `theme check --config` as an expected user error instead of crashing with EISDIR.
+- 62d961a: Fix development theme previews on stores with market subfolders when using account authentication, improve Theme Access authentication, keep pulled files inside the theme directory, and support browser identity verification.
+- e85a56f: Fix `theme profile` failing with "Bad response: 301" when `--url` includes a query string, and show an actionable error when the page redirects.
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [bcbaec8]
+- Updated dependencies [730d051]
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [349478a]
+  - @shopify/cli-kit@5.0.0
+
+## 4.9.0
+
+### Patch Changes
+
+- f6700aa: Bump Shopify/theme-tools packages
+- Updated dependencies [9945ebf]
+- Updated dependencies [267c622]
+- Updated dependencies [9832404]
+- Updated dependencies [fa5989a]
+- Updated dependencies [83fe8a2]
+- Updated dependencies [065cd24]
+- Updated dependencies [b5d1f33]
+- Updated dependencies [02fbf6e]
+- Updated dependencies [ab16257]
+- Updated dependencies [46dcc14]
+- Updated dependencies [58d1f09]
+- Updated dependencies [fd4a5db]
+- Updated dependencies [667c628]
+- Updated dependencies [2a9b3a4]
+  - @shopify/cli-kit@4.9.0
+
 ## 4.8.0
 
 ### Patch Changes

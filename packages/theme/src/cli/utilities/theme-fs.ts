@@ -4,11 +4,13 @@ import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
+import {resolveThemeFilePath, validateListingName} from './theme-file-path.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -58,7 +60,12 @@ const THEME_PARTITION_REGEX = {
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
+export function mountThemeFileSystem(
+  root: string,
+  options?: ThemeFileSystemOptions & {signal?: AbortSignal},
+): ThemeFileSystem {
+  if (options?.listing !== undefined) validateListingName(options.listing)
+
   const files = new Map<string, ThemeAsset>()
   const uploadErrors = new Map<string, string[]>()
   const unsyncedFileKeys = new Set<string>()
@@ -96,13 +103,14 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     cwd: root,
     deep: 3,
     ignore: DEFAULT_IGNORE_PATTERNS,
+  }).then(async (filesPaths) => {
+    filterPatterns.ignoreFromFile.push(...(await getPatternsFromShopifyIgnore(root)))
+    const selectedFiles = applyIgnoreFilters(
+      filesPaths.map((key) => ({key})),
+      filterPatterns,
+    )
+    await Promise.all(selectedFiles.map(({key}) => read(key)))
   })
-    .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
-    .then(([ignoredPatterns]) => {
-      if (Array.isArray(ignoredPatterns)) {
-        filterPatterns.ignoreFromFile.push(...ignoredPatterns)
-      }
-    })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
   const isFileIgnored = (fileKey: string) => applyIgnoreFilters([{key: fileKey}], filterPatterns).length === 0
@@ -270,10 +278,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     uploadErrors,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
+      await resolveThemeFilePath(root, fileKey)
       files.delete(fileKey)
       await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
+      await resolveThemeFilePath(root, asset.key)
       // When a listing is active and the written asset is a template/section JSON file,
       // use smart behavior:
       // - If the corresponding listing file already exists, write to listings/<preset>/<key>
@@ -283,7 +293,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
       if (options?.listing && isTemplateOrSectionJson) {
         const listingAssetKey = joinPath('listings', options.listing, asset.key)
-        const listingAbsolutePath = joinPath(root, listingAssetKey)
+        const listingAbsolutePath = await resolveThemeFilePath(root, listingAssetKey)
         const listingFileExists = await fileExists(listingAbsolutePath)
 
         // Keep checksum/value under the base key so checksums align with remote keys
@@ -323,6 +333,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     },
     startWatcher: async (themeId: string, adminSession: AdminSession) => {
       const {default: chokidar} = await import('chokidar')
+      if (options?.signal?.aborted) return
 
       const watcher = chokidar.watch([...directoriesToWatch], {
         ignored: DEFAULT_IGNORE_PATTERNS,
@@ -332,8 +343,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
       // Debounce file events per-file and per-event-type
       const pendingEvents = new Map<string, NodeJS.Timeout>()
+      const stop = () => {
+        for (const timeout of pendingEvents.values()) clearTimeout(timeout)
+        pendingEvents.clear()
+        watcher.close().catch((error: Error) => outputWarn(`Error closing file watcher: ${error.message}`))
+      }
+      options?.signal?.addEventListener('abort', stop, {once: true})
+      watcher.once('close', () => options?.signal?.removeEventListener('abort', stop))
 
       const queueFsEvent = (eventName: 'add' | 'change' | 'unlink', filePath: string) => {
+        if (options?.signal?.aborted) return
         const fileKey = getKey(filePath)
         const eventKey = `${fileKey}:${eventName}`
 
@@ -397,7 +416,7 @@ export function handleSyncUpdate(
 }
 
 async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
-  const absolutePath = joinPath(root, key)
+  const absolutePath = await resolveThemeFilePath(root, key)
 
   await ensureDirExists(absolutePath)
 
@@ -412,7 +431,7 @@ async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset
 
 export async function readThemeFile(root: string, path: Key): Promise<string | Buffer | undefined> {
   const options: ReadOptions = isTextFile(path) ? {encoding: 'utf8'} : {}
-  const absolutePath = joinPath(root, path)
+  const absolutePath = await resolveThemeFilePath(root, path)
 
   const themeFileExists = await fileExists(absolutePath)
   if (!themeFileExists) {
@@ -445,7 +464,7 @@ async function readThemeFileWithListing(
 }
 
 async function removeThemeFile(root: string, path: Key) {
-  const absolutePath = joinPath(root, path)
+  const absolutePath = await resolveThemeFilePath(root, path)
 
   const themeFileExists = await fileExists(absolutePath)
   if (!themeFileExists) {
@@ -583,7 +602,9 @@ function dirPath(filePath: string) {
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
+    commandEventOutputMode() === 'json'
+      ? `Synced ${action} ${fileKey}`
+      : outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
   )
 }
 

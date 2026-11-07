@@ -1,7 +1,10 @@
 import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
+import * as devUrls from './dev/urls.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
+import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
+import {DevSessionLogger} from './dev/processes/dev-session/dev-session-logger.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -15,7 +18,13 @@ import {describe, expect, test, vi} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
+import {Writable} from 'stream'
 
+vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./dev/processes/setup-dev-processes.js')
 vi.mock('./dev/ui.js')
@@ -25,6 +34,75 @@ vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('../utilities/mkcert.js')
 
 describe('dev', () => {
+  test.each(['cancellation', 'completion', 'preparation failure', 'process setup failure', 'session failure'])(
+    'stops the managed tunnel on %s',
+    async (outcome) => {
+      const app = testAppLinked()
+      const failure = new Error('Dev failed')
+      const stopTunnel = vi.fn()
+      const tunnelClient: TunnelClient = {
+        provider: 'cloudflare',
+        port: 3456,
+        getTunnelStatus: () => ({status: 'connected', url: 'https://example.trycloudflare.com'}),
+        stopTunnel,
+      }
+
+      vi.spyOn(devUrls, 'startTunnelPlugin').mockResolvedValue(tunnelClient)
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({
+        name: 'Remote app',
+        application_url: '',
+        embedded: true,
+      })
+      vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+      vi.mocked(checkPortAvailability).mockResolvedValue(true)
+      vi.mocked(setupDevProcesses).mockResolvedValue({
+        processes: [],
+        previewUrl: 'https://dev-store.myshopify.com/admin/apps/api-key',
+        graphiqlUrl: undefined,
+        devSessionStatusManager: new DevSessionStatusManager({isReady: true}),
+      })
+      vi.mocked(renderDev).mockImplementation(async ({abortController}) => {
+        expect(stopTunnel).not.toHaveBeenCalled()
+        if (outcome === 'cancellation') {
+          abortController.abort()
+          expect(stopTunnel).toHaveBeenCalledOnce()
+          abortController.abort()
+        } else if (outcome === 'session failure') {
+          throw failure
+        }
+      })
+
+      if (outcome === 'preparation failure') {
+        vi.mocked(fetchAppRemoteConfiguration).mockRejectedValue(failure)
+      } else if (outcome === 'process setup failure') {
+        vi.mocked(setupDevProcesses).mockRejectedValue(failure)
+      }
+
+      const running = dev({
+        app,
+        project: testProject({usesWorkspaces: true}),
+        remoteApp: testOrganizationApp({apiKey: 'api-key'}),
+        organization: testOrganization(),
+        specifications: [],
+        developerPlatformClient: testDeveloperPlatformClient(),
+        store: testOrganizationStore({}),
+        directory: app.directory,
+        update: false,
+        commandConfig: {runHook: vi.fn().mockResolvedValue({successes: []})} as any,
+        skipDependenciesInstallation: true,
+        tunnel: {mode: 'auto'},
+      })
+
+      if (outcome.endsWith('failure')) {
+        await expect(running).rejects.toBe(failure)
+      } else {
+        await running
+      }
+
+      expect(stopTunnel).toHaveBeenCalledOnce()
+    },
+  )
+
   test('logs store domain metadata when launching dev', async () => {
     const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
     const app = testAppLinked()
@@ -83,6 +161,129 @@ describe('dev', () => {
 
     addPublicMetadata.mockRestore()
     addSensitiveMetadata.mockRestore()
+  })
+})
+
+describe('dev with a dev instance', () => {
+  test.each([false, true])('captures output and session URLs, stopping on lock loss: %s', async (loseLock) => {
+    await inTemporaryDirectory(async (tmp) => {
+      const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
+      const app = testAppLinked({directory: tmp})
+      const manager = new DevSessionStatusManager({
+        isReady: false,
+        statusMessage: {type: 'loading', message: 'Preparing dev preview'},
+      })
+      const devInstance = await acquireDevInstance({command: 'app dev', directory: tmp})
+      const ownership = new AbortController()
+      const previewUrl = 'https://dev-store.myshopify.com/admin/apps/api-key'
+      const graphiqlUrl = 'http://localhost:3456/graphiql'
+      let infoWhileRunning: unknown
+
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({
+        name: 'Remote app',
+        application_url: '',
+        embedded: true,
+      })
+      vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+      vi.mocked(checkPortAvailability).mockResolvedValue(true)
+      vi.mocked(setupDevProcesses).mockResolvedValue({
+        processes: [
+          {
+            type: 'web',
+            prefix: 'web',
+            function: async ({stdout, stderr}: {stdout: Writable; stderr: Writable}) => {
+              stdout.write('Server listening on 3000\n')
+              stderr.write('Deprecation warning\n')
+              useConcurrentOutputContext({outputPrefix: 'discount'}, () => {
+                stdout.write('Building function discount...')
+                stdout.write('Building GraphQL types...\n')
+              })
+              await new DevSessionLogger(stdout).info('Update accepted')
+            },
+            options: {},
+          } as any,
+        ],
+        previewUrl,
+        graphiqlUrl,
+        devSessionStatusManager: manager,
+      })
+      const terminal = new Writable({write: (_chunk, _encoding, callback) => callback()})
+      vi.mocked(renderDev).mockImplementation(async ({processes, abortController}) => {
+        manager.updateStatus({previewURL: previewUrl})
+        manager.setMessage('READY')
+        manager.setMessage('CHANGE_DETECTED')
+        manager.updateStatus({isReady: true})
+        manager.setMessage('BUILD_ERROR', ['discount: Invalid input'])
+        manager.updateStatus({graphiqlURL: graphiqlUrl})
+        await vi.waitFor(async () => {
+          infoWhileRunning = JSON.parse(await readFile(devInstance.paths.infoFile))
+          expect(infoWhileRunning).toHaveProperty('details.preview.errors', ['discount: Invalid input'])
+        })
+        await Promise.all(processes.map((process) => process.action(terminal, terminal, new AbortController().signal)))
+        if (loseLock) {
+          ownership.abort(new Error('Lock lost'))
+          expect(abortController.signal.aborted).toBe(true)
+        }
+      })
+
+      const running = dev({
+        app,
+        project: testProject({usesWorkspaces: true}),
+        remoteApp: testOrganizationApp({apiKey: 'api-key'}),
+        organization: testOrganization(),
+        specifications: [],
+        developerPlatformClient: testDeveloperPlatformClient(),
+        store,
+        directory: app.directory,
+        update: false,
+        commandConfig: {} as any,
+        skipDependenciesInstallation: true,
+        tunnel: {mode: 'custom', url: 'https://localhost:3456'},
+        devInstance: {...devInstance, abortSignal: ownership.signal},
+      })
+      if (loseLock) {
+        await expect(running).rejects.toThrow('Lock lost')
+      } else {
+        await running
+      }
+      await devInstance.release()
+
+      expect(infoWhileRunning).toMatchObject({
+        status: 'running',
+        details: {
+          storeFqdn: 'dev-store.myshopify.com',
+          previewUrl,
+          preview: {state: 'error', errors: ['discount: Invalid input']},
+        },
+      })
+      const entries = (await readFile(devInstance.paths.logFile))
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+      entries.forEach((entry) => expect(entry).not.toHaveProperty('stream'))
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({source: 'app dev', message: `Preview URL: ${previewUrl}`}),
+          expect.objectContaining({source: 'app dev', message: `GraphiQL URL (Admin API): ${graphiqlUrl}`}),
+          expect.objectContaining({source: 'web', message: 'Server listening on 3000'}),
+          expect.objectContaining({source: 'web', message: 'Deprecation warning'}),
+          expect.objectContaining({source: 'discount', message: 'Building function discount...'}),
+          expect.objectContaining({source: 'discount', message: 'Building GraphQL types...'}),
+          expect.objectContaining({source: 'app-preview', message: 'Update accepted'}),
+        ]),
+      )
+      expect(
+        entries
+          .filter(({source}) => source === 'app dev')
+          .filter(({message}) => !message.startsWith('Preview URL:') && !message.startsWith('GraphiQL URL'))
+          .map(({level, message}) => ({level, message})),
+      ).toEqual([
+        {level: 'info', message: 'Preparing dev preview'},
+        {level: 'info', message: 'Ready, watching for changes in your app'},
+        {level: 'info', message: 'Change detected, updating dev preview'},
+        {level: 'error', message: 'Build error. Please review your code and try again'},
+      ])
+    })
   })
 })
 

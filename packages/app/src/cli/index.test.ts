@@ -7,7 +7,7 @@ import SecurityReview from './commands/app/security/review.js'
 import {describe, expect, test} from 'vitest'
 
 describe('@shopify/app command registration', () => {
-  test('registers App Security commands', () => {
+  test('registers app security commands', () => {
     expect(commands['app:security:check']).toBe(SecurityCheck)
     expect(commands['app:security:clean']).toBe(SecurityClean)
     expect(commands['app:security:instructions']).toBe(SecurityInstructions)

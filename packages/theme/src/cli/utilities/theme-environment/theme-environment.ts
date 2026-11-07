@@ -30,11 +30,15 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() =>
     ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session),
   )
-  const server = createDevelopmentServer(theme, ctx, workPromise)
+  const server = createDevelopmentServer(theme, ctx, workPromise, rejectBackgroundJob)
 
   return {
     workPromise,
     serverStart: server.start,
+    serverStop: async () => {
+      await server.close()
+      await envSetup.stopPromise
+    },
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
     backgroundJobPromise,
@@ -48,7 +52,7 @@ function ensureThemeEnvironmentSetup(
   rejectBackgroundJob: (reason?: unknown) => void,
 ) {
   const abort = (error: Error): never => {
-    renderThrownError('Failed to perform the initial theme synchronization.', error)
+    if (!ctx.signal?.aborted) renderThrownError('Failed to perform the initial theme synchronization.', error)
     rejectBackgroundJob(error)
     // Return a never-resolving promise to stop this promise chain without throwing.
     // Throwing would trigger catch handlers and continue execution. This stops the
@@ -58,12 +62,14 @@ function ensureThemeEnvironmentSetup(
 
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
 
-  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
-    handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob),
-  )
+  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) => {
+    ctx.signal?.throwIfAborted()
+    return handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob)
+  })
 
   const uploadPromise = reconcilePromise.then(async ({updatedRemoteChecksumsPromise}) => {
     const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+    ctx.signal?.throwIfAborted()
     return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
       nodelete: ctx.options.noDelete,
       deferPartialWork: true,
@@ -72,9 +78,13 @@ function ensureThemeEnvironmentSetup(
   })
 
   const workPromise = uploadPromise.then((result) => result.workPromise).catch(abort)
+  const stopPromise = reconcilePromise
+    .then(({workPromise, pollingPromise}) => Promise.allSettled([workPromise, pollingPromise]))
+    .catch(() => {})
 
   return {
     workPromise,
+    stopPromise,
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise
@@ -103,6 +113,7 @@ function handleThemeEditorSync(
 ): Promise<{
   updatedRemoteChecksumsPromise: Promise<Checksum[]>
   workPromise: Promise<void>
+  pollingPromise: Promise<void>
 }> {
   if (ctx.options.themeEditorSync) {
     return reconcileAndPollThemeEditorChanges(
@@ -115,6 +126,7 @@ function handleThemeEditorSync(
         ignore: ctx.options.ignore,
         only: ctx.options.only,
         reconciliationStrategy: ctx.options.reconciliationStrategy,
+        signal: ctx.signal,
       },
       rejectBackgroundJob,
     )
@@ -122,6 +134,7 @@ function handleThemeEditorSync(
     return Promise.resolve({
       updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),
       workPromise: Promise.resolve(),
+      pollingPromise: Promise.resolve(),
     })
   }
 }
@@ -131,7 +144,12 @@ interface DevelopmentServerInstance {
   port: number
 }
 
-function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
+function createDevelopmentServer(
+  theme: Theme,
+  ctx: DevServerContext,
+  initialWork: Promise<void>,
+  rejectBackgroundJob: (reason?: unknown) => void,
+) {
   const app = createApp()
   const allowedOrigins = [
     `http://${ctx.options.host}:${ctx.options.port}`,
@@ -168,34 +186,32 @@ function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWor
 
   app.use(getAssetsHandler(theme, ctx))
   app.use(getProxyHandler(theme, ctx))
-  app.use(getHtmlHandler(theme, ctx))
+  app.use(getHtmlHandler(theme, ctx, rejectBackgroundJob))
 
   const server = createServer({maxHeaderSize: MAX_HEADER_SIZE}, toNodeListener(app))
 
+  const close = async () => {
+    server.closeAllConnections()
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  }
   return {
     dispatch: app.handler.bind(app),
+    close,
     start: async (): Promise<DevelopmentServerInstance> => {
-      return new Promise((resolve, reject) =>
-        server.listen({port: ctx.options.port, host: ctx.options.host}, () => {
+      ctx.signal?.throwIfAborted()
+      return new Promise((resolve, reject) => {
+        server.once('error', reject)
+        server.listen({port: ctx.options.port, host: ctx.options.host, signal: ctx.signal}, () => {
+          server.off('error', reject)
           const address = server.address()
           if (!address || typeof address === 'string') {
             reject(new Error('Theme dev server did not bind to a TCP port'))
             return
           }
 
-          resolve({
-            port: address.port,
-            close: async () => {
-              await Promise.all([
-                new Promise((resolve) => {
-                  server.closeAllConnections()
-                  server.close(resolve)
-                }),
-              ])
-            },
-          })
-        }),
-      )
+          resolve({port: address.port, close})
+        })
+      })
     },
   }
 }

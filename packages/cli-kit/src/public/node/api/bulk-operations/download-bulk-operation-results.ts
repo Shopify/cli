@@ -18,13 +18,13 @@ export async function downloadBulkOperationResults(url: string): Promise<string>
 }
 
 /**
- * Checks whether any line of a JSONL bulk operation result reports GraphQL user errors.
+ * Checks whether any line of a JSONL bulk operation result reports top-level GraphQL errors or nested user errors.
  *
  * Blank result files, such as a completed operation that matched nothing, are treated as having
- * no user errors instead of crashing the JSON parser.
+ * no errors instead of crashing the JSON parser.
  *
  * @param results - The raw JSONL results string.
- * @returns True if any result line reports user errors.
+ * @returns True if any result line reports errors.
  */
 export function resultsContainUserErrors(results: string): boolean {
   const lines = results
@@ -42,6 +42,7 @@ export function resultsContainUserErrors(results: string): boolean {
       if (error instanceof SyntaxError) return false
       throw error
     }
+    if (Array.isArray(parsed.errors) && parsed.errors.length > 0) return true
     if (!parsed.data) return false
     const result = Object.values(parsed.data)[0] as {userErrors?: unknown[]} | undefined
     return result?.userErrors !== undefined && result.userErrors.length > 0

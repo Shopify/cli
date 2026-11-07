@@ -1,43 +1,47 @@
-import {appFlags} from '../../../flags.js'
-import {resolveAppSecurityRoot} from '../../../services/app-security-api.js'
-import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
-import {securityRecordJsonOutputSchema} from '../../../services/security-record-json.js'
+import {appSecuritySelectionFlags} from './selection-flags.js'
+import {requireResultsDirectory} from '../../../services/app-security-results.js'
+import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
+import securityRecord from '../../../services/security-record.js'
+import {renderSecurityRecordResult} from '../../../services/security-record/result.js'
+import {appSecurityRecordJsonOutputSchema} from '../../../services/security-record/types.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class SecurityRecord extends BaseCommand {
-  static hidden = true
+  static summary = 'Record agent findings from an app security check.'
 
-  static summary = 'Record agent App Security findings.'
+  static descriptionWithMarkdown = `Reads a coding agent's complete findings document from stdin, validates it, and replaces \`agent-findings.json\` in the results directory, \`.shopify/app-security/<results key>/\`. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`. \`--client-id\` is checked against your Shopify account before anything is read, so it needs you to be logged in.
 
-  static descriptionWithMarkdown = `Reads a coding agent's complete findings document from stdin, validates it, and replaces \`.shopify/app-security/agent-findings.json\`.
+The document must include a \`scope\` with the \`include_dirs\`, \`excludes\` and \`no_git_ignore\` values of the \`check\` run it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
 
-The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. With \`--json\`, the errors are listed in the error document's \`details.errors\`. It doesn't need a previous \`shopify app security check\` run.`
+The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. It needs the results directory that \`shopify app security check\` creates.
 
-  static get jsonOutputSchema() {
-    return securityRecordJsonOutputSchema
-  }
+Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
+
+  static jsonOutputSchema = appSecurityRecordJsonOutputSchema
 
   static description = this.descriptionForHelp()
 
-  // No --config: nothing in record depends on the app configuration.
   static flags = {
     ...globalFlags,
-    path: appFlags.path,
+    ...appSecuritySelectionFlags,
     ...jsonFlag,
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityRecord)
 
-    const appRoot = resolveAppSecurityRoot(flags.path)
-    const result = await securityRecord({appRoot})
-
-    if (flags.json) {
-      outputResult(securityRecordJsonOutputSchema.encode(result))
-    } else {
-      renderSecurityRecordResult(result, appRoot)
-    }
+    const selection = await resolveAppSecuritySelection({
+      path: flags.path,
+      config: flags.config,
+      clientId: flags['client-id'],
+      withoutAppConfig: flags['without-app-config'],
+      allowPrompts: false,
+      validateClientIdFlag: true,
+    })
+    await requireResultsDirectory(selection, flags.path)
+    const options = {selection, path: flags.path}
+    const result = await securityRecord(options)
+    renderSecurityRecordResult(result, options, flags.json ? 'json' : 'text')
   }
 }

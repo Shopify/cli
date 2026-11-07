@@ -6,6 +6,8 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  ensureNoServiceAccountToken,
+  isServiceAccountTokenSet,
   findSessionIdByAlias,
   setCurrentSessionAlias,
   setLastSeenUserId,
@@ -21,12 +23,14 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {automationTokenVariable} from '../../private/node/session/automation-token.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
+import {resolvePermanentStoreFqdn} from '../../private/node/session/permanent-store-domain.js'
 
 import {vi, describe, expect, test} from 'vitest'
 
@@ -41,6 +45,8 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
+vi.mock('../../private/node/session/automation-token.js')
+vi.mock('../../private/node/session/permanent-store-domain.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
 
@@ -50,6 +56,40 @@ describe('store command analytics session helpers', () => {
 
     expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
   })
+})
+
+describe('ensureNoServiceAccountToken', () => {
+  test('fails while SHOPIFY_SERVICE_ACCOUNT_TOKEN is set', () => {
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
+
+    expect(() => ensureNoServiceAccountToken()).toThrow("This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.")
+  })
+
+  test.each([undefined, 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
+    'does nothing when the automation token variable is %s',
+    (variable) => {
+      vi.mocked(automationTokenVariable).mockReturnValue(variable)
+
+      expect(() => ensureNoServiceAccountToken()).not.toThrow()
+    },
+  )
+})
+
+describe('isServiceAccountTokenSet', () => {
+  test('is true while SHOPIFY_SERVICE_ACCOUNT_TOKEN is the selected variable', () => {
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
+
+    expect(isServiceAccountTokenSet()).toBe(true)
+  })
+
+  test.each([undefined, 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
+    'is false when the automation token variable is %s',
+    (variable) => {
+      vi.mocked(automationTokenVariable).mockReturnValue(variable)
+
+      expect(isServiceAccountTokenSet()).toBe(false)
+    },
+  )
 })
 
 describe('findSessionIdByAlias', () => {
@@ -262,9 +302,13 @@ describe('ensureAuthenticatedTheme', () => {
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith(nonRandomUUID('password'))
+    expect(resolvePermanentStoreFqdn).not.toHaveBeenCalled()
   })
 
   test('returns the password when is provided and theme_access_token', async () => {
+    // Given
+    vi.mocked(resolvePermanentStoreFqdn).mockImplementation(async (store) => store)
+
     // When
     const got = await ensureAuthenticatedThemes('mystore.myshopify.com', 'shptka_password')
 
@@ -272,6 +316,18 @@ describe('ensureAuthenticatedTheme', () => {
     expect(got).toEqual({token: 'shptka_password', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith(nonRandomUUID('shptka_password'))
+  })
+
+  test("uses the store's permanent domain with a theme_access_token", async () => {
+    // Given
+    vi.mocked(resolvePermanentStoreFqdn).mockResolvedValueOnce('abc123-xy.myshopify.com')
+
+    // When
+    const got = await ensureAuthenticatedThemes('renamed-store.myshopify.com', 'shptka_password')
+
+    // Then
+    expect(resolvePermanentStoreFqdn).toHaveBeenCalledWith('renamed-store.myshopify.com')
+    expect(got).toEqual({token: 'shptka_password', storeFqdn: 'abc123-xy.myshopify.com'})
   })
 })
 
@@ -307,6 +363,51 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
+  })
+
+  test('exchanges the automation token with no fixed scopes when the caller allows one', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
+      accessToken: 'business-platform-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true, allowAutomationToken: true})
+
+    // Then
+    expect(got).toEqual('business-platform-token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token', [])
+    expect(exchangeAppAutomationTokenForAppManagementAccessToken).not.toHaveBeenCalled()
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
+  test('uses the logged-in session when the caller allows a token but none is set', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue(undefined)
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true, allowAutomationToken: true})
+
+    // Then
+    expect(got).toEqual('business_platform')
+    expect(ensureAuthenticated).toHaveBeenCalledWith({businessPlatformApi: {scopes: []}}, process.env, {noPrompt: true})
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).not.toHaveBeenCalled()
+  })
+
+  test('ignores the automation token when the caller does not allow one', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform()
+
+    // Then
+    expect(got).toEqual('business_platform')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).not.toHaveBeenCalled()
   })
 })
 
@@ -362,6 +463,8 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
+    // App commands keep the exchange's default Business Platform scopes.
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
@@ -409,4 +512,53 @@ describe('ensureAuthenticatedAdminAsApp', () => {
     // Then
     await expect(got).rejects.toThrow('Failed to get access token for app client123 on store mystore.myshopify.com')
   })
+
+  test('normalizes the store before sending the client secret', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    const got = await ensureAuthenticatedAdminAsApp('mystore', 'client123', 'secret456')
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://mystore.myshopify.com/admin/oauth/access_token',
+      expect.anything(),
+      'slow-request',
+    )
+    expect(got).toEqual({token: 'app_access_token', storeFqdn: 'mystore.myshopify.com'})
+  })
+
+  test('only sends the client secret to a Shopify store domain', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    await ensureAuthenticatedAdminAsApp('evil.attacker.test', 'client123', 'secret456')
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://evil.attacker.test.myshopify.com/admin/oauth/access_token',
+      expect.anything(),
+      'slow-request',
+    )
+  })
+
+  test.each(['evil.attacker.test:8443', 'mystore.myshopify.com:8443', 'user@mystore.myshopify.com'])(
+    'rejects %s without sending the client secret',
+    async (store) => {
+      // When
+      const got = ensureAuthenticatedAdminAsApp(store, 'client123', 'secret456')
+
+      // Then
+      await expect(got).rejects.toThrow(`Invalid store value: ${store}`)
+      expect(shopifyFetch).not.toHaveBeenCalled()
+    },
+  )
 })

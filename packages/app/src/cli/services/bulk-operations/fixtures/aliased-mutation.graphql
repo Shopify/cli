@@ -1,0 +1,16 @@
+mutation Update($input: ProductInput!) {
+  __typename
+  ...Operation
+}
+
+fragment Operation on Mutation {
+  update: productUpdate(input: $input) {
+    ...Errors
+  }
+}
+
+fragment Errors on ProductUpdatePayload {
+  errors: userErrors {
+    message
+  }
+}

@@ -1,6 +1,7 @@
+import {documentationSearchEntrySchema, type DocSearchResult} from './types.js'
 import {shopifyFetch, type Response} from '@shopify/cli-kit/node/http'
-import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 // The dev-assistant search endpoint queries the shopify.dev vector store and
 // returns an array of matching documentation chunks as JSON.
@@ -11,7 +12,17 @@ const SEARCH_URL = 'https://shopify.dev/assistant/search'
 const SURFACE_HEADER = 'X-Shopify-Surface'
 const SURFACE = 'cli'
 
-export async function docSearchService(query: string, apiName?: string, apiVersion?: string) {
+export type DocSearchServiceResult =
+  | (DocSearchResult & {status: 'success'; body: string})
+  | {status: 'invalid-response'; body: string}
+
+const SearchResponseSchema = zod.array(documentationSearchEntrySchema.strip().extend({domain: zod.string().nullish()}))
+
+export async function docSearchService(
+  query: string,
+  apiName?: string,
+  apiVersion?: string,
+): Promise<DocSearchServiceResult> {
   const params = new URLSearchParams({query})
   if (apiName) params.append('api_name', apiName)
   if (apiVersion) params.append('api_version', apiVersion)
@@ -46,5 +57,26 @@ export async function docSearchService(query: string, apiName?: string, apiVersi
     throw new AbortError(`Search failed: ${message}`)
   }
 
-  outputResult(body)
+  let responseData: unknown
+  try {
+    responseData = JSON.parse(body)
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error
+    return {status: 'invalid-response', body}
+  }
+  const parsed = SearchResponseSchema.safeParse(responseData)
+  if (!parsed.success) return {status: 'invalid-response', body}
+
+  return {
+    status: 'success',
+    results: parsed.data.map(({score, content, url, title, domain}) => ({
+      score,
+      content,
+      url,
+      title,
+      domain: domain ?? null,
+    })),
+    pageInfo: {hasNextPage: null},
+    body,
+  }
 }

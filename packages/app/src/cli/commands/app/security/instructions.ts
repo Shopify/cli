@@ -1,47 +1,62 @@
-import {appFlags} from '../../../flags.js'
-import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
+import {appSecuritySelectionFlags} from './selection-flags.js'
+import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
+import {appSecurityInstructions, deliverAppSecurityInstructions} from '../../../services/app-security-instructions.js'
+import {resolveAppSecuritySelection, resultsKey} from '../../../services/app-security-selection.js'
+import {renderSecurityInstructionsResult} from '../../../services/security-instructions/result.js'
+import {appSecurityInstructionsJsonOutputSchema} from '../../../services/security-instructions/types.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class SecurityInstructions extends BaseCommand {
-  static hidden = true
+  static summary = 'Provide app security check instructions to a coding agent.'
 
-  static summary = 'Provide App Security instructions to a coding agent.'
-
-  static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review App Security results.
+  static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review app security check results.
 
 By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
+
+  static jsonOutputSchema = appSecurityInstructionsJsonOutputSchema
 
   static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
-    path: appFlags.path,
-    config: appFlags.config,
+    ...appSecuritySelectionFlags,
     copy: Flags.boolean({
-      description: 'Copy the instructions to the clipboard instead of printing them.',
+      description:
+        'Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.',
       default: false,
       exclusive: ['write'],
       env: 'SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY',
     }),
     write: Flags.string({
-      description: 'Write the instructions to a file instead of printing them.',
+      description:
+        'Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and Markdown format of the written file.',
       exclusive: ['copy'],
       parse: async (input) => resolvePath(input),
       env: 'SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE',
     }),
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityInstructions)
 
-    await deliverAppSecurityInstructions({
-      directory: flags.path,
-      configName: flags.config,
-      copy: flags.copy,
-      writePath: flags.write,
+    const selection = await resolveAppSecuritySelection({
+      path: flags.path,
+      config: flags.config,
+      clientId: flags['client-id'],
+      withoutAppConfig: flags['without-app-config'],
+      allowPrompts: false,
     })
+    const instructions = appSecurityInstructions({
+      appDirectory: selection.appDirectory,
+      resultsKey: resultsKey(selection),
+      commands: resolveAppSecurityCommands(selection, flags.path),
+    })
+    const delivery = {copy: flags.copy, writePath: flags.write}
+    await deliverAppSecurityInstructions(instructions, delivery)
+    renderSecurityInstructionsResult(instructions, {selection, delivery}, flags.json ? 'json' : 'text')
   }
 }

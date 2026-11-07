@@ -1,4 +1,5 @@
 import BulkCancel from './cancel.js'
+import {renderCancelBulkOperationResult} from '../../../services/bulk-operations/cancel-result.js'
 import {cancelBulkOperation} from '../../../services/bulk-operations/cancel-bulk-operation.js'
 import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
 import {
@@ -12,6 +13,8 @@ import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 vi.mock('../../../services/bulk-operations/cancel-bulk-operation.js')
 vi.mock('../../../utilities/execute-command-helpers.js')
+vi.mock('../../../services/bulk-operations/cancel-result.js')
+vi.mock('../../../services/bulk-operations/progress.js')
 
 describe('app bulk cancel command', () => {
   const app = testAppLinked()
@@ -31,7 +34,7 @@ describe('app bulk cancel command', () => {
       },
       store,
     })
-    vi.mocked(cancelBulkOperation).mockResolvedValue()
+    vi.mocked(cancelBulkOperation).mockResolvedValue({operation: null, userErrors: []})
   })
 
   test('prepares app/store context and cancels bulk operation', async () => {
@@ -46,8 +49,12 @@ describe('app bulk cancel command', () => {
         store: 'shop.myshopify.com',
       }),
     )
+    expect(renderCancelBulkOperationResult).toHaveBeenCalledWith(
+      {operation: null, userErrors: []},
+      'gid://shopify/BulkOperation/12345',
+      'text',
+    )
     expect(cancelBulkOperation).toHaveBeenCalledWith({
-      organization: expect.any(Object),
       storeFqdn: 'shop.myshopify.com',
       operationId: 'gid://shopify/BulkOperation/12345',
       remoteApp,

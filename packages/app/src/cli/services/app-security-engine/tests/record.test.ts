@@ -3,11 +3,10 @@ import {RULE_CATALOG} from '../rules/catalog.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {describe, expect, test} from 'vitest'
-import type {AgentFindingsDocument} from '../types.js'
+import type {AgentFindingsDocument, AppSecurityScope} from '../types.js'
 
 const options: RecordAgentFindingsOptions = {
   engineVersion: '3.99.0',
-  project: {commit: 'abc123', dirty: false},
   generatedAt: '2026-01-02T03:04:05.000Z',
 }
 
@@ -28,14 +27,21 @@ function finding(overrides: Record<string, unknown> = {}): Record<string, unknow
   }
 }
 
+const scope: AppSecurityScope = {include_dirs: ['../backend'], excludes: ['**/generated'], no_git_ignore: true}
+
+/** Adds the required `scope` to a test document, unless the document says otherwise. */
+function withScope(input: unknown): unknown {
+  return typeof input === 'object' && input !== null && !Array.isArray(input) ? {scope, ...input} : input
+}
+
 function recordAccepted(input: unknown): AgentFindingsDocument {
-  const result = recordAgentFindings(input, options)
+  const result = recordAgentFindings(withScope(input), options)
   if (!result.ok) throw new Error(`Expected the document to be accepted: ${result.errors.join('; ')}`)
   return result.document
 }
 
 function recordRejected(document: unknown): string[] {
-  const result = recordAgentFindings(document, options)
+  const result = recordAgentFindings(withScope(document), options)
   if (result.ok) throw new Error('Expected the document to be rejected')
   return result.errors
 }
@@ -70,7 +76,7 @@ describe('recordAgentFindings', () => {
       source: 'agent',
       engine: {name: ENGINE_NAME, version: '3.99.0'},
       generated_at: '2026-01-02T03:04:05.000Z',
-      project: {commit: 'abc123', dirty: false},
+      scope,
     })
     expect(document.checks.map((check) => [check.id, check.status, check.findings.length])).toEqual([
       [tenant.id, 'executed', 2],
@@ -109,7 +115,7 @@ describe('recordAgentFindings', () => {
       source: 'agent',
       engine: {name: 'shopify-app-security', version: '3.99.0'},
       generated_at: '2026-01-02T03:04:05.000Z',
-      project: {commit: 'abc123', dirty: false},
+      scope,
       checks: [
         {
           id: 'OPEN_REDIRECT',
@@ -121,6 +127,7 @@ describe('recordAgentFindings', () => {
             severity: check.severity,
             description: entry.description,
             guide: entry.guide,
+            docs_url: entry.docsUrl,
             current_version: check.version,
             precedence: 'union',
           },
@@ -131,7 +138,7 @@ describe('recordAgentFindings', () => {
   })
 
   test('defaults generated_at to the current time', () => {
-    const result = recordAgentFindings({schema_version: 1}, {...options, generatedAt: undefined})
+    const result = recordAgentFindings({schema_version: 1, scope}, {...options, generatedAt: undefined})
 
     expect(result.ok && Date.parse(result.document.generated_at)).toBeGreaterThan(0)
   })
@@ -153,6 +160,40 @@ describe('recordAgentFindings', () => {
       `findings[1] (${tenant.id}): invalid line number: 0`,
       `findings[2] (${tenant.id}): finding requires at least one evidence citation`,
     ])
+  })
+
+  test('requires a scope, reports it with the other errors, and records nothing', () => {
+    const result = recordAgentFindings({schema_version: 2}, options)
+
+    expect(result).toEqual({ok: false, errors: ['schema_version must be 1', 'scope is required and must be an object']})
+  })
+
+  test.each([
+    [[], 'scope is required and must be an object'],
+    [{excludes: [], no_git_ignore: false}, 'scope.include_dirs must be an array of strings'],
+    [{include_dirs: [], excludes: [3], no_git_ignore: false}, 'scope.excludes must be an array of strings'],
+    [{include_dirs: [], excludes: [], no_git_ignore: 0}, 'scope.no_git_ignore must be a boolean'],
+  ])('rejects the malformed scope %j', (malformedScope, expectedError) => {
+    expect(recordAgentFindings({schema_version: 1, scope: malformedScope}, options)).toEqual({
+      ok: false,
+      errors: [expectedError],
+    })
+  })
+
+  test('keeps only the known scope keys, with the values exactly as reported', () => {
+    const document = recordAccepted({schema_version: 1, scope: {...scope, extra: true}})
+
+    expect(document.scope).toEqual(scope)
+  })
+
+  test('redacts secrets in the scope', () => {
+    const document = recordAccepted({
+      schema_version: 1,
+      scope: {include_dirs: [`../${FAKE_SHOPIFY_TOKEN}`], excludes: [FAKE_SHOPIFY_TOKEN], no_git_ignore: false},
+    })
+
+    expect(JSON.stringify(document.scope)).not.toContain(FAKE_SHOPIFY_TOKEN)
+    expect(document.scope.include_dirs[0]).toMatch(/^\.\.\/.*\[REDACTED/)
   })
 
   test('rejects a document that is not an object or has malformed arrays', () => {
@@ -188,7 +229,7 @@ describe('recordAgentFindings', () => {
     expect(document.checks[0]!.snapshot.current_version).toBe(tenant.version)
   })
 
-  test('snapshots title, description, and guide from the catalog, and severity and version from the check', () => {
+  test('snapshots title, description, guide, and docs URL from the catalog, and severity and version from the check', () => {
     const document = recordAccepted({
       schema_version: 1,
       checks_executed: [{check_id: 'SCOPE_OVER_REQUEST', check_version: 1, status: 'executed'}],
@@ -201,6 +242,7 @@ describe('recordAgentFindings', () => {
       severity: check.severity,
       description: entry.description,
       guide: entry.guide,
+      docs_url: entry.docsUrl,
       current_version: check.version,
       precedence: 'union',
     })
@@ -309,17 +351,29 @@ describe('recordAgentFindings', () => {
     const errors = recordRejected({
       schema_version: 1,
       findings: [
-        finding({file: '../outside.ts'}),
         finding({file: '/etc/passwd'}),
+        finding({file: 'src/a\0.ts'}),
         finding({evidence: [{file: 'C:\\Windows\\system.ini', line: 1}]}),
       ],
     })
 
     expect(errors).toEqual([
-      `findings[0] (${tenant.id}): unsafe file path (must be relative and inside the app): ../outside.ts`,
-      `findings[1] (${tenant.id}): unsafe file path (must be relative and inside the app): /etc/passwd`,
+      `findings[0] (${tenant.id}): unsafe file path (must be relative): /etc/passwd`,
+      `findings[1] (${tenant.id}): unsafe file path (must be relative): src/a\0.ts`,
       `findings[2] (${tenant.id}): unsafe evidence file path: C:\\Windows\\system.ini`,
     ])
+  })
+
+  test('accepts findings in a scan directory outside the app directory, with ../ paths', () => {
+    const document = recordAccepted({
+      schema_version: 1,
+      findings: [finding({file: '../backend/src/server.ts', evidence: [{file: '../library/src/auth.ts', line: 3}]})],
+    })
+
+    expect(document.checks[0]!.findings[0]).toMatchObject({
+      location: {file: '../backend/src/server.ts'},
+      evidence: [{location: {file: '../library/src/auth.ts', line: 3}}],
+    })
   })
 
   test('rejects more findings than the cap without validating each one', () => {
@@ -331,7 +385,7 @@ describe('recordAgentFindings', () => {
   test('rejects more checks_executed entries than known checks without validating each one', () => {
     const checkCount = loadChecks().size
     const result = recordAgentFindings(
-      {schema_version: 1, checks_executed: Array.from({length: checkCount + 1}, () => ({}))},
+      {schema_version: 1, scope, checks_executed: Array.from({length: checkCount + 1}, () => ({}))},
       options,
     )
 

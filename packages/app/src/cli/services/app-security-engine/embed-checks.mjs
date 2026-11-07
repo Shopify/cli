@@ -52,9 +52,9 @@ Usage:
   }
 
   if (actual === output) {
-    console.log(`App Security embedded.ts is up to date (${files.length} semantic checks and instructions)`)
+    console.log(`The app security check's embedded.ts is up to date (${files.length} semantic checks and instructions)`)
   } else {
-    console.error(`App Security embedded.ts is out of date.
+    console.error(`The app security check's embedded.ts is out of date.
 
 Markdown checks and instructions are the source of truth, but
 packages/app/src/cli/services/app-security-engine/checks/embedded.ts
@@ -69,6 +69,6 @@ Then commit the updated embedded.ts.`)
 } else {
   writeFileSync(outputPath, output)
   console.log(
-    `Embedded ${files.length} semantic checks and App Security instructions in app-security-engine/checks/embedded.ts`,
+    `Embedded ${files.length} semantic checks and app security check instructions in app-security-engine/checks/embedded.ts`,
   )
 }

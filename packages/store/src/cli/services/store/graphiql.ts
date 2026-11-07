@@ -3,6 +3,7 @@ import {TokenProvider} from '@shopify/cli-kit/node/graphiql/server'
 import {generateRandomGraphiQLKey, runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {ensureNoServiceAccountToken} from '@shopify/cli-kit/node/session'
 
 interface OpenStoreGraphiQLOptions {
   store: string
@@ -11,9 +12,9 @@ interface OpenStoreGraphiQLOptions {
   query?: string
   variables?: string
   apiVersion?: string
+  outputFormat?: 'text' | 'json'
   /**
-   * Test-only seam: aborts the server-running loop without requiring a real SIGINT.
-   * In production, the command itself listens for SIGINT and exits.
+   * Stops the session and closes its server when aborted.
    */
   abortSignal?: AbortSignal
 }
@@ -24,6 +25,7 @@ interface OpenStoreGraphiQLOptions {
  * process to be aborted (Ctrl+C) before shutting down.
  */
 export async function openStoreGraphiQL(options: OpenStoreGraphiQLOptions): Promise<void> {
+  ensureNoServiceAccountToken()
   const tokenProvider = createStoredSessionTokenProvider(options.store)
 
   const key = generateRandomGraphiQLKey()
@@ -37,6 +39,7 @@ export async function openStoreGraphiQL(options: OpenStoreGraphiQLOptions): Prom
     query: options.query,
     variables: options.variables,
     apiVersion: options.apiVersion,
+    outputFormat: options.outputFormat,
     additionalReadyMessages: [
       outputContent`Mutations are ${options.allowMutations ? outputToken.green('allowed') : outputToken.yellow('blocked')}.`,
     ],
@@ -46,7 +49,7 @@ export async function openStoreGraphiQL(options: OpenStoreGraphiQLOptions): Prom
 
 function createStoredSessionTokenProvider(store: string): TokenProvider {
   return {
-    getToken: async () => (await loadStoredStoreSession(store)).accessToken,
-    refreshToken: async () => (await loadStoredStoreSession(store)).accessToken,
+    getToken: async (signal) => (await loadStoredStoreSession(store, signal)).accessToken,
+    refreshToken: async (signal) => (await loadStoredStoreSession(store, signal)).accessToken,
   }
 }

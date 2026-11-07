@@ -25,9 +25,7 @@ ruleTester.run('command-json-output', rule, {
       code: `
         export default class WidgetList extends Command {
           static flags = {...jsonFlag}
-          static get jsonOutputSchema() {
-            return widgetListJsonOutputSchema
-          }
+          static jsonOutputSchema = widgetListJsonOutputSchema
         }
       `,
     },
@@ -37,27 +35,20 @@ ruleTester.run('command-json-output', rule, {
       code: `
         export default class WidgetDelete extends Command {
           static flags = {...globalFlags, ...jsonFlag}
-          static get jsonOutputSchema() {
-            return widgetDeleteJsonOutputSchema
-          }
+          static jsonOutputSchema = widgetDeleteJsonOutputSchema
         }
       `,
     },
     {
       name: 'allow-listed streaming command',
-      filename: '/repo/packages/app/src/cli/commands/app/dev.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
       code: 'export default class Dev extends Command {}',
     },
     {
-      name: 'legacy command baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
-      code: 'export default class Build extends Command {}',
-    },
-    {
       name: 'omitted exceptions preserve the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
       options: [{}],
-      code: 'export default class Build extends Command {}',
+      code: 'export default class Dev extends Command {}',
     },
     {
       name: 'custom exception in another repository',
@@ -99,16 +90,16 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'custom exceptions replace the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
       options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class Build extends Command {}',
+      code: 'export default class Dev extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
-      name: 'empty exceptions enforce the rule for legacy commands',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      name: 'empty exceptions remove the streaming command exemption',
+      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
       options: [{exceptions: []}],
-      code: 'export default class Build extends Command {}',
+      code: 'export default class Dev extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
@@ -129,7 +120,7 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'new subcommand of an allow-listed streaming command',
-      filename: '/repo/packages/app/src/cli/commands/app/dev/status.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/logs/status.ts',
       code: 'export default class DevStatus extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
@@ -161,9 +152,7 @@ ruleTester.run('command-json-output', rule, {
       filename: '/repo/packages/app/src/cli/commands/app/widgets/update.ts',
       code: `
         export default class WidgetUpdate extends Command {
-          static get jsonOutputSchema() {
-            return widgetUpdateJsonOutputSchema
-          }
+          static jsonOutputSchema = widgetUpdateJsonOutputSchema
         }
       `,
       errors: [

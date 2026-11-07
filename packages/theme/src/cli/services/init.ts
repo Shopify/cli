@@ -1,8 +1,10 @@
-import {renderSelectPrompt, renderWarning, renderTasks} from '@shopify/cli-kit/node/ui'
+import {type ThemeInitResult} from './init/types.js'
+import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {rmdir, fileExists, inTemporaryDirectory, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getLatestGitHubRelease} from '@shopify/cli-kit/node/github'
 
 export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
 const AI_INSTRUCTIONS_REPO_URL = 'https://github.com/Shopify/theme-liquid-docs.git'
@@ -17,14 +19,24 @@ const SUPPORTED_AI_INSTRUCTIONS = {
 type AIInstruction = keyof typeof SUPPORTED_AI_INSTRUCTIONS
 
 export async function cloneRepo(repoUrl: string, destination: string) {
-  await downloadRepository(repoUrl, destination)
+  return downloadRepository(repoUrl, destination)
 }
 
 export async function cloneRepoAndCheckoutLatestTag(repoUrl: string, destination: string) {
-  await downloadRepository(repoUrl, destination, true)
+  return downloadRepository(repoUrl, destination, true)
 }
 
-async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean) {
+export async function cloneLatestStableSkeletonTheme(destination: string) {
+  const release = await getLatestGitHubRelease('Shopify', 'skeleton-theme', {
+    filter: (release) => !release.draft && !release.prerelease,
+  })
+  if (!release) throw new AbortError("Couldn't find a stable Skeleton theme release")
+
+  const result = await downloadRepository(`${SKELETON_THEME_URL}#${release.tag_name}`, destination)
+  return {...result, repoUrl: SKELETON_THEME_URL, latest: true}
+}
+
+async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean): Promise<ThemeInitResult> {
   await renderTasks([
     {
       title: `Cloning ${repoUrl} into ${destination}`,
@@ -33,11 +45,12 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           repoUrl,
           destination,
           latestTag,
-          shallow: true,
+          // Fetch tags and history when selecting the latest release.
+          shallow: !latestTag,
         })
         await removeGitRemote(destination)
 
-        if (repoUrl === SKELETON_THEME_URL) {
+        if (repoUrl.split('#')[0] === SKELETON_THEME_URL) {
           await Promise.all(
             Object.keys(SUPPORTED_AI_INSTRUCTIONS).map(async (key) =>
               removeDirectory(joinPath(destination, `.${key}`)),
@@ -48,6 +61,8 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
       },
     },
   ])
+
+  return {path: destination, repoUrl, latest: latestTag ?? false, aiInstructions: null, instructionFiles: []}
 }
 
 async function removeDirectory(path: string) {
@@ -72,7 +87,8 @@ export async function promptAIInstruction() {
 }
 
 export async function createAIInstructions(themeRoot: string, aiInstruction: AIInstruction) {
-  const createdFiles: string[] = []
+  const copiedFiles: string[] = []
+  const files = [joinPath(themeRoot, 'AGENTS.md')]
 
   await renderTasks([
     {
@@ -103,10 +119,17 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
               instructions.map((instruction) => createAIInstructionFiles(themeRoot, agentsPath, instruction)),
             )
 
+            files.push(
+              ...instructions.flatMap((instruction) => {
+                if (instruction === 'cursor') return []
+                return [joinPath(themeRoot, instruction === 'github' ? 'copilot-instructions.md' : 'CLAUDE.md')]
+              }),
+            )
+
             // Collect files that were copied instead of symlinked
             results.forEach((result) => {
               if (result.copiedFile) {
-                createdFiles.push(result.copiedFile)
+                copiedFiles.push(result.copiedFile)
               }
             })
           } catch (error) {
@@ -117,14 +140,7 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
     },
   ])
 
-  if (createdFiles.length > 0) {
-    renderWarning({
-      headline: 'Files created instead of symlinks.',
-      body: `Shopify CLI attempted to create symbolic links between AGENTS.md and ${createdFiles.join(
-        ', ',
-      )}, but your system doesn't have Developer Mode enabled or symlinks are disabled. Separate files were created instead.`,
-    })
-  }
+  return {files, copiedFiles}
 }
 
 export async function createAIInstructionFiles(

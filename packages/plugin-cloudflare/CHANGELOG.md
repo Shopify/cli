@@ -1,5 +1,40 @@
 # @shopify/plugin-cloudflare
 
+## 5.0.0
+
+### Patch Changes
+
+- 62d961a: Protect webhook secrets in debug output, prevent GraphQL cache reuse across tokens, and harden GraphiQL and local command execution.
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [bcbaec8]
+- Updated dependencies [730d051]
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [349478a]
+  - @shopify/cli-kit@5.0.0
+
+## 4.9.0
+
+### Patch Changes
+
+- Updated dependencies [9945ebf]
+- Updated dependencies [267c622]
+- Updated dependencies [9832404]
+- Updated dependencies [fa5989a]
+- Updated dependencies [83fe8a2]
+- Updated dependencies [065cd24]
+- Updated dependencies [b5d1f33]
+- Updated dependencies [02fbf6e]
+- Updated dependencies [ab16257]
+- Updated dependencies [46dcc14]
+- Updated dependencies [58d1f09]
+- Updated dependencies [fd4a5db]
+- Updated dependencies [667c628]
+- Updated dependencies [2a9b3a4]
+  - @shopify/cli-kit@4.9.0
+
 ## 4.8.0
 
 ### Patch Changes

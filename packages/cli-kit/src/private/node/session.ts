@@ -12,6 +12,7 @@ import {
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {automationTokenAuthMethod, automationTokenVariablesProblem} from './session/automation-token.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
@@ -20,7 +21,7 @@ import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
-import {AdminSession, logout} from '../../public/node/session.js'
+import {AdminSession, ensureNoServiceAccountToken, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -114,7 +115,13 @@ export interface OAuthSession {
   userId: string
 }
 
-type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'custom_app_token' | 'none'
+type AuthMethod =
+  | 'partners_token'
+  | 'service_account_token'
+  | 'device_auth'
+  | 'theme_access_token'
+  | 'custom_app_token'
+  | 'none'
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
@@ -154,7 +161,8 @@ export function setLastSeenUserIdAfterAuth(id: string) {
  * This function checks for the authentication method in the following order:
  * 1. Returns the cached auth method if it's not 'none'.
  * 2. Checks for a cached session, which implies 'device_auth' was used.
- * 3. Checks for a partners token in the environment.
+ * 3. Checks for an automation token in the environment: `service_account_token` for SHOPIFY_SERVICE_ACCOUNT_TOKEN,
+ *    `partners_token` for the app and Partner variables.
  * 4. Checks for a theme password in the environment.
  * 5. If none of the above are true, returns 'none'.
  *
@@ -166,7 +174,7 @@ export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
   if (getCurrentSessionId()) return 'device_auth'
 
   const appAutomationToken = getAppAutomationToken()
-  if (appAutomationToken) return 'partners_token'
+  if (appAutomationToken) return automationTokenAuthMethod()
 
   const themePassword = themeToken()
   if (themePassword) {
@@ -203,6 +211,13 @@ export async function ensureAuthenticated(
   _env?: NodeJS.ProcessEnv,
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
+  // Commands that support automation tokens exchange them before calling this function, and getAppAutomationToken
+  // returns no token when the variables are invalid, so an invalid environment always reaches this check before any
+  // login starts.
+  const variablesProblem = automationTokenVariablesProblem()
+  if (variablesProblem) throw new AbortError(variablesProblem.message, variablesProblem.tryMessage)
+  ensureNoServiceAccountToken()
+
   const fqdn = await identityFqdn()
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn

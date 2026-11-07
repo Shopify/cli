@@ -2,8 +2,11 @@ import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
+import {normalizeStoreFqdn} from './context/fqdn.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {automationTokenVariable} from '../../private/node/session/automation-token.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
@@ -22,6 +25,7 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import {isThemeAccessSession} from '../../private/node/api/rest.js'
+import {resolvePermanentStoreFqdn} from '../../private/node/session/permanent-store-domain.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -273,6 +277,10 @@ ${outputToken.json(scopes)}
  * If a password is provided, that token will be used against Theme Access API.
  * Otherwise, it will ensure that the user is authenticated with the Admin API.
  *
+ * Theme Access passwords only work with the store's permanent `.myshopify.com` domain, so when the password is a
+ * Theme Access password the returned session uses the permanent domain of `store`, even if `store` is another of the
+ * store's domains.
+ *
  * @param store - Store fqdn to request auth for.
  * @param password - Password generated from Theme Access app.
  * @param scopes - Optional array of extra scopes to authenticate with.
@@ -290,33 +298,84 @@ ${outputToken.json(scopes)}
 `)
   if (password) {
     const session = {token: password, storeFqdn: store}
-    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
-    setLastSeenAuthMethod(authMethod)
+    const themeAccess = isThemeAccessSession(session)
+    setLastSeenAuthMethod(themeAccess ? 'theme_access_token' : 'custom_app_token')
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    if (themeAccess) session.storeFqdn = await resolvePermanentStoreFqdn(store)
     return session
   }
   return ensureAuthenticatedAdmin(store, scopes, options)
 }
 
 /**
+ * Options for `ensureAuthenticatedBusinessPlatform`.
+ */
+export interface EnsureAuthenticatedBusinessPlatformOptions extends EnsureAuthenticatedAdditionalOptions {
+  /**
+   * Authenticate with the automation token set in the environment, when there is one, instead of the
+   * logged-in user. Only commands that support automation tokens opt in; other callers, such as
+   * Hydrogen's login, keep using the user's session.
+   */
+  allowAutomationToken?: boolean
+}
+
+/**
  * Ensure that we have a valid session to access the Business Platform API.
  *
- * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param scopes - Optional array of extra scopes to authenticate with. Ignored when an automation token is used.
  * @param options - Optional extra options to use.
  * @returns The access token for the Business Platform API.
  */
 export async function ensureAuthenticatedBusinessPlatform(
   scopes: BusinessPlatformScope[] = [],
-  options: EnsureAuthenticatedAdditionalOptions = {},
+  options: EnsureAuthenticatedBusinessPlatformOptions = {},
 ): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, options)
+  const {allowAutomationToken = false, ...authenticationOptions} = options
+  const automationToken = allowAutomationToken ? getAppAutomationToken() : undefined
+  if (automationToken) {
+    // Request no explicit scopes, so Identity issues every Business Platform scope the token holds. The organizations
+    // API admits a CLI token only with a scope such as organization.store-management, and naming that scope would
+    // fail the exchange for app and Partner tokens, which don't hold it.
+    const result = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(automationToken, [])
+    return result.accessToken
+  }
+
+  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, authenticationOptions)
   if (!tokens.businessPlatform) {
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
   return tokens.businessPlatform
+}
+
+/**
+ * Whether SHOPIFY_SERVICE_ACCOUNT_TOKEN is set, which makes it the automation token the CLI authenticates with.
+ *
+ * True even when it's empty or set together with another automation token variable. Commands use this to skip logins
+ * saved on this machine, and authentication then reports any problem with the variables.
+ *
+ * @returns True when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set.
+ */
+export function isServiceAccountTokenSet(): boolean {
+  return automationTokenVariable() === environmentVariables.serviceAccountToken
+}
+
+/**
+ * Fails when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set, for commands that can't run with that token.
+ *
+ * Service account tokens can't log in as a user or call a store's Admin API, so commands that need either
+ * refuse to run instead of quietly using the person's own login. `ensureAuthenticated` runs this check before any
+ * login. Commands that run on a login saved by `shopify store auth` call it before loading that login.
+ *
+ * @throws AbortError when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set.
+ */
+export function ensureNoServiceAccountToken(): void {
+  if (!isServiceAccountTokenSet()) return
+  const variable = environmentVariables.serviceAccountToken
+
+  throw new AbortError(`This command can't use ${variable}.`, `Unset ${variable} to run it with your Shopify account.`)
 }
 
 /**
@@ -333,7 +392,8 @@ export function logout(): Promise<void> {
  *
  * See `ensureAuthenticatedAdmin` for access on behalf of a user.
  *
- * @param storeFqdn - Store fqdn to request auth for.
+ * @param storeFqdn - Store handle or domain, normalized with `normalizeStoreFqdn`. Unsupported URL components are
+ * rejected before the client secret is sent.
  * @param clientId - Client ID of the app.
  * @param clientSecret - Client secret of the app.
  * @returns The access token for the Admin API.
@@ -343,13 +403,14 @@ export async function ensureAuthenticatedAdminAsApp(
   clientId: string,
   clientSecret: string,
 ): Promise<AdminSession> {
+  const normalizedStoreFqdn = normalizeStoreFqdn(storeFqdn)
   const bodyData = {
     client_id: clientId,
     client_secret: clientSecret,
     grant_type: 'client_credentials',
   }
   const tokenResponse = await shopifyFetch(
-    `https://${storeFqdn}/admin/oauth/access_token`,
+    `https://${normalizedStoreFqdn}/admin/oauth/access_token`,
     {
       method: 'POST',
       headers: {
@@ -366,17 +427,17 @@ export async function ensureAuthenticatedAdminAsApp(
     if (body.includes('app_not_installed')) {
       throw new AbortError(
         outputContent`App is not installed on ${outputToken.green(
-          storeFqdn,
+          normalizedStoreFqdn,
         )}. Try running ${outputToken.genericShellCommand(`shopify app dev`)} to connect your app to the shop.`,
       )
     }
     throw new AbortError(
-      `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
+      `Failed to get access token for app ${clientId} on store ${normalizedStoreFqdn}: ${tokenResponse.statusText}`,
     )
   }
   try {
     const tokenJson = JSON.parse(body) as {access_token: string}
-    return {token: tokenJson.access_token, storeFqdn}
+    return {token: tokenJson.access_token, storeFqdn: normalizedStoreFqdn}
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(

@@ -5,6 +5,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type AppVersionByTagQueryVariables = Types.Exact<{
+  appId: Types.Scalars['ID']['input']
   versionTag: Types.Scalars['String']['input']
 }>
 
@@ -39,6 +40,11 @@ export const AppVersionByTag = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}},
+        },
+        {
+          kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'versionTag'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
@@ -50,6 +56,11 @@ export const AppVersionByTag = {
             kind: 'Field',
             name: {kind: 'Name', value: 'versionByTag'},
             arguments: [
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'appId'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+              },
               {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'tag'},

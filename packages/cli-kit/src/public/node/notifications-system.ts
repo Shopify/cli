@@ -172,7 +172,7 @@ export async function getNotifications(): Promise<Notifications> {
 }
 
 /**
- * Fetch notifications from the CDN and chache them.
+ * Fetch notifications from the CDN and cache them.
  *
  * @returns A string with the notifications.
  */

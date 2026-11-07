@@ -2,8 +2,11 @@ import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
 import {getBulkOperationStatus, listBulkOperations} from '../../../services/bulk-operations/bulk-operation-status.js'
+import {bulkOperationStatusJsonOutputSchema} from '../../../services/bulk-operations/types.js'
+import {renderBulkOperationStatusResult} from '../../../services/bulk-operations/status-result.js'
+import {logBulkOperationStart} from '../../../services/bulk-operations/progress.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operations'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -16,10 +19,13 @@ export default class BulkStatus extends AppLinkedCommand {
 
   Use [\`bulk execute\`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.`
 
+  static jsonOutputSchema = bulkOperationStatusJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
     id: Flags.string({
       description:
@@ -38,21 +44,21 @@ export default class BulkStatus extends AppLinkedCommand {
     const {flags} = await this.parse(BulkStatus)
 
     const {appContextResult, store} = await prepareAppStoreContext(flags)
-
-    if (flags.id) {
-      await getBulkOperationStatus({
+    const format = flags.json ? 'json' : 'text'
+    logBulkOperationStart(
+      flags.id ? 'Checking bulk operation status.' : 'Listing bulk operations.',
+      {
         organization: appContextResult.organization,
-        storeFqdn: store.shopDomain,
-        operationId: normalizeBulkOperationId(flags.id),
         remoteApp: appContextResult.remoteApp,
-      })
-    } else {
-      await listBulkOperations({
-        organization: appContextResult.organization,
         storeFqdn: store.shopDomain,
-        remoteApp: appContextResult.remoteApp,
-      })
-    }
+      },
+      format,
+    )
+    const options = {storeFqdn: store.shopDomain, remoteApp: appContextResult.remoteApp}
+    const result = flags.id
+      ? await getBulkOperationStatus({...options, operationId: normalizeBulkOperationId(flags.id)})
+      : await listBulkOperations(options)
+    renderBulkOperationStatusResult(result, format)
 
     return {app: appContextResult.app}
   }

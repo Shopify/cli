@@ -27,6 +27,8 @@ export abstract class FatalError extends Error {
   nextSteps?: TokenItem<InlineToken>[]
   formattedMessage?: TokenItem
   customSections?: AlertCustomSection[]
+  /** A stable code for JSON consumers to identify this error, included only when known. */
+  code?: string
   /** Selected JSON-serializable data to include in JSON errors. Never attach the raw error or request. */
   details?: unknown
   skipOclifErrorHandling: boolean
@@ -148,7 +150,8 @@ export async function handler(error: unknown): Promise<unknown> {
   }
 
   const {jsonOutputEnabled} = await import('../environment.js')
-  if (jsonOutputEnabled()) {
+  const {commandEventOutputMode} = await import('../../../private/node/command-event-context.js')
+  if ((commandEventOutputMode() ?? (jsonOutputEnabled() ? 'json' : 'text')) === 'json') {
     const {renderFatalErrorAsJson} = await import('../../../private/node/json-error.js')
     renderFatalErrorAsJson(fatal)
     await flushStdout()
@@ -226,8 +229,8 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
  * HTTP 401 (unauthenticated) is not "transient" in the retry sense — it means the user's session
  * token is expired or invalid, a credential/environment condition (see issue #7891). Rate limiting
  * (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response) matches the shape
- * detected by `errorsIncludeStatus429` in `private/node/api.ts`. Gateway errors (502/503/504) are
- * also expected infrastructure failures.
+ * detected by `errorsIncludeStatus429` in `private/node/api.ts`. Gateway errors (502/503/504, and the
+ * Cloudflare edge errors 520 to 524) are also expected infrastructure failures.
  *
  * Scoped to the external `ClientError` shape only — importing the cli-kit `GraphQLClientError`
  * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.

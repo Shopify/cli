@@ -44,7 +44,7 @@ const DEFAULT_WATCH_IGNORE = [
   '**/.gitignore',
 ]
 
-export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
+export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Extension initialized'
 
 /**
  * Class that represents an instance of a local extension
@@ -166,11 +166,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
-    this.handle = this.buildHandle()
+    const identity = this.specification.getIdentity?.(this.configuration)
+    this.handle = identity?.handle ?? this.buildHandle()
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = joinPath(this.directory, this.outputRelativePath)
-    this.uid = this.buildUIDFromStrategy()
+    this.uid = identity?.uid ?? this.buildUIDFromStrategy()
     this.devUUID = `dev-${this.uid}`
   }
 
@@ -375,6 +376,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get contextValue() {
+    const specificationTarget = this.specification.getTarget?.(this.configuration)
+    if (specificationTarget !== undefined) return specificationTarget
+
     let context = this.singleTarget ?? ''
     if (this.isFlow) context = this.configuration.handle ?? ''
     return context

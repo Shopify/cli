@@ -1,10 +1,13 @@
 import {openStoreGraphiQL} from './graphiql.js'
 import {loadStoredStoreSession} from './auth/session-lifecycle.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateRandomGraphiQLKey, runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
+import {ensureNoServiceAccountToken} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/graphiql/session')
+vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./auth/session-lifecycle.js')
 
 const mockedRunGraphiQLSession = vi.mocked(runGraphiQLSession)
@@ -55,15 +58,30 @@ describe('openStoreGraphiQL', () => {
     )
   })
 
-  test('uses a TokenProvider backed by loadStoredStoreSession', async () => {
-    await openStoreGraphiQL({
-      store: 'shop.myshopify.com',
+  test('refuses to start while the service account token is set', async () => {
+    vi.mocked(ensureNoServiceAccountToken).mockImplementation(() => {
+      throw new AbortError("This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.")
     })
 
-    const tokenProvider = mockedRunGraphiQLSession.mock.calls[0]![0].tokenProvider
-    await expect(tokenProvider.getToken()).resolves.toBe('stored-token')
-    expect(mockedLoadSession).toHaveBeenCalledWith('shop.myshopify.com')
+    await expect(openStoreGraphiQL({store: 'shop.myshopify.com'})).rejects.toThrow(
+      "This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.",
+    )
+    expect(mockedRunGraphiQLSession).not.toHaveBeenCalled()
   })
+
+  test.each(['getToken', 'refreshToken'] as const)(
+    'passes %s cancellation to the stored session loader',
+    async (operation) => {
+      await openStoreGraphiQL({
+        store: 'shop.myshopify.com',
+      })
+
+      const tokenProvider = mockedRunGraphiQLSession.mock.calls[0]![0].tokenProvider
+      const signal = new AbortController().signal
+      await expect(tokenProvider[operation]!(signal)).resolves.toBe('stored-token')
+      expect(mockedLoadSession).toHaveBeenCalledWith('shop.myshopify.com', signal)
+    },
+  )
 
   test('passes prefilled query, variables, and apiVersion to the shared session runner', async () => {
     await openStoreGraphiQL({
@@ -71,6 +89,7 @@ describe('openStoreGraphiQL', () => {
       query: 'query { shop { name } }',
       variables: '{"id":1}',
       apiVersion: '2024-10',
+      outputFormat: 'json',
     })
 
     expect(mockedRunGraphiQLSession).toHaveBeenCalledWith(
@@ -78,6 +97,7 @@ describe('openStoreGraphiQL', () => {
         query: 'query { shop { name } }',
         variables: '{"id":1}',
         apiVersion: '2024-10',
+        outputFormat: 'json',
       }),
     )
   })

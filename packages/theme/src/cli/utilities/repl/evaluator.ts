@@ -8,22 +8,25 @@ export interface SessionItem {
   value: string
 }
 
+export type LiquidValue = string | number | boolean | null | LiquidValue[] | {[key: string]: LiquidValue}
+
 export interface EvaluationConfig {
   themeSession: DevServerSession
   themeId: string
   url: string
   replSession: SessionItem[]
   snippet: string
+  mode?: 'interactive' | 'batch'
 }
 
-export async function evaluate(config: EvaluationConfig): Promise<string | number | undefined> {
-  return (
-    (await evalResult(config)) ??
-    (await evalContext(config)) ??
-    (await evalAssignmentContext(config)) ??
-    (await evalSyntaxError(config)) ??
-    undefined
-  )
+export async function evaluate(config: EvaluationConfig): Promise<LiquidValue | undefined> {
+  const result = await evalResult(config)
+  if (result !== undefined) return result.value
+  if (await evalContext(config)) return undefined
+  if (await evalAssignmentContext(config)) return undefined
+  await evalSyntaxError(config)
+  if (config.mode === 'batch') throw new AbortError('Unable to evaluate the Liquid command.')
+  return undefined
 }
 
 async function evalResult(config: EvaluationConfig) {
@@ -45,7 +48,9 @@ async function evalContext(config: EvaluationConfig) {
 
   if (successfulRequest(request.status, text)) {
     config.replSession.push(JSON.parse(json))
+    return true
   }
+  return false
 }
 
 async function evalAssignmentContext(config: EvaluationConfig) {
@@ -53,7 +58,7 @@ async function evalAssignmentContext(config: EvaluationConfig) {
 
   if (isSmartAssignment(config.snippet)) {
     config.snippet = `assign ${config.snippet}`
-    outputInfo(outputContent`${outputToken.gray(`> ${config.snippet}`)}`)
+    if (config.mode !== 'batch') outputInfo(outputContent`${outputToken.gray(`> ${config.snippet}`)}`)
     return evalContext(config)
   }
 }
@@ -74,19 +79,18 @@ async function evalSyntaxError(config: EvaluationConfig) {
 
   if (hasLiquidError(body)) {
     const error = body.replace(/ \(snippets\/eval line \d+\)/, '')
-    printSyntaxError(config.snippet, error)
+    printSyntaxError(config, error)
   }
 }
 
-function printSyntaxError(snippet: string, error: string) {
+function printSyntaxError(config: EvaluationConfig, error: string) {
+  let message = stripHTMLContent(error)
   if (error.includes('Unknown tag')) {
-    outputInfo(outputContent`${outputToken.errorText(`Unknown object, property, tag, or filter: '${snippet}'`)}`)
-    return
+    message = `Unknown object, property, tag, or filter: '${config.snippet}'`
   }
-
-  const resultContent = stripHTMLContent(error)
-  if (resultContent) {
-    outputInfo(outputContent`${outputToken.errorText(resultContent)}`)
+  if (message) {
+    if (config.mode === 'batch') throw new AbortError(message)
+    outputInfo(outputContent`${outputToken.errorText(message)}`)
   }
 }
 
@@ -122,6 +126,10 @@ async function makeRequest(config: EvaluationConfig): Promise<Response> {
     notFoundError()
   }
 
+  if (config.mode === 'batch' && response.status !== 200) {
+    throw new AbortError(`Liquid evaluation failed (HTTP ${response.status}).`)
+  }
+
   return response
 }
 
@@ -130,11 +138,11 @@ function buildRequestBody(config: EvaluationConfig): string {
   return `[${items.join(',').replace(/\\"/g, '"')}]`
 }
 
-function parseDisplayResult(result: string): string | number | undefined {
+function parseDisplayResult(result: string): {value: LiquidValue} | undefined {
   const resultContent = stripHTMLContent(result)
   if (resultContent) {
     const displayObject = JSON.parse(resultContent)?.find((item: SessionItem) => item.type === 'display')
-    return displayObject?.value
+    if (displayObject && 'value' in displayObject) return {value: displayObject.value}
   }
 }
 

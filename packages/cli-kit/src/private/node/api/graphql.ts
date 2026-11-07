@@ -22,7 +22,7 @@ to ${sanitizeURL(url)}`)
 
 export function sanitizeVariables(variables: Variables): string {
   const result: Variables = {...variables}
-  const sensitiveKeys = ['apiKey', 'serialized_script']
+  const sensitiveKeys = ['apiKey', 'serialized_script', 'sharedSecret', 'shared_secret']
 
   const sanitizedResult = sanitizeDeepVariables(result, sensitiveKeys)
 
@@ -134,6 +134,9 @@ export function errorHandler(api: string): (error: unknown, requestId?: string) 
         errorMessage = extractedMessages
       } else if (extractedMessages && status >= 500) {
         errorMessage = `The ${api} GraphQL API responded with HTTP status ${status}: ${extractedMessages}`
+      } else if (error.response.errors === undefined) {
+        // A 401 from an API gateway, for example, has no GraphQL body to quote.
+        errorMessage = `The ${api} GraphQL API responded unsuccessfully with the HTTP status ${status}.`
       } else {
         errorMessage = stringifyMessage(outputContent`
 The ${outputToken.raw(api)} GraphQL API responded unsuccessfully with${
@@ -158,4 +161,10 @@ ${outputToken.json(error.response.errors)}
       return error
     }
   }
+}
+
+export function extractGraphQLErrors(error: unknown): NonNullable<ClientError['response']['errors']> {
+  if (error instanceof ClientError) return Array.isArray(error.response.errors) ? error.response.errors : []
+  if (error instanceof GraphQLClientError) return Array.isArray(error.errors) ? error.errors : []
+  return []
 }

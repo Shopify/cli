@@ -1,15 +1,25 @@
 import {inspectErrorReason, isMissingFilesystemEntry} from './filesystem-errors.js'
-import {createFilePathMatcher, createPathMatcher} from './path-rules.js'
+import {
+  isDroppedEntry,
+  isDroppedTrackedPath,
+  isExcludedScanDirectory,
+  isIgnoredByParentRepository,
+  listGitIgnoredPaths,
+  listNestedRepository,
+  listTrackedFiles,
+  repositoryIgnoredPaths,
+} from './path-rules.js'
 import {findRepositoryMarker} from './repository-marker.js'
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
-import {APP_CONFIG_FILE_GLOB, isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
+import {isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../../../models/extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {removeTrailingSlash} from '../../../models/extensions/specifications/validation/common.js'
-import {fileExistsSync, fileSizeSync, globSync, readFileSync} from '@shopify/cli-kit/node/fs'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {fileSizeSync, readFileSync} from '@shopify/cli-kit/node/fs'
 import {
-  basename,
   cwd,
+  basename,
   dirname,
   extname,
   isAbsolutePath,
@@ -22,7 +32,7 @@ import {
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {lstatSync, readdirSync, realpathSync} from 'node:fs'
-import type {PathRules} from './path-rules.js'
+import type {GatheredListingStatus, PathRules, RepositoryIgnoredPaths} from './path-rules.js'
 import type {SourceCandidate} from '../types.js'
 import type {
   AppTomlContent,
@@ -34,75 +44,19 @@ import type {
 } from './types.js'
 import type {Dirent} from 'node:fs'
 
-/** Expected user error while locating a Shopify app root. */
-export class AppRootDiscoveryError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'AppRootDiscoveryError'
-  }
-}
-
 /**
- * Find the nearest app root without ever substituting CWD for a bad explicit path.
- *
- * App identity matches the rest of Shopify CLI: walk up for
- * `shopify.app.toml` / `shopify.app.<name>.toml` using
- * `isValidFormatAppConfigurationFileName`. This is not `Project.load()` — that
- * loader also reads package, environment, and hidden configuration, follows
- * different symlink policy, and does not keep the bounded raw bytes App Security
- * hashes and reports as coverage.
+ * Load the selected shopify.app.toml file.
  */
-export function findAppRoot(startPath?: string): string {
-  const requestedPath = resolvePath(startPath ?? cwd())
-  if (startPath && !fileExistsSync(requestedPath)) {
-    throw new AppRootDiscoveryError(`App path does not exist: ${startPath}`)
-  }
-
-  let directory = requestedPath
-  if (startPath && lstatSync(requestedPath).isFile()) {
-    if (!isValidFormatAppConfigurationFileName(basename(requestedPath))) {
-      throw new AppRootDiscoveryError(`App path is not a directory or Shopify app configuration file: ${startPath}`)
-    }
-    return dirname(requestedPath)
-  }
-  if (!lstatSync(directory).isDirectory()) {
-    throw new AppRootDiscoveryError(`App path is not a directory: ${startPath ?? directory}`)
-  }
-
-  while (true) {
-    if (listAppConfigFiles(directory).length > 0) return directory
-
-    const parent = dirname(directory)
-    if (parent === directory) break
-    directory = parent
-  }
-
-  throw new AppRootDiscoveryError(`Could not find a shopify.app*.toml from: ${startPath ?? cwd()}`)
-}
-
-function listAppConfigFiles(directory: string): string[] {
-  return globSync(APP_CONFIG_FILE_GLOB, {
-    cwd: directory,
-    deep: 1,
-    dot: false,
-    onlyFiles: false,
-    followSymbolicLinks: false,
-  }).filter((file) => isValidFormatAppConfigurationFileName(basename(file)))
-}
-
-/**
- * Load a specific shopify.app.toml file.
- */
-export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppTomlContent | null {
-  const content = readRepositoryText(appRoot, tomlPath)
+export function loadAppToml(appConfigFilePath: string, appDirectory: string): AppTomlContent | null {
+  const content = readRepositoryText(appConfigFilePath)
   if (content === undefined) return null
   try {
     const raw = decodeToml(content) as Record<string, unknown>
-    return parseAppToml(raw, tomlPath, content, appRoot)
+    return parseAppToml(raw, appConfigFilePath, content, appDirectory)
     // Invalid repository TOML is a coverage gap, not a scanner crash.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    recordSkippedFile(appRoot, tomlPath, {
+    recordSkippedFile(appConfigFilePath, {
       ok: false,
       reason: 'unreadable',
       detail: 'TOML could not be parsed',
@@ -228,26 +182,141 @@ function projectWebhookSubscription(value: unknown, path: string, appRoot?: stri
 
 function recordSectionGap(appRoot: string | undefined, path: string, detail: string): void {
   if (!appRoot) return
-  recordSkippedFile(appRoot, path, {ok: false, reason: 'unreadable', detail})
+  recordSkippedFile(path, {ok: false, reason: 'unreadable', detail})
 }
 
-/** Uses raw entries, so a nested app whose configuration file is gitignored is still a nested app. */
-function isNestedAppDirectory(entries: ReadonlyArray<Dirent>): boolean {
-  return entries.some((entry) => !entry.isDirectory() && isValidFormatAppConfigurationFileName(entry.name))
-}
-
-function readDirectoryEntries(appRoot: string, absolutePath: string, displayPath: string): Dirent[] | undefined {
+function readDirectoryEntries(absolutePath: string, isScanDirectory: boolean): Dirent[] | undefined {
   try {
     return readdirSync(absolutePath, {withFileTypes: true})
     // An unreadable directory is a coverage gap, not a scanner crash.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    recordSkippedFile(appRoot, absolutePath, {
+    recordSkippedFile(absolutePath, {
       ok: false,
       reason: 'unreadable',
-      detail: inspectErrorReason(displayPath, error),
+      detail: inspectErrorReason(isScanDirectory ? 'scan directory' : repositoryDisplayPath(absolutePath), error),
     })
     return undefined
+  }
+}
+
+interface GatherInput {
+  appDirectory: string
+  /** Absolute real paths of the directories to walk. */
+  scanDirectories: ReadonlyArray<string>
+  /**
+   * Every directory that was asked for, including those inside another scan directory, so each can be checked for the
+   * ignored-scan-directory warning. It contains every entry of `scanDirectories`.
+   */
+  requestedScanDirectories: ReadonlyArray<string>
+  /** Added after filtering, so no path rule can remove it. */
+  selectedAppConfigFilePath?: string
+  rules: PathRules
+}
+
+interface GatheredPaths {
+  /** Sorted and unique, relative to the app directory, written with `/`. They may start with `../`. */
+  paths: string[]
+  /** Requested directories that their repository ignores, so only the files Git tracks in them are gathered. */
+  ignoredScanDirectories: string[]
+  /** Absolute paths of directories, other than the app directory, that hold a gathered app configuration file. */
+  otherAppDirectories: string[]
+  /** How the first scan directory's ignored paths were found. Secret findings use it to explain why an ignored file was scanned. */
+  listingStatus: GatheredListingStatus
+}
+
+interface GatheredScanDirectory {
+  absolutePaths: string[]
+  listingStatus: GatheredPaths['listingStatus']
+}
+
+export async function gatherPaths({
+  appDirectory,
+  scanDirectories,
+  requestedScanDirectories,
+  selectedAppConfigFilePath,
+  rules,
+}: GatherInput): Promise<GatheredPaths> {
+  const ignoredScanDirectories: string[] = []
+  if (rules.gitFiltering) {
+    for (const requestedDirectory of requestedScanDirectories) {
+      // An excluded directory gathers nothing, so warning that only its tracked files are gathered would be wrong.
+      if (isExcludedScanDirectory(rules, requestedDirectory)) continue
+      // eslint-disable-next-line no-await-in-loop
+      if (await isIgnoredByParentRepository(requestedDirectory)) ignoredScanDirectories.push(requestedDirectory)
+    }
+  }
+
+  const gathered: GatheredScanDirectory[] = []
+  for (const scanDirectory of scanDirectories) {
+    // eslint-disable-next-line no-await-in-loop
+    gathered.push(await gatherScanDirectory(scanDirectory, rules, ignoredScanDirectories.includes(scanDirectory)))
+  }
+
+  const absolutePaths = [
+    ...gathered.flatMap((scanDirectory) => scanDirectory.absolutePaths),
+    ...(selectedAppConfigFilePath ? [selectedAppConfigFilePath] : []),
+  ]
+  const paths = [...new Set(absolutePaths.map((path) => normalizeCliPath(relativePath(appDirectory, path))))].sort()
+  return {
+    paths,
+    ignoredScanDirectories,
+    otherAppDirectories: findOtherAppDirectories(appDirectory, paths),
+    listingStatus: gathered[0]?.listingStatus ?? (rules.gitFiltering ? 'tracked-only' : 'git-ignore-off'),
+  }
+}
+
+/** Another app's files are scanned as this app's, so the caller can warn and suggest excluding them. */
+function findOtherAppDirectories(appDirectory: string, paths: ReadonlyArray<string>): string[] {
+  const directories = paths
+    .filter((path) => isValidFormatAppConfigurationFileName(basename(path)))
+    .map((path) => dirname(path))
+    .filter((directory) => directory !== '.')
+  return [...new Set(directories)].map((directory) => joinPath(appDirectory, directory))
+}
+
+async function gatherScanDirectory(
+  scanDirectory: string,
+  rules: PathRules,
+  ignoredByRepository: boolean,
+): Promise<GatheredScanDirectory> {
+  if (!rules.gitFiltering) {
+    return {
+      absolutePaths: await walkDirectory(scanDirectory, rules, undefined),
+      listingStatus: 'git-ignore-off',
+    }
+  }
+
+  if (ignoredByRepository) {
+    if (isExcludedScanDirectory(rules, scanDirectory)) return {absolutePaths: [], listingStatus: 'tracked-only'}
+    const trackedPaths = await listTrackedFiles(scanDirectory)
+    // A normal walk would scan the untracked files that Git was told to ignore.
+    if (trackedPaths === undefined) {
+      throw new AbortError(`Couldn't list the files Git tracks in ${relativePath(cwd(), scanDirectory) || '.'}.`)
+    }
+    return {
+      absolutePaths: trackedPaths
+        .filter((trackedPath) => !isDroppedTrackedPath(rules, scanDirectory, trackedPath))
+        .map((trackedPath) => joinPath(scanDirectory, trackedPath))
+        .filter(isTrackedFile),
+      listingStatus: 'tracked-only',
+    }
+  }
+
+  const listing = await listGitIgnoredPaths(scanDirectory)
+  return {
+    absolutePaths: await walkDirectory(scanDirectory, rules, repositoryIgnoredPaths(scanDirectory, listing)),
+    listingStatus: listing.status,
+  }
+}
+
+/** Git lists a submodule as one entry, and a deleted tracked file is still listed. */
+function isTrackedFile(absolutePath: string): boolean {
+  try {
+    return !lstatSync(absolutePath).isDirectory()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
   }
 }
 
@@ -255,33 +324,38 @@ function readDirectoryEntries(appRoot: string, absolutePath: string, displayPath
  * Symlinks and special entries are listed but never traversed;
  * `readRepositoryFile` enforces containment on anything a finder reads.
  */
-export function listRepositoryFiles(appRoot: string, rules: PathRules): string[] {
-  const matcher = createPathMatcher(rules)
+async function walkDirectory(
+  scanDirectory: string,
+  rules: PathRules,
+  scanDirectoryRepository: RepositoryIgnoredPaths | undefined,
+): Promise<string[]> {
+  if (isExcludedScanDirectory(rules, scanDirectory)) return []
   const files: string[] = []
-  // Appended to while iterating; '' is the app root.
-  const pendingDirectories = ['']
+  // Appended to while iterating.
+  const pendingDirectories = [{directory: scanDirectory, repository: scanDirectoryRepository}]
 
-  for (const relativeDirectory of pendingDirectories) {
-    const absoluteDirectory = relativeDirectory === '' ? appRoot : joinPath(appRoot, relativeDirectory)
-    const entries = readDirectoryEntries(
-      appRoot,
-      absoluteDirectory,
-      relativeDirectory === '' ? 'app root' : relativeDirectory,
-    )
+  for (const {directory, repository} of pendingDirectories) {
+    const entries = readDirectoryEntries(directory, directory === scanDirectory)
     if (entries === undefined) continue
-    if (relativeDirectory !== '' && isNestedAppDirectory(entries)) continue
 
     for (const entry of entries) {
-      const relative = relativeDirectory === '' ? entry.name : `${relativeDirectory}/${entry.name}`
-      if (entry.isDirectory()) {
-        if (!matcher(relative, {directory: true})) pendingDirectories.push(relative)
-      } else if (!matcher(relative, {directory: false})) {
-        files.push(relative)
+      const absolutePath = joinPath(directory, entry.name)
+      const isDirectory = entry.isDirectory()
+      if (isDroppedEntry(rules, repository, {absolutePath, isDirectory})) continue
+      if (!isDirectory) {
+        files.push(absolutePath)
+        continue
       }
+      // eslint-disable-next-line no-await-in-loop
+      const nestedRepository = rules.gitFiltering ? await listNestedRepository(absolutePath) : undefined
+      pendingDirectories.push({
+        directory: absolutePath,
+        repository: nestedRepository ? repositoryIgnoredPaths(absolutePath, nestedRepository) : repository,
+      })
     }
   }
 
-  return files.sort()
+  return files
 }
 
 /** A path inside nested extension directories belongs to each of them. */
@@ -310,10 +384,11 @@ function groupSourcePathsByExtensionDirectory(
  * Find extension-like repository content under the app root.
  *
  * `Project.load()` only considers paths in each app configuration's
- * `extension_directories`. App Security still scans every `shopify.extension.toml`
+ * `extension_directories`. The app security check still scans every `shopify.extension.toml`
  * inside the repository boundary, including unconfigured extensions, because
  * those files can still contain secrets, XSS, and other security evidence.
- * Nested apps, generated output, and test trees remain excluded.
+ * Extensions in a nested app, an `--include-dir` directory, or a directory that the selected app configuration
+ * file's `extension_directories` or `web_directories` add count as this app's.
  */
 export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<string>): ExtensionInfo[] {
   const extensionTomls = repositoryFiles.filter((path) => basename(path) === 'shopify.extension.toml')
@@ -326,7 +401,7 @@ export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<s
 
   return extensionTomls.flatMap((tomlPath) => {
     const fullPath = joinPath(appRoot, tomlPath)
-    const content = readRepositoryText(appRoot, fullPath)
+    const content = readRepositoryText(fullPath)
     if (content === undefined) return []
 
     try {
@@ -337,7 +412,7 @@ export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<s
       // Invalid repository TOML is a coverage gap, not a scanner crash.
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
-      recordSkippedFile(appRoot, fullPath, {
+      recordSkippedFile(fullPath, {
         ok: false,
         reason: 'unreadable',
         detail: 'TOML could not be parsed',
@@ -375,23 +450,40 @@ interface SkippedFile {
  * Files skipped during the most recent discovery pass.
  *
  * Module-level because discovery runs in several places and the scanner needs
- * to surface the total in scan metadata. Reset at the start of each scan via
- * `resetSkippedFiles()`.
+ * to surface the total in scan metadata. Reset at the start of each scan by
+ * `configureRepositoryReader()`.
  */
 let skippedFiles: SkippedFile[] = []
 const repositoryFileCache = new Map<string, RepositoryReadResult>()
 
-export function resetSkippedFiles(): void {
+interface RepositoryReaderConfiguration {
+  appDirectory: string
+  /** Absolute real paths. The containment boundary for a path is the scan directory that contains it. */
+  scanDirectories: ReadonlyArray<string>
+  /** Absolute paths that skip only the containment check; the size limit still applies. */
+  explicitInputs: ReadonlySet<string>
+}
+
+let readerConfiguration: RepositoryReaderConfiguration | undefined
+
+/** Configured once per scan. Also forgets the previous scan's skipped files and cached reads. */
+export function configureRepositoryReader(configuration: RepositoryReaderConfiguration): void {
+  readerConfiguration = configuration
   skippedFiles = []
   repositoryFileCache.clear()
+}
+
+function configuredReader(): RepositoryReaderConfiguration {
+  if (!readerConfiguration) throw new BugError('The repository reader was used before it was configured.')
+  return readerConfiguration
 }
 
 export function getSkippedFiles(): SkippedFile[] {
   return [...skippedFiles]
 }
 
-function recordSkippedFile(appRoot: string, path: string, failure: RepositoryReadFailure): void {
-  const repositoryPath = relativePath(appRoot, path).replace(/\\/g, '/')
+function recordSkippedFile(path: string, failure: RepositoryReadFailure): void {
+  const repositoryPath = relativePath(configuredReader().appDirectory, path).replace(/\\/g, '/')
   skippedFiles.push({
     path: repositoryPath.length > 0 ? repositoryPath : path,
     reason: failure.reason,
@@ -422,17 +514,9 @@ function repositoryPathFailure(detail: string): RepositoryReadFailure {
 
 type InspectedPath = {status: 'missing'} | {status: 'file'; path: string} | {status: 'unresolved'; reason: string}
 
-function repositoryDisplayPath(appRoot: string, path: string): string {
-  const relative = normalizeCliPath(relativePath(appRoot, path))
-  if (
-    relative.length === 0 ||
-    relative === '.' ||
-    relative === '..' ||
-    relative.startsWith('../') ||
-    isAbsolutePath(relative)
-  ) {
-    return 'path'
-  }
+function repositoryDisplayPath(path: string): string {
+  const relative = normalizeCliPath(relativePath(configuredReader().appDirectory, path))
+  if (relative.length === 0 || relative === '.' || isAbsolutePath(relative)) return 'path'
   return relative
 }
 
@@ -442,12 +526,12 @@ function repositoryDisplayPath(appRoot: string, path: string): string {
  * prefix walking runs only after ENOENT/ENOTDIR so optional allowlist paths
  * can distinguish ordinary absence from a dangling or escaping intermediate.
  */
-function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
-  const absoluteRoot = resolvePath(appRoot)
+function inspectRepositoryPath(scanDirectory: string, path: string): InspectedPath {
+  const absoluteRoot = resolvePath(scanDirectory)
   const absolutePath = resolvePath(absoluteRoot, path)
-  const display = repositoryDisplayPath(absoluteRoot, absolutePath)
+  const display = repositoryDisplayPath(absolutePath)
   if (!isSubpath(absoluteRoot, absolutePath)) {
-    return {status: 'unresolved', reason: `${display} escapes the app root`}
+    return {status: 'unresolved', reason: `${display} escapes the scan directory`}
   }
 
   let canonicalRoot: string
@@ -455,19 +539,19 @@ function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
     canonicalRoot = realpathSync(absoluteRoot)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'unresolved', reason: inspectErrorReason('app root', error)}
+    return {status: 'unresolved', reason: inspectErrorReason('scan directory', error)}
   }
 
   const segments = normalizeCliPath(relativePath(absoluteRoot, absolutePath))
     .split('/')
     .filter((segment) => segment.length > 0 && segment !== '.')
-  if (segments.includes('..')) return {status: 'unresolved', reason: `${display} escapes the app root`}
+  if (segments.includes('..')) return {status: 'unresolved', reason: `${display} escapes the scan directory`}
   if (segments.length === 0) return {status: 'unresolved', reason: `${display} is not a file`}
 
   try {
     const canonicalPath = realpathSync(absolutePath)
     if (!isSubpath(canonicalRoot, canonicalPath)) {
-      return {status: 'unresolved', reason: `${display} resolves outside the app root`}
+      return {status: 'unresolved', reason: `${display} resolves outside the scan directory`}
     }
     if (!lstatSync(canonicalPath).isFile()) {
       return {status: 'unresolved', reason: `${display} is not a file`}
@@ -490,7 +574,7 @@ function inspectMissingRepositoryPath(canonicalRoot: string, segments: string[],
       lstatSync(currentPath)
       const canonicalPath = realpathSync(currentPath)
       if (!isSubpath(canonicalRoot, canonicalPath)) {
-        return {status: 'unresolved', reason: `${display} resolves outside the app root`}
+        return {status: 'unresolved', reason: `${display} resolves outside the scan directory`}
       }
 
       const stats = lstatSync(canonicalPath)
@@ -525,29 +609,60 @@ function inspectMissingRepositoryPath(canonicalRoot: string, segments: string[],
   return {status: 'file', path: currentPath}
 }
 
-function containedRepositoryPath(appRoot: string, path: string): {path?: string; failure?: RepositoryReadFailure} {
-  const inspected = inspectRepositoryPath(appRoot, path)
+function containedRepositoryPath(path: string): {path?: string; failure?: RepositoryReadFailure} {
+  const scanDirectory = configuredReader().scanDirectories.find((directory) => isSubpath(directory, path))
+  if (scanDirectory === undefined) {
+    return {failure: repositoryPathFailure(`${repositoryDisplayPath(path)} is outside every scan directory`)}
+  }
+  const inspected = inspectRepositoryPath(scanDirectory, path)
   if (inspected.status === 'file') return {path: inspected.path}
   if (inspected.status === 'missing') return {failure: repositoryPathFailure('path does not exist')}
   return {failure: repositoryPathFailure(inspected.reason)}
 }
 
-function readRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
-  const absoluteRoot = resolvePath(appRoot)
-  const absolutePath = resolvePath(path)
-  const cacheKey = `${absoluteRoot}\0${absolutePath}`
-  const cached = repositoryFileCache.get(cacheKey)
+/** An explicit input is followed wherever it points, because the user chose it rather than discovery. */
+function explicitInputPath(path: string): {path?: string; failure?: RepositoryReadFailure} {
+  const display = repositoryDisplayPath(path)
+  try {
+    const canonicalPath = realpathSync(path)
+    if (!lstatSync(canonicalPath).isFile()) return {failure: repositoryPathFailure(`${display} is not a file`)}
+    return {path: canonicalPath}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return {
+      failure: repositoryPathFailure(
+        isMissingFilesystemEntry(error) ? 'path does not exist' : inspectErrorReason(display, error),
+      ),
+    }
+  }
+}
+
+function readRepositoryFile(absolutePath: string): RepositoryReadResult {
+  const path = resolvePath(absolutePath)
+  const cached = repositoryFileCache.get(path)
   if (cached) return cached
 
-  const containedPath = containedRepositoryPath(absoluteRoot, absolutePath)
-  const result = containedPath.path ? readBoundedFile(containedPath.path) : containedPath.failure!
-  repositoryFileCache.set(cacheKey, result)
-  if (!result.ok) recordSkippedFile(appRoot, path, result)
+  const located = configuredReader().explicitInputs.has(path) ? explicitInputPath(path) : containedRepositoryPath(path)
+  const result = located.path ? readBoundedFile(located.path) : located.failure!
+  repositoryFileCache.set(path, result)
+  if (!result.ok) recordSkippedFile(path, result)
   return result
 }
 
-function readRepositoryText(appRoot: string, path: string): string | undefined {
-  const result = readRepositoryFile(appRoot, path)
+/**
+ * Read a fixed path below a directory that isn't scanned, with that directory as the containment boundary.
+ * `undefined` means the path doesn't exist.
+ */
+function readFileContainedBy(directory: string, path: string): RepositoryReadResult | undefined {
+  const inspected = inspectRepositoryPath(directory, path)
+  if (inspected.status === 'missing') return undefined
+  const result = inspected.status === 'file' ? readBoundedFile(inspected.path) : repositoryPathFailure(inspected.reason)
+  if (!result.ok) recordSkippedFile(joinPath(directory, path), result)
+  return result
+}
+
+function readRepositoryText(absolutePath: string): string | undefined {
+  const result = readRepositoryFile(absolutePath)
   return result.ok ? result.content.toString() : undefined
 }
 
@@ -611,7 +726,7 @@ export function findSourceCandidates(repositoryFiles: ReadonlyArray<string>): So
 export function findAppSourceFiles(appRoot: string, repositoryFiles: ReadonlyArray<string>): SourceFile[] {
   return repositoryFiles.filter(hasSupportedSourceExtension).map((path) => {
     const absolutePath = joinPath(appRoot, path)
-    const result = readRepositoryFile(appRoot, absolutePath)
+    const result = readRepositoryFile(absolutePath)
     return {
       path,
       absolutePath,
@@ -677,44 +792,43 @@ function isProbablyBinary(content: Buffer): boolean {
 export function findSensitiveFiles(
   appRoot: string,
   repositoryFiles: ReadonlyArray<string>,
-  selectedAppConfigFileName?: string,
+  selectedAppConfigPath?: string,
 ): SourceFile[] {
   const paths = repositoryFiles
     .filter(isSensitiveFile)
-    // Compares the whole relative path, so only the app root's own lockfiles are dropped.
-    .filter((path) => !LOCKFILE_MANAGERS.has(path))
-    .filter((path) => {
-      const fileName = basename(path)
-      if (!isValidFormatAppConfigurationFileName(fileName)) return true
-      return fileName === selectedAppConfigFileName
-    })
+    // Matches by file name, so lockfiles in every scan directory are dropped, not only the app root's.
+    .filter((path) => !LOCKFILE_MANAGERS.has(basename(path)))
+    // Only the selected app configuration file is scanned, wherever another one with the same name sits.
+    .filter((path) => !isValidFormatAppConfigurationFileName(basename(path)) || path === selectedAppConfigPath)
 
   return paths.flatMap((path): SourceFile[] => {
     const absolutePath = joinPath(appRoot, path)
-    const result = readRepositoryFile(appRoot, absolutePath)
+    const result = readRepositoryFile(absolutePath)
     if (!result.ok) return [{path, absolutePath, ext: extname(path), content: undefined}]
     if (isProbablyBinary(result.content)) return []
     return [{path, absolutePath, ext: extname(path), content: result.content.toString()}]
   })
 }
 
-function nestedRepositoryReason(appRoot: string): string | undefined {
+/** Dependabot and Renovate read configuration from the root of the nearest repository that holds the app. */
+function dependencyAutomationRoot(appRoot: string): {directory: string} | {unresolvedReason: string} {
   const marker = findRepositoryMarker(appRoot)
-  if (marker.status === 'none') return undefined
-  if (marker.status === 'ambiguous') return marker.reason
-  return marker.directory === appRoot ? undefined : 'App root is nested below a parent Git repository'
-}
-
-function recordRejectedAllowlistPath(appRoot: string, relative: string, failure: RepositoryReadFailure): void {
-  recordSkippedFile(appRoot, resolvePath(appRoot, relative), failure)
+  if (marker.status === 'ambiguous') return {unresolvedReason: marker.reason}
+  return {directory: marker.status === 'found' ? marker.directory : appRoot}
 }
 
 /**
  * Read local bot configuration only; hosted integrations and CI workflows are
- * outside this check's scope. Paths are read from disk rather than the walked
- * list, so a symlinked `.github` is reported as unresolved rather than missing.
+ * outside this check's scope. Configuration inside a scan directory is read only
+ * when it was gathered, through the reader, so path rules apply and a gathered
+ * symbolic link that leaves its scan directory is reported as unresolved. The root
+ * of a repository that holds the app below its top level may be outside every scan
+ * directory, so an allowlisted path outside them is read directly, contained by that root.
  */
-export function findDependencyAutomationInputs(appRoot: string, rules: PathRules): DependencyAutomationInputs {
+export function findDependencyAutomationInputs(
+  appRoot: string,
+  gatheredPaths: ReadonlyArray<string>,
+): DependencyAutomationInputs {
   let canonicalRoot: string
   try {
     canonicalRoot = realpathSync(resolvePath(appRoot))
@@ -726,32 +840,28 @@ export function findDependencyAutomationInputs(appRoot: string, rules: PathRules
     return {files: [], unresolvedReason: inspectErrorReason('app root', error)}
   }
 
-  const repositoryReason = nestedRepositoryReason(canonicalRoot)
-  if (repositoryReason) return {files: [], unresolvedReason: repositoryReason}
+  const configurationRoot = dependencyAutomationRoot(canonicalRoot)
+  if ('unresolvedReason' in configurationRoot) return {files: [], unresolvedReason: configurationRoot.unresolvedReason}
+  const repositoryRoot = configurationRoot.directory
+  const {scanDirectories} = configuredReader()
+  const isScanned = (absolutePath: string) =>
+    repositoryRoot === canonicalRoot || scanDirectories.some((directory) => isSubpath(directory, absolutePath))
 
-  const isExcluded = createFilePathMatcher(rules)
+  const gathered = new Set(gatheredPaths)
   const files: SourceFile[] = []
   let unresolvedReason: string | undefined
-  for (const relative of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
-    if (isExcluded(relative)) continue
-    const inspected = inspectRepositoryPath(canonicalRoot, relative)
-    if (inspected.status === 'missing') continue
-    if (inspected.status === 'unresolved') {
-      recordRejectedAllowlistPath(canonicalRoot, relative, {
-        ok: false,
-        reason: 'unreadable',
-        detail: inspected.reason,
-      })
-      unresolvedReason ??= inspected.reason
-      continue
-    }
-
-    const absolutePath = resolvePath(canonicalRoot, relative)
-    const result = readBoundedFile(inspected.path)
+  for (const configurationPath of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
+    const absolutePath = joinPath(repositoryRoot, configurationPath)
+    const relative = normalizeCliPath(relativePath(canonicalRoot, absolutePath))
+    const scanned = isScanned(absolutePath)
+    if (scanned && !gathered.has(relative)) continue
+    const result = scanned ? readRepositoryFile(absolutePath) : readFileContainedBy(repositoryRoot, configurationPath)
+    if (result === undefined) continue
     if (!result.ok) {
-      recordRejectedAllowlistPath(canonicalRoot, relative, result)
       unresolvedReason ??=
-        result.reason === 'too_large' ? `${relative} is too large to inspect` : `Could not read ${relative}`
+        result.reason === 'too_large'
+          ? `${relative} is too large to inspect`
+          : (result.detail ?? `Could not read ${relative}`)
       continue
     }
 
@@ -784,7 +894,7 @@ export function findManifests(appRoot: string, discoveredPaths: ReadonlyArray<st
 
   for (const pkgPath of pkgPaths) {
     const fullPath = joinPath(appRoot, pkgPath)
-    const content = readRepositoryText(appRoot, fullPath)
+    const content = readRepositoryText(fullPath)
     if (content === undefined) continue
     try {
       const pkg = PackageManifestSchema.parse(JSON.parse(content))
@@ -807,7 +917,7 @@ export function findManifests(appRoot: string, discoveredPaths: ReadonlyArray<st
         dependencies: {},
         devDependencies: {},
       })
-      recordSkippedFile(appRoot, fullPath, {
+      recordSkippedFile(fullPath, {
         ok: false,
         reason: 'unreadable',
         detail: 'manifest could not be parsed',

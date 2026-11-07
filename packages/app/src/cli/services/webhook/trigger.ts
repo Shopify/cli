@@ -1,11 +1,11 @@
 import {DELIVERY_METHOD} from './trigger-flags.js'
-import {getWebhookSample, SendSampleWebhookVariables, UserErrors} from './request-sample.js'
+import {getWebhookSample, SendSampleWebhookVariables} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {collectAddressAndMethod, collectApiVersion, collectCredentials, collectTopic} from './trigger-options.js'
+import {AppWebhookTriggerResult, WebhookTriggerResult} from './trigger/types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {outputWarn, outputSuccess} from '@shopify/cli-kit/node/output'
 
 export interface WebhookTriggerInput {
   app: AppLinkedInterface
@@ -36,14 +36,13 @@ interface WebhookTriggerOptions {
 /**
  * Orchestrates the command request by collecting params, requesting the sample, and sending it to localhost if
  * required.
- * It outputs the result
  *
  * @param flags - Passed flags
  */
-export async function webhookTriggerService(input: WebhookTriggerInput) {
+export async function webhookTriggerService(input: WebhookTriggerInput): Promise<WebhookTriggerResult> {
   const options: WebhookTriggerOptions = await validateAndCollectFlags(input)
 
-  await sendSample(options)
+  return sendSample(options)
 }
 
 async function validateAndCollectFlags(input: WebhookTriggerInput): Promise<WebhookTriggerOptions> {
@@ -64,7 +63,7 @@ async function validateAndCollectFlags(input: WebhookTriggerInput): Promise<Webh
   }
 }
 
-async function sendSample(options: WebhookTriggerOptions) {
+async function sendSample(options: WebhookTriggerOptions): Promise<WebhookTriggerResult> {
   const variables: SendSampleWebhookVariables = {
     topic: options.topic,
     api_version: options.apiVersion,
@@ -76,38 +75,34 @@ async function sendSample(options: WebhookTriggerOptions) {
   const sample = await getWebhookSample(options.developerPlatformClient, variables, options.organizationId)
 
   if (!sample.success) {
-    outputWarn(`Request errors:\n${formatErrors(sample.userErrors)}`)
-    return
+    return {status: 'failed', reason: 'sample-request', userErrors: sample.userErrors}
+  }
+
+  const delivery: AppWebhookTriggerResult['delivery'] = {
+    topic: options.topic,
+    apiVersion: options.apiVersion,
+    deliveryMethod: options.deliveryMethod as AppWebhookTriggerResult['delivery']['deliveryMethod'],
+    address: options.address,
+    status: 'enqueued',
   }
 
   if (options.deliveryMethod === DELIVERY_METHOD.LOCALHOST) {
     const result = await triggerLocalWebhook(options.address, sample.samplePayload, sample.headers)
 
     if (result) {
-      outputSuccess('Localhost delivery sucessful')
-      return
+      return {
+        status: 'success',
+        delivery: {...delivery, status: 'delivered'},
+        samplePayloadIsEmpty: sample.samplePayload === JSON.stringify({}),
+      }
     }
 
-    outputWarn('Localhost delivery failed')
-    return
+    return {status: 'failed', reason: 'localhost-delivery'}
   }
 
-  if (sample.samplePayload === JSON.stringify({})) {
-    outputSuccess('Webhook has been enqueued for delivery')
-  }
-}
-
-function formatErrors(errors: UserErrors[]): string {
-  try {
-    return errors
-      .map((element) =>
-        JSON.parse(element.message)
-          .map((msg: string) => `  · ${msg}`)
-          .join('\n'),
-      )
-      .join('\n')
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err) {
-    return JSON.stringify(errors)
+  return {
+    status: 'success',
+    delivery,
+    samplePayloadIsEmpty: sample.samplePayload === JSON.stringify({}),
   }
 }

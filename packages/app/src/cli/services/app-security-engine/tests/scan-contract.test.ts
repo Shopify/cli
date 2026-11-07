@@ -1,7 +1,8 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
+import {scanDirectory as scan} from './scan-directory.js'
 import {buildAgentChecks} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
-import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
+import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
@@ -397,9 +398,6 @@ redirect_urls = ["http://app.example/callback"]
     const directory = await app({
       'shopify.app.toml': appConfig('write_script_tags'),
       'app/Main.java': 'x'.repeat(500_001),
-      'node_modules/vendor/index.java': 'ignored',
-      'tests/example.java': 'ignored',
-      'fixtures/example.java': 'ignored',
     })
     const result = await scan(directory)
 
@@ -480,7 +478,7 @@ describe('authenticated-route review handoff', () => {
     expect(agentChecks.checks).toContainEqual(
       expect.objectContaining({
         id: 'UNAUTHENTICATED_ENDPOINT',
-        version: 2,
+        version: 3,
       }),
     )
   })

@@ -11,6 +11,8 @@ import {Box, measureElement, Text, useStdout, DOMElement} from 'ink'
 import figures from 'figures'
 import type {InlineToken, LinkToken, TokenItem} from '../token-item.js'
 
+const DEFAULT_TERMINAL_ROWS = 24
+
 export type Message = TokenItem<Exclude<InlineToken, LinkToken>>
 
 interface PromptLayoutProps {
@@ -38,7 +40,7 @@ const PromptLayout = ({
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
   const [inputFixedAreaHeight, setInputFixedAreaHeight] = useState(0)
-  const currentAvailableLines = stdout.rows - promptAreaHeight - inputFixedAreaHeight
+  const currentAvailableLines = (stdout.rows ?? DEFAULT_TERMINAL_ROWS) - promptAreaHeight - inputFixedAreaHeight
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const wrapperRef = useCallback(
@@ -72,7 +74,7 @@ const PromptLayout = ({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - inputFixedAreaHeight
+      const newAvailableLines = (stdout.rows ?? DEFAULT_TERMINAL_ROWS) - promptAreaHeight - inputFixedAreaHeight
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }

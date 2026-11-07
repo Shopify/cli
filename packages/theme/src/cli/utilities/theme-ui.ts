@@ -1,3 +1,4 @@
+import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
@@ -7,7 +8,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 import {Writable} from 'stream'
 
-export function themeComponent(theme: Theme) {
+export function themeComponent(theme: Pick<Theme, 'id' | 'name'>) {
   return [
     `'${theme.name}'`,
     {
@@ -33,10 +34,18 @@ export async function ensureDirectoryConfirmed(
   }
 
   if (multiEnvironment) {
-    renderError({
-      headline: environment ? `Environment: ${environment}` : '',
-      body: message,
-    })
+    if (commandEventOutputMode() === 'json') {
+      emitCommandEvent({
+        type: 'diagnostic',
+        level: 'error',
+        message: `${environment ? `Environment: ${environment}\n` : ''}${message}`,
+      })
+    } else {
+      renderError({
+        headline: environment ? `Environment: ${environment}` : '',
+        body: message,
+      })
+    }
     return false
   }
 
@@ -65,14 +74,12 @@ export async function ensureLiveThemeConfirmed(theme: Theme, action: string, all
     return true
   }
 
-  if (isInputDisabled()) {
+  if (!terminalSupportsPrompting()) {
     throw new AbortError(
       `Can't ${action} on the live theme when user input is unavailable.`,
       'Use `--allow-live` to confirm that you want to continue.',
     )
   }
-
-  if (!terminalSupportsPrompting()) return true
 
   const message =
     `You're about to ${action} on your live theme "${theme.name}". ` +

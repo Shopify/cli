@@ -91,6 +91,7 @@ export async function exchangeStoreAuthCodeForToken(options: {
 export async function refreshStoreAccessToken(options: {
   store: string
   refreshToken: string
+  signal?: AbortSignal
 }): Promise<StoreTokenRefreshPayload> {
   const endpoint = `https://${options.store}/admin/oauth/access_token`
 
@@ -106,6 +107,7 @@ export async function refreshStoreAccessToken(options: {
       grant_type: 'refresh_token',
       refresh_token: options.refreshToken,
     }),
+    signal: options.signal,
   })
 
   const body = await response.text()

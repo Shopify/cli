@@ -13,6 +13,7 @@ interface EventSubscription {
 }
 
 interface EventsConfig {
+  handle?: string
   events?: {
     api_version?: string
     subscription?: EventSubscription | EventSubscription[]
@@ -22,6 +23,9 @@ interface EventsConfig {
 /**
  * Transforms the events config from local to remote format.
  * Resolves relative URIs (starting with /) by prepending the application_url.
+ * A single-subscription module carries its handle on the module, which the manifest
+ * sends separately, so it is dropped from the config payload. In the list shape the
+ * handle is kept on every entry, as Core's contract requires.
  * During dev, application_url is set to the tunnel URL, ensuring events
  * are delivered to the correct endpoint.
  */
@@ -37,13 +41,17 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
     appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
   }
 
+  const {handle: _, ...configWithoutHandle} = eventsConfig
   const subscription = eventsConfig.events.subscription
-  const resolved = wrapSubscriptions(subscription).map((sub) =>
-    typeof sub.uri === 'string' ? {...sub, uri: prependApplicationUrl(sub.uri, appUrl)} : sub,
-  )
+  const isSingleSubscription = !Array.isArray(subscription)
+  const resolved = wrapSubscriptions(subscription).map((sub) => {
+    const {handle: __, ...subWithoutHandle} = sub
+    const payload = isSingleSubscription ? subWithoutHandle : sub
+    return typeof payload.uri === 'string' ? {...payload, uri: prependApplicationUrl(payload.uri, appUrl)} : payload
+  })
 
   return {
-    ...eventsConfig,
+    ...configWithoutHandle,
     events: {
       ...eventsConfig.events,
       subscription: Array.isArray(subscription) ? resolved : resolved[0],

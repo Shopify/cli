@@ -10,6 +10,8 @@ export default class StoreOpen extends StoreCommand {
 
   static descriptionWithMarkdown = `Opens the storefront for a store you have access to in your default web browser.`
 
+  static jsonOutputSchema = openStoreJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com']
@@ -18,10 +20,6 @@ export default class StoreOpen extends StoreCommand {
     ...globalFlags,
     ...jsonFlag,
     store: storeFlags.store,
-  }
-
-  static get jsonOutputSchema() {
-    return openStoreJsonOutputSchema
   }
 
   public async run(): Promise<void> {

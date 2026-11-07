@@ -13,6 +13,7 @@ import {
   AssetParams,
   deleteThemeAssets,
   parseThemeFileContent,
+  metafieldDefinitionsByOwnerType,
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
@@ -26,13 +27,20 @@ import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_f
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
+import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
+import {errorHandler} from '../../../private/node/api/graphql.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
-import {AbortError} from '../error.js'
+import {AbortError, shouldReportErrorAsUnexpected} from '../error.js'
+import {adminFqdn} from '../context/fqdn.js'
+import {openURL} from '../system.js'
+import {isTTY, keypress} from '../ui.js'
 
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
 vi.mock('../api/admin.js')
+vi.mock('../context/fqdn.js')
+vi.mock('../ui.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.stubGlobal('fetch', vi.fn())
 
@@ -43,6 +51,62 @@ const expectedApiOptions = expect.objectContaining({
   maxRetryTimeMs: 90000,
   useAbortSignal: false,
   useNetworkLevelRetry: true,
+})
+
+describe('metafieldDefinitionsByOwnerType', () => {
+  test('fetches every page for the requested owner type', async () => {
+    const first = {
+      key: 'first',
+      namespace: 'custom',
+      name: 'First',
+      description: null,
+      type: {name: 'number_integer', category: 'NUMBER'},
+    }
+    const second = {...first, key: 'second', name: 'Second'}
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [first], pageInfo: {hasNextPage: true, endCursor: 'next'}}})
+      .mockResolvedValueOnce({
+        metafieldDefinitions: {nodes: [second], pageInfo: {hasNextPage: false, endCursor: 'last'}},
+      })
+
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).resolves.toEqual([first, second])
+    expect(adminRequestDoc).toHaveBeenNthCalledWith(1, {
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: 'PRODUCT', after: null},
+    })
+    expect(adminRequestDoc).toHaveBeenNthCalledWith(2, {
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: 'PRODUCT', after: 'next'},
+    })
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+  })
+
+  test('returns an empty collection when there are no definitions', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: false, endCursor: null}},
+    })
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).resolves.toEqual([])
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+  })
+
+  test('rejects when a later page fails instead of returning an incomplete collection', async () => {
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: true, endCursor: 'next'}}})
+      .mockRejectedValueOnce(new Error('Request failed'))
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).rejects.toThrow('Request failed')
+  })
+
+  test.each([null, 'next'])('rejects an invalid continuation cursor: %s', async (endCursor) => {
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: true, endCursor: 'next'}}})
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: true, endCursor}}})
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).rejects.toThrow(
+      'Failed to paginate metafield definitions',
+    )
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('fetchTheme', () => {
@@ -230,6 +294,24 @@ describe('fetchThemes', () => {
     await expect(fetchThemes(session)).rejects.toThrow(
       'The authenticated account or access token is missing the required theme access scope.',
     )
+  })
+
+  test('rethrows a raw HTTP 520 ClientError without reporting it as unexpected', async () => {
+    // Given
+    const errorResponse = {
+      status: 520,
+      headers: {},
+      error: '<!DOCTYPE html><html><body>Something went wrong</body></html>',
+    }
+    const gatewayError = new ClientError(errorResponse as any, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(gatewayError)
+
+    // When
+    const request = fetchThemes(session)
+
+    // Then
+    await expect(request).rejects.toBe(gatewayError)
+    expect(shouldReportErrorAsUnexpected(gatewayError)).toBe(false)
   })
 })
 
@@ -444,6 +526,16 @@ describe('themeUpdate', () => {
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(themeUpdate(123, {name: 'renamed theme'}, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('themePublish', () => {
@@ -481,6 +573,89 @@ describe('themePublish', () => {
       expect(theme!.role).toEqual(role)
     })
   }
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(themePublish(123, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
+})
+
+describe('trust challenges', () => {
+  const challengeUrl = 'https://admin.shopify.com/challenges/user_verification?token=abc'
+
+  beforeEach(() => {
+    vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(openURL).mockResolvedValue(true)
+    vi.mocked(keypress).mockResolvedValue(undefined)
+  })
+
+  test('themePublish opens the challenge in the browser and retries after the user completes it', async () => {
+    // Given
+    const id = 123
+    vi.mocked(adminRequestDoc)
+      .mockRejectedValueOnce(trustChallengeError(challengeUrl))
+      .mockResolvedValueOnce({
+        themePublish: {
+          theme: {id: `gid://shopify/OnlineStoreTheme/${id}`, name: 'live theme', role: 'live'},
+          userErrors: [],
+        },
+      })
+
+    // When
+    const theme = await themePublish(id, session)
+
+    // Then
+    expect(openURL).toHaveBeenCalledWith(challengeUrl)
+    expect(keypress).toHaveBeenCalledTimes(1)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+    expect(theme!.id).toEqual(id)
+  })
+
+  test('bulkUploadThemeAssets retries the challenged batch after the user completes the challenge', async () => {
+    // Given
+    vi.mocked(adminRequestDoc)
+      .mockRejectedValueOnce(trustChallengeError(challengeUrl))
+      .mockResolvedValueOnce({
+        themeFilesUpsert: {
+          upsertedThemeFiles: [{filename: 'snippets/product-variant-picker.liquid'}],
+          userErrors: [],
+        },
+      })
+
+    // When
+    const results = await bulkUploadThemeAssets(
+      123,
+      [{key: 'snippets/product-variant-picker.liquid', value: 'content'}],
+      session,
+    )
+
+    // Then
+    expect(keypress).toHaveBeenCalledTimes(1)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+    expect(results).toEqual([
+      {key: 'snippets/product-variant-picker.liquid', success: true, operation: Operation.Upload},
+    ])
+  })
+
+  test('a non-challenge GraphQL error is not retried', async () => {
+    // Given
+    const error = new ClientError({status: 200, errors: [{message: 'boom'} as any]}, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(error)
+
+    // When
+    const promise = themePublish(123, session)
+
+    // Then
+    await expect(promise).rejects.toBe(error)
+    expect(openURL).not.toHaveBeenCalled()
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('deleteThemeAssets', () => {
@@ -539,6 +714,16 @@ describe('deleteThemeAssets', () => {
     })
     expect(output).toEqual([{key, success: true, operation: 'DELETE'}])
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(deleteThemeAssets(123, ['snippets/product-variant-picker.liquid'], session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('themeDelete', () => {
@@ -567,6 +752,16 @@ describe('themeDelete', () => {
       expect(response).toBe(true)
     })
   }
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(themeDelete(123, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('themeDuplicate', () => {
@@ -602,6 +797,16 @@ describe('themeDuplicate', () => {
       })
     })
   }
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(themeDuplicate(123, 'duplicate theme', session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('request errors', () => {
@@ -767,6 +972,16 @@ describe('bulkUploadThemeAssets', async () => {
       'Error uploading theme files: Something went wrong',
     )
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(
+      bulkUploadThemeAssets(123, [{key: 'snippets/product-variant-picker.liquid', value: 'content'}], session),
+    ).rejects.toThrow('The authenticated account or access token is missing `write_themes` access scope.')
+  })
 })
 
 describe('parseThemeFileContent', () => {
@@ -820,6 +1035,21 @@ describe('parseThemeFileContent', () => {
     })
   })
 })
+
+function trustChallengeError(redirectTo: string): ClientError {
+  return new ClientError(
+    {
+      status: 200,
+      errors: [
+        {
+          message: 'Challenge Required',
+          extensions: {code: 'CHALLENGE_REQUIRED', redirect_to: redirectTo},
+        } as any,
+      ],
+    },
+    {query: ''},
+  )
+}
 
 function themeAccessDeniedError(requiredAccess?: string, field = 'themes'): ClientError {
   const extensions = requiredAccess ? {code: 'ACCESS_DENIED', requiredAccess} : {code: 'ACCESS_DENIED'}

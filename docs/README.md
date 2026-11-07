@@ -2,18 +2,20 @@
 
 # Contributors documentation
 
-This page contains resources for people interested in contributing to this repository or developing a [plugin](./plugins.md).
+This page contains resources for people interested in contributing to this repository or developing a [plugin](./cli/conventions.md#2---plugins-eg-shopifyapp).
 
 ## CLI
 
-The Shopify CLI is a tool for merchants, partners, and developers to interact with the platform from their terminals. Its technical design allows adding features horizontally through [**plugins**](#plugins) that build on [**cli-kit**](#cli-kit). [@shopify/theme](https://www.npmjs.com/package/@shopify/theme), [@shopify/app](https://www.npmjs.com/package/@shopify/app), [@shopify/cli-hydrogen](https://www.npmjs.com/package/@shopify/cli-hydrogen) are examples of plugins to develop themes, apps, and hydrogen storefronts, respectively.
+The Shopify CLI is a tool for merchants, partners, and developers to interact with the platform from their terminals. Its technical design allows adding features horizontally through [**plugins**](./cli/conventions.md#2---plugins-eg-shopifyapp) that build on [**cli-kit**](#cli-kit). [@shopify/theme](https://www.npmjs.com/package/@shopify/theme), [@shopify/app](https://www.npmjs.com/package/@shopify/app), [@shopify/cli-hydrogen](https://www.npmjs.com/package/@shopify/cli-hydrogen) are examples of plugins to develop themes, apps, and hydrogen storefronts, respectively.
 
 The list below contains valuable resources for people interested in contributing to the CLI project in this repository.
 
 * [Get started](./cli/get-started.md)
 * [Architecture](./cli/architecture.md)
+* [Designing for CLI](./cli/designing-for-cli.md)
 * [Conventions](./cli/conventions.md)
 * [JSON output contracts](./cli/json-output.md)
+* [Dev Instance files](./cli/dev-instance-agent-workflow.md)
 * [Performance](./cli/performance.md)
 * [Debugging](./cli/debugging.md)
 * [ESLint rules](./cli/eslint-rules.md)

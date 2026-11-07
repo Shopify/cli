@@ -181,7 +181,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 24.12.0
+          node-version: 24.22.1
       - name: Publish snapshot
         id: publish
         run: |
@@ -259,7 +259,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 24.12.0
+          node-version: 24.22.1
       - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
@@ -317,7 +317,7 @@ jobs:
           echo "Created branch $BRANCH"
 
       - name: Create GitHub release
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && !endsWith(steps.version.outputs.version, '.0.0')
         env:
           TAG: ${{ steps.version.outputs.version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -363,7 +363,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 24.12.0
+          node-version: 24.22.1
       - name: Release
         run: pnpm release ${{ github.event.inputs.tag || 'nightly' }}
         env:

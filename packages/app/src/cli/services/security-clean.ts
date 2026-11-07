@@ -1,39 +1,31 @@
-import {appSecurityArtifactPaths, cleanAppSecurityArtifacts} from './app-security-artifacts.js'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
-import type {SecurityCleanResult} from './security-clean-json.js'
+import {cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
+import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 
-interface SecurityCleanOptions {
-  appRoot: string
+/** The results directories that were removed. */
+export interface SecurityCleanResult {
+  removed: string[]
 }
 
+/** `all` removes every results directory under the app directory; otherwise only the selection's. */
+export type SecurityCleanOptions = {all: true; appDirectory: string} | {all: false; selection: AppSecuritySelection}
+
 export interface SecurityCleanDependencies {
-  cleanArtifacts(appRoot: string): Promise<string[]>
+  cleanResults(appDirectory: string, resultsKey: string): Promise<string[]>
+  cleanAllResults(appDirectory: string): Promise<string[]>
 }
 
 const defaultDependencies: SecurityCleanDependencies = {
-  cleanArtifacts: cleanAppSecurityArtifacts,
+  cleanResults: cleanResultsDirectory,
+  cleanAllResults: cleanAllResultsDirectories,
 }
 
-/** Removes every current and legacy App Security artifact without asking. Prints nothing. */
+/** Removes app security check results directories without asking. Prints nothing. */
 export default async function securityClean(
   options: SecurityCleanOptions,
   dependencies: SecurityCleanDependencies = defaultDependencies,
 ): Promise<SecurityCleanResult> {
-  const removed = await dependencies.cleanArtifacts(options.appRoot)
+  const removed = options.all
+    ? await dependencies.cleanAllResults(options.appDirectory)
+    : await dependencies.cleanResults(options.selection.appDirectory, resultsKey(options.selection))
   return {removed}
-}
-
-/** Presents a clean result in the terminal. */
-export function renderSecurityCleanResult(result: SecurityCleanResult, appRoot: string): void {
-  if (result.removed.length === 0) {
-    renderInfo({
-      headline: 'No App Security artifacts to remove.',
-      body: ['Nothing was found in', {filePath: appSecurityArtifactPaths(appRoot).artifactDirectory}],
-    })
-  } else {
-    renderSuccess({
-      headline: 'App Security artifacts removed.',
-      body: {list: {items: result.removed.map((path) => ({filePath: path}))}},
-    })
-  }
 }
