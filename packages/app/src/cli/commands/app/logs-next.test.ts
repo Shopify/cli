@@ -54,8 +54,8 @@ test('parses space/equals forms and forwards effective defaults', async () => {
     expect.objectContaining({
       'client-id': 'explicit-app',
       type: ['webhook'],
-      topic: 'orders/create',
-      store: 'example',
+      topic: ['orders/create'],
+      store: ['example'],
       since: '1h',
       limit: 20,
     }),
@@ -100,6 +100,84 @@ test('connects all seven filter flags to their exact API filters together', asyn
   ])
 })
 
+test('combines repeated log filters without combining query controls', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    [
+      '--type',
+      'webhook',
+      '--type=graphql',
+      '--store',
+      'one',
+      '--store=two',
+      '--status',
+      'success',
+      '--status=failure',
+      '--topic',
+      'orders/create',
+      '--topic=orders/updated',
+      '--status-code',
+      '200',
+      '--status-code=500',
+      '--operation-type',
+      'query',
+      '--operation-type=mutation',
+      '--operation-name',
+      'One',
+      '--operation-name=Two',
+      '--request-id',
+      'one,two',
+      '--request-id=three',
+      '--since',
+      '2h',
+      '--until',
+      '2026-10-06T14:00:00Z',
+      '--limit',
+      '100',
+      '--sort',
+      'timestamp',
+      '--order',
+      'desc',
+    ],
+    await Config.load(),
+  ).run()
+
+  const flags = vi.mocked(retrieveLogs).mock.calls[0]![0]
+  expect(flags).toMatchObject({
+    type: ['webhook', 'graphql'],
+    since: '2h',
+    until: '2026-10-06T14:00:00Z',
+    limit: 100,
+    sort: 'timestamp',
+    order: 'desc',
+  })
+  expect(prepareLogInput(flags).filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'IN', value: '["one.myshopify.com","two.myshopify.com"]'},
+    {field: 'RESULT_STATUS', operator: 'IN', value: '["SUCCESS","FAILURE"]'},
+    {field: 'TOPIC', operator: 'IN', value: '["orders/create","orders/updated"]'},
+    {field: 'STATUS_CODE', operator: 'IN', value: '["200","500"]'},
+    {field: 'OPERATION_TYPE', operator: 'IN', value: '["query","mutation"]'},
+    {field: 'OPERATION_NAME', operator: 'IN', value: '["One","Two"]'},
+    {field: 'REQUEST_ID', operator: 'IN', value: '["one,two","three"]'},
+  ])
+})
+
+test('keeps an environment filter scalar and gives repeated command-line values precedence', async () => {
+  vi.stubEnv('SHOPIFY_FLAG_TOPIC', 'orders/create')
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs([], await Config.load()).run()
+  expect(prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0]).filters).toEqual([
+    {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
+  ])
+
+  await new Logs(['--topic', 'orders/updated', '--topic', 'orders/delete'], await Config.load()).run()
+  expect(prepareLogInput(vi.mocked(retrieveLogs).mock.lastCall![0]).filters).toEqual([
+    {field: 'TOPIC', operator: 'IN', value: '["orders/updated","orders/delete"]'},
+  ])
+})
+
 test('accepts the maximum limit through parsing and input validation', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
@@ -117,7 +195,7 @@ test('omitted type and repeated type flags are passed to the service without inv
   expect(retrieveLogs).toHaveBeenLastCalledWith(
     expect.objectContaining({
       type: ['webhook', 'graphql'],
-      'request-id': 'request-123',
+      'request-id': ['request-123'],
     }),
   )
 })
@@ -165,10 +243,6 @@ test('accepts sorting from environment variables and requires the sort key', asy
 
 test.each([
   ['--client-id', 'one', '--client-id=two'],
-  ['--status', 'success', '--status=failure'],
-  ['--store', 'one', '--store=two'],
-  ['--topic', 'orders/create', '--topic=orders/delete'],
-  ['--operation-name', 'one', '--operation-name=two'],
   ['--since', '1h', '--since=2h'],
   ['--limit', '10', '--limit=20'],
   ['--until', '2026-10-06T13:00:00Z', '--until=2026-10-06T14:00:00Z'],

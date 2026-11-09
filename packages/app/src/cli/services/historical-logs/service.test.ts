@@ -318,6 +318,34 @@ test('default mixed-type search shares one query and limit, preserving every pre
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
 })
 
+test('sends IN filters in one request while keeping query controls scalar', async () => {
+  authorize()
+  logResponse([])
+  await retrieveLogs({
+    ...scope,
+    topic: ['orders/create', 'orders/updated'],
+    status: 'failure',
+    since: '2h',
+    until: '2026-10-06T14:00:00Z',
+    limit: 100,
+    sort: 'timestamp',
+    order: 'desc',
+  })
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+    clientId,
+    types: ['WEBHOOK'],
+    timestamp: {gte: '2026-10-06T12:00:00Z', lt: '2026-10-06T14:00:00Z'},
+    limit: 100,
+    sortKey: 'TIMESTAMP',
+    reverse: true,
+    filters: [
+      {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+      {field: 'TOPIC', operator: 'IN', value: '["orders/create","orders/updated"]'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+})
+
 test('cross-type filters are sent together and an empty intersection is not an error', async () => {
   authorize()
   logResponse([])
@@ -578,6 +606,8 @@ test.each([
   {limit: 0},
   {'client-id': ''},
   {'operation-name': 'x'.repeat(1025)},
+  {topic: ['orders/create', ' ']},
+  {topic: Array.from({length: 51}, () => 'orders/create')},
 ])('rejects invalid local input before auth %j', async (input) => {
   await expect(retrieveLogs({...scope, ...input})).rejects.toMatchObject({code: 'invalid-argument'})
   expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()

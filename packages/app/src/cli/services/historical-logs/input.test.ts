@@ -126,6 +126,43 @@ test('enforces the byte limit without truncating filter values', () => {
   expect(() => prepareLogInput({'operation-name': 'é'.repeat(513)})).toThrow('1024 UTF-8 bytes')
 })
 
+test('normalizes and deduplicates repeated filter values without splitting literal commas or JSON', () => {
+  expect(
+    prepareLogInput({
+      store: ['EXAMPLE', 'https://example.myshopify.com/admin', 'other'],
+      status: ['failure', 'failure'],
+      'operation-name': ['one,two', 'a"b', '日本語'],
+      'request-id': ['["one","two"]'],
+    }).filters,
+  ).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'IN', value: '["example.myshopify.com","other.myshopify.com"]'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'OPERATION_NAME', operator: 'IN', value: '["one,two","a\\"b","日本語"]'},
+    {field: 'REQUEST_ID', operator: 'EQUALS', value: '["one","two"]'},
+  ])
+})
+
+test('accepts fifty maximum-size filter values even when encoded JSON exceeds the scalar limit', () => {
+  const values = Array.from({length: 50}, (_, index) => String(index).padEnd(1024, 'a'))
+  const filter = prepareLogInput({'operation-name': values}).filters[0]!
+  expect(filter.operator).toBe('IN')
+  expect(JSON.parse(filter.value)).toEqual(values)
+  expect(prepareLogInput({'operation-name': ['é'.repeat(512), 'other']}).filters[0]?.operator).toBe('IN')
+})
+
+test.each([
+  [{topic: []}, '1 and 50'],
+  [{topic: ['orders/create', ' ']}, 'nonempty'],
+  [{topic: Array.from({length: 51}, () => 'orders/create')}, '50'],
+  [{'operation-name': ['valid', 'é'.repeat(513)]}, '1024 UTF-8 bytes'],
+  [{store: ['valid', 'custom.example.com']}, 'myshopify.com'],
+  [{status: ['success', 'unknown']}, 'success or failure'],
+  [{topic: ['orders/create', 'orders/*']}, 'slash-form'],
+  [{'status-code': ['200', '5xx']}, 'exact code'],
+] satisfies [LogInput, string][])('validates every repeated filter value for %j', (input, message) => {
+  expect(() => prepareLogInput(input)).toThrow(message)
+})
+
 test('anchors the default hour to the local clock truncated to whole seconds', () => {
   vi.setSystemTime(new Date('2026-10-06T14:02:03.987Z'))
   expect(window()).toEqual({

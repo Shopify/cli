@@ -17,7 +17,7 @@ Use server-side sorting only when selecting the oldest or newest matching record
 
 When fewer than --limit records are returned, all matching records available at query time were returned. Sorting isn't needed to establish completeness.
 
-Different filters combine with AND; each accepts one exact value. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records.
+Repeat a record filter to match any of its exact values (OR); different filters combine with AND. Each filter accepts up to 50 values. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records. Query controls --since, --until, --limit, --sort, and --order each accept one value.
 
 Defaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.
 
@@ -27,6 +27,7 @@ Defaults: preceding hour, 20 records. Maximum: seven-day window within thirty da
   static flags = {...globalFlags, ...jsonFlag, ...historicalLogFlags}
   static examples = [
     '<%= config.bin %> <%= command.id %> --client-id APP_CLIENT_ID --type webhook --topic orders/create --status failure --since 30m',
+    '<%= config.bin %> <%= command.id %> --type webhook --topic orders/create --topic orders/updated --status failure',
     '<%= config.bin %> <%= command.id %> --type graphql --operation-name MyQuery --json --no-input',
     '<%= config.bin %> <%= command.id %> --since 1h --sort timestamp --order desc',
   ]

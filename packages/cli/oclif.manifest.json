@@ -3881,11 +3881,12 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Returns a list of historical app logs and exits. Defaults to all supported log types. Use --type to select a type; repeat it to select multiple.\n\nFast retrieval is the default: leave out --sort. Prefer this mode with a narrow time window and selective filters to consume less throttle capacity. The CLI orders the returned records oldest first, but when the limit is reached they aren't necessarily the oldest or newest matches.\n\nUse server-side sorting only when selecting the oldest or newest matching records matters: --sort timestamp selects oldest first; add --order desc for newest first. This sorts before the result limit and is subject to API query limits.\n\nWhen fewer than --limit records are returned, all matching records available at query time were returned. Sorting isn't needed to establish completeness.\n\nDifferent filters combine with AND; each accepts one exact value. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records.\n\nDefaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.\n\n--json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `HistoricalAppLogs` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"logs\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppLogRecord\"\n      }\n    },\n    \"ordering\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"subset-timestamp-asc\",\n        \"timestamp-asc\",\n        \"timestamp-desc\"\n      ],\n      \"description\": \"subset-timestamp-asc sorts only the returned subset in the CLI, not necessarily the oldest or newest matches when the limit is reached. timestamp-asc and timestamp-desc request server sorting before the limit.\"\n    },\n    \"limitations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"Empty when fewer than the requested limit are returned.\"\n    }\n  },\n  \"required\": [\n    \"logs\",\n    \"ordering\",\n    \"limitations\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"HistoricalAppLogs\",\n  \"definitions\": {\n    \"AppLogRecord\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Native API timestamp; fractional seconds are preserved.\"\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"description\": \"Native API enum, such as WEBHOOK or GRAPHQL_REQUEST.\"\n        },\n        \"resultStatus\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"shopMyshopifyDomain\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        }\n      },\n      \"required\": [\n        \"timestamp\",\n        \"type\",\n        \"shopMyshopifyDomain\"\n      ],\n      \"additionalProperties\": true,\n      \"description\": \"Native record JSON. All additional approved API fields are preserved without renaming or truncation.\"\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Returns a list of historical app logs and exits. Defaults to all supported log types. Use --type to select a type; repeat it to select multiple.\n\nFast retrieval is the default: leave out --sort. Prefer this mode with a narrow time window and selective filters to consume less throttle capacity. The CLI orders the returned records oldest first, but when the limit is reached they aren't necessarily the oldest or newest matches.\n\nUse server-side sorting only when selecting the oldest or newest matching records matters: --sort timestamp selects oldest first; add --order desc for newest first. This sorts before the result limit and is subject to API query limits.\n\nWhen fewer than --limit records are returned, all matching records available at query time were returned. Sorting isn't needed to establish completeness.\n\nDifferent filters combine with AND; each accepts one exact value. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records.\n\nDefaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.\n\n--json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.",
+      "description": "Returns a list of historical app logs and exits. Defaults to all supported log types. Use --type to select a type; repeat it to select multiple.\n\nFast retrieval is the default: leave out --sort. Prefer this mode with a narrow time window and selective filters to consume less throttle capacity. The CLI orders the returned records oldest first, but when the limit is reached they aren't necessarily the oldest or newest matches.\n\nUse server-side sorting only when selecting the oldest or newest matching records matters: --sort timestamp selects oldest first; add --order desc for newest first. This sorts before the result limit and is subject to API query limits.\n\nWhen fewer than --limit records are returned, all matching records available at query time were returned. Sorting isn't needed to establish completeness.\n\nRepeat a record filter to match any of its exact values (OR); different filters combine with AND. Each filter accepts up to 50 values. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records. Query controls --since, --until, --limit, --sort, and --order each accept one value.\n\nDefaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.\n\n--json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `HistoricalAppLogs` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"logs\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppLogRecord\"\n      }\n    },\n    \"ordering\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"subset-timestamp-asc\",\n        \"timestamp-asc\",\n        \"timestamp-desc\"\n      ],\n      \"description\": \"subset-timestamp-asc sorts only the returned subset in the CLI, not necessarily the oldest or newest matches when the limit is reached. timestamp-asc and timestamp-desc request server sorting before the limit.\"\n    },\n    \"limitations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"Empty when fewer than the requested limit are returned.\"\n    }\n  },\n  \"required\": [\n    \"logs\",\n    \"ordering\",\n    \"limitations\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"HistoricalAppLogs\",\n  \"definitions\": {\n    \"AppLogRecord\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Native API timestamp; fractional seconds are preserved.\"\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"description\": \"Native API enum, such as WEBHOOK or GRAPHQL_REQUEST.\"\n        },\n        \"resultStatus\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"shopMyshopifyDomain\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        }\n      },\n      \"required\": [\n        \"timestamp\",\n        \"type\",\n        \"shopMyshopifyDomain\"\n      ],\n      \"additionalProperties\": true,\n      \"description\": \"Native record JSON. All additional approved API fields are preserved without renaming or truncation.\"\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Returns a list of historical app logs and exits. Defaults to all supported log types. Use --type to select a type; repeat it to select multiple.\n\nFast retrieval is the default: leave out --sort. Prefer this mode with a narrow time window and selective filters to consume less throttle capacity. The CLI orders the returned records oldest first, but when the limit is reached they aren't necessarily the oldest or newest matches.\n\nUse server-side sorting only when selecting the oldest or newest matching records matters: --sort timestamp selects oldest first; add --order desc for newest first. This sorts before the result limit and is subject to API query limits.\n\nWhen fewer than --limit records are returned, all matching records available at query time were returned. Sorting isn't needed to establish completeness.\n\nRepeat a record filter to match any of its exact values (OR); different filters combine with AND. Each filter accepts up to 50 values. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records. Query controls --since, --until, --limit, --sort, and --order each accept one value.\n\nDefaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.\n\n--json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --client-id APP_CLIENT_ID --type webhook --topic orders/create --status failure --since 30m",
+        "<%= config.bin %> <%= command.id %> --type webhook --topic orders/create --topic orders/updated --status failure",
         "<%= config.bin %> <%= command.id %> --type graphql --operation-name MyQuery --json --no-input",
         "<%= config.bin %> <%= command.id %> --since 1h --sort timestamp --order desc"
       ],
@@ -3961,18 +3962,18 @@
           "type": "boolean"
         },
         "operation-name": {
-          "description": "Exact GraphQL operation name; excludes non-GraphQL records.",
+          "description": "Exact GraphQL operation name; repeat to match any value. Excludes non-GraphQL records.",
           "env": "SHOPIFY_FLAG_OPERATION_NAME",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "operation-name",
           "type": "option"
         },
         "operation-type": {
-          "description": "Exact GraphQL operation type; excludes non-GraphQL records.",
+          "description": "Exact GraphQL operation type; repeat to match any value. Excludes non-GraphQL records.",
           "env": "SHOPIFY_FLAG_OPERATION_TYPE",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "operation-type",
           "type": "option"
         },
@@ -4001,10 +4002,10 @@
           "type": "option"
         },
         "request-id": {
-          "description": "Exact GraphQL request ID; excludes non-GraphQL records.",
+          "description": "Exact GraphQL request ID; repeat to match any value. Excludes non-GraphQL records.",
           "env": "SHOPIFY_FLAG_REQUEST_ID",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "request-id",
           "type": "option"
         },
@@ -4029,10 +4030,10 @@
           "type": "option"
         },
         "status": {
-          "description": "Recorded result status; not inferred from HTTP codes or response bodies.",
+          "description": "Recorded result status; not inferred from HTTP codes or response bodies. Repeat to match any value.",
           "env": "SHOPIFY_FLAG_STATUS",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "status",
           "options": [
             "success",
@@ -4041,27 +4042,27 @@
           "type": "option"
         },
         "status-code": {
-          "description": "Exact webhook HTTP status code (100–599); no status classes.",
+          "description": "Exact webhook HTTP status code (100–599); repeat to match any value. No status classes.",
           "env": "SHOPIFY_FLAG_STATUS_CODE",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "status-code",
           "type": "option"
         },
         "store": {
           "char": "s",
-          "description": "Exact store handle or myshopify.com domain/URL.",
+          "description": "Exact store handle or myshopify.com domain/URL; repeat to match any value.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "store",
           "type": "option"
         },
         "topic": {
-          "description": "Exact webhook topic; excludes non-webhook records.",
+          "description": "Exact webhook topic; repeat to match any value. Excludes non-webhook records.",
           "env": "SHOPIFY_FLAG_TOPIC",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "topic",
           "type": "option"
         },

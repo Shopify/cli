@@ -6,13 +6,13 @@ import type {LogFilterInput} from '../../api/graphql/app-logs/generated/types.js
 
 export interface LogInput {
   type?: string | string[]
-  store?: string
-  status?: string
-  topic?: string
-  'status-code'?: string
-  'operation-type'?: string
-  'operation-name'?: string
-  'request-id'?: string
+  store?: string | string[]
+  status?: string | string[]
+  topic?: string | string[]
+  'status-code'?: string | string[]
+  'operation-type'?: string | string[]
+  'operation-name'?: string | string[]
+  'request-id'?: string | string[]
   since?: string
   until?: string
   limit?: number
@@ -35,42 +35,18 @@ export function prepareLogInput(input: LogInput) {
     throw logError('invalid-argument', '--order requires --sort.')
   const timestampOrdering = input.order === 'desc' ? 'timestamp-desc' : 'timestamp-asc'
   const ordering = input.sort === undefined ? 'none' : timestampOrdering
-  const values: Partial<Record<(typeof logFilters)[number]['flag'], string>> = {}
-  for (const definition of logFilters) {
-    const value = input[definition.flag]
-    if (value === undefined) continue
-    if (typeof value !== 'string' || !value.trim())
-      throw logError('invalid-argument', `--${definition.flag} requires one nonempty value.`)
-    if (Buffer.byteLength(value, 'utf8') > 1024)
-      throw logError('invalid-argument', `--${definition.flag} accepts at most 1024 UTF-8 bytes.`)
-    values[definition.flag] = value
-  }
-  if (values.store) {
-    let domain: string
-    try {
-      domain = normalizeStoreFqdn(
-        /^[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(values.store.trim()) ? `${values.store.trim()}.myshopify.com` : values.store,
-      )
-    } catch (error) {
-      if (error instanceof AbortError) error.code = 'invalid-argument'
-      throw error
-    }
-    if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(domain))
-      throw logError('invalid-argument', 'Historical logs require a myshopify.com store domain.')
-    values.store = domain
-  }
-  if (values.status && !['success', 'failure'].includes(values.status))
-    throw logError('invalid-argument', '--status accepts success or failure.')
-  if (values.topic && !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_./-]+$/.test(values.topic))
-    throw logError('invalid-argument', '--topic requires an exact slash-form topic, such as orders/create.')
-  if (values['status-code'] && !/^[1-5]\d{2}$/.test(values['status-code']))
-    throw logError('invalid-argument', '--status-code accepts an exact code from 100 to 599, not a status class.')
-
   const filters: LogFilterInput[] = logFilters.flatMap(({flag, field}) => {
-    const value = values[flag]
-    return value === undefined
-      ? []
-      : [{field, operator: 'EQUALS', value: flag === 'status' ? value.toUpperCase() : value}]
+    const inputValue = input[flag]
+    if (inputValue === undefined) return []
+    const values = Array.isArray(inputValue) ? inputValue : [inputValue]
+    if (values.length < 1 || values.length > 50)
+      throw logError('invalid-argument', `--${flag} accepts between 1 and 50 values.`)
+    const normalizedValues = [...new Set(values.map((value) => normalizeLogFilterValue(flag, value)))]
+    return [
+      normalizedValues.length === 1
+        ? {field, operator: 'EQUALS', value: normalizedValues[0]!}
+        : {field, operator: 'IN', value: JSON.stringify(normalizedValues)},
+    ]
   })
   const window = prepareLogWindow(input)
   return {
@@ -80,6 +56,37 @@ export function prepareLogInput(input: LogInput) {
     ordering,
     window,
   }
+}
+
+function normalizeLogFilterValue(flag: (typeof logFilters)[number]['flag'], value: string): string {
+  if (typeof value !== 'string' || !value.trim())
+    throw logError('invalid-argument', `--${flag} requires nonempty values.`)
+  if (Buffer.byteLength(value, 'utf8') > 1024)
+    throw logError('invalid-argument', `--${flag} accepts at most 1024 UTF-8 bytes per value.`)
+  if (flag === 'store') {
+    let domain: string
+    try {
+      domain = normalizeStoreFqdn(
+        /^[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(value.trim()) ? `${value.trim()}.myshopify.com` : value,
+      )
+    } catch (error) {
+      if (error instanceof AbortError) error.code = 'invalid-argument'
+      throw error
+    }
+    if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(domain))
+      throw logError('invalid-argument', 'Historical logs require a myshopify.com store domain.')
+    return domain
+  }
+  if (flag === 'status') {
+    if (!['success', 'failure'].includes(value))
+      throw logError('invalid-argument', '--status accepts success or failure.')
+    return value.toUpperCase()
+  }
+  if (flag === 'topic' && !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_./-]+$/.test(value))
+    throw logError('invalid-argument', '--topic requires an exact slash-form topic, such as orders/create.')
+  if (flag === 'status-code' && !/^[1-5]\d{2}$/.test(value))
+    throw logError('invalid-argument', '--status-code accepts an exact code from 100 to 599, not a status class.')
+  return value
 }
 
 function prepareLogWindow(input: Pick<LogInput, 'since' | 'until'>) {
