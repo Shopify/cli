@@ -1,4 +1,4 @@
-/* eslint-disable no-case-declarations */
+/* eslint-disable no-case-declarations, no-await-in-loop */
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -11,6 +11,7 @@ import {fileExistsSync, matchGlob, mkdir, readFileSync} from '@shopify/cli-kit/n
 import {debounce} from '@shopify/cli-kit/common/function'
 import ignore from 'ignore'
 import {Writable} from 'stream'
+import {AsyncResource} from 'node:async_hooks'
 
 const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
 const EXTENSION_CREATION_TIMEOUT_IN_MS = 60000
@@ -67,6 +68,8 @@ export interface OutputContextOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
+  /** Wait for the initial file scan and retain command output context. Defaults to true. */
+  waitForWatcherReady?: boolean
 }
 
 export class FileWatcher {
@@ -76,6 +79,8 @@ export class FileWatcher {
   private readonly options: OutputContextOptions
   private onChangeCallback?: (events: WatcherEvent[]) => void
   private watcher?: FSWatcher
+  private starting?: Promise<void>
+  private restartRequested = false
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
   // Map of file paths to the extension handles that watch them
@@ -106,7 +111,40 @@ export class FileWatcher {
    * Starts a new file watcher, and closes the previous one if it exists.
    * This ensures the watcher picks up any changes in what files need to be watched.
    */
-  async start(): Promise<void> {
+  start(): Promise<void> {
+    if (this.options.waitForWatcherReady === false) return this.startWatcher()
+    this.restartRequested = true
+    this.starting ??= this.startWatching()
+    return this.starting
+  }
+
+  updateApp(app: AppLinkedInterface) {
+    this.app = app
+    this.extensionPaths = this.app.nonConfigExtensions
+      .map((ext) => normalizePath(ext.directory))
+      .filter((dir) => dir !== this.app.directory)
+    this.extensionPaths.forEach((path) => {
+      this.ignored[path] ??= this.createIgnoreInstance(path)
+    })
+  }
+
+  /** Lets subclasses observe native startup and set the file event listener's async context. */
+  protected onWatcherCreated(_watcher: FSWatcher, listener: (event: string, path: string) => void) {
+    return listener
+  }
+
+  private async startWatching(): Promise<void> {
+    try {
+      do {
+        this.restartRequested = false
+        await this.startWatcher()
+      } while (this.restartRequested && !this.options.signal.aborted)
+    } finally {
+      this.starting = undefined
+    }
+  }
+
+  private async startWatcher(): Promise<void> {
     const extensionDirectories = [...(this.app.configuration.extension_directories ?? ['extensions'])]
     const fullExtensionDirectories = extensionDirectories.map((directory) => joinPath(this.app.directory, directory))
 
@@ -154,25 +192,37 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', this.onWatcherCreated(this.watcher, this.handleFileEvent))
+    const onFileEvent =
+      this.options.waitForWatcherReady === false ? this.handleFileEvent : AsyncResource.bind(this.handleFileEvent)
+    this.watcher.on('all', this.onWatcherCreated(this.watcher, onFileEvent))
     this.addAbortListener()
 
+    const watcher = this.watcher
+    if (this.options.waitForWatcherReady !== false)
+      await new Promise<void>((resolve, reject) => {
+        const cleanup = () => {
+          watcher.removeListener('ready', onReady)
+          watcher.removeListener('error', onError)
+          this.options.signal.removeEventListener('abort', onReady)
+        }
+        const onReady = () => {
+          cleanup()
+          resolve()
+        }
+        const onError = (error: Error) => {
+          cleanup()
+          reject(error)
+        }
+        watcher.once('ready', onReady)
+        watcher.once('error', onError)
+        this.options.signal.addEventListener('abort', onReady, {once: true})
+        if (this.options.signal.aborted) {
+          this.close()
+          onReady()
+        }
+      })
+
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
-  }
-
-  updateApp(app: AppLinkedInterface) {
-    this.app = app
-    this.extensionPaths = this.app.nonConfigExtensions
-      .map((ext) => normalizePath(ext.directory))
-      .filter((dir) => dir !== this.app.directory)
-    this.extensionPaths.forEach((path) => {
-      this.ignored[path] ??= this.createIgnoreInstance(path)
-    })
-  }
-
-  /** Lets subclasses observe native startup and set the file event listener's async context. */
-  protected onWatcherCreated(_watcher: FSWatcher, listener: (event: string, path: string) => void) {
-    return listener
   }
 
   private addAbortListener() {
