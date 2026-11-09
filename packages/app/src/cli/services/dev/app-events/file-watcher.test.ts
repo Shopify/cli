@@ -14,6 +14,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {getEventListeners} from 'events'
 
 // Mock the import extractor - will be configured per test
 vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
@@ -23,6 +24,15 @@ vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
 }))
 
 const realChokidarWatch = chokidar.watch.bind(chokidar)
+
+function mockWatcherReadiness() {
+  return {
+    once: vi.fn((event: string, listener: () => void) => {
+      if (event === 'ready') queueMicrotask(listener)
+    }),
+    removeListener: vi.fn(),
+  }
+}
 
 // Helper to mock watchedFiles for extensions
 function mockExtensionWatchedFiles(extension: any, files: string[] = []) {
@@ -182,6 +192,174 @@ const outputOptions: OutputContextOptions = {
 }
 
 describe('file-watcher events', () => {
+  test('start waits for readiness and detects a change made immediately after it resolves', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const configPath = joinPath(directory, 'shopify.app.toml')
+      await writeFile(configPath, 'name = "fixture"')
+      const extensionDirectory = joinPath(directory, 'extensions', 'ui-extension')
+      await mkdir(extensionDirectory)
+      const sourcePath = joinPath(extensionDirectory, 'index.js')
+      await writeFile(sourcePath, 'initial')
+      const extension = await testUIExtension({directory: extensionDirectory})
+      mockExtensionWatchedFiles(extension, [sourcePath])
+      const controller = new AbortController()
+      const fileWatcher = new FileWatcher(testAppLinked({directory, configPath, allExtensions: [extension]}), {
+        ...outputOptions,
+        signal: controller.signal,
+      })
+      let watcher: FSWatcher | undefined
+      let ready = false
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+        watcher = realChokidarWatch(paths, options)
+        watcher.once('ready', () => {
+          ready = true
+        })
+        return watcher
+      })
+      const onChange = vi.fn<(events: WatcherEvent[]) => void>()
+      fileWatcher.onChange(onChange)
+
+      try {
+        await fileWatcher.start()
+        expect(ready).toBe(true)
+        expect(watcher!.listenerCount('ready')).toBe(0)
+        expect(watcher!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
+
+        await writeFile(sourcePath, 'edited source')
+        await vi.waitFor(
+          () => {
+            const events = onChange.mock.calls.flatMap(([events]) => events)
+            expect(events.map((event) => ({...event, path: normalizePath(event.path)}))).toContainEqual(
+              expect.objectContaining({type: 'file_updated', extensionHandle: extension.handle, path: sourcePath}),
+            )
+          },
+          {timeout: 3000},
+        )
+      } finally {
+        controller.abort()
+        await watcher?.close()
+      }
+    })
+  })
+
+  test.each(['ready', 'error', 'abort'] as const)('reentrant starts share readiness (%s)', async (outcome) => {
+    await inTemporaryDirectory(async (directory) => {
+      const controller = new AbortController()
+      const fileWatcher = new FileWatcher(testAppLinked({directory}), {
+        ...outputOptions,
+        signal: controller.signal,
+      })
+      const watchers: FSWatcher[] = []
+      const releaseReadiness: (() => void)[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+        const watcher = realChokidarWatch(paths, options)
+        const emit = watcher.emit.bind(watcher)
+        let readinessCaptured = false
+        vi.spyOn(watcher, 'emit').mockImplementation((event, ...args) => {
+          if (event === 'ready') {
+            if (!readinessCaptured) {
+              readinessCaptured = true
+              releaseReadiness.push(() => emit('ready'))
+            }
+            return true
+          }
+          return emit(event, ...args)
+        })
+        watchers.push(watcher)
+        return watcher
+      })
+      const settled = vi.fn()
+      const first = fileWatcher.start()
+      const firstSettled = first.then(settled, settled)
+      let results: Promise<PromiseSettledResult<void>[]> | undefined
+
+      try {
+        await vi.waitFor(() => expect(releaseReadiness).toHaveLength(1))
+        const second = fileWatcher.start()
+        results = Promise.allSettled([first, second])
+        releaseReadiness[0]!()
+        await vi.waitFor(() => expect(releaseReadiness).toHaveLength(2))
+        expect(settled).not.toHaveBeenCalled()
+        expect(watchers[0]!.listenerCount('ready')).toBe(0)
+        expect(watchers[0]!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(2)
+
+        const error = new Error('Refreshed scan failed')
+        if (outcome === 'error') watchers[1]!.emit('error', error)
+        else if (outcome === 'abort') controller.abort()
+        else releaseReadiness[1]!()
+
+        const expected =
+          outcome === 'error' ? {status: 'rejected', reason: error} : {status: 'fulfilled', value: undefined}
+        await expect(results).resolves.toEqual([expected, expected])
+        expect(watchers[1]!.listenerCount('ready')).toBe(0)
+        expect(watchers[1]!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
+      } finally {
+        controller.abort()
+        await firstSettled
+        await results
+        await Promise.all(watchers.map((watcher) => watcher.close()))
+      }
+    })
+  })
+  test('start rejects startup errors and removes its temporary listeners', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const controller = new AbortController()
+      const fileWatcher = new FileWatcher(testAppLinked({directory}), {
+        ...outputOptions,
+        signal: controller.signal,
+      })
+      const error = new Error('Initial scan failed')
+      let watcher: FSWatcher | undefined
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+        watcher = realChokidarWatch(paths, options)
+        queueMicrotask(() => watcher!.emit('error', error))
+        return watcher
+      })
+
+      try {
+        await expect(fileWatcher.start()).rejects.toBe(error)
+        expect(watcher!.listenerCount('ready')).toBe(0)
+        expect(watcher!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
+      } finally {
+        controller.abort()
+        await watcher?.close()
+      }
+    })
+  })
+
+  test.each([false, true])('start settles when startup is aborted (already aborted: %s)', async (alreadyAborted) => {
+    await inTemporaryDirectory(async (directory) => {
+      const controller = new AbortController()
+      const fileWatcher = new FileWatcher(testAppLinked({directory}), {
+        ...outputOptions,
+        signal: controller.signal,
+      })
+      let watcher: FSWatcher | undefined
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+        watcher = realChokidarWatch(paths, options)
+        vi.spyOn(watcher, 'close')
+        if (!alreadyAborted) queueMicrotask(() => controller.abort())
+        return watcher
+      })
+      if (alreadyAborted) controller.abort()
+
+      try {
+        await fileWatcher.start()
+        expect(watcher!.close).toHaveBeenCalledOnce()
+        expect(watcher!.listenerCount('ready')).toBe(0)
+        expect(watcher!.listenerCount('error')).toBe(0)
+        expect(getEventListeners(controller.signal, 'abort')).toHaveLength(1)
+      } finally {
+        controller.abort()
+        await watcher?.close()
+      }
+    })
+  })
+
   test('The file watcher is started with the correct paths and options', async () => {
     // Given
     await inTemporaryDirectory(async (dir) => {
@@ -210,6 +388,7 @@ describe('file-watcher events', () => {
 
       const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
         return {
+          ...mockWatcherReadiness(),
           on: (_: string, listener: any) => listener('change', joinPath(dir, 'shopify.app.toml')),
           close: () => Promise.resolve(),
         } as any
@@ -294,6 +473,7 @@ describe('file-watcher events', () => {
 
         let eventHandler: any
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn((event: string, listener: any) => {
             if (event === 'all') {
               eventHandler = listener
@@ -390,6 +570,7 @@ describe('file-watcher events', () => {
 
         const onChange = vi.fn()
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn().mockReturnThis(),
           close: vi.fn().mockResolvedValue(undefined),
         }
@@ -465,6 +646,7 @@ describe('file-watcher events', () => {
         vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
           watchedPaths = paths as string[]
           return {
+            ...mockWatcherReadiness(),
             on: vi.fn().mockReturnThis(),
             close: vi.fn().mockResolvedValue(undefined),
           } as any
@@ -513,6 +695,7 @@ describe('file-watcher events', () => {
         vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
           watchedPaths = paths as string[]
           return {
+            ...mockWatcherReadiness(),
             on: vi.fn().mockReturnThis(),
             close: vi.fn().mockResolvedValue(undefined),
           } as any
@@ -555,6 +738,7 @@ describe('file-watcher events', () => {
 
         let watchedPaths: string[] = []
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn().mockReturnThis(),
           close: vi.fn().mockResolvedValue(undefined),
         }
@@ -599,6 +783,7 @@ describe('file-watcher events', () => {
         })
 
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn().mockReturnThis(),
           add: vi.fn(),
           close: vi.fn().mockResolvedValue(undefined),
@@ -631,6 +816,7 @@ describe('file-watcher events', () => {
         }
 
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn((event: string, handler: any) => {
             if (event === 'all') eventHandler = handler
             return mockWatcher
@@ -677,6 +863,7 @@ describe('file-watcher events', () => {
       })
 
       const mockWatcher = {
+        ...mockWatcherReadiness(),
         on: vi.fn().mockReturnThis(),
         close: vi.fn().mockResolvedValue(undefined),
       }
@@ -710,6 +897,7 @@ describe('file-watcher events', () => {
       })
 
       const mockWatcher = {
+        ...mockWatcherReadiness(),
         on: vi.fn().mockReturnThis(),
         close: vi.fn().mockResolvedValue(undefined),
       }
@@ -854,6 +1042,7 @@ describe('file-watcher events', () => {
         configPath: joinPath(directory, 'shopify.app.toml'),
       })
       const mockWatcher = {
+        ...mockWatcherReadiness(),
         on: vi.fn().mockReturnThis(),
         close: vi.fn().mockResolvedValue(undefined),
       }
@@ -913,6 +1102,7 @@ describe('file-watcher events', () => {
 
         let eventHandler: any
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn((event: string, listener: any) => {
             if (event === 'all') eventHandler = listener
             return mockWatcher
@@ -962,6 +1152,7 @@ describe('file-watcher events', () => {
 
         let eventHandler: any
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn((event: string, listener: any) => {
             if (event === 'all') eventHandler = listener
             return mockWatcher
@@ -1004,6 +1195,7 @@ describe('file-watcher events', () => {
 
         let eventHandler: any
         const mockWatcher = {
+          ...mockWatcherReadiness(),
           on: vi.fn((event: string, listener: any) => {
             if (event === 'all') eventHandler = listener
             return mockWatcher
@@ -1061,6 +1253,7 @@ describe('file-watcher events', () => {
           watchCalls++
           watchedPaths.push(paths as string[])
           return {
+            ...mockWatcherReadiness(),
             on: vi.fn().mockReturnThis(),
             add: vi.fn(),
             close: mockClose,
@@ -1080,5 +1273,45 @@ describe('file-watcher events', () => {
         expect(watchedPaths[1]).toEqual(watchedPaths[0])
       })
     })
+  })
+})
+
+test('startup can opt out of waiting for the initial scan', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const controller = new AbortController()
+    const app = testAppLinked({directory})
+    const fileWatcher = new FileWatcher(app, {...outputOptions, signal: controller.signal, waitForWatcherReady: false})
+    let nativeWatcher: FSWatcher | undefined
+    let releaseReadiness: (() => void) | undefined
+    const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+      nativeWatcher = realChokidarWatch(paths, options)
+      const emit = nativeWatcher.emit.bind(nativeWatcher)
+      vi.spyOn(nativeWatcher, 'emit').mockImplementation((event, ...args) => {
+        if (event === 'ready') {
+          releaseReadiness = () => {
+            emit(event, ...args)
+          }
+          return false
+        }
+        return emit(event, ...args)
+      })
+      return nativeWatcher
+    })
+    let started = false
+    const starting = fileWatcher.start().then(() => {
+      started = true
+    })
+    try {
+      await vi.waitFor(() => expect(releaseReadiness).toBeTypeOf('function'))
+      expect(started).toBe(true)
+      releaseReadiness!()
+      await starting
+    } finally {
+      controller.abort()
+      releaseReadiness?.()
+      await starting
+      await nativeWatcher?.close()
+      watchSpy.mockRestore()
+    }
   })
 })

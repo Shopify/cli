@@ -16,8 +16,12 @@ import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_c
 import {afterEach, beforeEach, describe, expect, test, vi, type MockInstance} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {commandEventOutputMode, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import chokidar, {FSWatcher} from 'chokidar'
+import {AsyncResource} from 'node:async_hooks'
 import {Writable} from 'stream'
 
 vi.mock('../../../models/app/loader.js')
@@ -685,6 +689,72 @@ describe('app-event-watcher', () => {
     })
   })
 })
+test('does not notify startup listeners when cancelled during the initial file scan', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const controller = new AbortController()
+    const app = testAppLinked({directory})
+    const fileWatcher = new FileWatcher(app, {...outputOptions, signal: controller.signal})
+    vi.spyOn(fileWatcher, 'start').mockImplementation(async () => {
+      controller.abort()
+    })
+    const watcher = new AppEventWatcher(app, undefined, undefined, fileWatcher)
+    const onStart = vi.fn()
+    const onLateStart = vi.fn()
+    watcher.onStart(onStart)
+    await watcher.start({...outputOptions, signal: controller.signal}, false)
+    watcher.onStart(onLateStart)
+    expect(onStart).not.toHaveBeenCalled()
+    expect(onLateStart).not.toHaveBeenCalled()
+  })
+})
+
+test('keeps command output context when processing native file events', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const nativeCallback = new AsyncResource('app-file-watcher')
+    const controller = new AbortController()
+    const options = {...outputOptions, signal: controller.signal}
+    const extension = await testUIExtension({directory: joinPath(directory, 'extensions', 'ui')})
+    await mkdir(extension.directory)
+    const sourcePath = joinPath(extension.directory, 'index.js')
+    await writeFile(sourcePath, 'export default {}')
+    const app = testAppLinked({directory, allExtensions: [extension]})
+    vi.spyOn(app, 'generateExtensionTypes').mockResolvedValue(undefined)
+    vi.spyOn(extension, 'rescanImports').mockResolvedValue(false)
+    const modes: ReturnType<typeof commandEventOutputMode>[] = []
+    vi.spyOn(extension, 'buildForBundle').mockImplementation(async () => {
+      modes.push(commandEventOutputMode())
+      outputInfo('Build status')
+    })
+    const watch = chokidar.watch.bind(chokidar)
+    let fileWatcher: FSWatcher | undefined
+    const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation((paths, watchOptions) => {
+      fileWatcher = watch(paths, watchOptions)
+      return fileWatcher
+    })
+    const watcher = new AppEventWatcher(app)
+    const sink = vi.fn()
+    try {
+      await runWithCommandEvents({outputMode: 'json', sink}, () => watcher.start(options, false))
+      const changed = new Promise<void>((resolve) => watcher.onEvent(() => resolve()))
+      nativeCallback.runInAsyncScope(() => {
+        expect(commandEventOutputMode()).toBeUndefined()
+        fileWatcher!.emit('all', 'change', sourcePath)
+      })
+      await changed
+      expect(modes).toEqual(['json'])
+      expect(sink).toHaveBeenCalledWith(
+        expect.objectContaining({type: 'diagnostic', level: 'info', message: 'Build status'}),
+      )
+    } finally {
+      controller.abort()
+      await fileWatcher?.close()
+      watcher.removeAllListeners()
+      nativeCallback.emitDestroy()
+      watchSpy.mockRestore()
+    }
+  })
+})
+
 // Mock class for FileWatcher
 // Used to trigger mocked file system events immediately after the watcher is started.
 class MockFileWatcher extends FileWatcher {
