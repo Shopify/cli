@@ -3,7 +3,7 @@ import {captureFunctionRun} from '../runner.js'
 import {type AppLinkedInterface} from '../../../models/app/app.js'
 import {type ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {type FunctionConfigType} from '../../../models/extensions/specifications/function.js'
-import {AppEventWatcher, EventType} from '../../dev/app-events/app-event-watcher.js'
+import {AppEventWatcher, EventType, type ExtensionEvent} from '../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {ExternalError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
@@ -34,6 +34,10 @@ export async function watchReplay({
   const watcher = new AppEventWatcher(app)
   let failure: Error | undefined
   let executions = Promise.resolve()
+  let watching = false
+  let currentExtension = extension
+  let buildFailed = false
+  const startupUpdates: ExtensionEvent[] = []
   const diagnostics = new Writable({
     write(chunk, _encoding, callback) {
       onEvent({type: 'diagnostic', message: chunk.toString()})
@@ -78,17 +82,28 @@ export async function watchReplay({
       })
     return executions
   }
+  const handleUpdate = (changed: ExtensionEvent) => {
+    if (signal.aborted) return
+    if (changed.buildResult?.status === 'error') {
+      buildFailed = true
+      onEvent({type: 'build', status: 'failed', error: changed.buildResult.error})
+      return
+    }
+    buildFailed = false
+    currentExtension = changed.extension as ExtensionInstance<FunctionConfigType>
+    onEvent({type: 'build', status: 'success'})
+  }
   watcher.onError(fail)
   watcher.onEvent((event) => {
     if (signal.aborted) return
     const changed = event.extensionEvents.find(({extension: updated}) => updated.handle === extension.handle)
     if (!changed || changed.type !== EventType.Updated) return
-    if (changed.buildResult?.status === 'error') {
-      onEvent({type: 'build', status: 'failed', error: changed.buildResult.error})
+    if (!watching) {
+      startupUpdates.push(changed)
       return
     }
-    onEvent({type: 'build', status: 'success'})
-    return enqueue(changed.extension as ExtensionInstance<FunctionConfigType>)
+    handleUpdate(changed)
+    if (!buildFailed) return enqueue(currentExtension)
   })
 
   try {
@@ -96,7 +111,10 @@ export async function watchReplay({
     await watcher.start({stdout: diagnostics, stderr: diagnostics, signal}, false)
     if (!signal.aborted) {
       onEvent({type: 'status', status: 'watching'})
-      await enqueue(extension)
+      for (const changed of startupUpdates) handleUpdate(changed)
+      startupUpdates.length = 0
+      watching = true
+      if (!buildFailed) await enqueue(currentExtension)
       if (!signal.aborted) {
         await new Promise<void>((resolve) => signal.addEventListener('abort', () => resolve(), {once: true}))
       }

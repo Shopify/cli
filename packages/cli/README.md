@@ -3092,7 +3092,7 @@ DESCRIPTION
         "$ref": "#/definitions/FunctionRunResult"
       },
       {
-        "$ref": "#/definitions/FunctionReplayEvent"
+        "$ref": "#/definitions/FunctionReplayRecord"
       }
     ],
     "title": "FunctionReplayOutput",
@@ -3128,7 +3128,7 @@ DESCRIPTION
           },
           "success": {
             "type": "boolean",
-            "description": "False for a completed Function execution that failed; the command exits nonzero."
+            "description": "False for a completed Function execution that failed."
           }
         },
         "required": [
@@ -3144,7 +3144,7 @@ DESCRIPTION
         "additionalProperties": true,
         "description": "The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved."
       },
-      "FunctionReplayEvent": {
+      "FunctionReplayRecord": {
         "anyOf": [
           {
             "type": "object",
@@ -3175,29 +3175,57 @@ DESCRIPTION
             "additionalProperties": false
           },
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "build"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "build"
+                  },
+                  "timestamp": {
+                    "$ref": "#/definitions/FunctionReplayRecord/anyOf/0/properties/timestamp"
+                  },
+                  "status": {
+                    "type": "string",
+                    "const": "success"
+                  }
+                },
+                "required": [
+                  "type",
+                  "timestamp",
+                  "status"
+                ],
+                "additionalProperties": false
               },
-              "timestamp": {
-                "$ref": "#/definitions/FunctionReplayEvent/anyOf/0/properties/timestamp"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "success",
-                  "failed"
-                ]
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "build"
+                  },
+                  "timestamp": {
+                    "$ref": "#/definitions/FunctionReplayRecord/anyOf/0/properties/timestamp"
+                  },
+                  "status": {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  "error": {
+                    "type": "string",
+                    "description": "The rebuild failure message."
+                  }
+                },
+                "required": [
+                  "type",
+                  "timestamp",
+                  "status",
+                  "error"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "type",
-              "timestamp",
-              "status"
-            ],
-            "additionalProperties": false
+            ]
           },
           {
             "type": "object",
@@ -3207,14 +3235,15 @@ DESCRIPTION
                 "const": "execution"
               },
               "timestamp": {
-                "$ref": "#/definitions/FunctionReplayEvent/anyOf/0/properties/timestamp"
+                "$ref": "#/definitions/FunctionReplayRecord/anyOf/0/properties/timestamp"
               },
               "result": {
                 "$ref": "#/definitions/FunctionRunResult"
               },
               "exitCode": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "description": "The exit code of this Function run, not the replay process."
               }
             },
             "required": [
@@ -3338,7 +3367,7 @@ DESCRIPTION
       },
       "success": {
         "type": "boolean",
-        "description": "False for a completed Function execution that failed; the command exits nonzero."
+        "description": "False for a completed Function execution that failed."
       }
     },
     "required": [

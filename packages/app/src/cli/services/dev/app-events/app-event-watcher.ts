@@ -156,6 +156,7 @@ export class AppEventWatcher extends EventEmitter {
         })
     })
     await this.fileWatcher.start()
+    if (this.options.signal.aborted) return
 
     this.ready = true
     this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})

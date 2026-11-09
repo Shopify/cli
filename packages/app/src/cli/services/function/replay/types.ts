@@ -10,33 +10,43 @@ const lifecycleSchema = zod
   })
   .strict()
 
-const buildSchema = zod
-  .object({
-    type: zod.literal('build'),
-    timestamp: jsonOutputTimestampSchema,
-    status: zod.enum(['success', 'failed']),
-  })
-  .strict()
+const buildSchema = zod.discriminatedUnion('status', [
+  zod
+    .object({
+      type: zod.literal('build'),
+      timestamp: jsonOutputTimestampSchema,
+      status: zod.literal('success'),
+    })
+    .strict(),
+  zod
+    .object({
+      type: zod.literal('build'),
+      timestamp: jsonOutputTimestampSchema,
+      status: zod.literal('failed'),
+      error: zod.string().describe('The rebuild failure message.'),
+    })
+    .strict(),
+])
 
 const executionSchema = zod
   .object({
     type: zod.literal('execution'),
     timestamp: jsonOutputTimestampSchema,
     result: functionRunJsonOutputSchema.schema,
-    exitCode: zod.number().int().nonnegative(),
+    exitCode: zod.number().int().nonnegative().describe('The exit code of this Function run, not the replay process.'),
   })
   .strict()
 
-export const functionReplayEventSchema = defineJsonOutputSchema({
-  name: 'FunctionReplayEvent',
-  schema: zod.discriminatedUnion('type', [lifecycleSchema, buildSchema, executionSchema]),
+export const functionReplayRecordSchema = defineJsonOutputSchema({
+  name: 'FunctionReplayRecord',
+  schema: zod.union([lifecycleSchema, buildSchema, executionSchema]),
 })
 
 export const functionReplayJsonOutputSchema = defineJsonOutputSchema({
   name: 'FunctionReplayOutput',
-  schema: zod.union([functionRunJsonOutputSchema.schema, functionReplayEventSchema.schema]),
+  schema: zod.union([functionRunJsonOutputSchema.schema, functionReplayRecordSchema.schema]),
   definitions: {
     FunctionRunResult: functionRunJsonOutputSchema.schema,
-    FunctionReplayEvent: functionReplayEventSchema.schema,
+    FunctionReplayRecord: functionReplayRecordSchema.schema,
   },
 })

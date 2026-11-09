@@ -689,6 +689,25 @@ describe('app-event-watcher', () => {
     })
   })
 })
+test('does not notify startup listeners when cancelled during the initial file scan', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const controller = new AbortController()
+    const app = testAppLinked({directory})
+    const fileWatcher = new FileWatcher(app, {...outputOptions, signal: controller.signal})
+    vi.spyOn(fileWatcher, 'start').mockImplementation(async () => {
+      controller.abort()
+    })
+    const watcher = new AppEventWatcher(app, undefined, undefined, fileWatcher)
+    const onStart = vi.fn()
+    const onLateStart = vi.fn()
+    watcher.onStart(onStart)
+    await watcher.start({...outputOptions, signal: controller.signal}, false)
+    watcher.onStart(onLateStart)
+    expect(onStart).not.toHaveBeenCalled()
+    expect(onLateStart).not.toHaveBeenCalled()
+  })
+})
+
 test('keeps command output context when processing native file events', async () => {
   await inTemporaryDirectory(async (directory) => {
     const nativeCallback = new AsyncResource('app-file-watcher')

@@ -276,6 +276,55 @@ test.each(['watching', 'running', 'diagnostic'])(
   },
 )
 
+test.each([false, true])('defers startup rebuilds and uses the latest extension (build failed: %s)', async (failed) => {
+  const {options, events, emit, startWatcher, start} = await fixture()
+  const updatedExtension = await testFunctionExtension({
+    config: {
+      ...options.extension.configuration,
+      build: {...options.extension.configuration.build, path: 'dist/updated.wasm', wasm_opt: true},
+    },
+  })
+  let finishStartup!: () => void
+  startWatcher.mockReturnValue(
+    new Promise((resolve) => {
+      finishStartup = resolve
+    }),
+  )
+  const running = start()
+  try {
+    await flushPromises()
+    emit([
+      {
+        type: EventType.Updated,
+        extension: updatedExtension,
+        buildResult: failed
+          ? {status: 'error', error: 'Compilation failed', uid: updatedExtension.uid}
+          : {status: 'ok', uid: updatedExtension.uid},
+      },
+    ])
+    await flushPromises()
+    expect(events).toEqual([])
+    expect(captureFunctionRun).not.toHaveBeenCalled()
+    finishStartup()
+    await flushPromises()
+    expect(events.slice(0, 2)).toEqual([
+      {type: 'status', status: 'watching'},
+      failed ? {type: 'build', status: 'failed', error: 'Compilation failed'} : {type: 'build', status: 'success'},
+    ])
+    if (failed) {
+      expect(captureFunctionRun).not.toHaveBeenCalled()
+      emit([{type: EventType.Updated, extension: updatedExtension}])
+      await flushPromises()
+    }
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
+    expect(vi.mocked(captureFunctionRun).mock.calls[0]![0].functionExtension).toBe(updatedExtension)
+  } finally {
+    finishStartup()
+    options.abortController.abort()
+    await running
+  }
+})
+
 test.each(['startup', 'watcher', 'runner', 'invalid-result'])('propagates a fatal %s failure', async (source) => {
   const {options, events, startWatcher} = await fixture()
   const error = new Error('Watch failed')
