@@ -59,7 +59,7 @@ test('formats watch events as JSONL and keeps diagnostics on stderr', async () =
   })
   const resultJson = String.raw`{
     "name": "function.wasm", "size": 1, "memory_usage": 64,
-    "instructions": 9007199254740993, "logs": "hello world \"quoted\" done\nsecond",
+    "instructions": 9007199254740993, "logs": "hello world \"quoted words\" done\nsecond",
     "input": {}, "output": null, "success": false
   }`
   vi.mocked(watchReplay).mockImplementation(async ({onEvent}) => {

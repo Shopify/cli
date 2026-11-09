@@ -2,4 +2,4 @@
 '@shopify/cli': patch
 ---
 
-Wait for file watcher readiness in app dev and stop startup when cancelled.
+Wait for file watcher readiness and startup rebuilds in app dev, report their latest results, and stop startup when cancelled.
