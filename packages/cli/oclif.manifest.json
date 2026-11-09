@@ -4105,6 +4105,84 @@
       "strict": true,
       "summary": "Lists historical app logs."
     },
+    "app:logs-next:filters": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Lists local record filters and query/output controls for app logs-next. Without --type, lists all supported inputs and their applicability. Repeat --type to list inputs common to every selected type. Does not authenticate, select an app, or check access or log availability.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppLogFilters` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"filters\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\n            \"type\": \"string\",\n            \"pattern\": \"^[a-z]+(?:-[a-z]+)*$\",\n            \"description\": \"Long flag name without the -- prefix.\"\n          },\n          \"kind\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"filter\",\n              \"query\",\n              \"output\"\n            ]\n          },\n          \"description\": {\n            \"type\": \"string\",\n            \"minLength\": 1\n          },\n          \"valueFormat\": {\n            \"type\": \"string\"\n          },\n          \"allowedValues\": {\n            \"anyOf\": [\n              {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"string\"\n                }\n              },\n              {\n                \"type\": \"null\"\n              }\n            ],\n            \"description\": \"Exhaustive choices, or null for a format-defined value.\"\n          },\n          \"default\": {\n            \"anyOf\": [\n              {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"number\"\n                  },\n                  {\n                    \"type\": \"boolean\"\n                  },\n                  {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \"type\": \"string\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"type\": \"null\"\n              }\n            ],\n            \"description\": \"The literal retrieval default, or null when unset, dynamic, or conditional; see matching for details.\"\n          },\n          \"repeatable\": {\n            \"type\": \"boolean\"\n          },\n          \"applicableTypes\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"webhook\",\n                \"graphql\"\n              ]\n            }\n          },\n          \"matching\": {\n            \"type\": \"string\"\n          },\n          \"vocabulary\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"fixed\",\n              \"open\"\n            ]\n          },\n          \"required\": {\n            \"type\": \"boolean\"\n          },\n          \"dependencies\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            },\n            \"description\": \"Other flag names required when this input is supplied, without the -- prefix.\"\n          },\n          \"incompatibleWith\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            },\n            \"description\": \"Combinations rejected by retrieval, not combinations that match no records.\"\n          }\n        },\n        \"required\": [\n          \"name\",\n          \"kind\",\n          \"description\",\n          \"valueFormat\",\n          \"allowedValues\",\n          \"default\",\n          \"repeatable\",\n          \"applicableTypes\",\n          \"matching\",\n          \"vocabulary\",\n          \"required\",\n          \"dependencies\",\n          \"incompatibleWith\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"description\": \"Local app logs-next record filters and query/output controls, sorted by long flag name. Without --type, lists all inputs; selected types return only common inputs. Does not check app access or log availability.\"\n    }\n  },\n  \"required\": [\n    \"filters\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppLogFilters\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Lists local record filters and query/output controls for app logs-next. Without --type, lists all supported inputs and their applicability. Repeat --type to list inputs common to every selected type. Does not authenticate, select an app, or check access or log availability.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --type webhook --json --no-input",
+        "<%= config.bin %> <%= command.id %> --type graphql --type webhook --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "type": {
+          "description": "Show inputs applicable to this log type; repeat to show inputs common to every selected type.",
+          "env": "SHOPIFY_FLAG_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "type",
+          "options": [
+            "webhook",
+            "graphql"
+          ],
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:logs-next:filters",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Lists supported historical app log filters and query controls."
+    },
     "app:logs-next:types": {
       "aliases": [
       ],

@@ -15,6 +15,7 @@ import SecurityReview from './commands/app/security/review.js'
 import Logs from './commands/app/logs.js'
 import LogsNext from './commands/app/logs-next.js'
 import LogTypes from './commands/app/logs-next/types.js'
+import LogFilters from './commands/app/logs-next/filters.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import BulkExecute from './commands/app/bulk/execute.js'
@@ -70,6 +71,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:logs': Logs,
   'app:logs-next': LogsNext,
   'app:logs-next:types': LogTypes,
+  'app:logs-next:filters': LogFilters,
   'app:import:channel-config': ImportChannelConfig,
   'app:import:custom-data-definitions': ImportCustomDataDefinitions,
   'app:import:dashboard-extensions': ImportDashboardExtensions,
