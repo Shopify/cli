@@ -108,7 +108,7 @@ export async function watchReplay({
 
   try {
     if (signal.aborted) return
-    await watcher.start({stdout: diagnostics, stderr: diagnostics, signal}, false)
+    await watcher.start({stdout: diagnostics, stderr: diagnostics, signal, waitForWatcherReady: true}, false)
     if (!signal.aborted) {
       onEvent({type: 'status', status: 'watching'})
       for (const changed of startupUpdates) handleUpdate(changed)

@@ -68,6 +68,8 @@ export interface OutputContextOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
+  /** Wait for the initial file scan and retain command output context for JSON replay. */
+  waitForWatcherReady?: boolean
 }
 
 export class FileWatcher {
@@ -110,6 +112,7 @@ export class FileWatcher {
    * This ensures the watcher picks up any changes in what files need to be watched.
    */
   start(): Promise<void> {
+    if (!this.options.waitForWatcherReady) return this.startWatcher()
     this.restartRequested = true
     this.starting ??= this.startWatching()
     return this.starting
@@ -184,32 +187,36 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', AsyncResource.bind(this.handleFileEvent))
+    const onFileEvent = this.options.waitForWatcherReady
+      ? AsyncResource.bind(this.handleFileEvent)
+      : this.handleFileEvent
+    this.watcher.on('all', onFileEvent)
     this.addAbortListener()
 
     const watcher = this.watcher
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = () => {
-        watcher.removeListener('ready', onReady)
-        watcher.removeListener('error', onError)
-        this.options.signal.removeEventListener('abort', onReady)
-      }
-      const onReady = () => {
-        cleanup()
-        resolve()
-      }
-      const onError = (error: Error) => {
-        cleanup()
-        reject(error)
-      }
-      watcher.once('ready', onReady)
-      watcher.once('error', onError)
-      this.options.signal.addEventListener('abort', onReady, {once: true})
-      if (this.options.signal.aborted) {
-        this.close()
-        onReady()
-      }
-    })
+    if (this.options.waitForWatcherReady)
+      await new Promise<void>((resolve, reject) => {
+        const cleanup = () => {
+          watcher.removeListener('ready', onReady)
+          watcher.removeListener('error', onError)
+          this.options.signal.removeEventListener('abort', onReady)
+        }
+        const onReady = () => {
+          cleanup()
+          resolve()
+        }
+        const onError = (error: Error) => {
+          cleanup()
+          reject(error)
+        }
+        watcher.once('ready', onReady)
+        watcher.once('error', onError)
+        this.options.signal.addEventListener('abort', onReady, {once: true})
+        if (this.options.signal.aborted) {
+          this.close()
+          onReady()
+        }
+      })
 
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
   }

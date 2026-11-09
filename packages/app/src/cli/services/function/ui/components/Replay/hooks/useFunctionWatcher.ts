@@ -3,21 +3,30 @@ import {AppLinkedInterface} from '../../../../../../models/app/app.js'
 import {FunctionConfigType} from '../../../../../../models/extensions/specifications/function.js'
 import {ExtensionInstance} from '../../../../../../models/extensions/extension-instance.js'
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
-import {watchReplay, ReplayWatchEvent} from '../../../../replay/watch.js'
+import {runFunction} from '../../../../runner.js'
+import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useState} from 'react'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
+import {Writable} from 'stream'
 
 interface WatchFunctionForReplayOptions {
   selectedRun: FunctionRunData
   abortController: AbortController
   app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
+  appWatcher: AppEventWatcher
 }
 
-export function useFunctionWatcher({selectedRun, abortController, app, extension}: WatchFunctionForReplayOptions) {
+export function useFunctionWatcher({
+  selectedRun,
+  abortController,
+  app,
+  extension,
+  appWatcher,
+}: WatchFunctionForReplayOptions) {
   const functionRunFromSelectedRun = {
     type: 'functionRun',
     input: selectedRun.payload.input,
@@ -37,69 +46,91 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
 
   const [error, setError] = useState<string | undefined>(undefined)
 
+  const {input, export: runExport} = selectedRun.payload
+
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
 
   useEffect(() => {
-    let mounted = true
-    let hasExecuted = false
     const watchAbortController = new AbortController()
-    const abort = () => watchAbortController.abort()
-    abortController.signal.addEventListener('abort', abort, {once: true})
-    if (abortController.signal.aborted) abort()
+    abortController.signal.addEventListener('abort', () => {
+      watchAbortController.abort()
+    })
 
-    const watchingMessage = `Watching for changes to ${selectedRun.source}...`
-    const onEvent = (event: ReplayWatchEvent) => {
-      if (!mounted) return
-      switch (event.type) {
-        case 'status':
-          if (event.status === 'watching') {
-            setStatusMessage(watchingMessage)
-          } else if (event.status === 'running') {
-            setStatusMessage(hasExecuted ? 'Re-running with latest changes...' : 'Replaying log with local function...')
-          }
-          break
-        case 'build':
-          setError(
-            event.status === 'failed' ? `Error while reloading and building extension: ${event.error}` : undefined,
-          )
-          break
-        case 'execution': {
-          const functionRun: FunctionRunFromRunner = {...JSON.parse(event.resultJson), type: 'functionRun'}
-          hasExecuted = true
-          setRecentFunctionRuns((recentFunctionRuns) => [functionRun, recentFunctionRuns[0]])
-          setStatusMessage(watchingMessage)
-          setLogs((logs) => [...logs, functionRun])
-          break
-        }
-        case 'diagnostic':
-          setLogs((logs) => [...logs, {type: 'systemMessage', message: event.message}])
-          break
-      }
+    const runFunction = async () => {
+      const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
+      setRecentFunctionRuns((recentFunctionRuns) => {
+        return [functionRun, recentFunctionRuns[0]]
+      })
+      setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
+      setLogs((logs) => [...logs, functionRun])
     }
 
-    watchReplay({selectedRun, app, extension, abortController: watchAbortController, onEvent}).catch(
-      (error: unknown) => {
-        if (mounted && !abortController.signal.aborted) {
-          abortController.abort(error instanceof Error ? error : new Error(String(error)))
+    const initialReplay = async () => {
+      setStatusMessage('Replaying log with local function...')
+      await runFunction()
+    }
+
+    const startWatchingFunction = async () => {
+      appWatcher.onEvent(async (event) => {
+        const functionExt = event.extensionEvents.find((extEvent) => extEvent.extension.handle === extension.handle)
+        if (!functionExt || functionExt.type !== EventType.Updated) return
+        if (functionExt.buildResult?.status === 'error') {
+          setError(`Error while reloading and building extension: ${functionExt.buildResult?.error}`)
+          return
         }
-      },
-    )
+        setError(undefined)
+        setStatusMessage('Re-running with latest changes...')
+        await runFunction()
+      })
+
+      const customStdout = new Writable({
+        write(chunk, _enconding, next) {
+          setLogs((logs) => [...logs, {type: 'systemMessage', message: chunk.toString()}])
+          next()
+        },
+      })
+
+      await appWatcher.start({stdout: customStdout, stderr: customStdout, signal: watchAbortController.signal}, false)
+    }
+
+    // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/no-floating-promises
+    initialReplay().then(() => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      startWatchingFunction()
+    })
 
     return () => {
-      mounted = false
-      abortController.signal.removeEventListener('abort', abort)
       watchAbortController.abort()
     }
-  }, [selectedRun, app, extension, abortController])
+  }, [input, runExport, app, extension])
 
-  useAbortSignal(abortController.signal, async (error) => {
+  useAbortSignal(abortController.signal, async () => {
     setTimeout(() => {
       if (isUnitTest()) return
       treeKill(process.pid, 'SIGINT', false, () => {
-        process.exit(error ? 1 : 0)
+        process.exit(0)
       })
     }, 2000)
   })
 
   return {logs, statusMessage, recentFunctionRuns, error}
+}
+
+async function runFunctionRunnerWithLogInput(
+  fun: ExtensionInstance<FunctionConfigType>,
+  input: string,
+  exportName: string,
+): Promise<FunctionRunFromRunner> {
+  let functionRunnerOutput = ''
+  const customStdout = new Writable({
+    write(chunk, _encoding, next) {
+      functionRunnerOutput += chunk as string
+      next()
+    },
+  })
+
+  await runFunction({functionExtension: fun, input, export: exportName, stdout: customStdout, json: true})
+
+  const result = JSON.parse(functionRunnerOutput)
+  return {...result, type: 'functionRun'}
 }

@@ -5,6 +5,7 @@ import {ExtensionInstance} from '../../../../../models/extensions/extension-inst
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
 import {AppLinkedInterface} from '../../../../../models/app/app.js'
 import {prettyPrintJsonIfPossible} from '../../../../app-logs/utils.js'
+import {AppEventWatcher} from '../../../../dev/app-events/app-event-watcher.js'
 import figures from '@shopify/cli-kit/node/figures'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React, {FunctionComponent} from 'react'
@@ -22,11 +23,13 @@ export interface ReplayProps {
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
   const {isAborted} = useAbortSignal(abortController.signal)
   const {isRawModeSupported: canUseShortcuts} = useStdin()
+  const appWatcher = new AppEventWatcher(app)
   const {logs, statusMessage, recentFunctionRuns, error} = useFunctionWatcher({
     selectedRun,
     abortController,
     app,
     extension,
+    appWatcher,
   })
 
   useInput(
