@@ -34,7 +34,7 @@ const clientId = 'test-app'
 const scope = {'client-id': clientId, 'no-input': true, type: ['webhook']}
 const record = {
   timestamp: '2026-10-06T13:30:00.123456789Z',
-  type: 'WEBHOOK_DELIVERY',
+  type: 'WEBHOOK',
   shopMyshopifyDomain: 'example.myshopify.com',
   topic: 'orders/create',
   resultStatus: 'FAILURE',
@@ -156,7 +156,7 @@ test('submits one bounded search and preserves the native record JSON exactly', 
   expect(init?.redirect).toBe('error')
   expect(JSON.parse(String(init?.body)).variables).toEqual({
     clientId,
-    types: ['WEBHOOK_DELIVERY'],
+    types: ['WEBHOOK'],
     timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
     limit: 20,
     filters: [
@@ -311,7 +311,7 @@ test('default mixed-type search shares one query and limit, preserving every pre
   const result = await retrieveLogs({'client-id': clientId, limit: 2})
   expect(result.logs).toEqual([graphqlRecord, record])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK_DELIVERY', 'GRAPHQL_REQUEST'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST'],
     limit: 2,
     filters: [],
   })
@@ -324,7 +324,7 @@ test('cross-type filters are sent together and an empty intersection is not an e
   const result = await retrieveLogs({'client-id': clientId, topic: 'orders/create', 'operation-name': 'MyQuery'})
   expect(result.logs).toEqual([])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK_DELIVERY', 'GRAPHQL_REQUEST'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST'],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
       {field: 'OPERATION_NAME', operator: 'EQUALS', value: 'MyQuery'},
