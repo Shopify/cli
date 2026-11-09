@@ -4105,6 +4105,76 @@
       "strict": true,
       "summary": "Lists historical app logs."
     },
+    "app:logs-next:types": {
+      "aliases": [
+      ],
+      "args": {
+        "type": {
+          "description": "The log type to describe. Omit to list all supported types.",
+          "name": "type"
+        }
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Lists the local catalog of historical app log types, applicable filters, limitations, and examples for app logs-next. Optionally select one type. Does not authenticate, select an app, or check access or log availability.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppLogTypes` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"types\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"name\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"webhook\",\n              \"graphql\"\n            ]\n          },\n          \"description\": {\n            \"type\": \"string\"\n          },\n          \"filters\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"store\",\n                \"status\",\n                \"topic\",\n                \"status-code\",\n                \"operation-type\",\n                \"operation-name\",\n                \"request-id\"\n              ]\n            },\n            \"description\": \"Applicable filter flag names for app logs-next, without the -- prefix.\"\n          },\n          \"limitations\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"example\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"name\",\n          \"description\",\n          \"filters\",\n          \"limitations\",\n          \"example\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"description\": \"The complete local catalog, or one selected type. Does not check app access or log availability.\"\n    }\n  },\n  \"required\": [\n    \"types\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppLogTypes\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Lists the local catalog of historical app log types, applicable filters, limitations, and examples for app logs-next. Optionally select one type. Does not authenticate, select an app, or check access or log availability.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> webhook --json --no-input",
+        "<%= config.bin %> <%= command.id %> graphql"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:logs-next:types",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Lists supported historical app log types."
+    },
     "app:release": {
       "aliases": [
       ],
