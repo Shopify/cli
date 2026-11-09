@@ -2,4 +2,4 @@
 '@shopify/cli': minor
 ---
 
-Require explicit operator permission to execute custom Theme Checks with `--allow-custom-checks` on `theme check`, `theme language-server`, and `theme push --strict`.
+Require explicit operator permission for custom Theme Checks on `theme check`, `theme language-server`, and `theme push --strict`; ignore consent settings in theme TOML.

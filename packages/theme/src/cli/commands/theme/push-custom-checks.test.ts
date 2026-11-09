@@ -63,6 +63,10 @@ test.each([
   {argv: ['--strict', '--no-allow-custom-checks'], environment: '1', allowed: false},
   {argv: ['--strict'], environment: undefined, configuredConsent: true, allowed: false},
   {argv: ['--strict', '--no-allow-custom-checks'], environment: '1', configuredConsent: true, allowed: false},
+  {argv: ['--strict', '--allow-custom-checks'], environment: undefined, configuredConsent: false, allowed: true},
+  {argv: ['--strict'], environment: '1', configuredConsent: false, allowed: true},
+  {argv: ['--strict'], environment: undefined, configuredConsent: false, allowed: false},
+  {argv: [], environment: undefined, configuredConsent: true, allowed: false},
   {argv: [], environment: undefined, allowed: false},
   {argv: [], environment: '0', allowed: false},
   {argv: ['--no-allow-custom-checks'], environment: '1', allowed: false},
@@ -73,10 +77,10 @@ test.each([
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({storeFqdn: 'test.myshopify.com', token: 'token'})
     await inTemporaryDirectory(async (directory) => {
       await writeCustomCheck(directory)
-      if (configuredConsent) {
+      if (configuredConsent !== undefined) {
         await writeFile(
           joinPath(directory, 'shopify.theme.toml'),
-          '[environments.default]\nallow-custom-checks = true\n',
+          `[environments.default]\nallow-custom-checks = ${configuredConsent}\n`,
         )
       }
       const push = await command(directory, argv)
@@ -89,13 +93,13 @@ test.each([
         } else {
           await push.run()
           expect(executeThemePush).toHaveBeenCalledOnce()
-          if (configuredConsent) {
-            expect(executeThemePush).toHaveBeenCalledWith(
-              expect.objectContaining({'allow-custom-checks': !argv.includes('--no-allow-custom-checks')}),
-              expect.anything(),
-              false,
-              undefined,
-            )
+          if (configuredConsent !== undefined) {
+            const pushFlags = vi.mocked(executeThemePush).mock.calls[0]?.[0]
+            if (argv.includes('--no-allow-custom-checks')) {
+              expect(pushFlags).toHaveProperty('allow-custom-checks', false)
+            } else {
+              expect(pushFlags).not.toHaveProperty('allow-custom-checks')
+            }
           }
         }
       })
