@@ -1,3 +1,4 @@
+import {ReplayFileWatcher} from './file-watcher.js'
 import {type FunctionRunData} from '../replay.js'
 import {captureFunctionRun} from '../runner.js'
 import {type AppLinkedInterface} from '../../../models/app/app.js'
@@ -31,7 +32,6 @@ export async function watchReplay({
   onEvent,
 }: WatchReplayOptions): Promise<void> {
   const {signal} = abortController
-  const watcher = new AppEventWatcher(app)
   let failure: Error | undefined
   let executions = Promise.resolve()
   let watching = false
@@ -44,6 +44,8 @@ export async function watchReplay({
       callback()
     },
   })
+  const fileWatcher = new ReplayFileWatcher(app, {stdout: diagnostics, stderr: diagnostics, signal})
+  const watcher = new AppEventWatcher(app, undefined, undefined, fileWatcher)
 
   const fail = (error: Error) => {
     if (signal.aborted) return
@@ -95,6 +97,7 @@ export async function watchReplay({
   }
   watcher.onError(fail)
   watcher.onEvent((event) => {
+    fileWatcher.changeProcessed()
     if (signal.aborted) return
     const changed = event.extensionEvents.find(({extension: updated}) => updated.handle === extension.handle)
     if (!changed || changed.type !== EventType.Updated) return
@@ -108,7 +111,8 @@ export async function watchReplay({
 
   try {
     if (signal.aborted) return
-    await watcher.start({stdout: diagnostics, stderr: diagnostics, signal, waitForWatcherReady: true}, false)
+    await watcher.start({stdout: diagnostics, stderr: diagnostics, signal}, false)
+    await fileWatcher.waitForStartupChanges()
     if (!signal.aborted) {
       onEvent({type: 'status', status: 'watching'})
       for (const changed of startupUpdates) handleUpdate(changed)

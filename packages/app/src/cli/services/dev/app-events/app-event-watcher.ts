@@ -97,7 +97,6 @@ export class AppEventWatcher extends EventEmitter {
   private ready = false
   private initialEvents: ExtensionEvent[] = []
   private fileWatcher?: FileWatcher
-  private readonly pendingEvents = new Set<Promise<void>>()
 
   constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string, fileWatcher?: FileWatcher) {
     super()
@@ -127,7 +126,7 @@ export class AppEventWatcher extends EventEmitter {
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
     this.fileWatcher.onChange((events) => {
-      const pending = handleWatcherEvents(events, this.app, this.options)
+      handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
           if (!appEvent) return
@@ -155,18 +154,8 @@ export class AppEventWatcher extends EventEmitter {
         .catch((error) => {
           this.emit('error', error)
         })
-        .finally(() => this.pendingEvents.delete(pending))
-      if (this.options.waitForWatcherReady) this.pendingEvents.add(pending)
     })
     await this.fileWatcher.start()
-    if (this.options.waitForWatcherReady) {
-      while (!this.options.signal.aborted && this.pendingEvents.size > 0) {
-        // Startup builds can trigger more file events before they finish.
-        // eslint-disable-next-line no-await-in-loop
-        await Promise.all(this.pendingEvents)
-      }
-      if (this.options.signal.aborted) return
-    }
 
     this.ready = true
     this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})
