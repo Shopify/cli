@@ -2,7 +2,7 @@ import {ThemeCheckResult} from './check/types.js'
 import {withThemeCheckDiagnostics} from './check/diagnostics.js'
 import {fileExists, fileRealPath, isDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess, outputDebug} from '@shopify/cli-kit/node/output'
-import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {uniq} from '@shopify/cli-kit/common/array'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -33,15 +33,42 @@ type SeverityCounts = Partial<{
 
 export type FailLevel = 'error' | 'suggestion' | 'style' | 'warning' | 'info' | 'crash'
 
-function isMissingThemeCheckConfigFile(error: unknown, configPath: string) {
+function isMissingFileError(error: unknown): error is Error & {path: string} {
   return (
     error instanceof Error &&
     'code' in error &&
     error.code === 'ENOENT' &&
     'path' in error &&
-    typeof error.path === 'string' &&
-    resolvePath(error.path) === resolvePath(configPath)
+    typeof error.path === 'string'
   )
+}
+
+function themeCheckConfigIdentifier(path: string): string | undefined {
+  // On Windows, readFile errors can resolve a config identifier against the working directory.
+  const identifier = path.startsWith('theme-check:') ? path : basename(path)
+  return identifier.startsWith('theme-check:') ? identifier : undefined
+}
+
+async function isMissingThemeCheckConfigFile(error: Error & {path: string}, root: string, configPath?: string) {
+  if (themeCheckConfigIdentifier(error.path) !== undefined) return true
+  if (configPath !== undefined && resolvePath(error.path) === resolvePath(configPath)) return true
+
+  // An ENOENT from themeCheckRun may concern a theme file, not a config. Retry only
+  // config loading after a failure to identify missing extends without loading twice on success.
+  try {
+    await withThemeCheckDiagnostics(() => loadConfig(configPath, root))
+  } catch (configError) {
+    if (
+      isMissingFileError(configError) &&
+      'syscall' in configError &&
+      configError.syscall === 'open' &&
+      resolvePath(configError.path) === resolvePath(error.path)
+    ) {
+      return true
+    }
+    throw error
+  }
+  return false
 }
 
 /**
@@ -62,6 +89,7 @@ async function assertThemeCheckConfigIsNotDirectory(configPath: string | undefin
 }
 
 async function withThemeCheckConfigErrorHandling<T>(
+  root: string,
   configPath: string | undefined,
   operation: () => Promise<T>,
 ): Promise<T> {
@@ -69,8 +97,19 @@ async function withThemeCheckConfigErrorHandling<T>(
   try {
     return await operation()
   } catch (error) {
-    if (configPath !== undefined && isMissingThemeCheckConfigFile(error, configPath)) {
-      throw new AbortError(`Theme Check config file not found: ${configPath}`)
+    if (isMissingFileError(error) && (await isMissingThemeCheckConfigFile(error, root, configPath))) {
+      const identifier = themeCheckConfigIdentifier(error.path)
+      const missingPath =
+        configPath !== undefined && resolvePath(error.path) === resolvePath(configPath)
+          ? configPath
+          : normalizePath(error.path)
+      const message = identifier
+        ? `Unknown Theme Check config: ${identifier}`
+        : `Theme Check config file not found: ${missingPath}`
+      throw new AbortError(
+        message,
+        `Use a built-in config (${ModernIdentifiers.join(', ')}), or a path to an existing .theme-check.yml file. Check the extends values in your Theme Check config.`,
+      )
     }
     throw error
   }
@@ -332,7 +371,7 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
 }
 
 export async function outputActiveConfig(themeRoot: string, configPath?: string, environment?: string) {
-  const {ignore, settings, rootUri} = await withThemeCheckConfigErrorHandling(configPath, () =>
+  const {ignore, settings, rootUri} = await withThemeCheckConfigErrorHandling(themeRoot, configPath, () =>
     loadConfig(configPath, themeRoot),
   )
 
@@ -354,7 +393,7 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string,
 }
 
 export async function outputActiveChecks(root: string, configPath?: string, environment?: string) {
-  const {settings, ignore, checks} = await withThemeCheckConfigErrorHandling(configPath, () =>
+  const {settings, ignore, checks} = await withThemeCheckConfigErrorHandling(root, configPath, () =>
     loadConfig(configPath, root),
   )
   // Depending on how the configs were merged during loadConfig, there may be
@@ -421,7 +460,7 @@ export function isExtendedWriteStream(stream: NodeJS.WriteStream): stream is Ext
 }
 
 export async function checkTheme(path: string, config?: string, environment?: string) {
-  const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
+  const {offenses, theme} = await withThemeCheckConfigErrorHandling(path, config, () =>
     withThemeCheckDiagnostics(() =>
       themeCheckRun(path, config, (message) => {
         if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
