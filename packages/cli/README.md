@@ -22177,7 +22177,7 @@ FLAGS
 
   --[no-]allow-custom-checks
       Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and
-      checks. Only command-line arguments or the process environment can enable this.
+      checks. Only command-line arguments or the process environment can enable this. Requires --strict.
       [env: SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS]
 
   --auth-alias=<value>

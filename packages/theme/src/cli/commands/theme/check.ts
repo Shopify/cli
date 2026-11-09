@@ -23,6 +23,7 @@ import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import type {LoadConfigOptions} from '@shopify/theme-check-node'
 import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
@@ -225,8 +226,14 @@ function legacyOutputFormat(argv: string[]): string | undefined {
 }
 
 // Compatibility adapter for theme push, which still presents check results as text.
-export async function runThemeCheck(path: string, outputFormat: string, config?: string, environment?: string) {
-  const result = await checkTheme(path, config, environment)
+export async function runThemeCheck(
+  path: string,
+  outputFormat: string,
+  config?: string,
+  environment?: string,
+  options: LoadConfigOptions = {},
+) {
+  const result = await checkTheme(path, config, environment, options)
   renderThemeCheckResult(result, outputFormat, path, environment)
   return {offenses: result.offenses, theme: result.theme}
 }
