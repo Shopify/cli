@@ -1,4 +1,4 @@
-import {checkForCLIVersions} from './cli-version-check.js'
+import {checkForCLIVersions, getCachedCurrentMajorCLIVersion} from './cli-version-check.js'
 import * as confStore from './conf-store.js'
 import {CLI_KIT_VERSION} from '../../public/common/version.js'
 import {inTemporaryDirectory} from '../../public/node/fs.js'
@@ -76,36 +76,46 @@ async function withRegistry(handler: HttpHandler, run: (storage: LocalStorage<co
   }
 }
 
-test('prerun starts without waiting and postrun reuses its in-flight lookup', async () => {
-  let requests = 0
-  let releaseRequest!: () => void
-  const requestCanFinish = new Promise<void>((resolve) => {
-    releaseRequest = resolve
-  })
-  await withRegistry(
-    http.get('https://registry.npmjs.org/*', async () => {
-      requests += 1
-      await requestCanFinish
-      return HttpResponse.json(metadata)
-    }),
-    async (storage) => {
-      try {
-        await checkForNewVersionInBackground()
-        await vi.waitFor(() => expect(requests).toBe(1))
-        const postrunLookup = versionToAutoUpgrade()
-        releaseRequest()
+test.each(['missing', 'expired'])(
+  'postrun skips the %s cache without waiting for the prerun lookup',
+  async (cacheState) => {
+    let requests = 0
+    let releaseRequest!: () => void
+    const requestCanFinish = new Promise<void>((resolve) => {
+      releaseRequest = resolve
+    })
+    await withRegistry(
+      http.get('https://registry.npmjs.org/*', async () => {
+        requests += 1
+        await requestCanFinish
+        return HttpResponse.json(metadata)
+      }),
+      async (storage) => {
+        try {
+          if (cacheState === 'expired') {
+            confStore.cacheStore(currentMajorCacheKey, currentMajorVersion)
+            const cache = storage.get('cache')!
+            cache[currentMajorCacheKey]!.timestamp -= 24 * 60 * 60 * 1000 + 1
+            storage.set('cache', cache)
+          }
+          await checkForNewVersionInBackground()
+          await vi.waitFor(() => expect(requests).toBe(1))
+          expect(versionToAutoUpgrade()).toBeUndefined()
+          releaseRequest()
 
-        await expect(postrunLookup).resolves.toBe(currentMajorVersion)
-        expect(requests).toBe(1)
-        expect(storage.get('cache')?.[latestCacheKey]?.value).toBe(nextMajorVersion)
-        expect(storage.get('cache')?.[currentMajorCacheKey]?.value).toBe(currentMajorVersion)
-      } finally {
-        releaseRequest()
-        await checkForCLIVersions()
-      }
-    },
-  )
-})
+          await checkForCLIVersions()
+          expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+          expect(requests).toBe(1)
+          expect(storage.get('cache')?.[latestCacheKey]?.value).toBe(nextMajorVersion)
+          expect(storage.get('cache')?.[currentMajorCacheKey]?.value).toBe(currentMajorVersion)
+        } finally {
+          releaseRequest()
+          await checkForCLIVersions()
+        }
+      },
+    )
+  },
+)
 
 test('reuses both caches for 24 hours and refreshes them with one request after expiry', async () => {
   let requests = 0
@@ -122,12 +132,14 @@ test('reuses both caches for 24 hours and refreshes them with one request after 
       const populatedAt = storage.get('cache')![currentMajorCacheKey]!.timestamp
       const now = vi.spyOn(Date, 'now').mockReturnValue(populatedAt + 23 * 60 * 60 * 1000)
       await checkForNewVersionInBackground()
-      await expect(versionToAutoUpgrade()).resolves.toBe(currentMajorVersion)
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
       expect(requests).toBe(1)
 
       now.mockReturnValue(populatedAt + 24 * 60 * 60 * 1000 + 1)
       await checkForNewVersionInBackground()
-      await expect(versionToAutoUpgrade()).resolves.toBe(currentMajorVersion)
+      expect(versionToAutoUpgrade()).toBeUndefined()
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
       expect(requests).toBe(2)
     },
   )
@@ -144,8 +156,10 @@ test('caches a successful lookup even when no current-major update is available'
       })
     }),
     async () => {
-      await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
-      await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBeUndefined()
+      await checkForNewVersionInBackground()
+      expect(versionToAutoUpgrade()).toBeUndefined()
       expect(requests).toBe(1)
     },
   )
@@ -160,14 +174,17 @@ test('backs off failed lookups for five minutes without discarding cached versio
     }),
     async (storage) => {
       confStore.cacheStore(latestCacheKey, CLI_KIT_VERSION)
-      await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
-      await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBeUndefined()
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBeUndefined()
       expect(requests).toBe(1)
       expect(storage.get('cache')?.[latestCacheKey]?.value).toBe(CLI_KIT_VERSION)
 
       const failedAt = storage.get('cache')![`${currentMajorCacheKey}-lookup-failure`]!.timestamp
       vi.spyOn(Date, 'now').mockReturnValue(failedAt + 5 * 60 * 1000 + 1)
-      await expect(versionToAutoUpgrade()).resolves.toBe(currentMajorVersion)
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
       expect(requests).toBe(2)
     },
   )
@@ -200,10 +217,60 @@ test('does not refresh a missing major cache when auto-upgrade is disabled and l
   await withCache(async () => {
     confStore.cacheStore(latestCacheKey, nextMajorVersion)
     await checkForNewVersionInBackground()
-    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+    expect(versionToAutoUpgrade()).toBeUndefined()
     expect(fetch).not.toHaveBeenCalled()
   })
 })
+
+test('reads a fresh current-major version even when latest is not cached', async () => {
+  const fetch = vi.spyOn(httpClient, 'fetch')
+  await withCache(async () => {
+    confStore.cacheStore(currentMajorCacheKey, currentMajorVersion)
+    expect(getCachedCurrentMajorCLIVersion()).toBe(currentMajorVersion)
+    expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+test('a forced upgrade skips a missing current-major cache without using latest or fetching', async () => {
+  vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', '1')
+  const fetch = vi.spyOn(httpClient, 'fetch')
+  await withCache(async () => {
+    confStore.cacheStore(latestCacheKey, nextMajorVersion)
+    expect(getCachedCurrentMajorCLIVersion()).toBeUndefined()
+    expect(versionToAutoUpgrade()).toBeUndefined()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+test.each([24 * 60 * 60 * 1000 - 1, 24 * 60 * 60 * 1000, 24 * 60 * 60 * 1000 + 1])(
+  'expires current-major cache-only reads at 24 hours, age=%i ms',
+  async (ageMs) => {
+    const fetch = vi.spyOn(httpClient, 'fetch')
+    await withCache(async (storage) => {
+      confStore.cacheStore(currentMajorCacheKey, currentMajorVersion)
+      const timestamp = storage.get('cache')![currentMajorCacheKey]!.timestamp
+      vi.spyOn(Date, 'now').mockReturnValue(timestamp + ageMs)
+      const expectedVersion = ageMs < 24 * 60 * 60 * 1000 ? currentMajorVersion : undefined
+      expect(getCachedCurrentMajorCLIVersion()).toBe(expectedVersion)
+      expect(versionToAutoUpgrade()).toBe(expectedVersion)
+      expect(fetch).not.toHaveBeenCalled()
+    })
+  },
+)
+
+test.each(['invalid-version', nextMajorVersion, prereleaseVersion])(
+  'skips an invalid, wrong-major, or prerelease cached version: %s',
+  async (version) => {
+    const fetch = vi.spyOn(httpClient, 'fetch')
+    await withCache(async () => {
+      confStore.cacheStore(currentMajorCacheKey, version)
+      expect(getCachedCurrentMajorCLIVersion()).toBeUndefined()
+      expect(versionToAutoUpgrade()).toBeUndefined()
+      expect(fetch).not.toHaveBeenCalled()
+    })
+  },
+)
 
 test.each(['CI', 'prerelease'])('skips background and automatic lookups for %s', async (gate) => {
   vi.mocked(isCI).mockReturnValue(gate === 'CI')
@@ -211,7 +278,7 @@ test.each(['CI', 'prerelease'])('skips background and automatic lookups for %s',
   const fetch = vi.spyOn(httpClient, 'fetch')
   await withCache(async () => {
     await checkForNewVersionInBackground()
-    await expect(versionToAutoUpgrade()).resolves.toBeUndefined()
+    expect(versionToAutoUpgrade()).toBeUndefined()
     expect(fetch).not.toHaveBeenCalled()
   })
 })
@@ -229,7 +296,8 @@ test('a forced lookup runs in prerun even when normal update checks are disabled
     }),
     async () => {
       await checkForNewVersionInBackground()
-      await expect(versionToAutoUpgrade()).resolves.toBe(currentMajorVersion)
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
       expect(requests).toBe(1)
     },
   )

@@ -96,7 +96,7 @@ function findAlias(aliases: string[]) {
 
 /**
  * Starts a shared background lookup for manual-upgrade hints and automatic upgrades.
- * The postrun hook reuses the cached versions or the in-flight lookup.
+ * The postrun hook reads fresh cached versions without waiting for an in-flight lookup.
  */
 export async function checkForNewVersionInBackground(): Promise<void> {
   const [{CLI_KIT_VERSION}, {isPreReleaseVersion}, {isCI}, {getAutoUpgradeEnabled}] = await Promise.all([

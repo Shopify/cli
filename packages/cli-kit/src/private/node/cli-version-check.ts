@@ -24,17 +24,23 @@ interface PackageMetadata {
 
 let pendingLookup: Promise<CLIVersions> | undefined
 
+export function getCachedCurrentMajorCLIVersion(): string | undefined {
+  const cached = cacheRetrieve(currentMajorCacheKey)
+  if (cached && satisfies(cached.value, currentMajorRange) && Date.now() - cached.timestamp < cacheExpiryMs) {
+    return cached.value
+  }
+  return undefined
+}
+
 export async function checkForCLIVersions({includeCurrentMajor = true} = {}): Promise<CLIVersions> {
   if (pendingLookup) return pendingLookup
 
   const latest = cacheRetrieve(latestCacheKey)
-  const currentMajor = cacheRetrieve(currentMajorCacheKey)
+  const currentMajor = getCachedCurrentMajorCLIVersion()
   const now = Date.now()
   const latestIsFresh = latest && valid(latest.value) && now - latest.timestamp < cacheExpiryMs
-  const currentMajorIsFresh =
-    currentMajor && satisfies(currentMajor.value, currentMajorRange) && now - currentMajor.timestamp < cacheExpiryMs
-  if (latestIsFresh && (!includeCurrentMajor || currentMajorIsFresh)) {
-    return {latest: latest.value, currentMajor: currentMajor?.value}
+  if (latestIsFresh && (!includeCurrentMajor || currentMajor)) {
+    return {latest: latest.value, currentMajor}
   }
 
   const failure = cacheRetrieve(failureCacheKey)

@@ -19,6 +19,7 @@ import {isCI} from './system.js'
 import {globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
+import {getCachedCurrentMajorCLIVersion} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {lt as semverLt} from 'semver'
 import type {UpgradeResult} from './upgrade/types.js'
@@ -166,13 +167,13 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
 }
 
 /**
- * Finds the newest stable release in the current major, or skips automatic upgrades.
+ * Reads a fresh cached stable release in the current major, or skips automatic upgrades.
  * Auto-upgrade is enabled by default and can be disabled via `setAutoUpgradeEnabled(false)`.
  * Also skips for CI, pre-release versions, or when no newer version is available.
  *
  * @returns The version string to upgrade to, or undefined if no upgrade should happen.
  */
-export async function versionToAutoUpgrade(): Promise<string | undefined> {
+export function versionToAutoUpgrade(): string | undefined {
   const currentVersion = CLI_KIT_VERSION
   const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
   if (!forced && !getAutoUpgradeEnabled()) {
@@ -187,8 +188,7 @@ export async function versionToAutoUpgrade(): Promise<string | undefined> {
     outputDebug('Auto-upgrade: Skipping auto-upgrade for pre-release version.')
     return undefined
   }
-  const {checkForCLIVersions} = await import('../../private/node/cli-version-check.js')
-  const {currentMajor} = await checkForCLIVersions()
+  const currentMajor = getCachedCurrentMajorCLIVersion()
   const newerVersion = currentMajor && semverLt(currentVersion, currentMajor) ? currentMajor : undefined
   if (!newerVersion) outputDebug('Auto-upgrade: No newer version available in the current major.')
   return newerVersion

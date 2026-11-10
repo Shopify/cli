@@ -90,7 +90,7 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
  */
 export async function autoUpgradeIfNeeded(): Promise<void> {
   const {versionToAutoUpgrade, warnIfUpgradeAvailable} = await import('../upgrade.js')
-  const newerVersion = await versionToAutoUpgrade()
+  const newerVersion = versionToAutoUpgrade()
   if (!newerVersion) {
     await warnIfUpgradeAvailable()
     return
