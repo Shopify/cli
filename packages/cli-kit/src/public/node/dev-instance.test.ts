@@ -10,8 +10,6 @@ import {
 } from './dev-instance.js'
 import {AbortError} from './error.js'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, rmdir, writeFile} from './fs.js'
-import {joinPath} from './path.js'
-import * as system from './system.js'
 import {
   getConcurrentOutputContext,
   useConcurrentOutputContext,
@@ -382,83 +380,6 @@ describe('acquireDevInstance', () => {
       await instance.release()
     })
   })
-
-  test.skipIf(process.platform !== 'win32').each([true, false])(
-    'handles a locked metadata file without losing the previous record, unlocks=%s',
-    {timeout: 20000},
-    async (releaseBeforeRetryLimit) => {
-      await inTemporaryDirectory(async (directory) => {
-        const identity = {command: 'app dev', directory}
-        const instance = await acquireDevInstance(identity)
-        const readyFile = joinPath(directory, 'reader-ready')
-        const releaseFile = joinPath(directory, 'release-reader')
-        const reader = system
-          .exec(
-            'powershell.exe',
-            [
-              '-NoProfile',
-              '-NonInteractive',
-              '-Command',
-              `
-              $ErrorActionPreference = 'Stop'
-              $handle = [System.IO.File]::Open($env:DEV_INSTANCE_TEST_INFO_FILE, 'Open', 'Read', 'Read')
-              try {
-                [System.IO.File]::WriteAllText($env:DEV_INSTANCE_TEST_READY_FILE, 'ready')
-                $deadline = [DateTime]::UtcNow.AddSeconds(10)
-                while (-not [System.IO.File]::Exists($env:DEV_INSTANCE_TEST_RELEASE_FILE) -and [DateTime]::UtcNow -lt $deadline) {
-                  Start-Sleep -Milliseconds 10
-                }
-              } finally {
-                $handle.Dispose()
-              }
-            `,
-            ],
-            {
-              env: {
-                ...process.env,
-                DEV_INSTANCE_TEST_INFO_FILE: instance.paths.infoFile,
-                DEV_INSTANCE_TEST_READY_FILE: readyFile,
-                DEV_INSTANCE_TEST_RELEASE_FILE: releaseFile,
-              },
-            },
-          )
-          .then(
-            () => undefined,
-            (error: Error) => error,
-          )
-        const sleep = system.sleep
-        const retryDelay = vi.spyOn(system, 'sleep')
-        if (releaseBeforeRetryLimit) {
-          retryDelay.mockImplementation(async (seconds) => {
-            await writeFile(releaseFile, '')
-            await expect(reader).resolves.toBeUndefined()
-            await sleep(seconds)
-          })
-        }
-        try {
-          await vi.waitFor(() => expect(fileExists(readyFile)).resolves.toBe(true), {timeout: 10000})
-          const updating = instance.update({status: 'running'})
-          if (releaseBeforeRetryLimit) {
-            await expect(updating).resolves.toBeUndefined()
-            await expect(readDevInstance(identity)).resolves.toMatchObject({status: 'running'})
-          } else {
-            await expect(updating).rejects.toHaveProperty('code', expect.stringMatching(/^(EPERM|EACCES|EBUSY)$/))
-            await expect(readDevInstance(identity)).resolves.toMatchObject({status: 'starting'})
-            expect(retryDelay).toHaveBeenCalledTimes(5)
-          }
-          expect(retryDelay).toHaveBeenCalledWith(0.1)
-        } finally {
-          retryDelay.mockRestore()
-          await writeFile(releaseFile, '')
-          try {
-            await expect(reader).resolves.toBeUndefined()
-          } finally {
-            await instance.release()
-          }
-        }
-      })
-    },
-  )
 
   test('can save status again after a write fails', async () => {
     await inTemporaryDirectory(async (directory) => {

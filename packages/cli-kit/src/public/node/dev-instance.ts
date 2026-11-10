@@ -2,7 +2,6 @@ import {getOrCreateHiddenShopifyFolder} from './hidden-folder.js'
 import {joinPath} from './path.js'
 import {fileExists, glob, mkdir, readFile, removeFile, removeFileSync, renameFile, rmdir} from './fs.js'
 import {AbortError} from './error.js'
-import {sleep} from './system.js'
 import {outputDebug} from './output.js'
 import {formatJsonOutputTimestamp} from './json-output-schema.js'
 import {hashString, randomUUID} from './crypto.js'
@@ -409,20 +408,7 @@ async function writeDevInstanceInfo(infoFile: string, info: DevInstanceInfo): Pr
   // Write then rename so readers never see a partial file. Details may hold local URLs with keys, so keep it private.
   const temporaryFile = `${infoFile}.${info.sessionId}.tmp`
   await writeFileWithMode(temporaryFile, `${JSON.stringify(info, null, 2)}\n`, {mode: 0o600})
-  await renameDevInstanceInfo(temporaryFile, infoFile)
-}
-
-async function renameDevInstanceInfo(temporaryFile: string, infoFile: string, retries = 5): Promise<void> {
-  try {
-    await renameFile(temporaryFile, infoFile)
-  } catch (error) {
-    const errorCode = (error as NodeJS.ErrnoException | undefined)?.code
-    if (process.platform !== 'win32' || retries === 0 || !['EPERM', 'EACCES', 'EBUSY'].includes(errorCode ?? '')) {
-      throw error
-    }
-    await sleep(0.1)
-    await renameDevInstanceInfo(temporaryFile, infoFile, retries - 1)
-  }
+  await renameFile(temporaryFile, infoFile)
 }
 
 function isLockedError(error: unknown): boolean {
