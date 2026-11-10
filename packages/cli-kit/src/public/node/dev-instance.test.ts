@@ -11,7 +11,7 @@ import {
 import {AbortError} from './error.js'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, rmdir, writeFile} from './fs.js'
 import {joinPath} from './path.js'
-import {exec} from './system.js'
+import * as system from './system.js'
 import {
   getConcurrentOutputContext,
   useConcurrentOutputContext,
@@ -392,8 +392,7 @@ describe('acquireDevInstance', () => {
         const instance = await acquireDevInstance(identity)
         const readyFile = joinPath(directory, 'reader-ready')
         const releaseFile = joinPath(directory, 'release-reader')
-        const temporaryFile = `${instance.paths.infoFile}.${instance.info.sessionId}.tmp`
-        const reader = exec(
+        const reader = system.exec(
           'powershell.exe',
           [
             '-NoProfile',
@@ -406,10 +405,6 @@ describe('acquireDevInstance', () => {
                 [System.IO.File]::WriteAllText($env:DEV_INSTANCE_TEST_READY_FILE, 'ready')
                 $deadline = [DateTime]::UtcNow.AddSeconds(10)
                 while (-not [System.IO.File]::Exists($env:DEV_INSTANCE_TEST_RELEASE_FILE) -and [DateTime]::UtcNow -lt $deadline) {
-                  if ($env:DEV_INSTANCE_TEST_RELEASE_EARLY -eq '1' -and [System.IO.File]::Exists($env:DEV_INSTANCE_TEST_TEMP_FILE)) {
-                    Start-Sleep -Milliseconds 200
-                    break
-                  }
                   Start-Sleep -Milliseconds 10
                 }
               } finally {
@@ -423,14 +418,21 @@ describe('acquireDevInstance', () => {
               DEV_INSTANCE_TEST_INFO_FILE: instance.paths.infoFile,
               DEV_INSTANCE_TEST_READY_FILE: readyFile,
               DEV_INSTANCE_TEST_RELEASE_FILE: releaseFile,
-              DEV_INSTANCE_TEST_TEMP_FILE: temporaryFile,
-              DEV_INSTANCE_TEST_RELEASE_EARLY: releaseBeforeRetryLimit ? '1' : '0',
             },
           },
         ).then(
           () => undefined,
           (error: Error) => error,
         )
+        const sleep = system.sleep
+        const retryDelay = vi.spyOn(system, 'sleep')
+        if (releaseBeforeRetryLimit) {
+          retryDelay.mockImplementation(async (seconds) => {
+            await writeFile(releaseFile, '')
+            await expect(reader).resolves.toBeUndefined()
+            await sleep(seconds)
+          })
+        }
         try {
           await vi.waitFor(() => expect(fileExists(readyFile)).resolves.toBe(true), {timeout: 10000})
           const updating = instance.update({status: 'running'})
@@ -440,8 +442,11 @@ describe('acquireDevInstance', () => {
           } else {
             await expect(updating).rejects.toHaveProperty('code', expect.stringMatching(/^(EPERM|EACCES|EBUSY)$/))
             await expect(readDevInstance(identity)).resolves.toMatchObject({status: 'starting'})
+            expect(retryDelay).toHaveBeenCalledTimes(5)
           }
+          expect(retryDelay).toHaveBeenCalledWith(0.1)
         } finally {
+          retryDelay.mockRestore()
           await writeFile(releaseFile, '')
           try {
             await expect(reader).resolves.toBeUndefined()
