@@ -6,7 +6,7 @@ import {inTemporaryDirectory} from '../../public/node/fs.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {checkForNewVersionInBackground} from '../../public/node/hooks/prerun.js'
 import {versionToAutoUpgrade} from '../../public/node/upgrade.js'
-import {checkForCachedNewVersion} from '../../public/node/node-package-manager.js'
+import {checkForCachedNewVersion, checkForNewVersion} from '../../public/node/node-package-manager.js'
 import * as httpClient from '../../public/node/http.js'
 import {isCI} from '../../public/node/system.js'
 import {isPreReleaseVersion} from '../../public/node/version.js'
@@ -58,13 +58,18 @@ async function withCache(run: (storage: LocalStorage<confStore.ConfSchema>) => P
     const storage = new LocalStorage<confStore.ConfSchema>({cwd: directory})
     const retrieve = confStore.cacheRetrieve
     const store = confStore.cacheStore
+    const repopulate = confStore.cacheRetrieveOrRepopulate
     const retrieveSpy = vi.spyOn(confStore, 'cacheRetrieve').mockImplementation((key) => retrieve(key, storage))
     const storeSpy = vi.spyOn(confStore, 'cacheStore').mockImplementation((key, value) => store(key, value, storage))
+    const repopulateSpy = vi
+      .spyOn(confStore, 'cacheRetrieveOrRepopulate')
+      .mockImplementation((key, populate, timeout) => repopulate(key, populate, timeout, storage))
     try {
       await run(storage)
     } finally {
       retrieveSpy.mockRestore()
       storeSpy.mockRestore()
+      repopulateSpy.mockRestore()
     }
   })
 }
@@ -166,6 +171,42 @@ test('excludes a deprecated higher stable release after latest is moved back', a
         currentMajor: currentMajorVersion,
       })
       expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+    },
+  )
+})
+
+test('public ranged checks cannot seed or overwrite the vetted auto-upgrade target with a deprecated release', async () => {
+  const deprecatedVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+  let requests = 0
+  await withRegistry(
+    http.get('https://registry.npmjs.org/*', () => {
+      requests += 1
+      return HttpResponse.json({
+        name: '@shopify/cli',
+        'dist-tags': {latest: currentMajorVersion},
+        versions: {
+          [currentMajorVersion]: {name: '@shopify/cli', version: currentMajorVersion},
+          [deprecatedVersion]: {
+            name: '@shopify/cli',
+            version: deprecatedVersion,
+            deprecated: 'Broken release; do not install',
+          },
+        },
+      })
+    }),
+    async () => {
+      const options = {versionRange: currentMajorRange, cacheExpiryInHours: 24}
+      await expect(checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, options)).resolves.toBe(deprecatedVersion)
+      expect(versionToAutoUpgrade()).toBeUndefined()
+
+      await checkForCLIVersions()
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+      await expect(checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, options)).resolves.toBe(deprecatedVersion)
+      await expect(
+        checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, {versionRange: currentMajorRange}),
+      ).resolves.toBe(deprecatedVersion)
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+      expect(requests).toBe(3)
     },
   )
 })

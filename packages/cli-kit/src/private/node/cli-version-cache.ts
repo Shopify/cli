@@ -27,6 +27,12 @@ export function getCLIVersionCacheKey(registry: string, versionRange?: string): 
   return `npm-package-@shopify/cli${versionRange ? `@${versionRange}` : ''}:registry:${hashString(registry)}`
 }
 
+export function getPublicCLIVersionCacheKey(registry: string, versionRange?: string): PackageVersionKey {
+  const latestCacheKey = getCLIVersionCacheKey(registry)
+  // Generic range results are not vetted for deprecation and must not feed auto-upgrades.
+  return versionRange ? `${latestCacheKey}:range:${versionRange}` : latestCacheKey
+}
+
 export function getCachedCLIVersion(versionRange?: string): string | undefined {
   if (!currentRegistry) return undefined
   const cached = cacheRetrieve(getCLIVersionCacheKey(currentRegistry, versionRange))

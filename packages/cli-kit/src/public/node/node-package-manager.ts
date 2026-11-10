@@ -7,7 +7,7 @@ import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
-import {getCachedCLIVersion, getCLIVersionCacheKey, resolveCLIRegistry} from '../../private/node/cli-version-cache.js'
+import {getCachedCLIVersion, getPublicCLIVersionCacheKey, resolveCLIRegistry} from '../../private/node/cli-version-cache.js'
 import {parseJSON} from '../common/json.js'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -323,7 +323,7 @@ export async function checkForNewVersion(
   try {
     const cacheKey: PackageVersionKey =
       dependency === '@shopify/cli'
-        ? getCLIVersionCacheKey(await resolveCLIRegistry(), versionRange)
+        ? getPublicCLIVersionCacheKey(await resolveCLIRegistry(), versionRange)
         : `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
     lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
