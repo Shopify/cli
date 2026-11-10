@@ -392,13 +392,14 @@ describe('acquireDevInstance', () => {
         const instance = await acquireDevInstance(identity)
         const readyFile = joinPath(directory, 'reader-ready')
         const releaseFile = joinPath(directory, 'release-reader')
-        const reader = system.exec(
-          'powershell.exe',
-          [
-            '-NoProfile',
-            '-NonInteractive',
-            '-Command',
-            `
+        const reader = system
+          .exec(
+            'powershell.exe',
+            [
+              '-NoProfile',
+              '-NonInteractive',
+              '-Command',
+              `
               $ErrorActionPreference = 'Stop'
               $handle = [System.IO.File]::Open($env:DEV_INSTANCE_TEST_INFO_FILE, 'Open', 'Read', 'Read')
               try {
@@ -411,19 +412,20 @@ describe('acquireDevInstance', () => {
                 $handle.Dispose()
               }
             `,
-          ],
-          {
-            env: {
-              ...process.env,
-              DEV_INSTANCE_TEST_INFO_FILE: instance.paths.infoFile,
-              DEV_INSTANCE_TEST_READY_FILE: readyFile,
-              DEV_INSTANCE_TEST_RELEASE_FILE: releaseFile,
+            ],
+            {
+              env: {
+                ...process.env,
+                DEV_INSTANCE_TEST_INFO_FILE: instance.paths.infoFile,
+                DEV_INSTANCE_TEST_READY_FILE: readyFile,
+                DEV_INSTANCE_TEST_RELEASE_FILE: releaseFile,
+              },
             },
-          },
-        ).then(
-          () => undefined,
-          (error: Error) => error,
-        )
+          )
+          .then(
+            () => undefined,
+            (error: Error) => error,
+          )
         const sleep = system.sleep
         const retryDelay = vi.spyOn(system, 'sleep')
         if (releaseBeforeRetryLimit) {
