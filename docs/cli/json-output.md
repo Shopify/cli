@@ -242,6 +242,30 @@ events from stderr; missing required input then produces a fatal error instead o
 
 ## Exempt only streaming commands
 
+`shopify app function replay --json` writes `FunctionReplayRecord` records to stdout as JSONL in watch mode.
+Each record has `type` and a UTC whole-second `timestamp`. The three record types are:
+
+- `status`: `watching` after the initial file scan completes, and `cancelled` when replay stops after cancellation.
+- `build`: `success` or `failed` after a rebuild. A failed build includes its failure message in `error`.
+- `execution`: the native Function runner `result` and the `exitCode` of that Function run. Native fields, numeric
+  tokens, and strings are preserved. `result.success: false` reports a completed Function failure.
+
+Rebuild records and executions wait for `watching`. The first execution uses the latest successful startup rebuild,
+or the original extension if no rebuild occurred. A failed startup rebuild waits for a successful rebuild before execution.
+Build failures and completed Function failures are recoverable: replay keeps watching and does not set the process
+exit code from the Function run. Build output and runner diagnostics use command diagnostic events on stderr.
+The failed build message is also available in the stdout build record; it does not create a second stderr diagnostic.
+
+Fatal setup, watcher, or runner failures stop replay, write the standard `{error: {...}}` envelope to stdout, and exit
+nonzero. They do not emit `cancelled`. On `SIGINT`, `SIGTERM`, or `SIGQUIT`, replay emits `cancelled` and exits with
+code 130, 143, or 131, respectively. When stdout closes with `EPIPE`, replay cancels and stops writing records so a
+pipeline can finish. There is no final success result. With `--no-watch --json`, replay returns one native
+`FunctionRunResult` document and uses that run's exit code instead.
+
+Setup prompts use stderr. Use `--json --no-input` for unattended replay with JSON diagnostics on stderr.
+`app function replay --json-schema` describes finite results, stdout records, fatal errors, and stderr side events.
+The stdout record definition is `FunctionReplayRecord`; `Event` describes stderr side events.
+
 `shopify app dev --json` writes dev stream records as identical JSONL bytes to stdout and the session log. Each record
 has `timestamp`, `source`, and `message`, with `level` when available. The log contains process output, preview URLs,
 and session status messages. There is no final success result. Preview errors remain log records so that the
