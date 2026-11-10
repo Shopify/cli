@@ -1,16 +1,13 @@
-import {cacheRetrieve, cacheStore, PackageVersionKey} from './conf-store.js'
+import {cacheRetrieve, cacheStore} from './conf-store.js'
+import {getCachedCLIVersion, getCLIVersionCacheKey, resolveCLIRegistry} from './cli-version-cache.js'
 import {CLI_KIT_VERSION} from '../../public/common/version.js'
 import {outputDebug} from '../../public/node/output.js'
-import {maxSatisfying, SemVer, valid, satisfies} from 'semver'
+import {maxSatisfying, SemVer, valid} from 'semver'
 
-const cacheExpiryMs = 24 * 60 * 60 * 1000
 const failureBackoffMs = 5 * 60 * 1000
 const requestTimeoutMs = 3000
 const packageName = '@shopify/cli'
 const currentMajorRange = `${new SemVer(CLI_KIT_VERSION).major}.x`
-const latestCacheKey: PackageVersionKey = `npm-package-${packageName}`
-const currentMajorCacheKey: PackageVersionKey = `${latestCacheKey}@${currentMajorRange}`
-const failureCacheKey: PackageVersionKey = `${currentMajorCacheKey}-lookup-failure`
 
 interface CLIVersions {
   latest?: string
@@ -22,46 +19,49 @@ interface PackageMetadata {
   versions: Record<string, {version: string; deprecated?: string}>
 }
 
-let pendingLookup: Promise<CLIVersions> | undefined
+const pendingLookups = new Map<string, Promise<CLIVersions>>()
 
 export function getCachedCurrentMajorCLIVersion(): string | undefined {
-  const cached = cacheRetrieve(currentMajorCacheKey)
-  if (cached && satisfies(cached.value, currentMajorRange) && Date.now() - cached.timestamp < cacheExpiryMs) {
-    return cached.value
-  }
-  return undefined
+  return getCachedCLIVersion(currentMajorRange)
 }
 
 export async function checkForCLIVersions({includeCurrentMajor = true} = {}): Promise<CLIVersions> {
-  if (pendingLookup) return pendingLookup
+  try {
+    const registry = await resolveCLIRegistry()
+    const lookupKey = getCLIVersionCacheKey(registry, currentMajorRange)
+    const pendingLookup = pendingLookups.get(lookupKey)
+    if (pendingLookup) return pendingLookup
 
-  const latest = cacheRetrieve(latestCacheKey)
-  const currentMajor = getCachedCurrentMajorCLIVersion()
-  const now = Date.now()
-  const latestIsFresh = latest && valid(latest.value) && now - latest.timestamp < cacheExpiryMs
-  if (latestIsFresh && (!includeCurrentMajor || currentMajor)) {
-    return {latest: latest.value, currentMajor}
+    const latest = getCachedCLIVersion()
+    const currentMajor = getCachedCurrentMajorCLIVersion()
+    if (latest && (!includeCurrentMajor || currentMajor)) return {latest, currentMajor}
+
+    const failure = cacheRetrieve(`${lookupKey}-lookup-failure`)
+    if (failure && Date.now() - failure.timestamp < failureBackoffMs) return {}
+
+    const lookup = fetchAndCacheVersions(registry)
+      .catch(() => ({}))
+      .finally(() => {
+        pendingLookups.delete(lookupKey)
+      })
+    pendingLookups.set(lookupKey, lookup)
+    return lookup
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    outputDebug('Skipping the CLI version lookup after a registry or cache failure.')
+    return {}
   }
-
-  const failure = cacheRetrieve(failureCacheKey)
-  if (failure && now - failure.timestamp < failureBackoffMs) return {}
-
-  pendingLookup = fetchAndCacheVersions()
-    .catch(() => ({}))
-    .finally(() => {
-      pendingLookup = undefined
-    })
-  return pendingLookup
 }
 
-async function fetchAndCacheVersions(): Promise<CLIVersions> {
+async function fetchAndCacheVersions(registry: string): Promise<CLIVersions> {
+  const latestCacheKey = getCLIVersionCacheKey(registry)
+  const currentMajorCacheKey = getCLIVersionCacheKey(registry, currentMajorRange)
+  const failureCacheKey = `${currentMajorCacheKey}-lookup-failure` as const
   try {
-    const [{fetch}, {default: registryUrl}, {default: registryAuthToken}] = await Promise.all([
+    const [{fetch}, {default: registryAuthToken}] = await Promise.all([
       import('../../public/node/http.js'),
-      import('registry-url'),
       import('registry-auth-token'),
     ])
-    const registry = registryUrl('@shopify')
     const url = new URL(encodeURIComponent(packageName).replace(/^%40/, '@'), registry)
     const auth = registryAuthToken(registry, {recursive: true})
     const headers: Record<string, string> = {

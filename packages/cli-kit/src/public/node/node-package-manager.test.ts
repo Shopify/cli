@@ -31,6 +31,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {LocalStorage} from './local-storage.js'
 import * as confStore from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
+import registryUrl from 'registry-url'
 import {http, HttpResponse} from 'msw'
 import {setupServer} from 'msw/node'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
@@ -38,7 +39,10 @@ import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 vi.mock('./version.js')
 vi.mock('./system.js')
 vi.mock('latest-version')
+vi.mock('registry-url')
 vi.mock('./is-global')
+
+beforeEach(() => vi.mocked(registryUrl).mockReturnValue('https://registry.npmjs.org/'))
 
 const mockedExec = vi.mocked(exec)
 const mockedCaptureOutput = vi.mocked(captureOutput)
@@ -656,6 +660,25 @@ describe('checkForNewVersion', () => {
     expect(latestVersion).toHaveBeenCalledTimes(3)
     expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {version: '4.x'})
     expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {version: '5.x'})
+  })
+
+  test('scopes CLI latest and range cache producers to the configured registry', async () => {
+    vi.mocked(latestVersion)
+      .mockResolvedValueOnce('6.0.0')
+      .mockResolvedValueOnce('4.10.1')
+      .mockResolvedValueOnce('5.0.0')
+      .mockResolvedValueOnce('4.9.0')
+    await checkForNewVersion('@shopify/cli', '4.8.4', {cacheExpiryInHours: 24})
+    await checkForNewVersion('@shopify/cli', '4.8.4', {versionRange: '4.x', cacheExpiryInHours: 24})
+    vi.mocked(registryUrl).mockReturnValue('https://mirror.example.com/')
+    await expect(checkForNewVersion('@shopify/cli', '4.8.4', {cacheExpiryInHours: 24})).resolves.toBe('5.0.0')
+    await expect(
+      checkForNewVersion('@shopify/cli', '4.8.4', {versionRange: '4.x', cacheExpiryInHours: 24}),
+    ).resolves.toBe('4.9.0')
+    vi.mocked(registryUrl).mockClear()
+    expect(checkForCachedNewVersion('@shopify/cli', '4.8.4')).toBe('5.0.0')
+    expect(registryUrl).not.toHaveBeenCalled()
+    expect(latestVersion).toHaveBeenCalledTimes(4)
   })
 
   test('refreshes a major-specific cache to discover a later backport', async () => {

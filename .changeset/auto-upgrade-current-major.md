@@ -3,4 +3,4 @@
 '@shopify/cli': patch
 ---
 
-Auto-upgrade refreshes current-major versions in the background and skips upgrades when no fresh cached version is available.
+Keep npm-based auto-upgrades on the newest non-deprecated stable release in the installed major, including maintenance fixes after a newer major is released.

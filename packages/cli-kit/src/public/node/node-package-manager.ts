@@ -7,6 +7,7 @@ import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {getCachedCLIVersion, getCLIVersionCacheKey, resolveCLIRegistry} from '../../private/node/cli-version-cache.js'
 import {parseJSON} from '../common/json.js'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -318,9 +319,12 @@ export async function checkForNewVersion(
     return getLatestNPMPackageVersion(dependency, versionRange)
   }
 
-  const cacheKey: PackageVersionKey = `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
   let lastVersion
   try {
+    const cacheKey: PackageVersionKey =
+      dependency === '@shopify/cli'
+        ? getCLIVersionCacheKey(await resolveCLIRegistry(), versionRange)
+        : `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
     lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -340,13 +344,14 @@ export async function checkForNewVersion(
 
 /**
  * Given an NPM dependency, it checks if there's a cached more recent version, and if there is, it returns its value.
+ * For Shopify CLI, reads only fresh entries from the registry resolved by an earlier version lookup.
  * @param dependency - The dependency name (e.g. react)
  * @param currentVersion - The current version.
  * @returns A more recent version or undefined if there's no more recent version.
  */
 export function checkForCachedNewVersion(dependency: string, currentVersion: string): string | undefined {
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
-  const lastVersion = cacheRetrieve(cacheKey)?.value
+  const lastVersion = dependency === '@shopify/cli' ? getCachedCLIVersion() : cacheRetrieve(cacheKey)?.value
 
   if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
     return lastVersion

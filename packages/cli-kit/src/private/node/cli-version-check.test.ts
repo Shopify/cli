@@ -1,10 +1,12 @@
 import {checkForCLIVersions, getCachedCurrentMajorCLIVersion} from './cli-version-check.js'
+import {getCLIVersionCacheKey, resolveCLIRegistry} from './cli-version-cache.js'
 import * as confStore from './conf-store.js'
 import {CLI_KIT_VERSION} from '../../public/common/version.js'
 import {inTemporaryDirectory} from '../../public/node/fs.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {checkForNewVersionInBackground} from '../../public/node/hooks/prerun.js'
 import {versionToAutoUpgrade} from '../../public/node/upgrade.js'
+import {checkForCachedNewVersion} from '../../public/node/node-package-manager.js'
 import * as httpClient from '../../public/node/http.js'
 import {isCI} from '../../public/node/system.js'
 import {isPreReleaseVersion} from '../../public/node/version.js'
@@ -37,8 +39,8 @@ const metadata = {
     [CLI_KIT_VERSION, currentMajorVersion, prereleaseVersion, nextMajorVersion].map((version) => [version, {version}]),
   ),
 }
-const latestCacheKey = 'npm-package-@shopify/cli'
-const currentMajorCacheKey = `${latestCacheKey}@${currentMajorRange}` as const
+const latestCacheKey = getCLIVersionCacheKey('https://registry.npmjs.org/')
+const currentMajorCacheKey = getCLIVersionCacheKey('https://registry.npmjs.org/', currentMajorRange)
 
 beforeEach(() => {
   vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', undefined)
@@ -51,6 +53,7 @@ afterEach(() => {
 })
 
 async function withCache(run: (storage: LocalStorage<confStore.ConfSchema>) => Promise<void>) {
+  await resolveCLIRegistry()
   await inTemporaryDirectory(async (directory) => {
     const storage = new LocalStorage<confStore.ConfSchema>({cwd: directory})
     const retrieve = confStore.cacheRetrieve
@@ -210,6 +213,177 @@ test('backs off failed lookups for five minutes without discarding cached versio
       expect(requests).toBe(2)
     },
   )
+})
+
+test('registry switches isolate fresh latest and current-major caches while the new lookup is pending', async () => {
+  let secondRegistryRequests = 0
+  let releaseRequest!: () => void
+  const requestCanFinish = new Promise<void>((resolve) => {
+    releaseRequest = resolve
+  })
+  const server = setupServer(
+    http.get('https://registry.npmjs.org/*', () => HttpResponse.json(metadata)),
+    http.get('https://mirror.example.com/*', async () => {
+      secondRegistryRequests += 1
+      await requestCanFinish
+      return HttpResponse.json({
+        'dist-tags': {latest: CLI_KIT_VERSION},
+        versions: {[CLI_KIT_VERSION]: {version: CLI_KIT_VERSION}},
+      })
+    }),
+  )
+  server.listen({onUnhandledRequest: 'error'})
+  try {
+    await withCache(async () => {
+      await checkForCLIVersions()
+      vi.mocked(registryUrl).mockReturnValue('https://mirror.example.com/')
+      const lookup = checkForCLIVersions()
+      try {
+        await vi.waitFor(() => expect(secondRegistryRequests).toBe(1))
+        vi.mocked(registryUrl).mockClear()
+        expect(versionToAutoUpgrade()).toBeUndefined()
+        expect(checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)).toBeUndefined()
+        expect(registryUrl).not.toHaveBeenCalled()
+      } finally {
+        releaseRequest()
+        await lookup
+      }
+      expect(getCachedCurrentMajorCLIVersion()).toBe(CLI_KIT_VERSION)
+      expect(checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)).toBeUndefined()
+    })
+  } finally {
+    releaseRequest()
+    server.close()
+  }
+})
+
+test('a registry failure does not suppress a lookup from another registry', async () => {
+  const server = setupServer(
+    http.get('https://registry.npmjs.org/*', () => new HttpResponse(null, {status: 503})),
+    http.get('https://mirror.example.com/*', () => HttpResponse.json(metadata)),
+  )
+  server.listen({onUnhandledRequest: 'error'})
+  try {
+    await withCache(async () => {
+      await expect(checkForCLIVersions()).resolves.toEqual({})
+      vi.mocked(registryUrl).mockReturnValue('https://mirror.example.com/')
+      await expect(checkForCLIVersions()).resolves.toEqual({
+        latest: nextMajorVersion,
+        currentMajor: currentMajorVersion,
+      })
+    })
+  } finally {
+    server.close()
+  }
+})
+
+test('in-flight lookups are shared only within the same registry and late results retain their source', async () => {
+  let requests = 0
+  let releaseRequest!: () => void
+  const requestCanFinish = new Promise<void>((resolve) => {
+    releaseRequest = resolve
+  })
+  const server = setupServer(
+    http.get('https://registry.npmjs.org/*', async () => {
+      requests += 1
+      await requestCanFinish
+      return HttpResponse.json(metadata)
+    }),
+    http.get('https://mirror.example.com/*', () =>
+      HttpResponse.json({
+        'dist-tags': {latest: CLI_KIT_VERSION},
+        versions: {[CLI_KIT_VERSION]: {version: CLI_KIT_VERSION}},
+      }),
+    ),
+  )
+  server.listen({onUnhandledRequest: 'error'})
+  try {
+    await withCache(async () => {
+      const firstLookup = checkForCLIVersions()
+      const sharedLookup = checkForCLIVersions()
+      try {
+        await vi.waitFor(() => expect(requests).toBe(1))
+        vi.mocked(registryUrl).mockReturnValue('https://mirror.example.com/')
+        await expect(checkForCLIVersions()).resolves.toEqual({latest: CLI_KIT_VERSION, currentMajor: CLI_KIT_VERSION})
+      } finally {
+        releaseRequest()
+        await Promise.all([firstLookup, sharedLookup])
+      }
+      expect(requests).toBe(1)
+      expect(getCachedCurrentMajorCLIVersion()).toBe(CLI_KIT_VERSION)
+      expect(checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)).toBeUndefined()
+    })
+  } finally {
+    releaseRequest()
+    server.close()
+  }
+})
+
+test('normalizes registry identity without including URL credentials, query, or fragment in cache keys', async () => {
+  let requests = 0
+  await withRegistry(
+    http.get('https://registry.npmjs.org/*', () => {
+      requests += 1
+      return HttpResponse.json(metadata)
+    }),
+    async (storage) => {
+      vi.mocked(registryUrl).mockReturnValue(
+        'https://synthetic-user:synthetic-password@REGISTRY.NPMJS.ORG:443/?synthetic-query#synthetic-fragment',
+      )
+      await checkForCLIVersions()
+      const keys = Object.keys(storage.get('cache')!)
+      expect(keys).toEqual(expect.arrayContaining([latestCacheKey, currentMajorCacheKey]))
+      expect(keys.join(' ')).not.toContain('synthetic')
+      vi.mocked(registryUrl).mockReturnValue('https://registry.npmjs.org')
+      await checkForCLIVersions()
+      expect(requests).toBe(1)
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+    },
+  )
+})
+
+test('registry paths are distinct cache sources', async () => {
+  let requests = 0
+  await withRegistry(
+    http.get('https://registry.npmjs.org/*', () => {
+      requests += 1
+      return HttpResponse.json(metadata)
+    }),
+    async () => {
+      await checkForCLIVersions()
+      vi.mocked(registryUrl).mockReturnValue('https://registry.npmjs.org/mirror/')
+      await checkForCLIVersions()
+      expect(requests).toBe(2)
+    },
+  )
+})
+
+test('registry ports and major ranges have distinct cache keys', async () => {
+  vi.mocked(registryUrl).mockReturnValue('https://registry.npmjs.org:8443/')
+  const registry = await resolveCLIRegistry()
+  expect(getCLIVersionCacheKey(registry)).not.toBe(latestCacheKey)
+  expect(getCLIVersionCacheKey(registry, '5.x')).not.toBe(getCLIVersionCacheKey(registry, '6.x'))
+})
+
+test('ignores legacy unscoped caches and rejects reads when the registry cannot be resolved', async () => {
+  await withCache(async () => {
+    confStore.cacheStore('npm-package-@shopify/cli', nextMajorVersion)
+    confStore.cacheStore(`npm-package-@shopify/cli@${currentMajorRange}`, currentMajorVersion)
+    expect(versionToAutoUpgrade()).toBeUndefined()
+    expect(checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)).toBeUndefined()
+
+    confStore.cacheStore(latestCacheKey, nextMajorVersion)
+    confStore.cacheStore(currentMajorCacheKey, currentMajorVersion)
+    expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+    vi.mocked(registryUrl).mockImplementation(() => {
+      throw new Error('Invalid registry configuration')
+    })
+    await expect(checkForCLIVersions()).resolves.toEqual({})
+    vi.mocked(registryUrl).mockClear()
+    expect(versionToAutoUpgrade()).toBeUndefined()
+    expect(checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)).toBeUndefined()
+    expect(registryUrl).not.toHaveBeenCalled()
+  })
 })
 
 test('uses the configured scoped registry and its authentication', async () => {
