@@ -658,9 +658,31 @@ describe('checkForNewVersion', () => {
     ).resolves.toBe('4.10.1')
     expect(checkForCachedNewVersion('@shopify/cli', '4.8.4')).toBe('6.0.0')
     expect(latestVersion).toHaveBeenCalledTimes(3)
-    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {version: '4.x'})
-    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {version: '5.x'})
+    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {
+      version: '4.x',
+      registryUrl: 'https://registry.npmjs.org/',
+    })
+    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {
+      version: '5.x',
+      registryUrl: 'https://registry.npmjs.org/',
+    })
   })
+
+  test.each([undefined, '2.x'])(
+    'preserves dependency registry resolution for non-CLI range %s',
+    async (versionRange) => {
+      vi.mocked(latestVersion).mockResolvedValue('2.2.3')
+      vi.mocked(registryUrl).mockClear()
+
+      await expect(checkForNewVersion('dependency', '2.2.2', versionRange ? {versionRange} : {})).resolves.toBe('2.2.3')
+      if (versionRange) {
+        expect(latestVersion).toHaveBeenCalledWith('dependency', {version: versionRange})
+      } else {
+        expect(latestVersion).toHaveBeenCalledWith('dependency')
+      }
+      expect(registryUrl).not.toHaveBeenCalled()
+    },
+  )
 
   test('scopes CLI latest and range cache producers to the configured registry', async () => {
     vi.mocked(latestVersion)

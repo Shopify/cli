@@ -7,7 +7,11 @@ import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
-import {getCachedCLIVersion, getPublicCLIVersionCacheKey, resolveCLIRegistry} from '../../private/node/cli-version-cache.js'
+import {
+  getCachedCLIVersion,
+  getPublicCLIVersionCacheKey,
+  resolveCLIRegistry,
+} from '../../private/node/cli-version-cache.js'
 import {parseJSON} from '../common/json.js'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -314,17 +318,16 @@ export async function checkForNewVersion(
   currentVersion: string,
   {cacheExpiryInHours = 0, versionRange}: {cacheExpiryInHours?: number | undefined; versionRange?: string} = {},
 ): Promise<string | undefined> {
-  const getLatestVersion = async () => {
-    outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
-    return getLatestNPMPackageVersion(dependency, versionRange)
-  }
-
   let lastVersion
   try {
-    const cacheKey: PackageVersionKey =
-      dependency === '@shopify/cli'
-        ? getPublicCLIVersionCacheKey(await resolveCLIRegistry(), versionRange)
-        : `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
+    const registry = dependency === '@shopify/cli' ? await resolveCLIRegistry() : undefined
+    const getLatestVersion = async () => {
+      outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+      return getLatestNPMPackageVersion(dependency, versionRange, registry)
+    }
+    const cacheKey: PackageVersionKey = registry
+      ? getPublicCLIVersionCacheKey(registry, versionRange)
+      : `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
     lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -708,13 +711,19 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
  * Returns the latest available version of an NPM package.
  * @param name - The name of the NPM package.
  * @param versionRange - An optional semver range that limits the versions considered.
+ * @param registry - The captured registry used for both the request and its cache key.
  * @returns A promise to get the latest available version of a package.
  */
-async function getLatestNPMPackageVersion(name: string, versionRange?: string) {
+async function getLatestNPMPackageVersion(name: string, versionRange?: string, registry?: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     const {default: latestVersion} = await import('latest-version')
-    return versionRange ? latestVersion(name, {version: versionRange}) : latestVersion(name)
+    // latest-version forwards registryUrl to package-json, but omits it from its options type.
+    const options = {
+      ...(versionRange ? {version: versionRange} : {}),
+      ...(registry ? {registryUrl: registry} : {}),
+    }
+    return versionRange || registry ? latestVersion(name, options) : latestVersion(name)
   })
 }
 
