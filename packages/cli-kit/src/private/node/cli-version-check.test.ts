@@ -211,6 +211,36 @@ test('uses the configured scoped registry and its authentication', async () => {
   )
 })
 
+test.each([
+  ['cross-port', 'https://registry.npmjs.org:8443/'],
+  ['subdomain', 'https://mirror.registry.npmjs.org/'],
+  ['unrelated-host', 'https://other.example.com/'],
+])('rejects authenticated %s redirects without sending credentials to the destination', async (_kind, destination) => {
+  const token = 'synthetic-redirect-test-token'
+  vi.mocked(registryAuthToken).mockReturnValue({type: 'Bearer', token})
+  let destinationRequests = 0
+  const server = setupServer(
+    http.get('https://registry.npmjs.org/*', ({request}) => {
+      expect(request.headers.get('authorization')).toBe(`Bearer ${token}`)
+      return new HttpResponse(null, {status: 302, headers: {location: destination}})
+    }),
+    http.get(`${destination}*`, () => {
+      destinationRequests += 1
+      return HttpResponse.json(metadata)
+    }),
+  )
+  server.listen({onUnhandledRequest: 'error'})
+  try {
+    await withCache(async () => {
+      await expect(checkForCLIVersions()).resolves.toEqual({})
+      expect(destinationRequests).toBe(0)
+      expect(versionToAutoUpgrade()).toBeUndefined()
+    })
+  } finally {
+    server.close()
+  }
+})
+
 test('does not refresh a missing major cache when auto-upgrade is disabled and latest is cached', async () => {
   vi.mocked(confStore.getAutoUpgradeEnabled).mockReturnValue(false)
   const fetch = vi.spyOn(httpClient, 'fetch')

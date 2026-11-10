@@ -71,7 +71,8 @@ async function fetchAndCacheVersions(): Promise<CLIVersions> {
 
     const response = await fetch(
       url.href,
-      {headers},
+      // Registry credentials must never be copied to a redirect destination.
+      {headers, redirect: 'error'},
       {
         useNetworkLevelRetry: false,
         useAbortSignal: true,
