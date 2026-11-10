@@ -2204,6 +2204,43 @@ describe('load', () => {
     ])
   })
 
+  test('builds webhook subscription uids from the uri resolved against the application url', async () => {
+    // Given
+    const appConfigurationWithWebhooks = `
+    name = "for-testing-webhooks"
+    client_id = "1234567890"
+    application_url = "https://example.com/"
+    embedded = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [[webhooks.subscriptions]]
+      topics = ["orders/create"]
+      uri = "/webhooks/orders"
+
+    [[webhooks.subscriptions]]
+      topics = ["orders/paid"]
+      uri = "https://other.example.com/webhooks"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+    `
+    await writeConfig(appConfigurationWithWebhooks)
+
+    // When
+    const app = await loadTestingApp({remoteFlags: []})
+
+    // Then
+    const webhookUids = app.allExtensions
+      .filter((ext) => ext.specification.identifier === 'webhook_subscription')
+      .map((ext) => ext.uid)
+    expect(webhookUids).toEqual([
+      'orders/create::::https://example.com/webhooks/orders',
+      'orders/paid::::https://other.example.com/webhooks',
+    ])
+  })
+
   describe('configuration expansion', () => {
     test('creates and validates expanded modules without knowing the specification', async () => {
       const specification = createConfigExtensionSpecification({
