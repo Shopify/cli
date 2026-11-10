@@ -7,16 +7,27 @@ describe('validateTemplateValue', () => {
     expect(() => validateTemplateValue(undefined)).not.toThrow()
   })
 
-  test('should not throw an error for valid GitHub URL', () => {
-    expect(() => validateTemplateValue('https://github.com/Shopify/example')).not.toThrow()
+  test.each([
+    'https://github.com/Shopify/example',
+    'https://github.com/example/custom-template/subpath#branch',
+    'https://github.com/Shopify/shopify-app-template-node',
+  ])('should not throw an error for valid GitHub URL %s', (template) => {
+    expect(() => validateTemplateValue(template)).not.toThrow()
   })
 
   test('should throw an AbortError for non-GitHub URL', () => {
     expect(() => validateTemplateValue('https://gitlab.com/example')).toThrow(AbortError)
   })
 
-  test('should not throw an error for valid predefined template', () => {
-    expect(() => validateTemplateValue('node')).not.toThrow()
+  test.each(['reactRouter', 'none', 'ruby', 'remix'])(
+    'should not throw an error for valid predefined template %s',
+    (template) => {
+      expect(() => validateTemplateValue(template)).not.toThrow()
+    },
+  )
+
+  test('should reject the removed node template alias', () => {
+    expect(() => validateTemplateValue('node')).toThrow(AbortError)
   })
 
   test('should throw an AbortError for invalid template', () => {
@@ -34,7 +45,7 @@ describe('validateFlavorValue', () => {
   })
 
   test('should not throw an error when template is provided without flavor', () => {
-    expect(() => validateFlavorValue('node', undefined)).not.toThrow()
+    expect(() => validateFlavorValue('ruby', undefined)).not.toThrow()
   })
 
   test('should throw an AbortError when flavor is provided for custom template', () => {

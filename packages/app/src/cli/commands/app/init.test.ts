@@ -64,6 +64,42 @@ afterEach(() => {
 })
 
 describe('Init command', () => {
+  test.each([{flags: []}, {flags: ['--flavor', 'javascript']}])(
+    'rejects the removed node alias before authentication with $flags',
+    async ({flags}) => {
+      await inTemporaryDirectory(async (directory) => {
+        const validation = await vi.importActual<typeof import('../../services/init/validate.js')>(
+          '../../services/init/validate.js',
+        )
+        vi.mocked(validateTemplateValue).mockImplementation(validation.validateTemplateValue)
+        const outputMock = mockAndCaptureOutput()
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+        try {
+          await expect(
+            Init.run([
+              '--template',
+              'node',
+              '--name',
+              'my-app',
+              '--client-id',
+              'api-key',
+              '--path',
+              directory,
+              ...flags,
+            ]),
+          ).rejects.toThrow('process.exit unexpectedly called with "1"')
+          expect(outputMock.error()).toContain('Only reactRouter, none template aliases are supported')
+          expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+          expect(initPrompt).not.toHaveBeenCalled()
+          expect(initService).not.toHaveBeenCalled()
+        } finally {
+          consoleErrorSpy.mockRestore()
+        }
+      })
+    },
+  )
+
   test('reports all unconditional requirements before running non-interactively', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       vi.stubEnv('CI', 'true')

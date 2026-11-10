@@ -62,10 +62,6 @@ export const templates = {
     label: 'Build an extension-only app',
     visible: true,
   } as Template,
-  node: {
-    url: 'https://github.com/Shopify/shopify-app-template-node',
-    visible: false,
-  } as Template,
   ruby: {
     url: 'https://github.com/Shopify/shopify-app-template-ruby',
     visible: false,
