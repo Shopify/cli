@@ -73,7 +73,10 @@ export type LogFilterField =
   | 'RESULT_STATUS'
   /** The shop's myshopify.com domain, as in shopMyshopifyDomain. */
   | 'SHOP_MYSHOPIFY_DOMAIN'
-  /** The HTTP response status code, such as 500. */
+  /**
+   * The HTTP response status code from 100 to 599, or with EQUALS and NOT_EQUALS,
+   * a class: 2xx, 3xx, 4xx, 5xx (case-insensitive).
+   */
   | 'STATUS_CODE'
   /**
    * The Sidekick event target, such as extensions/security_scan, the Function
@@ -90,7 +93,11 @@ export type LogFilterInput = {
   field: LogFilterField;
   /** How to compare the field with the value. */
   operator: LogFilterOperator;
-  /** The value to compare with, at most 1024 bytes. */
+  /**
+   * For EQUALS and NOT_EQUALS, one string of at most 1024 bytes. For IN, a
+   * JSON-encoded array of 1 to 50 non-blank strings, each at most 1024 bytes.
+   * Duplicate values are matched once.
+   */
   value: Scalars['String']['input'];
 };
 
@@ -98,6 +105,8 @@ export type LogFilterInput = {
 export type LogFilterOperator =
   /** Matches logs whose field equals the value. */
   | 'EQUALS'
+  /** Matches logs whose field equals any string in the JSON-encoded value array. Logs with no value for the field do not match. */
+  | 'IN'
   /** Matches logs whose field doesn't equal the value, including logs with no value for the field. */
   | 'NOT_EQUALS';
 
