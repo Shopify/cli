@@ -26,7 +26,7 @@ import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {getCachedCurrentMajorCLIVersion} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {lt as semverLt} from 'semver'
+import {lt as semverLt, SemVer} from 'semver'
 import type {UpgradeResult} from './upgrade/types.js'
 
 export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
