@@ -161,6 +161,18 @@ describe('fetchTheme', () => {
       'The authenticated account or access token is missing `read_themes` access scope.',
     )
   })
+
+  test('aborts with a Shopify-side error instead of returning undefined when the Admin API returns HTTP 500', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('request-id'))
+
+    // When
+    const error = await fetchTheme(123, session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(SERVER_ERROR_MESSAGE)
+  })
 })
 
 describe('findDevelopmentThemeByName', () => {
@@ -313,6 +325,37 @@ describe('fetchThemes', () => {
     await expect(request).rejects.toBe(gatewayError)
     expect(shouldReportErrorAsUnexpected(gatewayError)).toBe(false)
   })
+
+  test('aborts with a Shopify-side error instead of rethrowing a raw HTTP 500 ClientError', async () => {
+    // Given
+    const serverError = internalServerError('request-id')
+    vi.mocked(adminRequestDoc).mockRejectedValue(serverError)
+
+    // When
+    const error = await fetchThemes(session).catch((error: unknown) => error)
+
+    // Then
+    expect(shouldReportErrorAsUnexpected(serverError)).toBe(true)
+    expect(error).not.toBe(serverError)
+    expect(error).toBeInstanceOf(AbortError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(SERVER_ERROR_MESSAGE)
+    expect(String((error as AbortError).tryMessage)).toBe(
+      'This is a problem on the Shopify side, not with your command. Wait a moment and run the command again. If the problem continues, contact Shopify support and include this request ID: request-id',
+    )
+  })
+
+  test.each([404, 503])('rethrows a raw HTTP %i ClientError unchanged', async (status) => {
+    // Given
+    const clientError = new ClientError({status, headers: new Headers()}, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(clientError)
+
+    // When
+    const request = fetchThemes(session)
+
+    // Then
+    await expect(request).rejects.toBe(clientError)
+  })
 })
 
 describe('fetchChecksums', () => {
@@ -363,6 +406,21 @@ describe('fetchChecksums', () => {
     expect(checksum[0]!.checksum).toEqual('29e2e56057c3b58c02bc7946d7600481')
     expect(checksum[1]!.checksum).toEqual('f14a0bd594f4fee47b13fc09543098ff')
     expect(checksum[2]!.checksum).toEqual(null)
+  })
+
+  test('aborts with a Shopify-side error without a request ID when the HTTP 500 response has none', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError())
+
+    // When
+    const error = await fetchChecksums(123, session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(SERVER_ERROR_MESSAGE)
+    expect(String((error as AbortError).tryMessage)).toBe(
+      'This is a problem on the Shopify side, not with your command. Wait a moment and run the command again.',
+    )
   })
 })
 
@@ -435,6 +493,19 @@ describe('themeCreate', () => {
       responseOptions: {handleErrors: false},
       preferredBehaviour: expectedApiOptions,
     })
+  })
+
+  test('aborts with a Shopify-side error and sends the mutation once when the Admin API returns HTTP 500', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('request-id'))
+
+    // When
+    const error = await themeCreate(params, session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(SERVER_ERROR_MESSAGE)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
   })
 
   test('throws a friendly error when access is denied by a missing theme write access scope', async () => {
@@ -1035,6 +1106,19 @@ describe('parseThemeFileContent', () => {
     })
   })
 })
+
+const SERVER_ERROR_MESSAGE = 'The Admin API for my-shop.myshopify.com returned a server error (HTTP 500).'
+
+function internalServerError(requestId?: string): ClientError {
+  return new ClientError(
+    {
+      status: 500,
+      errors: 'Internal Server Error' as any,
+      headers: new Headers(requestId ? {'x-request-id': requestId} : {}),
+    },
+    {query: ''},
+  )
+}
 
 function trustChallengeError(redirectTo: string): ClientError {
   return new ClientError(

@@ -35,7 +35,7 @@ import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
 import {recordTiming, recordEvent, recordError} from '../analytics.js'
-import {type Variables} from 'graphql-request'
+import {ClientError, type Variables} from 'graphql-request'
 import type {InlineToken, TokenItem} from '../ui.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
@@ -74,6 +74,8 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    // A server error does not mean that the theme is missing, so it must not become `undefined`.
+    abortIfServerError(error, session)
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -646,8 +648,43 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    abortIfServerError(error, options.session)
     throw error
   }
+}
+
+/**
+ * Turns an HTTP 500 from the Admin API into an expected error. The CLI builds these theme
+ * requests itself, so a 500 is a failure on the Shopify side, not a bug in the CLI. Without
+ * this, the raw `ClientError` reaches the error reporter and is filed as a CLI bug.
+ *
+ * Only the requests that set `handleErrors: false` get here with a raw `ClientError`. The
+ * other requests already get an `AbortError` for a 5xx from the GraphQL error handler. The
+ * gateway statuses (502 to 504, 520 to 524) stay raw: `isExpectedApiError` already treats them
+ * as expected.
+ *
+ * @param error - The error thrown by the Admin API request.
+ * @param session - The session of the request, for the store name in the message.
+ */
+function abortIfServerError(error: unknown, session: AdminSession): void {
+  if (!(error instanceof ClientError) || error.response.status !== 500) return
+
+  const requestId = requestIdFromClientError(error)
+  let tryMessage =
+    'This is a problem on the Shopify side, not with your command. Wait a moment and run the command again.'
+  if (requestId) {
+    tryMessage += ` If the problem continues, contact Shopify support and include this request ID: ${requestId}`
+  }
+
+  throw recordError(
+    new AbortError(`The Admin API for ${session.storeFqdn} returned a server error (HTTP 500).`, tryMessage),
+  )
+}
+
+function requestIdFromClientError(error: ClientError): string | undefined {
+  // graphql-request types the response without headers, but it carries the fetch Response's headers.
+  const headers = (error.response as {headers?: {get?: (name: string) => string | null}}).headers
+  return headers?.get?.('x-request-id') ?? undefined
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {
