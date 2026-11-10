@@ -34,7 +34,7 @@ export async function createApp(ctx: {
   cli: CLIProcess
   parentDir: string
   name?: string
-  template?: 'reactRouter' | 'remix' | 'none'
+  template?: 'reactRouter' | 'none'
   flavor?: 'javascript' | 'typescript'
   packageManager?: 'npm' | 'yarn' | 'pnpm' | 'bun'
   orgId?: string
@@ -44,9 +44,8 @@ export async function createApp(ctx: {
   const template = ctx.template ?? 'reactRouter'
   const packageManager =
     ctx.packageManager ?? (process.env.E2E_PACKAGE_MANAGER as 'npm' | 'yarn' | 'pnpm' | 'bun') ?? 'pnpm'
-  // reactRouter/remix both require a --flavor or they'll hang on the language
-  // prompt in non-interactive runs. Default to javascript when template needs
-  // it. For `--template none` (extension-only) flavor is ignored.
+  // React Router requires a --flavor in non-interactive runs.
+  // Default to javascript for React Router; extension-only apps have no flavor.
   const flavor = ctx.flavor ?? (template === 'none' ? undefined : 'javascript')
 
   const args = ['--template', template]

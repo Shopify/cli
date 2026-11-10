@@ -11,13 +11,26 @@ describe('validateTemplateValue', () => {
     expect(() => validateTemplateValue('https://github.com/Shopify/example')).not.toThrow()
   })
 
+  test('should still accept the Remix repository as a custom GitHub template', () => {
+    expect(() =>
+      validateTemplateValue('https://github.com/Shopify/shopify-app-template-remix/subpath#branch'),
+    ).not.toThrow()
+  })
+
+  test('should reject the removed remix template alias', () => {
+    expect(() => validateTemplateValue('remix')).toThrow(AbortError)
+  })
+
   test('should throw an AbortError for non-GitHub URL', () => {
     expect(() => validateTemplateValue('https://gitlab.com/example')).toThrow(AbortError)
   })
 
-  test('should not throw an error for valid predefined template', () => {
-    expect(() => validateTemplateValue('node')).not.toThrow()
-  })
+  test.each(['reactRouter', 'none', 'ruby', 'node'])(
+    'should not throw an error for valid predefined template %s',
+    (template) => {
+      expect(() => validateTemplateValue(template)).not.toThrow()
+    },
+  )
 
   test('should throw an AbortError for invalid template', () => {
     expect(() => validateTemplateValue('invalid-template')).toThrow(AbortError)
@@ -46,10 +59,10 @@ describe('validateFlavorValue', () => {
   })
 
   test('should throw an AbortError for invalid flavor option', () => {
-    expect(() => validateFlavorValue('remix', 'invalid-flavor')).toThrow(AbortError)
+    expect(() => validateFlavorValue('reactRouter', 'invalid-flavor')).toThrow(AbortError)
   })
 
-  test('should not throw an error for valid template and flavor combination', () => {
-    expect(() => validateFlavorValue('remix', 'javascript')).not.toThrow()
+  test.each(['javascript', 'typescript'])('should accept the React Router %s flavor', (flavor) => {
+    expect(() => validateFlavorValue('reactRouter', flavor)).not.toThrow()
   })
 })

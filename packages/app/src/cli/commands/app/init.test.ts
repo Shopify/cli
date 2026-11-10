@@ -64,6 +64,42 @@ afterEach(() => {
 })
 
 describe('Init command', () => {
+  test.each([{flags: []}, {flags: ['--flavor', 'javascript']}])(
+    'rejects the removed remix alias before authentication with $flags',
+    async ({flags}) => {
+      await inTemporaryDirectory(async (directory) => {
+        const validation = await vi.importActual<typeof import('../../services/init/validate.js')>(
+          '../../services/init/validate.js',
+        )
+        vi.mocked(validateTemplateValue).mockImplementation(validation.validateTemplateValue)
+        const outputMock = mockAndCaptureOutput()
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+        try {
+          await expect(
+            Init.run([
+              '--template',
+              'remix',
+              '--name',
+              'my-app',
+              '--client-id',
+              'api-key',
+              '--path',
+              directory,
+              ...flags,
+            ]),
+          ).rejects.toThrow('process.exit unexpectedly called with "1"')
+          expect(outputMock.error()).toContain('Only reactRouter, none template aliases are supported')
+          expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+          expect(initPrompt).not.toHaveBeenCalled()
+          expect(initService).not.toHaveBeenCalled()
+        } finally {
+          consoleErrorSpy.mockRestore()
+        }
+      })
+    },
+  )
+
   test('reports all unconditional requirements before running non-interactively', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       vi.stubEnv('CI', 'true')
@@ -121,8 +157,8 @@ describe('Init command', () => {
       })
 
       vi.mocked(initPrompt).mockResolvedValue({
-        template: 'https://github.com/Shopify/shopify-app-template-remix',
-        templateType: 'remix',
+        template: 'https://github.com/Shopify/shopify-app-template-react-router',
+        templateType: 'reactRouter',
         globalCLIResult: {install: false, alreadyInstalled: false},
       })
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
@@ -224,8 +260,8 @@ describe('Init command', () => {
         )
 
         vi.mocked(initPrompt).mockResolvedValue({
-          template: 'https://github.com/Shopify/shopify-app-template-remix',
-          templateType: 'remix',
+          template: 'https://github.com/Shopify/shopify-app-template-react-router',
+          templateType: 'reactRouter',
           globalCLIResult: {install: false, alreadyInstalled: false},
         })
 
@@ -239,7 +275,7 @@ describe('Init command', () => {
             '--name',
             'my-app',
             '--template',
-            'remix',
+            'reactRouter',
             '--path',
             tmpDir,
           ]),
@@ -282,8 +318,8 @@ describe('Init command', () => {
       })
 
       vi.mocked(initPrompt).mockResolvedValue({
-        template: 'https://github.com/Shopify/shopify-app-template-remix',
-        templateType: 'remix',
+        template: 'https://github.com/Shopify/shopify-app-template-react-router',
+        templateType: 'reactRouter',
         globalCLIResult: {install: false, alreadyInstalled: false},
       })
       vi.mocked(initService).mockResolvedValue(initResult(mockApp))
@@ -295,7 +331,7 @@ describe('Init command', () => {
         '--name',
         'my-new-app',
         '--template',
-        'remix',
+        'reactRouter',
         '--path',
         tmpDir,
       ])
@@ -312,7 +348,7 @@ describe('Init command', () => {
         expect.objectContaining({
           name: 'my-new-app',
           packageManager: 'npm',
-          template: 'https://github.com/Shopify/shopify-app-template-remix',
+          template: 'https://github.com/Shopify/shopify-app-template-react-router',
         }),
       )
     })
@@ -330,7 +366,7 @@ describe('Init command', () => {
         vi.mocked(validateFlavorValue).mockReturnValue(undefined)
 
         // When/Then
-        await expect(Init.run(['--name', '', '--template', 'remix', '--path', tmpDir])).rejects.toThrow(
+        await expect(Init.run(['--name', '', '--template', 'reactRouter', '--path', tmpDir])).rejects.toThrow(
           'process.exit unexpectedly called with "1"',
         )
 
@@ -357,7 +393,7 @@ describe('Init command', () => {
         vi.mocked(validateFlavorValue).mockReturnValue(undefined)
 
         // When/Then
-        await expect(Init.run(['--name', '   ', '--template', 'remix', '--path', tmpDir])).rejects.toThrow(
+        await expect(Init.run(['--name', '   ', '--template', 'reactRouter', '--path', tmpDir])).rejects.toThrow(
           'process.exit unexpectedly called with "1"',
         )
 

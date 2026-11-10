@@ -38,7 +38,7 @@ describe('init', () => {
   })
 
   describe('visibleTemplates', () => {
-    test('omits the deprecated remix template so it is not advertised in --template help text', () => {
+    test('omits the removed remix alias from --template help text', () => {
       expect(visibleTemplates).not.toContain('remix')
     })
 
@@ -49,7 +49,7 @@ describe('init', () => {
 
   test.each<{template: string | undefined; expected: boolean}>([
     {template: 'reactRouter', expected: true},
-    {template: 'remix', expected: true},
+    {template: 'remix', expected: false},
     {template: 'none', expected: false},
     {template: 'https://github.com/Shopify/custom-template', expected: false},
     {template: undefined, expected: false},
