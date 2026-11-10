@@ -312,7 +312,7 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
 export async function checkForNewVersion(
   dependency: string,
   currentVersion: string,
-  {cacheExpiryInHours = 0, versionRange}: {cacheExpiryInHours?: number; versionRange?: string} = {},
+  {cacheExpiryInHours = 0, versionRange}: {cacheExpiryInHours?: number | undefined; versionRange?: string} = {},
 ): Promise<string | undefined> {
   const getLatestVersion = async () => {
     outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
