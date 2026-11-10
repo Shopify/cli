@@ -73,7 +73,10 @@ export type LogFilterField =
   | 'RESULT_STATUS'
   /** The shop's myshopify.com domain, as in shopMyshopifyDomain. */
   | 'SHOP_MYSHOPIFY_DOMAIN'
-  /** The HTTP response status code, such as 500. */
+  /**
+   * The HTTP response status code from 100 to 599, or with EQUALS and NOT_EQUALS,
+   * a class: 2xx, 3xx, 4xx, 5xx (case-insensitive).
+   */
   | 'STATUS_CODE'
   /**
    * The Sidekick event target, such as extensions/security_scan, the Function

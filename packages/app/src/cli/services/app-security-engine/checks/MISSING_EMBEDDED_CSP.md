@@ -1,6 +1,6 @@
 ---
 id: MISSING_EMBEDDED_CSP
-version: 3
+version: 4
 severity: medium
 ---
 
@@ -15,9 +15,12 @@ buttons they can't see.
 
 ## What to look for
 
-1. **Determine if the app is embedded.** Check `shopify.app.toml` for
-   `app_embed` or `theme_app_extension` in the capabilities. If the app
-   is not embedded, this check does not apply.
+1. **Determine if the app is embedded.** Check each `shopify.app*.toml`
+   for the top-level `embedded = true` setting, which makes the app render
+   inside the Shopify admin. If no configuration sets `embedded = true`, the
+   app is not embedded and this check does not apply. Theme app extensions
+   and app embed blocks run on the storefront, so they don't make an app
+   embedded in the admin.
 
 2. **Find where HTTP response headers are set.** Search for:
    - `Content-Security-Policy` in any file
@@ -34,9 +37,10 @@ buttons they can't see.
    A wildcard `frame-ancestors *` is not safe. An absent `frame-ancestors`
    is not safe (browsers default to allowing any origin).
 
-4. **Check for the Shopify Remix helper.** If the app uses
-   `@shopify/shopify-app-remix`, the `addDocumentResponseHeaders` function
-   sets the correct CSP automatically. If it's called, the app is safe.
+4. **Check for the Shopify app SDK helper.** If the app uses
+   `@shopify/shopify-app-react-router` or `@shopify/shopify-app-remix`, the
+   `addDocumentResponseHeaders` function sets the correct CSP automatically.
+   If it's called on document responses, the app is safe.
 
 5. **Check for `X-Frame-Options` as a fallback.** Some apps use
    `X-Frame-Options: ALLOW-FROM https://admin.shopify.com` instead of
@@ -58,7 +62,7 @@ For embedded apps with no `frame-ancestors` directive and a concrete sensitive U
   "line": 1,
   "message": "Embedded app has no frame-ancestors CSP directive — any origin can iframe it",
   "evidence": [
-    { "file": "shopify.app.toml", "line": 5, "quote": "app_embed = true" },
+    { "file": "shopify.app.toml", "line": 5, "quote": "embedded = true" },
     {
       "file": "app/root.tsx",
       "line": 1,
@@ -66,13 +70,13 @@ For embedded apps with no `frame-ancestors` directive and a concrete sensitive U
     }
   ],
   "confidence": "medium",
-  "reasoning": "The app declares app_embed capability but no file sets a Content-Security-Policy with frame-ancestors, and the embedded surface exposes a privileged action that can be clickjacked."
+  "reasoning": "The app sets embedded = true but no file sets a Content-Security-Policy with frame-ancestors, and the embedded surface exposes a privileged action that can be clickjacked."
 }
 ```
 
 Do not report:
 
-- Non-embedded apps (no app_embed or theme_app_extension)
+- Non-embedded apps (no `shopify.app*.toml` sets `embedded = true`)
 - Apps that call `addDocumentResponseHeaders` (handles CSP automatically)
 - Apps with an explicit `frame-ancestors` directive in their CSP
 - Embedded surfaces with no demonstrated sensitive action or privileged UI
