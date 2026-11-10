@@ -33,9 +33,9 @@ export function getPublicCLIVersionCacheKey(registry: string, versionRange?: str
   return versionRange ? `${latestCacheKey}:range:${versionRange}` : latestCacheKey
 }
 
-export function getCachedCLIVersion(versionRange?: string): string | undefined {
-  if (!currentRegistry) return undefined
-  const cached = cacheRetrieve(getCLIVersionCacheKey(currentRegistry, versionRange))
+export function getCachedCLIVersion(versionRange?: string, registry = currentRegistry): string | undefined {
+  if (!registry) return undefined
+  const cached = cacheRetrieve(getCLIVersionCacheKey(registry, versionRange))
   if (
     cached &&
     valid(cached.value) &&

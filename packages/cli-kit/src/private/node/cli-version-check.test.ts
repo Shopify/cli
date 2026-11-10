@@ -298,6 +298,48 @@ test('registry switches isolate fresh latest and current-major caches while the 
   }
 })
 
+test.each([true, false])(
+  'overlapping registry resolutions read their captured cache source with includeCurrentMajor=%s',
+  async (includeCurrentMajor) => {
+    const secondRegistry = 'https://mirror.example.com/'
+    const requests = {first: 0, second: 0}
+    const server = setupServer(
+      http.get('https://registry.npmjs.org/*', () => {
+        requests.first += 1
+        return HttpResponse.json(metadata)
+      }),
+      http.get(`${secondRegistry}*`, () => {
+        requests.second += 1
+        return HttpResponse.json(metadata)
+      }),
+    )
+    server.listen({onUnhandledRequest: 'error'})
+    try {
+      await withCache(async (storage) => {
+        confStore.cacheStore(getCLIVersionCacheKey(secondRegistry), CLI_KIT_VERSION)
+        confStore.cacheStore(getCLIVersionCacheKey(secondRegistry, currentMajorRange), CLI_KIT_VERSION)
+        vi.mocked(registryUrl).mockReturnValueOnce('https://registry.npmjs.org/').mockReturnValue(secondRegistry)
+
+        // Both source resolutions finish before either caller resumes its cache reads.
+        const firstLookup = checkForCLIVersions({includeCurrentMajor})
+        const secondLookup = checkForCLIVersions({includeCurrentMajor})
+        const [firstVersions, secondVersions] = await Promise.all([firstLookup, secondLookup])
+        expect(firstVersions).toEqual({latest: nextMajorVersion, currentMajor: currentMajorVersion})
+        expect(secondVersions).toEqual({latest: CLI_KIT_VERSION, currentMajor: CLI_KIT_VERSION})
+        expect(requests).toEqual({first: 1, second: 0})
+        expect(storage.get('cache')?.[latestCacheKey]?.value).toBe(nextMajorVersion)
+        expect(storage.get('cache')?.[currentMajorCacheKey]?.value).toBe(currentMajorVersion)
+        vi.mocked(registryUrl).mockClear()
+        expect(getCachedCurrentMajorCLIVersion()).toBe(CLI_KIT_VERSION)
+        expect(checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)).toBeUndefined()
+        expect(registryUrl).not.toHaveBeenCalled()
+      })
+    } finally {
+      server.close()
+    }
+  },
+)
+
 test('a registry failure does not suppress a lookup from another registry', async () => {
   const server = setupServer(
     http.get('https://registry.npmjs.org/*', () => new HttpResponse(null, {status: 503})),

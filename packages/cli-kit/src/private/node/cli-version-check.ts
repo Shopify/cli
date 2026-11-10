@@ -32,8 +32,8 @@ export async function checkForCLIVersions({includeCurrentMajor = true} = {}): Pr
     const pendingLookup = pendingLookups.get(lookupKey)
     if (pendingLookup) return pendingLookup
 
-    const latest = getCachedCLIVersion()
-    const currentMajor = getCachedCurrentMajorCLIVersion()
+    const latest = getCachedCLIVersion(undefined, registry)
+    const currentMajor = getCachedCLIVersion(currentMajorRange, registry)
     if (latest && (!includeCurrentMajor || currentMajor)) return {latest, currentMajor}
 
     const failure = cacheRetrieve(`${lookupKey}-lookup-failure`)
