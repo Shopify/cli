@@ -22,6 +22,7 @@ interface Template {
   url: string
   label?: string
   visible: boolean
+  deprecated?: {replacement: string}
   branches?: {
     prompt: string
     options: {[key: string]: TemplateBranch}
@@ -46,9 +47,8 @@ export const templates = {
   remix: {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
     label: 'Build a Remix app',
-    // The remix template is deprecated: kept accessible via `--template remix` for back-compat,
-    // but hidden from help text and the interactive prompt. Use `reactRouter` instead.
     visible: false,
+    deprecated: {replacement: 'reactRouter'},
     branches: {
       prompt: 'For your Remix template, which language do you want?',
       options: {
@@ -65,6 +65,7 @@ export const templates = {
   node: {
     url: 'https://github.com/Shopify/shopify-app-template-node',
     visible: false,
+    deprecated: {replacement: 'reactRouter'},
   } as Template,
   ruby: {
     url: 'https://github.com/Shopify/shopify-app-template-ruby',

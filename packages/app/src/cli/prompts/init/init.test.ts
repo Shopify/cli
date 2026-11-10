@@ -57,6 +57,35 @@ describe('init', () => {
     expect(templateRequiresFlavor(template)).toBe(expected)
   })
 
+  test.each([
+    {template: 'node', flavor: undefined, url: 'https://github.com/Shopify/shopify-app-template-node'},
+    {template: 'remix', flavor: undefined, url: 'https://github.com/Shopify/shopify-app-template-remix#main'},
+    {template: 'remix', flavor: 'javascript', url: 'https://github.com/Shopify/shopify-app-template-remix#javascript'},
+    {template: 'remix', flavor: 'typescript', url: 'https://github.com/Shopify/shopify-app-template-remix#main'},
+  ])('keeps resolving $template with flavor $flavor to its original repository', async ({template, flavor, url}) => {
+    if (template === 'remix' && !flavor) vi.mocked(renderSelectPrompt).mockResolvedValueOnce('main')
+
+    const got = await init({template, flavor})
+
+    expect(got).toEqual({
+      template: url,
+      flavor,
+      templateType: template,
+      globalCLIResult,
+    })
+    if (template === 'remix' && !flavor) {
+      expect(renderSelectPrompt).toHaveBeenCalledWith({
+        choices: [
+          {label: 'JavaScript', value: 'javascript'},
+          {label: 'TypeScript', value: 'main'},
+        ],
+        message: 'For your Remix template, which language do you want?',
+      })
+    } else {
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+    }
+  })
+
   test('it renders branches for templates that have them', async () => {
     const answers = {
       template: 'https://github.com/Shopify/shopify-app-template-react-router#javascript-cli',

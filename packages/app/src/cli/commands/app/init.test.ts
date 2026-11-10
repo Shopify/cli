@@ -373,6 +373,111 @@ describe('Init command', () => {
   })
 })
 
+describe('legacy template deprecation', () => {
+  beforeEach(async () => {
+    const validation = await vi.importActual<typeof import('../../services/init/validate.js')>(
+      '../../services/init/validate.js',
+    )
+    vi.mocked(validateTemplateValue).mockImplementation(validation.validateTemplateValue)
+    vi.mocked(validateFlavorValue).mockImplementation(validation.validateFlavorValue)
+    vi.mocked(inferPackageManager).mockReturnValue('npm')
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient())
+    vi.mocked(appFromIdentifiers).mockResolvedValue(testOrganizationApp())
+    vi.mocked(initService).mockResolvedValue(initResult(testAppLinked()))
+  })
+
+  test.each([
+    {template: 'node', flavor: undefined},
+    {template: 'remix', flavor: undefined},
+    {template: 'remix', flavor: 'javascript'},
+    {template: 'remix', flavor: 'typescript'},
+  ] as const)('warns for $template with flavor $flavor and continues initialization', async ({template, flavor}) => {
+    const templateUrl = `https://github.com/Shopify/shopify-app-template-${template}`
+    vi.mocked(initPrompt).mockResolvedValue({
+      template: templateUrl,
+      templateType: template,
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runInitCommand(['--template', template, '--client-id', 'api-key', ...(flavor ? ['--flavor', flavor] : [])])
+      expect(stdout()).toBe('')
+      // Joins wrapped banner lines so assertions don't depend on terminal width.
+      const warning = unstyled(stderr()).replace(/[\s│╭╮╰╯─]+/g, ' ')
+      expect(warning).toContain(`The ${template} app template is deprecated.`)
+      expect(warning).toContain('It will be removed in a future major release.')
+      expect(warning).toContain('--template reactRouter')
+      expect(warning).toContain('GitHub template URL')
+    })
+    expect(initPrompt).toHaveBeenCalledWith({template, flavor})
+    expect(initService).toHaveBeenCalledOnce()
+  })
+
+  test.each(['node', 'remix'] as const)(
+    'warns on stderr in JSON mode when %s is supplied via the environment',
+    async (template) => {
+      vi.stubEnv('SHOPIFY_FLAG_TEMPLATE', template)
+      vi.mocked(initPrompt).mockResolvedValue({
+        template: `https://github.com/Shopify/shopify-app-template-${template}`,
+        templateType: template,
+        globalCLIResult: {install: false, alreadyInstalled: false},
+      })
+
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runInitCommand([
+          '--json',
+          '--client-id',
+          'api-key',
+          ...(template === 'remix' ? ['--flavor', 'typescript'] : []),
+        ])
+        expect(JSON.parse(stdout()).status).toBe('success')
+        expect(JSON.parse(stderr())).toMatchObject({
+          type: 'diagnostic',
+          level: 'warning',
+          message: expect.stringContaining(`The ${template} app template is deprecated.`),
+        })
+      })
+      expect(initService).toHaveBeenCalledOnce()
+    },
+  )
+
+  test.each([
+    'reactRouter',
+    'none',
+    'ruby',
+    'https://github.com/Shopify/custom-template',
+    'https://github.com/Shopify/shopify-app-template-node',
+    'https://github.com/Shopify/shopify-app-template-remix',
+  ])('does not warn for %s', async (template) => {
+    vi.mocked(initPrompt).mockResolvedValue({
+      template,
+      templateType: 'custom',
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+
+    await withCapturedStandardStreams(async ({stderr}) => {
+      await runInitCommand(['--template', template, '--client-id', 'api-key'])
+      expect(unstyled(stderr())).not.toContain('deprecated')
+    })
+    expect(initService).toHaveBeenCalledOnce()
+  })
+
+  test('still rejects a flavor for node before warning or authentication', async () => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runInitCommand(['--json', '--template', 'node', '--flavor', 'typescript', '--client-id', 'api-key']).catch(
+        handler,
+      )
+      expect(JSON.parse(stdout())).toMatchObject({
+        error: {type: 'abort', message: expect.stringContaining('node template does not support flavors')},
+      })
+      expect(stderr()).toBe('')
+    })
+    expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+    expect(initService).not.toHaveBeenCalled()
+  })
+})
+
 describe('Init JSON output', () => {
   beforeEach(() => {
     vi.mocked(inferPackageManager).mockReturnValue('npm')
