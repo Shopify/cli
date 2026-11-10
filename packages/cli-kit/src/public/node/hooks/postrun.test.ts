@@ -134,7 +134,7 @@ describe('autoUpgradeIfNeeded', () => {
       vi.mocked(isMajorVersionChange).mockImplementation(actualIsMajorVersionChange)
       vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
       vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli')
-      vi.mocked(versionToAutoUpgrade).mockResolvedValue(new SemVer(CLI_KIT_VERSION).inc('patch').version)
+      vi.mocked(versionToAutoUpgrade).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('patch').version)
     })
 
     test('guides unversioned installs to the maintained major when the default formula moves on', async () => {
