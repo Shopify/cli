@@ -94,12 +94,43 @@ export async function buildJSFunction(fun: ExtensionInstance<FunctionConfigType>
   const javyBuilder: JavyBuilder = exports.length === 0 ? DefaultJavyBuilder : new ExportJavyBuilder(exports)
 
   const deps = await validateShopifyFunctionPackageVersion(fun)
+  await checkJSFunction(fun, options)
 
   if (options.useTasks) {
     return buildJSFunctionWithTasks(fun, options, javyBuilder, deps)
   } else {
     return buildJSFunctionWithoutTasks(fun, options, javyBuilder, deps)
   }
+}
+
+// Runs @shopify/shopify_function's check.js, when the package has it, before the function is built.
+export async function checkJSFunction(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+  const check = await findPathUp('node_modules/@shopify/shopify_function/check.js', {type: 'file', cwd: fun.directory})
+  if (!check) return
+
+  await inTemporaryDirectory(async (temporaryDirectory) => {
+    // Each target's export is the function the bundle imports for it
+    const functionPath = joinPath(temporaryDirectory, 'function.json')
+    await writeFile(
+      functionPath,
+      JSON.stringify({
+        handle: fun.handle,
+        directory: fun.directory,
+        entry: fun.entrySourceFilePath,
+        schema: joinPath(fun.directory, 'schema.graphql'),
+        targets: (fun.configuration.targeting ?? []).map((targeting) => ({
+          target: targeting.target,
+          export: targeting.export && camelize(targeting.export),
+          inputQuery: targeting.input_query && joinPath(fun.directory, targeting.input_query),
+        })),
+      }),
+    )
+    await exec(process.execPath, [check, '--function', functionPath], {
+      cwd: fun.directory,
+      stderr: options.stderr,
+      signal: options.signal,
+    })
+  })
 }
 
 async function buildJSFunctionWithoutTasks(

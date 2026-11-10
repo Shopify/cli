@@ -7,6 +7,7 @@ import {
   runWasmOpt,
   runTrampoline,
   buildJSFunction,
+  checkJSFunction,
 } from './build.js'
 import {
   javyBinary,
@@ -475,6 +476,98 @@ describe('bundleExtension', () => {
 
       // Then
       await expect(got).rejects.toThrow(/Could not find your function entry point./)
+    })
+  })
+})
+
+describe('checkJSFunction', () => {
+  const config = {
+    name: 'test function',
+    type: 'function',
+    build: {wasm_opt: true},
+    configuration_ui: false,
+    api_version: '2026-07',
+    targeting: [
+      {target: 'cart.validations.generate.prepare', export: 'cart-validations-generate-prepare'},
+      {
+        target: 'cart.validations.generate.run',
+        input_query: 'src/run.graphql',
+        export: 'cart-validations-generate-run',
+      },
+    ],
+  }
+
+  async function installCheck(tmpDir: string) {
+    const check = joinPath(tmpDir, 'node_modules/@shopify/shopify_function/check.js')
+    await mkdir(dirname(check))
+    await writeFile(check, '')
+    return check
+  }
+
+  test("runs @shopify/shopify_function's check.js with the function's targets", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js', config})
+      const check = await installCheck(tmpDir)
+      let functionJson: unknown
+      vi.mocked(exec).mockImplementation(async (_command, args) => {
+        functionJson = JSON.parse(await readFile(args.at(-1)!))
+      })
+
+      // When
+      await checkJSFunction(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      expect(exec).toHaveBeenCalledWith(
+        process.execPath,
+        [check, '--function', expect.stringMatching(/function\.json$/)],
+        {cwd: tmpDir, stderr, signal},
+      )
+      expect(functionJson).toEqual({
+        handle: ourFunction.handle,
+        directory: tmpDir,
+        entry: 'src/index.js',
+        schema: joinPath(tmpDir, 'schema.graphql'),
+        targets: [
+          {target: 'cart.validations.generate.prepare', export: 'cartValidationsGeneratePrepare'},
+          {
+            target: 'cart.validations.generate.run',
+            export: 'cartValidationsGenerateRun',
+            inputQuery: joinPath(tmpDir, 'src/run.graphql'),
+          },
+        ],
+      })
+    })
+  })
+
+  test('does nothing when @shopify/shopify_function has no check.js', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js', config})
+
+      // When
+      await checkJSFunction(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      expect(exec).not.toHaveBeenCalled()
+    })
+  })
+
+  test('fails the build when the check fails', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js', config})
+      await installShopifyLibrary(tmpDir)
+      const check = await installCheck(tmpDir)
+      vi.mocked(exec).mockRejectedValueOnce(new Error('prepare variables mismatch'))
+
+      // When
+      const got = buildJSFunction(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      await expect(got).rejects.toThrow('prepare variables mismatch')
+      expect(exec).toHaveBeenCalledTimes(1)
+      expect(exec).toHaveBeenCalledWith(process.execPath, [check, '--function', expect.any(String)], expect.anything())
     })
   })
 })
