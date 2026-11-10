@@ -145,6 +145,28 @@ test('reuses both caches for 24 hours and refreshes them with one request after 
   )
 })
 
+test('excludes a deprecated higher stable release after latest is moved back', async () => {
+  const deprecatedVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+  await withRegistry(
+    http.get('https://registry.npmjs.org/*', () =>
+      HttpResponse.json({
+        'dist-tags': {latest: currentMajorVersion},
+        versions: {
+          [currentMajorVersion]: {version: currentMajorVersion},
+          [deprecatedVersion]: {version: deprecatedVersion, deprecated: 'Broken release; do not install'},
+        },
+      }),
+    ),
+    async () => {
+      await expect(checkForCLIVersions()).resolves.toEqual({
+        latest: currentMajorVersion,
+        currentMajor: currentMajorVersion,
+      })
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+    },
+  )
+})
+
 test('caches a successful lookup even when no current-major update is available', async () => {
   let requests = 0
   await withRegistry(

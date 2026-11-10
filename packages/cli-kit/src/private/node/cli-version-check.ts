@@ -19,7 +19,7 @@ interface CLIVersions {
 
 interface PackageMetadata {
   'dist-tags': {latest?: string}
-  versions: Record<string, {version: string}>
+  versions: Record<string, {version: string; deprecated?: string}>
 }
 
 let pendingLookup: Promise<CLIVersions> | undefined
@@ -82,7 +82,8 @@ async function fetchAndCacheVersions(): Promise<CLIVersions> {
     if (!response.ok) throw new Error('The npm registry request failed.')
     const metadata = (await response.json()) as PackageMetadata
     const latest = metadata['dist-tags'].latest
-    const currentMajor = maxSatisfying(Object.keys(metadata.versions), currentMajorRange)
+    const eligibleVersions = Object.keys(metadata.versions).filter((version) => !metadata.versions[version]?.deprecated)
+    const currentMajor = maxSatisfying(eligibleVersions, currentMajorRange)
     if (!latest || !valid(latest) || !metadata.versions[latest] || !currentMajor) {
       throw new Error('The npm registry did not return stable CLI versions.')
     }
