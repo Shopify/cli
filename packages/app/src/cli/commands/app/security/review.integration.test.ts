@@ -152,7 +152,6 @@ const suppressionEntries = [
     path: 'shopify.app.toml',
     code: 'api_version 2024-01',
     reason: 'The upgrade ships with the next release.',
-    configurations: ['shopify.app.toml'],
   },
   {
     source: 'agent',
@@ -160,7 +159,6 @@ const suppressionEntries = [
     kind: 'false-positive',
     path: 'app/routes/orders.tsx',
     reason: 'The logger redacts tokens.',
-    configurations: ['shopify.app.toml'],
   },
 ]
 
@@ -713,7 +711,7 @@ describe('app security review command boundary', () => {
         {...leakEntry, path: 'app/routes/old-orders.tsx'},
         {...leakEntry, code: 'access token is written to the server log'},
         {...leakEntry, check: 'UNAUTHENTICATED_ENDPOINT'},
-        {...suppressionEntries[0], configurations: ['shopify.app.staging.toml']},
+        {...suppressionEntries[0], source: 'agent', check: 'CSRF_MISSING_PROTECTION'},
       ])
 
       const json = await runJsonCommand(['--path', directory])
@@ -747,9 +745,7 @@ describe('app security review command boundary', () => {
       expect(box).toContain(
         'suppressions[1]: agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx · matches 2 findings At app/routes/orders.tsx:5, app/routes/orders.tsx:9',
       )
-      expect(box).toContain(
-        'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
-      )
+      expect(box).toContain('Not evaluated: 2 entries (no executed results for their checks).')
       expect(JSON.parse(withOldFile.stdout).suppressions.entries[0]).toMatchObject({status: 'stale', likelyPath: null})
     })
   })

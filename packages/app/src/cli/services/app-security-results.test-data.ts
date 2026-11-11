@@ -32,6 +32,6 @@ export function appSecurityResultsFor(
         : null,
       agent: sources.agent ? {path: paths.agentFindingsPath, document: sources.agent} : null,
     },
-    ...combineFindings({...sources, suppressions: {entries: suppressionEntries, resultsKey, missingPaths}}),
+    ...combineFindings({...sources, suppressions: {entries: suppressionEntries, missingPaths}}),
   }
 }

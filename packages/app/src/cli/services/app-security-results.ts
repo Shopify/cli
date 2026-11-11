@@ -94,7 +94,6 @@ export async function loadAppSecurityResults(
     agent: agentSource?.document ?? null,
     suppressions: {
       entries: suppressionEntries,
-      resultsKey: key,
       missingPaths: await missingSuppressionPaths(selection.appDirectory, suppressionEntries),
     },
   })

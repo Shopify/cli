@@ -851,14 +851,13 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
     kind: 'accepted-risk',
     path: 'app/routes/orders.tsx',
     reason: 'The logs stay on the developer machine.',
-    configurations: ['shopify.app.toml'],
     ...overrides,
   })
   const entries = [
     entry({}),
     entry({source: 'agent', kind: 'false-positive', reason: 'The token is a placeholder.'}),
     entry({path: 'app/routes/deleted.tsx'}),
-    entry({configurations: ['shopify.app.staging.toml']}),
+    entry({check: 'UNAUTHENTICATED_ENDPOINT'}),
   ]
 
   test("fills each finding's suppression from what suppresses it, an entry first, for both sources", async () => {
@@ -951,7 +950,7 @@ describe('renderSecurityReviewResult as JSON with shopify.app-security.json', ()
         {
           index: 3,
           source: 'deterministic',
-          check: 'CREDENTIAL_LOG_LEAKAGE',
+          check: 'UNAUTHENTICATED_ENDPOINT',
           kind: 'accepted-risk',
           path: appPath('app/routes/orders.tsx'),
           status: 'not-evaluated',

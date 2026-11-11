@@ -125,7 +125,6 @@ const committedSecretEntry = {
   path: 'app/routes/index.ts',
   code: 'const access_token = "shpa[REDACTED:38]"',
   reason: 'A fake token for the session tests.',
-  configurations: ['shopify.app.toml'],
 }
 
 /**
@@ -745,12 +744,12 @@ describe('app security check --json command boundary', () => {
     })
   })
 
-  test('counts agent entries and entries for another configuration as not evaluated, never as stale', async () => {
+  test('counts entries without executed check results as not evaluated, never as stale', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
       await writeAppSecuritySuppressionsFixture(directory, [
         {...committedSecretEntry, source: 'agent', check: 'CREDENTIAL_LOG_LEAKAGE', code: 'console.log(session)'},
-        {...committedSecretEntry, configurations: ['shopify.app.staging.toml']},
+        {...committedSecretEntry, source: 'agent', check: 'CSRF_MISSING_PROTECTION'},
       ])
 
       const json = await runJsonCommand(['--path', directory])
@@ -765,9 +764,7 @@ describe('app security check --json command boundary', () => {
         ],
       })
       const report = boxText(text.stderr)
-      expect(report).toContain(
-        'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
-      )
+      expect(report).toContain('Not evaluated: 2 entries (no executed results for their checks).')
       expect(report).not.toMatch(/Stale entries|Ambiguous entries/)
     })
   })
@@ -798,21 +795,37 @@ describe('app security check --json command boundary', () => {
     })
   })
 
-  test('an entry naming the configuration file applies without --client-id, one naming a client ID only with it', async () => {
+  test.each(
+    (['false-positive', 'accepted-risk'] as const).flatMap((kind) => [
+      {kind, selection: 'local', flags: ['--config', 'shopify.app.toml']},
+      {kind, selection: 'CI', flags: ['--config', 'ci']},
+      {kind, selection: 'client ID', flags: ['--client-id', 'test-client-id']},
+      {kind, selection: 'no TOML', flags: ['--without-app-config', '--client-id', 'test-client-id']},
+    ]),
+  )('a $kind suppression applies to check and review with $selection selection', async ({kind, selection, flags}) => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
-      // The client ID that shopify.app.toml holds: a plain run still doesn't match it.
-      const byClientId = {...committedSecretEntry, configurations: ['test-client-id']}
-      const exitCode = async (entry: typeof committedSecretEntry, flags: string[] = []) => {
-        await writeAppSecuritySuppressionsFixture(directory, [entry])
-        return (await runJsonCommand(['--path', directory, '--blocking', 'high', ...flags])).exitCode
+      if (selection === 'CI') {
+        const config = await readFile(joinPath(directory, 'shopify.app.toml'))
+        await writeFile(joinPath(directory, 'shopify.app.ci.toml'), config)
       }
-      const withClientId = ['--client-id', 'test-client-id']
+      await writeAppSecuritySuppressionsFixture(directory, [{...committedSecretEntry, kind}])
+      const argv = ['--path', directory, '--blocking', 'high', ...flags]
 
-      await expect(exitCode(committedSecretEntry)).resolves.toBe(0)
-      await expect(exitCode(committedSecretEntry, withClientId)).resolves.toBe(1)
-      await expect(exitCode(byClientId)).resolves.toBe(1)
-      await expect(exitCode(byClientId, withClientId)).resolves.toBe(0)
+      const check = await runJsonCommand(argv)
+      const review = await runJsonCommand(argv, SecurityReview)
+
+      expect(check.exitCode).toBe(0)
+      expect(JSON.parse(check.stdout)).toMatchObject({valid: true, blocking: {blockedCheckCount: 0}})
+      expect(review.exitCode).toBe(0)
+      expect(JSON.parse(review.stdout)).toMatchObject({
+        checks: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'COMMITTED_SECRET',
+            findings: [expect.objectContaining({disposition: 'suppressed'})],
+          }),
+        ]),
+      })
     })
   })
 

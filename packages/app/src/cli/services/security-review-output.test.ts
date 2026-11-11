@@ -505,7 +505,6 @@ describe('buildSecurityReviewAlerts', () => {
       kind: 'accepted-risk',
       path: 'shopify.app.toml',
       reason: 'The upgrade ships with the next release.',
-      configurations: ['shopify.app.toml'],
     }
     const suppressedBox = (input: SecurityReviewPresenterInput) =>
       buildSecurityReviewAlerts(input).find((alert) => String(alert.options.headline).endsWith('suppressed.'))
@@ -568,7 +567,6 @@ describe('buildSecurityReviewAlerts', () => {
           kind: 'false-positive',
           path: 'app/routes/orders.tsx',
           reason: 'The token is a placeholder.',
-          configurations: ['shopify.app.toml'],
           ...entry,
         },
       }
@@ -579,8 +577,8 @@ describe('buildSecurityReviewAlerts', () => {
         not_evaluated_reason: 'no-executed-result',
       },
       {
-        ...entryResult(3, 'not-evaluated', {configurations: ['shopify.app.staging.toml']}),
-        not_evaluated_reason: 'other-configurations',
+        ...entryResult(3, 'not-evaluated', {}),
+        not_evaluated_reason: 'no-executed-result',
       },
     ]
     function inputWithEntries(suppressions: SuppressionEntryResult[], checkIds: string[] = []) {
@@ -623,8 +621,7 @@ describe('buildSecurityReviewAlerts', () => {
       expect(JSON.stringify(alerts.at(-2))).toContain('suppressions[0]:')
       expect(alerts.at(-2)?.options.customSections?.at(-1)).toEqual({
         body: {
-          subdued:
-            'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+          subdued: 'Not evaluated: 2 entries (no executed results for their checks).',
         },
       })
     })
@@ -647,7 +644,7 @@ describe('buildSecurityReviewAlerts', () => {
       const withoutResult = entriesBox(inputWithEntries(entries, ['UNSAFE_INNERHTML']))
 
       expect(leakOnly?.options.customSections?.at(-1)).toEqual({
-        body: {subdued: 'Not evaluated: 1 entry (1 for other app configurations).'},
+        body: {subdued: 'Not evaluated: 1 entry (no executed result for its check).'},
       })
       expect(JSON.stringify(leakOnly)).toContain('suppressions[0]:')
       expect(JSON.stringify(leakOnly)).not.toContain('UNSAFE_INNERHTML')
