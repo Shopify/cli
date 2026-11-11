@@ -780,7 +780,6 @@ describe('securityRecord', () => {
       path: 'app/routes/orders.tsx',
       code: 'const orders = await prisma.order.findMany()',
       reason: 'Every order table holds one shop.',
-      configurations: ['shopify.app.toml'],
     }
 
     test('saves each suppression to shopify.app-security.json with its kind, and saves it once', async () => {
@@ -855,7 +854,7 @@ describe('securityRecord', () => {
       })
     })
 
-    test('lists the --client-id as the configuration of a new entry', async () => {
+    test('saves a configuration-independent entry when recording by client ID', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createAppWithRoute(directory)
         const selection = {...selectionFor(appRoot), clientIdOverride: 'other-client-id'}
@@ -865,9 +864,7 @@ describe('securityRecord', () => {
           testDependencies(documentWith([finding({line: 3, suppression})])),
         )
 
-        expect(result.suppressions?.saved).toStrictEqual([
-          {index: 0, change: 'added', entry: {...savedEntry, configurations: ['other-client-id']}},
-        ])
+        expect(result.suppressions?.saved).toStrictEqual([{index: 0, change: 'added', entry: {...savedEntry}}])
       })
     })
 

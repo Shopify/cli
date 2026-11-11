@@ -524,6 +524,7 @@ describe('appSecurityInstructions suppressions', () => {
       expect(suppressing).toContain("If any are on the agent finding's line, only those findings are companions")
       expect(suppressing).toContain('otherwise, all those findings in the file are companions')
       expect(suppressing).toContain('exact companion numbers in `savedSuppressions.companionFindingNumbers`')
+      expect(suppressing).toContain('Persisted suppressions apply to all app configurations and client-ID runs.')
       expect(suppressing).toContain('this works only when its suppression has `origin: "file"`')
       expect(suppressing).toContain('its origin is `agent`, this command cannot save its companions')
       expect(suppressing).toContain('Report that limit and the reason in `notSaved`')

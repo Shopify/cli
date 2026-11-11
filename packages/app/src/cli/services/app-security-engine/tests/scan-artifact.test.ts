@@ -369,7 +369,6 @@ describe('activeScanIssues', () => {
     kind: 'false-positive',
     path: 'app/a.ts',
     reason: 'A test fixture.',
-    configurations: ['shopify.app.toml'],
     ...overrides,
   })
 
@@ -378,7 +377,7 @@ describe('activeScanIssues', () => {
     return combineFindings({
       deterministic: buildDeterministicFindings(scanResult),
       agent: null,
-      suppressions: {entries, resultsKey: 'shopify.app'},
+      suppressions: {entries},
     }).checks
   }
 

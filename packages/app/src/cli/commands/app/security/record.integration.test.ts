@@ -269,7 +269,6 @@ describe('app security record command boundary', () => {
             path: resolve(appDirectory, 'app', 'routes', 'orders.tsx'),
             code: 'const orders = await prisma.order.findMany()',
             reason: 'Every order table holds one shop.',
-            configurations: ['shopify.app.toml'],
           },
         ],
         alreadySavedCount: 0,

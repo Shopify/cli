@@ -202,15 +202,15 @@ function showRefusal(refusal: SuppressionRefusal): FindingDecision {
   return {...NO_DECISION, resultsChanged}
 }
 
-function interactiveReviewIntroAlert({findings, configuration}: InteractiveReviewSession): SecurityReviewAlert {
+function interactiveReviewIntroAlert({findings}: InteractiveReviewSession): SecurityReviewAlert {
   if (findings.length === 0) {
-    return {type: 'info', options: {headline: `No active findings to review for ${configuration}.`}}
+    return {type: 'info', options: {headline: 'No active findings to review.'}}
   }
   return {
     type: 'info',
     options: {
-      headline: `Reviewing ${countLabel(findings.length, 'active finding')} for ${configuration}, most severe first.`,
-      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop. The suppressions you save are kept when you quit.`,
+      headline: `Reviewing ${countLabel(findings.length, 'active finding')}, most severe first.`,
+      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop. The suppressions you save apply to all app configurations and are kept when you quit.`,
     },
   }
 }
