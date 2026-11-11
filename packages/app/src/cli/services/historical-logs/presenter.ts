@@ -62,6 +62,8 @@ function logDetails(record: LogsResult['logs'][number]): unknown {
           .filter((value) => typeof value === 'string' && value.length > 0)
           .join(' ') || undefined
       )
+    case 'SIDEKICK_EVENT':
+      return record.target
     default:
       return undefined
   }

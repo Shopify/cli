@@ -4090,7 +4090,7 @@
           "type": "option"
         },
         "target": {
-          "description": "Exact Function execution target; excludes non-Function records.",
+          "description": "Exact Function execution or Sidekick event target; excludes other record types.",
           "env": "SHOPIFY_FLAG_TARGET",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4117,7 +4117,8 @@
             "function",
             "app-event",
             "app-billing-event",
-            "rest"
+            "rest",
+            "sidekick"
           ],
           "type": "option"
         },
