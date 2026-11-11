@@ -210,7 +210,7 @@ describe('agent checks', () => {
     const expectedVersions = {
       CROSS_SITE_SCRIPTING: 2,
       TEXT_SETTING_HTML_SMUGGLING: 3,
-      THEME_EXTENSION_XSS: 3,
+      THEME_EXTENSION_XSS: 4,
       UNSAFE_INNERHTML: 4,
     }
     for (const [id, version] of Object.entries(expectedVersions)) {
@@ -225,6 +225,32 @@ describe('agent checks', () => {
     const crossSiteScripting = checks.get('CROSS_SITE_SCRIPTING')!.prompt
     expect(crossSiteScripting).toMatch(/is\s+not\s+author-controlled\s+content/)
     expect(crossSiteScripting).toContain("It doesn't own the XSS")
+  })
+
+  test('prompts do not treat the wrong signal or an insufficient control as safe', () => {
+    const checks = loadChecks()
+
+    const embeddedCsp = checks.get('MISSING_EMBEDDED_CSP')!
+    expect(embeddedCsp.version).toBe(4)
+    expect(embeddedCsp.prompt).toContain('`embedded = true`')
+    expect(embeddedCsp.prompt).not.toContain('app_embed')
+    expect(embeddedCsp.prompt).toContain('@shopify/shopify-app-react-router')
+
+    const ssrf = checks.get('SSRF_REQUEST_FORGERY')!
+    expect(ssrf.version).toBe(2)
+    expect(ssrf.prompt).not.toContain('The URL scheme is restricted to https only')
+    expect(ssrf.prompt).toContain('does not restrict the destination')
+    expect(ssrf.prompt).toContain('every redirect target is validated')
+
+    const scriptTag = checks.get('SCRIPT_TAG_URL_INJECTION')!
+    expect(scriptTag.version).toBe(3)
+    expect(scriptTag.prompt).not.toContain('The URL scheme is restricted to https\n')
+    expect(scriptTag.prompt).toContain('Restricting the scheme to https is not a protection')
+
+    const themeXss = checks.get('THEME_EXTENSION_XSS')!.prompt
+    expect(themeXss).not.toContain('(escaped)')
+    expect(themeXss).toContain('This does not cover event handler')
+    expect(themeXss).toContain('on elements other than `<script>`')
   })
 
   test('SHARED_NAMESPACE_METAFIELD_RENDER classifies ownership by namespace prefix only', () => {
