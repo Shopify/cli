@@ -347,7 +347,10 @@ export interface SuppressionDecision {
 }
 
 /** A new entry to append to shopify.app-security.json. */
-export type SuppressionChange = {type: 'add'; entry: AppSecuritySuppression}
+export interface SuppressionChange {
+  type: 'add'
+  entry: AppSecuritySuppression
+}
 
 /**
  * - `saved`: an entry of the file already suppresses the finding, so nothing changes.
