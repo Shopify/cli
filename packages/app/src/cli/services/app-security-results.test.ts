@@ -222,10 +222,9 @@ describe('loadAppSecurityResults', () => {
       // The fixture's finding has no excerpt, so the entry matches its message.
       code: 'the query has no shop filter',
       reason: 'Every order table holds one shop.',
-      configurations: ['shopify.app.toml', 'other-client-id'],
     }
 
-    test('applies the entries of shopify.app-security.json to the results of the selected configuration', async () => {
+    test('applies the same suppression to configuration and client-ID results', async () => {
       await inTemporaryDirectory(async (directory) => {
         const selection = await createApp(directory)
         await writeAgentFindings(selection.appDirectory, resultsKey(selection), agentFindingsDocument)
@@ -244,9 +243,9 @@ describe('loadAppSecurityResults', () => {
           disposition: 'suppressed',
           suppressed_by: {origin: 'file', entry_index: 0},
         })
-        expect(tenantFinding(other.checks)).toMatchObject({source: 'agent', disposition: 'active'})
+        expect(tenantFinding(other.checks)).toMatchObject({source: 'agent', disposition: 'suppressed'})
         expect(results.suppressions).toMatchObject([{index: 0, status: 'matched', matched_finding_count: 1}])
-        expect(other.suppressions).toMatchObject([{index: 0, status: 'not-evaluated', matched_finding_count: 0}])
+        expect(other.suppressions).toMatchObject([{index: 0, status: 'matched', matched_finding_count: 1}])
       })
     })
 

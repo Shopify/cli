@@ -23,25 +23,18 @@ export interface SuppressionEntry {
    */
   code?: string
   reason: string
-  /**
-   * App configuration file names, such as shopify.app.toml, which match a run of that configuration without
-   * `--client-id`, or client IDs passed with `--client-id`. The entry applies when one of them names the run's results
-   * key.
-   */
-  configurations: string[]
 }
 
-/** The entries of shopify.app-security.json, and the results key of the run that they're applied to. */
+/** The entries of shopify.app-security.json, shared by every app configuration. */
 export interface SuppressionsInput {
   entries: SuppressionEntry[]
-  resultsKey: string
 }
 
 /**
  * - `matched`: the entry matched at least one finding.
  * - `stale`: the entry matched nothing, although its source's executed result for the check could hold the finding.
  * - `ambiguous`: `code` matched more than one finding, so the entry suppresses none.
- * - `not-evaluated`: the run has no result that could hold the finding: the entry names other configurations, its
+ * - `not-evaluated`: the run has no result that could hold the finding: its
  *   source recorded no result for the check (the agent didn't record it, or the deterministic check didn't run), or
  *   that result is unresolved or not applicable and nothing matched.
  */
@@ -92,8 +85,7 @@ interface ScoredCandidate {
 
 /**
  * Applies the matching rules to each entry (§8.2):
- * 1. The candidates are the findings of the entry's source and check in the entry's path, when one of the entry's
- *    configurations names the run's results key.
+ * 1. The candidates are the findings of the entry's source and check in the entry's path, in any app configuration.
  * 2. Without `code`, every candidate matches.
  * 3. With `code`, a candidate matches when the normalized text occurs in its captured code (`occursInCode`). A
  *    candidate without captured code (`hasCapturedCode`) matches when the text occurs in its message instead.
@@ -103,11 +95,11 @@ interface ScoredCandidate {
  *    otherwise.
  */
 export function matchSuppressionEntries(
-  {entries: suppressionEntries, resultsKey}: SuppressionsInput = {entries: [], resultsKey: ''},
+  {entries: suppressionEntries}: SuppressionsInput = {entries: []},
   recordedCheck: RecordedCheckLookup,
 ): SuppressionMatches {
   const entries = suppressionEntries.map((entry, index): SuppressionEntryResult & EntryMatch => {
-    const check = appliesToResultsKey(entry, resultsKey) ? recordedCheck(entry.source, entry.check) : undefined
+    const check = recordedCheck(entry.source, entry.check)
     const {status, findingIndexes} = check ? matchEntry(entry, check) : NOT_EVALUATED
     return {index, entry, status, matched_finding_count: findingIndexes.length, findingIndexes}
   })
@@ -153,20 +145,6 @@ export function findingSuppression(
  */
 function normalizeSuppressionText(text: string): string {
   return text.replace(/[\s,;]/g, '').replace(/['"`]/g, '"')
-}
-
-/**
- * A configuration names a results key: an app configuration file name without its `.toml` extension, as `check`
- * names the results directory of that configuration without `--client-id`, or a client ID as it is, as `--client-id`
- * names it. So a file name doesn't apply to a run with `--client-id`, and the client ID in the configuration file
- * doesn't apply to a run without it.
- */
-function configurationResultsKey(configuration: string): string {
-  return configuration.endsWith('.toml') ? configuration.slice(0, -'.toml'.length) : configuration
-}
-
-function appliesToResultsKey(entry: SuppressionEntry, resultsKey: string): boolean {
-  return entry.configurations.some((configuration) => configurationResultsKey(configuration) === resultsKey)
 }
 
 function findingKey(source: FindingsSource, checkId: string, index: number): string {

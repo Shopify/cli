@@ -78,7 +78,6 @@ const eolApiVersionEntry: SuppressionEntry = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'The upgrade ships with the next release.',
-  configurations: ['shopify.app.toml'],
 }
 const tenantIsolationEntry: SuppressionEntry = {
   source: 'agent',
@@ -87,7 +86,6 @@ const tenantIsolationEntry: SuppressionEntry = {
   path: 'app/routes/orders.tsx',
   code: 'the query has no shop filter',
   reason: 'Every order table holds one shop.',
-  configurations: ['shopify.app.toml'],
 }
 
 function dispositionsOf(checks: CombinedCheck[], id: string) {

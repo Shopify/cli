@@ -193,7 +193,7 @@ export default async function securityCheck(
   const {checks, suppressions} = combineFindings({
     deterministic: execution.deterministicFindings,
     agent: null,
-    suppressions: {entries: suppressionEntries, resultsKey: resolution.resultsKey},
+    suppressions: {entries: suppressionEntries},
   })
 
   return {
