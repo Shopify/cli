@@ -129,8 +129,8 @@ export type LogType =
   | 'REST_REQUEST'
   /** A Sidekick event. */
   | 'SIDEKICK_EVENT'
-  /** A UI extension error. */
-  | 'UI_EXTENSION_ERROR'
+  /** An error related to UI extensions. */
+  | 'UI_EXTENSION'
   /** A webhook delivery. */
   | 'WEBHOOK';
 
