@@ -6,6 +6,7 @@ const logTypes = [
   {name: 'function', backend: 'FUNCTION_RUN'},
   {name: 'app-event', backend: 'APP_EVENT'},
   {name: 'app-billing-event', backend: 'APP_BILLING_EVENT'},
+  {name: 'rest', backend: 'REST_REQUEST'},
 ] as const
 
 export const logFilters = [
@@ -19,6 +20,8 @@ export const logFilters = [
   {flag: 'function-handle', field: 'FUNCTION_HANDLE'},
   {flag: 'target', field: 'TARGET'},
   {flag: 'event-handle', field: 'EVENT_HANDLE'},
+  {flag: 'method', field: 'METHOD'},
+  {flag: 'request-path', field: 'REQUEST_PATH'},
 ] as const
 
 export const queryLimits = {
@@ -39,7 +42,7 @@ function selectedLogType(value?: string) {
   if (!type)
     throw logError(
       'invalid-argument',
-      'Supported log types are webhook, graphql, function, app-event, and app-billing-event.',
+      'Supported log types are webhook, graphql, function, app-event, app-billing-event, and rest.',
     )
   return type
 }

@@ -3961,6 +3961,14 @@
           "name": "limit",
           "type": "option"
         },
+        "method": {
+          "description": "Exact REST HTTP method; excludes non-REST records.",
+          "env": "SHOPIFY_FLAG_METHOD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "method",
+          "type": "option"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -4017,11 +4025,19 @@
           "type": "option"
         },
         "request-id": {
-          "description": "Exact GraphQL request ID; excludes non-GraphQL records.",
+          "description": "Exact GraphQL or REST request ID; excludes other record types.",
           "env": "SHOPIFY_FLAG_REQUEST_ID",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "request-id",
+          "type": "option"
+        },
+        "request-path": {
+          "description": "Exact REST request path; excludes non-REST records.",
+          "env": "SHOPIFY_FLAG_REQUEST_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "request-path",
           "type": "option"
         },
         "since": {
@@ -4057,7 +4073,7 @@
           "type": "option"
         },
         "status-code": {
-          "description": "Exact webhook HTTP status code (100–599); no status classes.",
+          "description": "Exact webhook or REST HTTP status code (100–599); no status classes.",
           "env": "SHOPIFY_FLAG_STATUS_CODE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4100,7 +4116,8 @@
             "graphql",
             "function",
             "app-event",
-            "app-billing-event"
+            "app-billing-event",
+            "rest"
           ],
           "type": "option"
         },

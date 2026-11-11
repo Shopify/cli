@@ -18,11 +18,19 @@ test('registers hidden retrieval alongside the legacy logs migration command', a
   expect(next.flags).toHaveProperty('since')
   expect(next.flags).toHaveProperty('limit')
   expect(next.flags.type).toMatchObject({
-    options: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event'],
+    options: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest'],
   })
   expect(next.flags['function-handle']).toMatchObject({env: 'SHOPIFY_FLAG_FUNCTION_HANDLE'})
   expect(next.flags.target).toMatchObject({env: 'SHOPIFY_FLAG_TARGET'})
   expect(next.flags['event-handle']).toMatchObject({env: 'SHOPIFY_FLAG_EVENT_HANDLE'})
+  expect(next.flags.method).toMatchObject({env: 'SHOPIFY_FLAG_METHOD'})
+  expect(next.flags['request-path']).toMatchObject({env: 'SHOPIFY_FLAG_REQUEST_PATH'})
+  expect(next.flags['request-id']).toMatchObject({
+    description: 'Exact GraphQL or REST request ID; excludes other record types.',
+  })
+  expect(next.flags['status-code']).toMatchObject({
+    description: 'Exact webhook or REST HTTP status code (100–599); no status classes.',
+  })
   expect(next.flags).not.toHaveProperty('source')
   expect(logs.hidden).toBe(true)
   expect(sources).toBeUndefined()
@@ -53,6 +61,8 @@ test('direct text and JSON help remain available for the hidden command', async 
   expect(log.mock.calls.flat().join('\n')).toContain('app logs-next')
   expect(log.mock.calls.flat().join('\n')).toContain('--function-handle')
   expect(log.mock.calls.flat().join('\n')).toContain('--event-handle')
+  expect(log.mock.calls.flat().join('\n')).toContain('--method')
+  expect(log.mock.calls.flat().join('\n')).toContain('--request-path')
   expect(log.mock.calls.flat().join('\n')).toContain('app-billing-event')
   expect(log.mock.calls.flat().join('\n')).toContain('Exact app event or app billing event handle')
   expect(log.mock.calls.flat().join('\n')).toContain('Exact Function execution target')
