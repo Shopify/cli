@@ -97,11 +97,16 @@ function sessionStorageSupportsRefreshMetadata(context: ScanContext, setupSource
   )
 }
 
+// Blanks comments and strings instead of removing them so match indexes still point into the original source.
 function stripCommentsAndStrings(source: string): string {
   return source
-    .replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '))
-    .replace(/\/\/[^\n]*/g, '')
-    .replace(/(["'`])(?:\\.|(?!\1)[^\\\n])*\1/g, (literal) => literal.replace(/[^\n]/g, ' '))
+    .replace(/\/\*[\s\S]*?\*\//g, blankText)
+    .replace(/\/\/[^\n]*/g, blankText)
+    .replace(/(["'`])(?:\\.|(?!\1)[^\\\n])*\1/g, blankText)
+}
+
+function blankText(text: string): string {
+  return text.replace(/[^\n]/g, ' ')
 }
 
 function lineAt(source: string, index: number): number {
