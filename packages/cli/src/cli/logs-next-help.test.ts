@@ -17,6 +17,9 @@ test('registers hidden retrieval alongside the legacy logs migration command', a
   expect(next.hidden).toBe(true)
   expect(next.flags).toHaveProperty('since')
   expect(next.flags).toHaveProperty('limit')
+  expect(next.flags.type).toMatchObject({options: ['webhook', 'graphql', 'function']})
+  expect(next.flags['function-handle']).toMatchObject({env: 'SHOPIFY_FLAG_FUNCTION_HANDLE'})
+  expect(next.flags.target).toMatchObject({env: 'SHOPIFY_FLAG_TARGET'})
   expect(next.flags).not.toHaveProperty('source')
   expect(logs.hidden).toBe(true)
   expect(sources).toBeUndefined()
@@ -45,6 +48,8 @@ test('direct text and JSON help remain available for the hidden command', async 
   const result = await helpService(await loadConfig(), ['app', 'logs-next'])
 
   expect(log.mock.calls.flat().join('\n')).toContain('app logs-next')
+  expect(log.mock.calls.flat().join('\n')).toContain('--function-handle')
+  expect(log.mock.calls.flat().join('\n')).toContain('Exact Function execution target')
   expect(log.mock.calls.flat().join('\n')).toContain("Sorting isn't needed to establish completeness.")
   expect(result).toMatchObject({kind: 'command', command: {id: 'app:logs-next', hidden: true}})
 })

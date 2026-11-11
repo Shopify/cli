@@ -3,6 +3,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 const logTypes = [
   {name: 'webhook', backend: 'WEBHOOK'},
   {name: 'graphql', backend: 'GRAPHQL_REQUEST'},
+  {name: 'function', backend: 'FUNCTION_RUN'},
 ] as const
 
 export const logFilters = [
@@ -13,6 +14,8 @@ export const logFilters = [
   {flag: 'operation-type', field: 'OPERATION_TYPE'},
   {flag: 'operation-name', field: 'OPERATION_NAME'},
   {flag: 'request-id', field: 'REQUEST_ID'},
+  {flag: 'function-handle', field: 'FUNCTION_HANDLE'},
+  {flag: 'target', field: 'TARGET'},
 ] as const
 
 export const queryLimits = {
@@ -30,7 +33,7 @@ export function logError(code: string, message: string, requestId?: string | nul
 
 function selectedLogType(value?: string) {
   const type = logTypes.find(({name}) => name === value)
-  if (!type) throw logError('invalid-argument', 'Supported log types are webhook and graphql.')
+  if (!type) throw logError('invalid-argument', 'Supported log types are webhook, graphql, and function.')
   return type
 }
 

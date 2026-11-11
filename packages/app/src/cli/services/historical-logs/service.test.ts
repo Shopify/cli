@@ -280,6 +280,49 @@ test.each(['Admin', 'Storefront', 'CustomerAccount'])(
   },
 )
 
+test('requests Function runs with exact filters and preserves native JSON', async () => {
+  const functionRecord = {
+    timestamp: record.timestamp,
+    type: 'FUNCTION_RUN',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    resultStatus: 'FAILURE',
+    functionHandle: 'discount',
+    target: 'cart.lines.discounts.generate.run',
+    functionId: 'gid://shopify/ShopifyFunction/123',
+    invocationId: 'invocation-123',
+    errorType: 'InstructionCountLimitExceeded',
+    futureField: {nested: [null, false, 'unchanged']},
+  }
+  authorize()
+  logResponse([functionRecord])
+
+  const result = await retrieveLogs({
+    ...scope,
+    type: ['function'],
+    store: 'example',
+    status: 'failure',
+    'function-handle': 'discount',
+    target: 'cart.lines.discounts.generate.run',
+  })
+
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
+    types: ['FUNCTION_RUN'],
+    limit: 20,
+    filters: [
+      {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+      {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+      {field: 'FUNCTION_HANDLE', operator: 'EQUALS', value: 'discount'},
+      {field: 'TARGET', operator: 'EQUALS', value: 'cart.lines.discounts.generate.run'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  expect(result.logs).toEqual([functionRecord])
+  await withCapturedStandardStreams(async ({stdout}) => {
+    renderHistoricalLogs(result, true, 20)
+    expect(JSON.parse(stdout()).logs).toEqual([functionRecord])
+  })
+})
+
 test('an empty successful search has no result-limit warning', async () => {
   authorize()
   logResponse([])
@@ -311,7 +354,7 @@ test('default mixed-type search shares one query and limit, preserving every pre
   const result = await retrieveLogs({'client-id': clientId, limit: 2})
   expect(result.logs).toEqual([graphqlRecord, record])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN'],
     limit: 2,
     filters: [],
   })
@@ -324,7 +367,7 @@ test('cross-type filters are sent together and an empty intersection is not an e
   const result = await retrieveLogs({'client-id': clientId, topic: 'orders/create', 'operation-name': 'MyQuery'})
   expect(result.logs).toEqual([])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST'],
+    types: ['WEBHOOK', 'GRAPHQL_REQUEST', 'FUNCTION_RUN'],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
       {field: 'OPERATION_NAME', operator: 'EQUALS', value: 'MyQuery'},
