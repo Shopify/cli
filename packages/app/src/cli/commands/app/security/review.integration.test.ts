@@ -152,7 +152,6 @@ const suppressionEntries = [
     path: 'shopify.app.toml',
     code: 'api_version 2024-01',
     reason: 'The upgrade ships with the next release.',
-    configurations: ['shopify.app.toml'],
   },
   {
     source: 'agent',
@@ -160,7 +159,6 @@ const suppressionEntries = [
     kind: 'false-positive',
     path: 'app/routes/orders.tsx',
     reason: 'The logger redacts tokens.',
-    configurations: ['shopify.app.toml'],
   },
 ]
 

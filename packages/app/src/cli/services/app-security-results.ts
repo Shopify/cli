@@ -91,7 +91,7 @@ export async function loadAppSecurityResults(
   const {checks, suppressions} = combineFindings({
     deterministic: deterministicSource?.document ?? null,
     agent: agentSource?.document ?? null,
-    suppressions: {entries: suppressionEntries, resultsKey: key},
+    suppressions: {entries: suppressionEntries},
   })
   return {sources: {deterministic: deterministicSource, agent: agentSource}, checks, suppressions}
 }

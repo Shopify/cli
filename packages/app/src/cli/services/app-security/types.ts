@@ -104,7 +104,7 @@ export const appSecuritySuppressionEntrySchema = zod
     status: zod
       .enum(['matched', 'stale', 'ambiguous', 'not-evaluated'])
       .describe(
-        "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check.",
+        "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check.",
       ),
     matchedFindingCount: zod
       .number()

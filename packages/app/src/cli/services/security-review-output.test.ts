@@ -503,7 +503,6 @@ describe('buildSecurityReviewAlerts', () => {
       kind: 'accepted-risk',
       path: 'shopify.app.toml',
       reason: 'The upgrade ships with the next release.',
-      configurations: ['shopify.app.toml'],
     }
     const suppressedBox = (input: SecurityReviewPresenterInput) =>
       buildSecurityReviewAlerts(input).find((alert) => String(alert.options.headline).endsWith('suppressed.'))

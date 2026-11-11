@@ -78,7 +78,6 @@ const fixtureEntry: SuppressionEntry = {
   kind: 'false-positive',
   path: 'app/routes/index.ts',
   reason: 'A fake token for the route tests.',
-  configurations: ['shopify.app.toml'],
 }
 
 /** A scan that reports `committedSecretIssue`, after `check` applied these entries of shopify.app-security.json. */
@@ -89,7 +88,7 @@ function scannedWithSuppressions(
   const {checks, suppressions} = combineFindings({
     deterministic: committedSecretExecution.deterministicFindings,
     agent: null,
-    suppressions: {entries, resultsKey: 'shopify.app'},
+    suppressions: {entries},
   })
   return scanned({execution: committedSecretExecution, checks, suppressions, ...overrides})
 }

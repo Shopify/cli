@@ -55,7 +55,6 @@ const entry: SuppressionEntry = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'Development configuration only.',
-  configurations: ['shopify.app.toml'],
 }
 
 function view(
@@ -65,7 +64,7 @@ function view(
   const {checks, suppressions} = combineFindings({
     deterministic: documents.deterministic,
     agent: documents.agent ?? null,
-    suppressions: {entries, resultsKey: 'shopify.app'},
+    suppressions: {entries},
   })
   return suppressedFindingsView(checks, suppressions)
 }

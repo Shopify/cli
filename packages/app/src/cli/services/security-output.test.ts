@@ -483,7 +483,6 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     kind: 'false-positive',
     path: 'test/fixtures/session.ts',
     reason: 'Fake tokens in a unit test fixture.',
-    configurations: ['shopify.app.toml'],
   }
   const scriptTagEntry: SuppressionEntry = {
     source: 'deterministic',
@@ -492,7 +491,6 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     path: 'shopify.app.toml',
     code: 'write_script_tags',
     reason: 'Kept until the app embed ships.',
-    configurations: ['shopify.app.toml'],
   }
 
   /** The report of a scan with these issues, after `check` applied these entries to its deterministic findings. */
@@ -509,7 +507,7 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     const {checks, suppressions} = combineFindings({
       deterministic,
       agent: null,
-      suppressions: {entries, resultsKey: 'shopify.app'},
+      suppressions: {entries},
     })
     return reportInput({scan, checks, suppressions})
   }
