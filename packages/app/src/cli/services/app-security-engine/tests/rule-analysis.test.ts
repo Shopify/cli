@@ -491,8 +491,22 @@ describe('EOL_API_VERSION quarterly lifecycle', () => {
     const findings = scanEolApiVersions(
       context({
         appTomls: [
-          {raw: {}, path: '/app/shopify.app.toml', apiVersion: '2025-04', redirectUrls: [], webhooks: []},
-          {raw: {}, path: '/app/shopify.app.production.toml', apiVersion: '2025-07', redirectUrls: [], webhooks: []},
+          {
+            raw: {},
+            path: '/app/shopify.app.toml',
+            apiVersion: '2025-04',
+            scopeKeys: new Map(),
+            redirectUrls: [],
+            webhooks: [],
+          },
+          {
+            raw: {},
+            path: '/app/shopify.app.production.toml',
+            apiVersion: '2025-07',
+            scopeKeys: new Map(),
+            redirectUrls: [],
+            webhooks: [],
+          },
         ],
         files: [
           source(
@@ -515,6 +529,30 @@ describe('EOL_API_VERSION quarterly lifecycle', () => {
       'app/shopify.server.mts',
     ])
   })
+
+  test.each(['\n', '\r\n'])('reports declaration lines after comments with %j line endings', (newline) => {
+    const findings = scanEolApiVersions(
+      context({
+        files: [
+          source(
+            `// Pin the API version on purpose.
+// The legacy server keeps an older version.
+export const legacy = shopifyApp({
+  appUrl: 'https://legacy.example',
+  apiVersion: '2024-04',
+})
+
+// The main server.
+const shopify = shopifyApp({apiVersion: ApiVersion.January24})`.replaceAll('\n', newline),
+            'app/shopify.server.ts',
+          ),
+        ],
+      }),
+      new Date('2026-08-31T00:00:00.000Z'),
+    )
+
+    expect(findings.map((finding) => finding.location.line)).toEqual([5, 9])
+  })
 })
 
 describe('EXPIRING_OFFLINE_TOKEN supported React Router analysis', () => {
@@ -535,6 +573,25 @@ describe('EXPIRING_OFFLINE_TOKEN supported React Router analysis', () => {
     )
     expect(result.issues).toHaveLength(1)
     expect(result.unresolvedReason).toBeUndefined()
+  })
+
+  test.each(['\n', '\r\n'])('reports the false flag line after comments with %j line endings', (newline) => {
+    const result = scanExpiringOfflineTokens(
+      context({
+        files: [
+          source(
+            `// Configure the app.
+// Offline tokens do not expire on purpose.
+const shopify = shopifyApp({
+  future: {expiringOfflineAccessTokens: false},
+})`.replaceAll('\n', newline),
+            'app/shopify.server.ts',
+          ),
+        ],
+      }),
+    )
+
+    expect(result.issues.map((finding) => finding.location)).toEqual([{file: 'app/shopify.server.ts', line: 4}])
   })
 
   test('returns clean only when enablement and refresh-compatible storage are visible', () => {

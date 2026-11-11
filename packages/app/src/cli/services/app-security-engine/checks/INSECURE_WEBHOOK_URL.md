@@ -1,6 +1,6 @@
 ---
 id: INSECURE_WEBHOOK_URL
-version: 2
+version: 3
 severity: high
 precedence: prefer-agent
 ---

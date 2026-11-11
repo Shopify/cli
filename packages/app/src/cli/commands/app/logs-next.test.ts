@@ -28,7 +28,7 @@ function result(): LogsResult {
       {
         id: 'gid://shopify/AppLogRecord/example',
         timestamp: '2026-10-06T13:30:00.123456789Z',
-        type: 'WEBHOOK_DELIVERY',
+        type: 'WEBHOOK',
         resultStatus: 'FAILURE',
         shopMyshopifyDomain: 'example.myshopify.com',
         topic: 'orders/create',
@@ -123,7 +123,7 @@ test('omitted type and repeated type flags are passed to the service without inv
 })
 
 test.each([
-  {argv: [], backend: 'WEBHOOK_DELIVERY'},
+  {argv: [], backend: 'WEBHOOK'},
   {argv: ['--type', 'graphql'], backend: 'GRAPHQL_REQUEST'},
 ])('resolves the environment log type with command-line precedence for $argv', async ({argv, backend}) => {
   vi.stubEnv('SHOPIFY_FLAG_TYPE', 'webhook')
@@ -228,7 +228,7 @@ test('webhook-only human output omits the inapplicable API column', async () => 
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Topic / operation'])
     expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
       '2026-10-06T13:30:00.123456789Z',
-      'WEBHOOK_DELIVERY',
+      'WEBHOOK',
       'FAILURE',
       'example.myshopify.com',
       'orders/create',
