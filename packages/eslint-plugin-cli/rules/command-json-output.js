@@ -1,35 +1,18 @@
-const {commandExceptions} = require('./json-output-command-exceptions')
-
 module.exports = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'require typed JSON output for new finite commands',
+      description: 'require typed JSON output for visible commands',
     },
-    schema: [
-      {
-        type: 'object',
-        properties: {
-          exceptions: {
-            type: 'array',
-            items: {type: 'string'},
-            uniqueItems: true,
-          },
-        },
-        additionalProperties: false,
-      },
-    ],
+    schema: [],
     messages: {
-      missingJsonFlag:
-        'New finite commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
-      missingJsonOutputSchema:
-        'New finite commands must declare a static jsonOutputSchema. See docs/cli/json-output.md.',
+      missingJsonFlag: 'Visible commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
+      missingJsonOutputSchema: 'Visible commands must declare a static jsonOutputSchema. See docs/cli/json-output.md.',
     },
   },
   create(context) {
-    const exemptCommands = new Set(context.options[0]?.exceptions ?? commandExceptions)
-    const commandPath = repositoryPath(context.filename)
-    if (!isCommandPath(commandPath) || exemptCommands.has(commandPath)) return {}
+    const commandPath = context.filename.replaceAll('\\', '/')
+    if (!isCommandPath(commandPath)) return {}
 
     return {
       ExportDefaultDeclaration(node) {
@@ -51,12 +34,6 @@ module.exports = {
 
 function isCommandPath(commandPath) {
   return /\/src\/(?:cli\/)?commands\//.test(commandPath)
-}
-
-function repositoryPath(filename) {
-  const normalizedFilename = filename.replaceAll('\\', '/')
-  const packagesDirectory = normalizedFilename.lastIndexOf('/packages/')
-  return packagesDirectory === -1 ? normalizedFilename : normalizedFilename.slice(packagesDirectory + 1)
 }
 
 function hasJsonOutputSchema(classMembers) {
