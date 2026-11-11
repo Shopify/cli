@@ -55,7 +55,6 @@ const entry: SuppressionEntry = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'Development configuration only.',
-  configurations: ['shopify.app.toml'],
 }
 
 function view(
@@ -65,7 +64,7 @@ function view(
   const {checks, suppressions} = combineFindings({
     deterministic: documents.deterministic,
     agent: documents.agent ?? null,
-    suppressions: {entries, resultsKey: 'shopify.app'},
+    suppressions: {entries},
   })
   return suppressedFindingsView(checks, suppressions)
 }
@@ -237,7 +236,7 @@ describe('unappliedEntriesView', () => {
     const {suppressions} = combineFindings({
       deterministic: deterministic([check(), secretCheck]),
       agent: null,
-      suppressions: {entries, resultsKey: 'shopify.app', missingPaths},
+      suppressions: {entries, missingPaths},
     })
     return unappliedEntriesView(suppressions, {review: 'shopify app security review'})
   }
@@ -250,7 +249,7 @@ describe('unappliedEntriesView', () => {
         {...secretEntry, path: 'test/fixtures/a.ts'},
         {...entry, path: 'app/removed.ts'},
         {...entry, source: 'agent', check: 'SCOPE_OVER_REQUEST'},
-        {...entry, configurations: ['shopify.app.staging.toml']},
+        {...entry, source: 'agent', check: 'CSRF_MISSING_PROTECTION'},
       ],
       ['app/routes/old-session.ts', 'app/removed.ts'],
     )
@@ -305,8 +304,7 @@ describe('unappliedEntriesView', () => {
         {body: 'This entry suppresses nothing. Give it a more specific code that matches one finding.'},
         {
           body: {
-            subdued:
-              'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+            subdued: 'Not evaluated: 2 entries (no executed results for their checks).',
           },
         },
       ],
@@ -367,7 +365,7 @@ describe('unappliedEntriesView', () => {
       const {suppressions} = combineFindings({
         deterministic: deterministic([renamedCheck]),
         agent: null,
-        suppressions: {entries: [staleEntry], resultsKey: 'shopify.app'},
+        suppressions: {entries: [staleEntry]},
       })
       const view = unappliedEntriesView(suppressions, likelyFindingCommands)
       const [stale] = view?.sections ?? []
@@ -419,10 +417,10 @@ describe('unappliedEntriesView', () => {
   })
 
   test('is an info view with only the count when every entry that applies to nothing is not evaluated', () => {
-    expect(unapplied([{...entry, configurations: ['shopify.app.staging.toml']}])).toEqual({
+    expect(unapplied([{...entry, source: 'agent', check: 'CSRF_MISSING_PROTECTION'}])).toEqual({
       headline: '1 entry in shopify.app-security.json not evaluated.',
       needsChange: false,
-      sections: [{body: {subdued: 'Not evaluated: 1 entry (1 for other app configurations).'}}],
+      sections: [{body: {subdued: 'Not evaluated: 1 entry (no executed result for its check).'}}],
     })
   })
 

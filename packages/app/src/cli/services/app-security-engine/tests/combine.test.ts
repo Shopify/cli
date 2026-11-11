@@ -419,21 +419,19 @@ describe('combineFindings', () => {
         kind: 'false-positive',
         path,
         reason: 'Reviewed with the security team.',
-        configurations: ['shopify.app.toml'],
         ...overrides,
       }
     }
 
     function combineWith(
       entries: SuppressionEntry[],
-      sources: {deterministic?: StoredCheck[]; agent?: StoredCheck[]; resultsKey?: string; missingPaths?: string[]},
+      sources: {deterministic?: StoredCheck[]; agent?: StoredCheck[]; missingPaths?: string[]},
     ) {
       return combineFindings({
         deterministic: sources.deterministic ? deterministicDocument(sources.deterministic) : null,
         agent: sources.agent ? agentDocument(sources.agent) : null,
         suppressions: {
           entries,
-          resultsKey: sources.resultsKey ?? 'shopify.app',
           ...(sources.missingPaths ? {missingPaths: sources.missingPaths} : {}),
         },
       })
@@ -820,27 +818,6 @@ describe('combineFindings', () => {
         expect(suppressions[0]!.not_evaluated_reason).toBe('no-executed-result')
       },
     )
-
-    test('an entry applies only to the results of the configurations it names', () => {
-      const deterministic = [check({findings: [loggedToken]})]
-      const staging = entry({configurations: ['shopify.app.staging.toml', '1234abcd']})
-
-      expect(combineWith([staging], {deterministic}).suppressions).toEqual([
-        {
-          index: 0,
-          entry: staging,
-          status: 'not-evaluated',
-          matched_finding_count: 0,
-          not_evaluated_reason: 'other-configurations',
-        },
-      ])
-      expect(dispositions(combineWith([staging], {deterministic}).checks)[0]!.disposition).toBe('active')
-      for (const resultsKey of ['shopify.app.staging', '1234abcd']) {
-        expect(statuses(combineWith([staging], {deterministic, resultsKey}).suppressions)).toEqual([
-          {status: 'matched', count: 1},
-        ])
-      }
-    })
 
     test('prefer-agent: a deterministic entry matches the superseded finding, and suppresses it without a current agent result', () => {
       const suppression = entry({code: 'console.log(session.accessToken)'})

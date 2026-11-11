@@ -24,7 +24,6 @@ import {
   planSuppression,
   readAppSecuritySuppressions,
   saveAppSecuritySuppressions,
-  suppressionConfiguration,
   type AppSecuritySuppression,
   type SavedSuppression,
   type SuppressionChange,
@@ -321,8 +320,6 @@ async function planAgentSuppressions(
   const results: SuppressionResults = {
     deterministic: null,
     agent: document,
-    resultsKey: resultsKey(selection),
-    configuration: suppressionConfiguration(selection),
   }
   const plans = targets.map(({kind, reason, ...target}) => ({
     target,

@@ -10,7 +10,6 @@ import {
   planSuppression,
   readAppSecuritySuppressions,
   saveAppSecuritySuppressions,
-  suppressionConfiguration,
   type AppSecuritySuppression,
   type SuppressionResults,
   type SuppressionTarget,
@@ -44,7 +43,6 @@ const deterministicEntry: AppSecuritySuppression = {
   path: 'test/fixtures/session.ts',
   code: 'accessToken: "shpa[REDACTED:38]"',
   reason: 'Fake token in a unit test fixture.',
-  configurations: ['shopify.app.toml'],
 }
 
 const agentEntry: AppSecuritySuppression = {
@@ -53,11 +51,7 @@ const agentEntry: AppSecuritySuppression = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'Kept until the app embed migration ships.',
-  configurations: ['shopify.app.toml', 'shopify.app.production.toml'],
 }
-
-const CONFIGURATION_PROBLEM =
-  'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
 
 async function writeSuppressionsFile(appDirectory: string, contents: string): Promise<string> {
   const path = appSecuritySuppressionsPath(appDirectory)
@@ -344,19 +338,13 @@ describe('readAppSecuritySuppressions', () => {
     })
   })
 
-  describe('code and configurations', () => {
+  describe('code', () => {
     test.each([
       ['an empty code', {code: ' '}, 'suppressions[0].code: must not be empty'],
       [
         'a code longer than a finding snippet can be',
         {code: 'x'.repeat(4_001)},
         'suppressions[0].code: must be at most 4000 characters',
-      ],
-      ['a missing configurations list', {configurations: undefined}, 'suppressions[0].configurations: required'],
-      [
-        'an empty configurations list',
-        {configurations: []},
-        'suppressions[0].configurations: must list at least one app configuration',
       ],
       ...[';', ' , ', ',;\n'].map((code): [string, Record<string, unknown>, string] => [
         `the code ${JSON.stringify(code)}`,
@@ -367,29 +355,6 @@ describe('readAppSecuritySuppressions', () => {
       await expect(entryProblems(changes)).resolves.toStrictEqual([problem])
     })
 
-    test.each([
-      ['a configuration path', 'config/shopify.app.toml'],
-      ['a configuration name without .toml', 'shopify.app.production'],
-      ['a file name that is not an app configuration', 'shopify.app.toml.bak'],
-      ['an app configuration file name with a space', 'shopify.app.my store.toml'],
-      ['a name with a dot that is not an app configuration', 'production.toml'],
-      ['a client ID with a space', 'client id'],
-      ['an empty name', ''],
-    ])('rejects %s as a configuration', async (_name, configuration) => {
-      await expect(entryProblems({configurations: ['shopify.app.toml', configuration]})).resolves.toStrictEqual([
-        `suppressions[0].configurations[1]: ${CONFIGURATION_PROBLEM}`,
-      ])
-    })
-
-    test.each([' shopify.app.toml', 'shopify.app.toml ', '1234567890abcdef\t'])(
-      'rejects the configuration %j, with whitespace around it',
-      async (configuration) => {
-        await expect(entryProblems({configurations: [configuration]})).resolves.toStrictEqual([
-          'suppressions[0].configurations[0]: must not start or end with whitespace',
-        ])
-      },
-    )
-
     test('accepts a code as long as a finding snippet can be', async () => {
       await inTemporaryDirectory(async (directory) => {
         const entry = {...deterministicEntry, code: 'x'.repeat(4_000)}
@@ -399,25 +364,15 @@ describe('readAppSecuritySuppressions', () => {
       })
     })
 
-    test('accepts app configuration file names and client IDs as configurations', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const configurations = [
-          'shopify.app.toml',
-          'shopify.app.production.toml',
-          'shopify.app.my-store_2.toml',
-          '1234567890abcdef1234567890abcdef',
-          'test-client-id',
-        ]
-        const entry = {...agentEntry, configurations}
-        await writeSuppressionsFile(directory, suppressionsJson([entry]))
-
-        await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([entry])
-      })
+    test('rejects configuration scoping from prototype files instead of silently widening it', async () => {
+      await expect(entryProblems({configurations: ['shopify.app.production.toml']})).resolves.toStrictEqual([
+        'suppressions[0]: configurations is no longer supported. Suppressions apply to all app configurations; remove this field.',
+      ])
     })
   })
 
   describe('duplicates', () => {
-    test('rejects an entry with the same source, check, path, code, and configurations as an earlier one', async () => {
+    test('rejects an entry with the same source, check, path and code as an earlier one', async () => {
       await inTemporaryDirectory(async (directory) => {
         await writeSuppressionsFile(
           directory,
@@ -429,21 +384,18 @@ describe('readAppSecuritySuppressions', () => {
               ...agentEntry,
               kind: 'false-positive',
               reason: 'Another reason.',
-              configurations: [...agentEntry.configurations].reverse(),
             },
-            {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.toml']},
           ]),
         )
 
         await expect(readProblems(directory)).resolves.toStrictEqual([
           'suppressions[2]: duplicates suppressions[0]',
           'suppressions[3]: duplicates suppressions[1]',
-          'suppressions[4]: duplicates suppressions[0]',
         ])
       })
     })
 
-    test('accepts entries that differ in source, check, path, code, or configurations', async () => {
+    test('accepts entries that differ in source, check, path or code', async () => {
       await inTemporaryDirectory(async (directory) => {
         const entries = [
           deterministicEntry,
@@ -457,9 +409,7 @@ describe('readAppSecuritySuppressions', () => {
             kind: deterministicEntry.kind,
             path: deterministicEntry.path,
             reason: deterministicEntry.reason,
-            configurations: deterministicEntry.configurations,
           },
-          {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.production.toml']},
         ]
         await writeSuppressionsFile(directory, suppressionsJson(entries))
 
@@ -734,18 +684,6 @@ describe('parseSuppressionFlags', () => {
   )
 })
 
-describe('suppressionConfiguration', () => {
-  test("names the selected configuration's file, or the client ID that names the results", () => {
-    const config = {kind: 'config', appDirectory: '/app', appConfigFilePath: '/app/shopify.app.staging.toml'} as const
-
-    expect(suppressionConfiguration(config)).toBe('shopify.app.staging.toml')
-    expect(suppressionConfiguration({...config, clientIdOverride: 'flag-client-id'})).toBe('flag-client-id')
-    expect(
-      suppressionConfiguration({kind: 'no-config', appDirectory: '/app', clientId: 'abc', clientIdSource: 'flag'}),
-    ).toBe('abc')
-  })
-})
-
 /** An agent finding at `line` of `file`, with the lines around it as its excerpt. */
 function agentFinding(file: string, line: number, lines: string[], message: string): StoredFinding {
   return findingWithExcerpt({location: {file, line}, message, evidence: [{location: {file, line}}]}, lines)
@@ -755,8 +693,8 @@ function agentDocument(checkId: string, findings: StoredFinding[]): AgentFinding
   return storedAgentDocument({checkId, findings, generatedAt: '2026-09-01T11:00:00.000Z', precedence: 'union'})
 }
 
-function resultsOf(document: AgentFindingsDocument, configuration = 'shopify.app.toml'): SuppressionResults {
-  return {deterministic: null, agent: document, resultsKey: 'shopify.app', configuration}
+function resultsOf(document: AgentFindingsDocument): SuppressionResults {
+  return {deterministic: null, agent: document}
 }
 
 function targetOf(document: AgentFindingsDocument, findingIndex: number): SuppressionTarget {
@@ -783,7 +721,7 @@ const routeLines = [
 ]
 
 describe('planSuppression', () => {
-  test('names the finding by its flagged line, under the configuration of the results', () => {
+  test('names the finding by its flagged line', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'The access token reaches a log.'),
     ])
@@ -799,7 +737,6 @@ describe('planSuppression', () => {
           path: 'app/routes/orders.tsx',
           code: 'console.log(session.accessToken)',
           reason: 'The logger redacts tokens.',
-          configurations: ['shopify.app.toml'],
         },
       },
     })
@@ -830,7 +767,7 @@ describe('planSuppression', () => {
       const {checks, suppressions} = combineFindings({
         deterministic: null,
         agent: document,
-        suppressions: {entries: [entry!], resultsKey: 'shopify.app'},
+        suppressions: {entries: [entry!]},
       })
       expect(suppressions[0]).toMatchObject({status: 'matched', matched_finding_count: 1})
       expect(checks[0]!.findings.map((finding) => finding.disposition)).toStrictEqual(
@@ -921,10 +858,8 @@ describe('planSuppression', () => {
             path: 'app/routes/orders.tsx',
             code,
             reason: 'The logger redacts tokens.',
-            configurations: ['shopify.app.toml'],
           },
         ],
-        resultsKey: 'shopify.app',
       },
     })
 
@@ -1030,7 +965,6 @@ describe('planSuppression', () => {
       kind: 'accepted-risk',
       path: 'app/routes/orders.tsx',
       reason: 'Local development only.',
-      configurations: ['shopify.app.toml'],
     }
 
     expect(
@@ -1038,7 +972,7 @@ describe('planSuppression', () => {
     ).toStrictEqual({status: 'saved', entryIndex: 1})
   })
 
-  test('adds the configuration to the entry that suppresses the same finding for another configuration', () => {
+  test('reuses an existing code selector without changing the suppression', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, routeLines.slice(0, 5), 'm'),
     ])
@@ -1049,14 +983,13 @@ describe('planSuppression', () => {
       path: 'app/routes/orders.tsx',
       code: 'console.log(session.accessToken)',
       reason: 'Local development only.',
-      configurations: ['shopify.app.staging.toml'],
     }
 
     expect(
       planSuppression(targetOf(document, 0), decision, resultsOf(document), [agentEntry, stagingEntry]),
     ).toStrictEqual({
-      status: 'change',
-      change: {type: 'add-configuration', index: 1, configuration: 'shopify.app.toml'},
+      status: 'saved',
+      entryIndex: 1,
     })
   })
 
@@ -1093,19 +1026,14 @@ describe('planSuppression', () => {
       finding,
     }
 
-    const plan = planSuppression(
-      target,
-      decision,
-      {deterministic, agent, resultsKey: 'shopify.app', configuration: 'shopify.app.toml'},
-      [],
-    )
+    const plan = planSuppression(target, decision, {deterministic, agent}, [])
 
     expect(plan).toMatchObject({
       status: 'change',
       change: {type: 'add', entry: {source: 'deterministic', code: 'console.log(session.accessToken)'}},
     })
     const entry = plan.status === 'change' && plan.change.type === 'add' ? plan.change.entry : undefined
-    const suppressions = {entries: [entry!], resultsKey: 'shopify.app'}
+    const suppressions = {entries: [entry!]}
     // `review` combines both results: the finding stays superseded, and the entry matched it.
     const reviewed = combineFindings({deterministic, agent, suppressions})
     // `check` reads the deterministic results alone: the entry suppresses the finding.
@@ -1135,7 +1063,7 @@ describe('planSuppression', () => {
     const {checks, suppressions} = combineFindings({
       deterministic: null,
       agent: moved,
-      suppressions: {entries: [entry!], resultsKey: 'shopify.app'},
+      suppressions: {entries: [entry!]},
     })
 
     expect(suppressions[0]).toMatchObject({status: 'matched', matched_finding_count: 1})
@@ -1153,11 +1081,10 @@ describe('planReattachment', () => {
     path: 'app/routes/orders.tsx',
     code: 'console.log(session.accessToken)',
     reason: 'The logger redacts tokens in production.',
-    configurations: ['shopify.app.staging.toml', 'shopify.app.toml'],
   } as const satisfies AppSecuritySuppression
   const kept = {kind: staleEntry.kind, reason: staleEntry.reason}
 
-  test('gives the entry the code of a new entry for the finding, and keeps its kind, reason and configurations', () => {
+  test('gives the entry the code of a new entry for the finding, and keeps its kind and reason', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, renamedLines.slice(0, 5), 'The access token reaches a log.'),
     ])
@@ -1230,7 +1157,6 @@ describe('saveAppSecuritySuppressions', () => {
     path: 'shopify.app.toml',
     code: 'api_version = "2024-01"',
     reason: 'The upgrade ships with the next release.',
-    configurations: ['shopify.app.toml'],
   }
 
   test('creates the file with schema_version 1, as two-space JSON with a trailing newline, outside .shopify', async () => {
@@ -1249,7 +1175,7 @@ describe('saveAppSecuritySuppressions', () => {
     })
   })
 
-  test('appends entries and adds configurations, keeping every other entry and key as the file has them', async () => {
+  test('appends entries, keeping every other entry and key as the file has them', async () => {
     await inTemporaryDirectory(async (directory) => {
       // The file can't hold unknown keys, so `$schema` and an entry with its keys in another order stand for them.
       const original = {
@@ -1262,10 +1188,7 @@ describe('saveAppSecuritySuppressions', () => {
 
       const {saved} = await saveAppSecuritySuppressions(
         directory,
-        [
-          {type: 'add-configuration', index: 0, configuration: 'shopify.app.staging.toml'},
-          {type: 'add', entry: newEntry},
-        ],
+        [{type: 'add', entry: newEntry}],
         [deterministicEntry, agentEntry],
       )
 
@@ -1275,7 +1198,6 @@ describe('saveAppSecuritySuppressions', () => {
         suppressions: [
           {
             ...original.suppressions[0],
-            configurations: ['shopify.app.toml', 'shopify.app.staging.toml'],
           },
           agentEntry,
           newEntry,
@@ -1284,14 +1206,7 @@ describe('saveAppSecuritySuppressions', () => {
       expect(text).toBe(`${JSON.stringify(expected, null, 2)}\n`)
       // The untouched entry is the same text, byte for byte.
       expect(text).toContain(JSON.stringify(agentEntry, null, 2).replaceAll('\n', '\n    '))
-      expect(saved).toStrictEqual([
-        {
-          index: 0,
-          change: 'configuration-added',
-          entry: {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.staging.toml']},
-        },
-        {index: 2, change: 'added', entry: newEntry},
-      ])
+      expect(saved).toStrictEqual([{index: 2, change: 'added', entry: newEntry}])
     })
   })
 
@@ -1393,7 +1308,7 @@ describe('saveAppSecuritySuppressions', () => {
   })
 
   test.each(['reorder', 'delete'] as const)(
-    'refuses a stale entry index after %s without changing the file',
+    'refuses changed entries after %s without changing the file',
     async (change) => {
       await inTemporaryDirectory(async (directory) => {
         const expected = [deterministicEntry, agentEntry]
@@ -1402,11 +1317,7 @@ describe('saveAppSecuritySuppressions', () => {
         await writeSuppressionsFile(directory, text)
 
         await expect(
-          saveAppSecuritySuppressions(
-            directory,
-            [{type: 'add-configuration', index: 0, configuration: 'shopify.app.staging.toml'}],
-            expected,
-          ),
+          saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], expected),
         ).rejects.toMatchObject({code: 'suppressions-file-changed'})
 
         await expect(readFile(appSecuritySuppressionsPath(directory))).resolves.toBe(text)

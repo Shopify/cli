@@ -168,7 +168,6 @@ describe('renderSecurityRecordResult', () => {
       path: 'app/routes/orders.tsx',
       code: 'const orders = await prisma.order.findMany()',
       reason: 'Every order table holds one shop.',
-      configurations: ['shopify.app.toml'],
     }
 
     function suppressions(appRoot: string): RecordedSuppressions {
@@ -379,7 +378,6 @@ describe('renderSecurityRecordResult', () => {
                 path: resolve(appRoot, 'app', 'routes', 'orders.tsx'),
                 code: 'const orders = await prisma.order.findMany()',
                 reason: 'Every order table holds one shop.',
-                configurations: ['shopify.app.toml'],
                 previous: null,
               },
             ],

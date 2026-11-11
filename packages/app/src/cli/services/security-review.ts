@@ -13,7 +13,6 @@ import {
   planReattachment,
   planSuppression,
   saveAppSecuritySuppressions,
-  suppressionConfiguration,
   type AppSecuritySuppression,
   type SavedSuppression,
   type SuppressionDecision,
@@ -155,8 +154,6 @@ export type InteractiveSecurityReview = (session: InteractiveReviewSession) => P
 export interface InteractiveReviewSession {
   /** The reviewed results when the session starts. */
   result: SecurityReviewResult
-  /** The app configuration that new entries list, such as `shopify.app.toml`. */
-  configuration: string
   /** The active findings of the checks that `--check-id` selects, most severe first: the findings the session offers. */
   findings: NumberedFinding[]
   /**
@@ -355,12 +352,11 @@ export default async function securityReview(
       ? savedOrAbort(await suppressFinding(selection, loaded.results, loaded.result, options.suppress, decision))
       : undefined
   const reattachments = options.interactive
-    ? reattachmentOffers(selection, loaded.results, loaded.result)
+    ? reattachmentOffers(loaded.results, loaded.result)
     : new Map<number, ReattachmentOffer>()
   const interactiveReview = options.interactive
     ? await options.interactive({
         result: loaded.result,
-        configuration: suppressionConfiguration(selection),
         findings: interactiveReviewFindings(loaded.result, isActive),
         supersededFindings: interactiveReviewFindings(loaded.result, isCountedByCheckBlocking),
         suppress: async ({findingNumber, decision: requestDecision, includeSuperseded}) => {
@@ -514,19 +510,16 @@ function reattachedEntry(
   return index === undefined || entry === undefined ? undefined : {index, entry}
 }
 
-/** The stored results that new and re-attached entries must match, with the run's results key and configuration. */
-function suppressionResultsOf(selection: AppSecuritySelection, results: AppSecurityResults): SuppressionResults {
+/** The stored results that new and re-attached entries must match, across all app configurations. */
+function suppressionResultsOf(results: AppSecurityResults): SuppressionResults {
   return {
     deterministic: results.sources.deterministic?.document ?? null,
     agent: results.sources.agent?.document ?? null,
-    resultsKey: resultsKey(selection),
-    configuration: suppressionConfiguration(selection),
   }
 }
 
 /** The stale entries that `--interactive` can re-attach, by their likely finding's number, each with its new code. */
 function reattachmentOffers(
-  selection: AppSecuritySelection,
   results: AppSecurityResults,
   review: SecurityReviewResult,
 ): ReadonlyMap<number, ReattachmentOffer> {
@@ -541,7 +534,7 @@ function reattachmentOffers(
         storedTarget(results, target),
         entryIndex,
         keptDecision(entry, {}),
-        suppressionResultsOf(selection, results),
+        suppressionResultsOf(results),
         entries,
       )
       if (plan.status !== 'change' || plan.change.type !== 'replace-code') return []
@@ -598,7 +591,7 @@ async function suppressFinding(
   const findings = [...(alreadySuppressed ? [] : [target]), ...(options.includeSuperseded ? companions : [])]
   if (findings.length === 0) return refused(notSuppressible(target))
 
-  const suppressionResults = suppressionResultsOf(selection, results)
+  const suppressionResults = suppressionResultsOf(results)
   const entries = results.suppressions.map(({entry}) => entry)
   const plans = findings.map((numberedFinding) => {
     const stored = storedTarget(results, numberedFinding)

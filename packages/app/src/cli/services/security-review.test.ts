@@ -88,7 +88,6 @@ const eolApiVersionEntry: SuppressionEntry = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'The upgrade ships with the next release.',
-  configurations: ['shopify.app.toml'],
 }
 const tenantIsolationEntry: SuppressionEntry = {
   source: 'agent',
@@ -97,7 +96,6 @@ const tenantIsolationEntry: SuppressionEntry = {
   path: 'app/routes/orders.tsx',
   code: 'the query has no shop filter',
   reason: 'Every order table holds one shop.',
-  configurations: ['shopify.app.toml'],
 }
 
 function dispositionsOf(checks: CombinedCheck[], id: string) {
@@ -544,7 +542,6 @@ describe('securityReview --suppress', () => {
         path: 'shopify.app.toml',
         code: 'api_version = "2024-01"',
         reason: 'The upgrade ships with the next release.',
-        configurations: ['shopify.app.toml'],
       }
       expect(reviewed.savedSuppressions).toStrictEqual({
         path: appSecuritySuppressionsPath(appRoot),
@@ -694,7 +691,6 @@ describe('securityReview --suppress', () => {
         path: 'app/shopify.server.ts',
         code: 'logger.info(apiSecretKey)',
         reason: 'The logger drops secrets.',
-        configurations: ['shopify.app.toml'],
       }
       expect(reviewed.savedSuppressions).toStrictEqual({
         path: appSecuritySuppressionsPath(appRoot),
@@ -749,26 +745,20 @@ describe('securityReview --suppress', () => {
     })
   })
 
-  test('adds the configuration to the entry of another configuration that names the same finding', async () => {
+  test('refuses to suppress an already suppressed finding without changing its entry', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, bothWithExcerpts)
-      const stagingEntry = {
+      const entry = {
         source: 'deterministic',
         check: 'EOL_API_VERSION',
         kind: 'accepted-risk',
         path: 'shopify.app.toml',
         code: 'api_version = "2024-01"',
-        reason: 'Staging follows production.',
-        configurations: ['shopify.app.staging.toml'],
+        reason: 'The API version upgrade is planned.',
       }
-      await writeAppSecuritySuppressionsFixture(appRoot, [stagingEntry])
+      await writeAppSecuritySuppressionsFixture(appRoot, [entry])
 
-      const reviewed = await suppress(appRoot, {findingNumber: 6})
-
-      const entry = {...stagingEntry, configurations: ['shopify.app.staging.toml', 'shopify.app.toml']}
-      expect(reviewed.savedSuppressions?.saved).toStrictEqual([
-        {index: 0, change: 'configuration-added', entry, findingNumber: 6},
-      ])
+      await expect(suppress(appRoot, {findingNumber: 6})).rejects.toMatchObject({code: 'finding-not-suppressible'})
       await expect(readEntries(appRoot)).resolves.toStrictEqual([entry])
     })
   })
@@ -1010,7 +1000,6 @@ describe('securityReview --suppress', () => {
                 kind: 'accepted-risk',
                 path,
                 reason: 'The results are old.',
-                configurations: ['shopify.app.toml'],
               },
             ],
           }),
@@ -1172,7 +1161,6 @@ describe('securityReview --suppress, for the likely finding of a stale entry', (
         path: 'app/routes/session.ts',
         code: 'console.log(currentSession.accessToken)',
         reason,
-        configurations: ['shopify.app.toml'],
       }
       expect(reattached.savedSuppressions).toStrictEqual({
         path: appSecuritySuppressionsPath(appRoot),
@@ -1268,7 +1256,6 @@ describe('securityReview --suppress, for the likely finding of a stale entry', (
         path: 'app/routes/orders.tsx',
         code: 'console.log(session.idToken)',
         reason: 'The logger redacts tokens.',
-        configurations: ['shopify.app.toml'],
       }
       await writeAppSecuritySuppressionsFixture(appRoot, [agentEntry])
       await mkdir(joinPath(appRoot, 'app', 'routes'))
@@ -1332,7 +1319,6 @@ describe('securityReview --suppress, for the likely finding of a stale entry', (
         path: 'app/routes/orders.tsx',
         code: 'console.log(session.accessToken)',
         reason: 'The logger redacts tokens.',
-        configurations: ['shopify.app.toml'],
       }
       const fileText = JSON.stringify({schema_version: 1, suppressions: [agentEntry]})
       await writeFile(appSecuritySuppressionsPath(appRoot), fileText)
@@ -1390,7 +1376,6 @@ describe('securityReview --interactive', () => {
       const appRoot = await createApp(directory, bothWithExcerpts)
       const {offered, record} = offeredFindings()
       const checkSession = async (session: InteractiveReviewSession) => {
-        expect(session.configuration).toBe('shopify.app.toml')
         expect(session.result.resultsDigest).toMatch(/^[0-9a-f]{12}$/)
         return record(session)
       }
@@ -1449,7 +1434,6 @@ describe('securityReview --interactive', () => {
         path: 'shopify.app.toml',
         code: 'api_version = "2024-01"',
         reason: 'The logger redacts tokens.',
-        configurations: ['shopify.app.toml'],
       }
       let outcome: InteractiveReviewOutcome | undefined
 
@@ -1632,7 +1616,6 @@ describe('securityReview --interactive, for the likely finding of a stale entry'
     path: 'app/routes/session.ts',
     code: 'console.log(session.accessToken)',
     reason,
-    configurations: ['shopify.app.toml'],
   } as const
 
   async function createRenamedApp(
@@ -1696,49 +1679,54 @@ describe('securityReview --interactive, for the likely finding of a stale entry'
     })
   })
 
-  test('refuses to re-attach a finding that is no longer the likely finding of a stale entry, and saves nothing', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createRenamedApp(directory)
-      const fileText = await readFile(appSecuritySuppressionsPath(appRoot))
+  test.each(['removed', 'moved'] as const)(
+    'refuses re-attachment when the stale entry is %s, and saves nothing',
+    async (change) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createRenamedApp(directory)
+        const fileText = await readFile(appSecuritySuppressionsPath(appRoot))
 
-      await securityReview(
-        {
-          directory: appRoot,
-          checkIds: [],
-          blocking: 'high',
-          interactive: async (session) => {
-            // The file changes during the session: the entry is gone.
-            await writeFile(appSecuritySuppressionsPath(appRoot), JSON.stringify({schema_version: 1, suppressions: []}))
-            const result = await session.reattach(1)
-            await writeFile(appSecuritySuppressionsPath(appRoot), fileText)
-            expect(result).toStrictEqual({
-              status: 'refused',
-              refusal: {
-                code: 'finding-not-suppressible',
-                message: 'Finding 1 is no longer the likely finding of a stale entry. Nothing was saved.',
-                tryMessage:
-                  'Choose Suppress to save a new entry for it, or run the review again to see the stale entries of shopify.app-security.json.',
-                details: {findingNumber: 1},
-              },
-            })
-            return {saved: [], declinedCompanions: [], ending: 'finished'}
+        await securityReview(
+          {
+            directory: appRoot,
+            checkIds: [],
+            blocking: 'high',
+            interactive: async (session) => {
+              // The file changes during the session, so the entry no longer names this finding.
+              await writeFile(
+                appSecuritySuppressionsPath(appRoot),
+                JSON.stringify({
+                  schema_version: 1,
+                  suppressions: change === 'removed' ? [] : [{...staleEntry, path: 'app/routes/other-orders.tsx'}],
+                }),
+              )
+              const result = await session.reattach(1)
+              await writeFile(appSecuritySuppressionsPath(appRoot), fileText)
+              expect(result).toStrictEqual({
+                status: 'refused',
+                refusal: {
+                  code: 'finding-not-suppressible',
+                  message: 'Finding 1 is no longer the likely finding of a stale entry. Nothing was saved.',
+                  tryMessage:
+                    'Choose Suppress to save a new entry for it, or run the review again to see the stale entries of shopify.app-security.json.',
+                  details: {findingNumber: 1},
+                },
+              })
+              return {saved: [], declinedCompanions: [], ending: 'finished'}
+            },
           },
-        },
-        testDependencies(),
-      )
+          testDependencies(),
+        )
 
-      await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(fileText)
-    })
-  })
+        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(fileText)
+      })
+    },
+  )
 
   test.each([
     {change: 'code', entries: [{...staleEntry, code: 'console.log(otherSession.accessToken)'}]},
     {change: 'reason', entries: [{...staleEntry, reason: 'A different decision.'}]},
     {change: 'kind', entries: [{...staleEntry, kind: 'accepted-risk'}]},
-    {
-      change: 'configurations',
-      entries: [{...staleEntry, configurations: ['shopify.app.toml', 'shopify.app.production.toml']}],
-    },
     {
       change: 'replacement entry',
       entries: [
@@ -1746,7 +1734,6 @@ describe('securityReview --interactive, for the likely finding of a stale entry'
           ...staleEntry,
           code: 'console.log(otherSession.accessToken)',
           reason: 'A different decision.',
-          configurations: ['shopify.app.toml', 'shopify.app.production.toml'],
         },
       ],
     },

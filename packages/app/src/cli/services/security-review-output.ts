@@ -198,7 +198,6 @@ function likelyFindingCommands({result, commands}: SecurityReviewPresenterInput)
 
 const SAVED_CHANGE_LABEL: Record<SavedSuppression['change'], string> = {
   added: 'added',
-  'configuration-added': 'configuration added',
   'code-replaced': 're-attached',
 }
 
@@ -226,7 +225,6 @@ function savedEntrySection(
       `${entry.source} ${entry.check} in`,
       {filePath: entry.path},
       ...(previous ? reattachedEntryLines(entry, previous) : savedEntryLines(entry)),
-      {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
       ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
     ],
   }

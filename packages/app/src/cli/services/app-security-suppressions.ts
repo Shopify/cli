@@ -18,14 +18,12 @@ import {
   type SuppressionKind,
 } from './app-security-engine/index.js'
 import {isMissingFilesystemEntry} from './app-security-engine/scanners/filesystem-errors.js'
-import {isValidFormatAppConfigurationFileName} from '../models/app/config-file-naming.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 import lockfile from 'proper-lockfile'
 import {isDeepStrictEqual} from 'node:util'
-import type {AppSecuritySelection} from './app-security-selection.js'
 
 const SUPPRESSIONS_SCHEMA_VERSION = 1
 
@@ -71,17 +69,6 @@ function pathProblem(path: string): string | undefined {
   return undefined
 }
 
-/**
- * An entry names each app configuration it applies to by its file name (`shopify.app.toml` or
- * `shopify.app.<name>.toml`), or by a client ID passed with `--client-id`: a token without dots, whitespace, or path
- * separators. Any other name could never match.
- */
-function configurationProblem(name: string): string | undefined {
-  if (name.trim() !== name) return 'must not start or end with whitespace'
-  if (isValidFormatAppConfigurationFileName(name) || /^[^\s./\\]+$/.test(name)) return undefined
-  return 'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
-}
-
 const suppressionSchema = zod.strictObject(
   {
     source: choice(FINDINGS_SOURCES),
@@ -100,15 +87,6 @@ const suppressionSchema = zod.strictObject(
       )
       .optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
-    configurations: zod
-      .array(
-        requiredString().superRefine((name, context) => {
-          const problem = configurationProblem(name)
-          if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
-        }),
-        {required_error: 'required', invalid_type_error: 'must be an array'},
-      )
-      .min(1, 'must list at least one app configuration'),
   },
   {invalid_type_error: 'must be an object'},
 )
@@ -154,6 +132,9 @@ const MAX_QUOTED_KEY_LENGTH = 40
 
 /** Names an unknown key, and the known key it differs from only in case, as in `Code` for `code`. */
 function describeUnknownKey(key: string, knownKeys: string[]): string {
+  if (key === 'configurations') {
+    return 'configurations is no longer supported. Suppressions apply to all app configurations; remove this field.'
+  }
   const shortKey = key.length > MAX_QUOTED_KEY_LENGTH ? `${key.slice(0, MAX_QUOTED_KEY_LENGTH)}\u2026` : key
   const knownKey = knownKeys.find((candidate) => candidate.toLowerCase() === key.toLowerCase())
   const hint = knownKey === undefined ? '' : `. Did you mean ${JSON.stringify(knownKey)}?`
@@ -212,8 +193,8 @@ function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
 }
 
 /**
- * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code), and the
- * same set of app configurations. Only one of them could apply, so a duplicate is a problem even when its kind or
+ * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code).
+ * Only one of them could apply, so a duplicate is a problem even when its kind or
  * reason differs. Only entries that are valid on their own are compared; the schema reports the others.
  */
 function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
@@ -222,8 +203,8 @@ function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
   return entries.flatMap((entry: unknown, entryIndex): SuppressionsFileProblem[] => {
     const parsed = suppressionSchema.safeParse(entry)
     if (!parsed.success) return []
-    const {source, check, path, code, configurations} = parsed.data
-    const match = JSON.stringify([source, check, path, code ?? null, [...new Set(configurations)].sort()])
+    const {source, check, path, code} = parsed.data
+    const match = JSON.stringify([source, check, path, code ?? null])
     const firstIndex = firstIndexByMatch.get(match)
     if (firstIndex === undefined) {
       firstIndexByMatch.set(match, entryIndex)
@@ -356,18 +337,10 @@ export function suppressionReasonProblem(reason: string): string | undefined {
   return parsed.success ? undefined : parsed.error.issues[0]?.message
 }
 
-/** The app configuration that an entry lists for the selection's results: the configuration's file name, or the client ID. */
-export function suppressionConfiguration(selection: AppSecuritySelection): string {
-  if (selection.kind === 'no-config') return selection.clientId
-  return selection.clientIdOverride ?? basename(selection.appConfigFilePath)
-}
-
-/** The stored results that a new entry must match, with the run's results key and the configuration that names it. */
+/** The stored results that a new entry must match. */
 export interface SuppressionResults {
   deterministic: DeterministicFindingsDocument | null
   agent: AgentFindingsDocument | null
-  resultsKey: string
-  configuration: string
 }
 
 /** A stored finding to suppress. */
@@ -386,13 +359,12 @@ export interface SuppressionDecision {
 }
 
 /**
- * A change to shopify.app-security.json: append an entry, add the run's configuration to an existing entry, or
+ * A change to shopify.app-security.json: append an entry or
  * re-attach a stale entry to its likely finding: replace its `code`, and set its kind and reason, which are its own
  * unless the person replaced them.
  */
 export type SuppressionChange =
   | {type: 'add'; entry: AppSecuritySuppression}
-  | {type: 'add-configuration'; index: number; configuration: string}
   | {type: 'replace-code'; index: number; code: string; kind: SuppressionKind; reason: string}
 
 /**
@@ -428,12 +400,11 @@ const CODE_WORD = /[\w$.:/@-]{3,}/g
 
 /**
  * Plans how to save a suppression for one finding of the current results. The new entry names the finding's source,
- * check and path, the run's configuration, and `code` from the finding's redacted excerpt, never from a source file.
+ * check and path, and `code` from the finding's redacted excerpt, never from a source file.
  * A finding without a line gets no `code`. The plan holds only an entry that the matching of `review` and `check`
  * applies to that finding and to no other one in the current results:
- * 1. An entry that already suppresses the finding under this configuration leaves the file as it is.
- * 2. An entry for another configuration that would suppress only this finding gets this configuration too.
- * 3. Otherwise a new entry gets the shortest `code` that names the finding alone: its flagged line, then wider parts
+ * 1. An entry that already suppresses the finding leaves the file as it is.
+ * 2. Otherwise a new entry gets the shortest `code` that names the finding alone: its flagged line, then wider parts
  *    of the statement, then a word of the line that the finding's message names (the matching keeps the finding whose
  *    code and message both hold the text).
  */
@@ -455,7 +426,6 @@ export function planSuppression(
     path,
     ...(code === undefined ? {} : {code}),
     reason: decision.reason,
-    configurations: [results.configuration],
   })
   const base = entryWithCode(undefined)
   const problems = entryProblems(base)
@@ -467,22 +437,6 @@ export function planSuppression(
     }
   }
 
-  const hasLine = target.finding.location.line !== undefined
-  const reusableIndex = entries.findIndex(
-    (entry) =>
-      entry.source === base.source &&
-      entry.check === base.check &&
-      entry.path === path &&
-      (entry.code !== undefined) === hasLine &&
-      matchesOnly({...entry, configurations: base.configurations}, target, results),
-  )
-  if (reusableIndex !== -1) {
-    return {
-      status: 'change',
-      change: {type: 'add-configuration', index: reusableIndex, configuration: results.configuration},
-    }
-  }
-
   const named = codeNamingTarget(target, results, codeCandidates(target.finding), entryWithCode, base)
   if (named.status === 'refused') return named
   return {status: 'change', change: {type: 'add', entry: named.entry}}
@@ -491,7 +445,7 @@ export function planSuppression(
 /**
  * Plans how to re-attach a stale entry to its likely finding (`likely_finding`), the target: the entry gets the `code`
  * that a new entry for the target would get, the shortest of `planSuppression`'s candidates that names the target
- * alone, and the decision's kind and reason. Its source, check, path, configurations and every other key stay. When no
+ * alone, and the decision's kind and reason. Its source, check, path and every other key stay. When no
  * code names the target alone, the plan is refused as `planSuppression` refuses it, and the entry stays as it is.
  */
 export function planReattachment(
@@ -531,10 +485,7 @@ function codeNamingTarget<TCode extends string | undefined>(
 ): {status: 'named'; code: TCode; entry: AppSecuritySuppression} | Extract<SuppressionPlan, {status: 'refused'}> {
   const {path} = base
   const refusedPlan = (problem: string): Extract<SuppressionPlan, {status: 'refused'}> => {
-    const [withoutCode] = matchSuppressionEntries(
-      {entries: [base], resultsKey: results.resultsKey},
-      recordedCheckLookup(results),
-    ).entries
+    const [withoutCode] = matchSuppressionEntries({entries: [base]}, recordedCheckLookup(results)).entries
     return {status: 'refused', problem, withoutCode: {findingCount: withoutCode?.matched_finding_count ?? 0}}
   }
 
@@ -585,16 +536,13 @@ function matchingEntryIndex(
   target: SuppressionTarget,
   results: SuppressionResults,
 ): number | undefined {
-  const matches = matchSuppressionEntries({entries, resultsKey: results.resultsKey}, recordedCheckLookup(results))
+  const matches = matchSuppressionEntries({entries}, recordedCheckLookup(results))
   return matches.entryFor(target.source, target.checkId, target.findingIndex)?.index
 }
 
 /** Whether the entry matches the target, and no other finding, in the current results. */
 function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, results: SuppressionResults): boolean {
-  const matches = matchSuppressionEntries(
-    {entries: [entry], resultsKey: results.resultsKey},
-    recordedCheckLookup(results),
-  )
+  const matches = matchSuppressionEntries({entries: [entry]}, recordedCheckLookup(results))
   const [result] = matches.entries
   return (
     result?.status === 'matched' &&
@@ -627,10 +575,10 @@ export interface SavedSuppression {
   /** The entry's index in the file, from 0. */
   index: number
   /**
-   * `added` for a new entry, `configuration-added` for an existing entry that got the run's configuration, and
+   * `added` for a new entry and
    * `code-replaced` for a stale entry that was re-attached to its likely finding.
    */
-  change: 'added' | 'configuration-added' | 'code-replaced'
+  change: 'added' | 'code-replaced'
   entry: AppSecuritySuppression
   /** For `code-replaced` only: the entry's code, kind and reason before the change. */
   previous?: Pick<AppSecuritySuppression, 'code' | 'kind' | 'reason'>
@@ -642,7 +590,7 @@ export interface SavedSuppression {
  * writes nothing. Checks the entries used to plan the changes and serializes CLI writers with a file lock.
  * Validates the final bytes before `beforeCommit`, then commits those same bytes. New entries go at the end. Every
  * other key, value and order stays as the file has them, in two-space
- * JSON with a trailing newline, so a file in that format changes only where an entry is added, extended or re-attached.
+ * JSON with a trailing newline, so a file in that format changes only where an entry is added or re-attached.
  */
 export async function saveAppSecuritySuppressions(
   appDirectory: string,
@@ -666,19 +614,15 @@ export async function saveAppSecuritySuppressions(
       }
       const entry = updated.suppressions[change.index]
       if (!entry) abortChangedSuppressions()
-      if (change.type === 'replace-code') {
-        const previous = {
-          ...(entry.code === undefined ? {} : {code: entry.code}),
-          kind: entry.kind,
-          reason: entry.reason,
-        }
-        entry.code = change.code
-        entry.kind = change.kind
-        entry.reason = change.reason
-        return {index: change.index, change: 'code-replaced', entry: suppressionSchema.parse(entry), previous}
+      const previous = {
+        ...(entry.code === undefined ? {} : {code: entry.code}),
+        kind: entry.kind,
+        reason: entry.reason,
       }
-      entry.configurations.push(change.configuration)
-      return {index: change.index, change: 'configuration-added', entry: suppressionSchema.parse(entry)}
+      entry.code = change.code
+      entry.kind = change.kind
+      entry.reason = change.reason
+      return {index: change.index, change: 'code-replaced', entry: suppressionSchema.parse(entry), previous}
     })
     const validated = parseSuppressionsFile(updated)
     if (!validated.ok) abortInvalidSuppressionsFile(path, validated.errors)

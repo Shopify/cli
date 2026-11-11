@@ -285,17 +285,10 @@ function ambiguousEntryItem(result: SuppressionEntryResult): TokenItem<InlineTok
   ]
 }
 
-/** "Not evaluated: 3 entries (2 for checks without executed results, 1 for other app configurations)." */
+/** Entries whose source has no executed result for the check. */
 function notEvaluatedLine(results: SuppressionEntryResult[]): string {
-  const withoutResults = results.filter((result) => result.not_evaluated_reason !== 'other-configurations').length
-  const otherConfigurations = results.length - withoutResults
-  const reasons = [
-    withoutResults > 0
-      ? `${withoutResults} for ${withoutResults === 1 ? 'a check without an executed result' : 'checks without executed results'}`
-      : undefined,
-    otherConfigurations > 0 ? `${otherConfigurations} for other app configurations` : undefined,
-  ].filter((reason) => reason !== undefined)
-  return `Not evaluated: ${entryCountLabel(results.length)} (${reasons.join(', ')}).`
+  const reason = results.length === 1 ? 'no executed result for its check' : 'no executed results for their checks'
+  return `Not evaluated: ${entryCountLabel(results.length)} (${reason}).`
 }
 
 function entryCountLabel(total: number): string {

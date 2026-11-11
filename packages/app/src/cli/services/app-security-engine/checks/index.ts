@@ -148,6 +148,7 @@ finding: "kind" is the user's false-positive or accepted-risk, and
 "justification" is the user's reason. Never suppress a finding on your own
 initiative, and never invent a reason. record saves each suppression to
 shopify.app-security.json; tell the user to review and commit that file.
+Persisted suppressions apply to all app configurations and client-ID runs.
 
 Pipe the whole document on stdin to \`shopify app security record\`, using the
 exact command from the instructions you were given: its flags select where the

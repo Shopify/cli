@@ -238,13 +238,9 @@ function showRefusal(refusal: SuppressionRefusal): FindingDecision {
   return {...NO_DECISION, resultsChanged}
 }
 
-function interactiveReviewIntroAlert({
-  findings,
-  configuration,
-  reattachments,
-}: InteractiveReviewSession): SecurityReviewAlert {
+function interactiveReviewIntroAlert({findings, reattachments}: InteractiveReviewSession): SecurityReviewAlert {
   if (findings.length === 0) {
-    return {type: 'info', options: {headline: `No active findings to review for ${configuration}.`}}
+    return {type: 'info', options: {headline: 'No active findings to review.'}}
   }
   const reattach =
     reattachments.size === 0
@@ -253,8 +249,8 @@ function interactiveReviewIntroAlert({
   return {
     type: 'info',
     options: {
-      headline: `Reviewing ${countLabel(findings.length, 'active finding')} for ${configuration}, most severe first.`,
-      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop.${reattach} The suppressions you save are kept when you quit.`,
+      headline: `Reviewing ${countLabel(findings.length, 'active finding')}, most severe first.`,
+      body: `For each finding, choose Suppress to save an entry for it to ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} at once, Continue to leave it active, or Quit to stop.${reattach} The suppressions you save apply to all app configurations and are kept when you quit.`,
     },
   }
 }

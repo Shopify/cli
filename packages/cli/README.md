@@ -5951,13 +5951,11 @@ DESCRIPTION
   of `shopify.app-security.json` applied, but not the findings: run `shopify app security review --json` for those.
 
   Findings that an entry of `shopify.app-security.json` in the app directory suppresses don't count for `--blocking`.
-  The results files still hold every finding. An entry applies to the results that its `configurations` name: an app
-  configuration file name, such as `shopify.app.toml`, names the results of that configuration without `--client-id`,
-  and a client ID names the results of a run with that `--client-id`. An entry's `code` matches the code excerpt that
-  the results file saves with the finding. A results file that would be larger than 5 MB with excerpts is saved without
-  them; then an entry with `code` matches only the finding's message, so it can go stale and leave the finding active.
-  The check reads `shopify.app-security.json` before it scans, so an invalid file stops the command before any results
-  file is replaced.
+  The results files still hold every finding. Suppressions apply to all app configurations and client-ID runs. An
+  entry's `code` matches the code excerpt that the results file saves with the finding. A results file that would be
+  larger than 5 MB with excerpts is saved without them; then an entry with `code` matches only the finding's message, so
+  it can go stale and leave the finding active. The check reads `shopify.app-security.json` before it scans, so an
+  invalid file stops the command before any results file is replaced.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6261,7 +6259,7 @@ DESCRIPTION
               "ambiguous",
               "not-evaluated"
             ],
-            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check."
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check."
           },
           "matchedFindingCount": {
             "type": "integer",
@@ -7048,10 +7046,9 @@ DESCRIPTION
             "type": "string",
             "enum": [
               "added",
-              "configuration-added",
               "code-replaced"
             ],
-            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced."
+            "description": "added: a new entry at the end of the file. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced."
           },
           "source": {
             "type": "string",
@@ -7092,13 +7089,6 @@ DESCRIPTION
           "reason": {
             "type": "string",
             "description": "Why the finding is suppressed."
-          },
-          "configurations": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
           },
           "previous": {
             "anyOf": [
@@ -7153,7 +7143,6 @@ DESCRIPTION
           "path",
           "code",
           "reason",
-          "configurations",
           "previous"
         ],
         "additionalProperties": false,
@@ -7274,21 +7263,20 @@ DESCRIPTION
 
   `shopify.app-security.json`, in the app directory, holds the findings that your team decided not to fix. Commit it, so
   that your team and CI use the same decisions. Each entry names a finding's source, check ID and file, and can name a
-  `code` text of the finding. It has a kind, `false-positive` or `accepted-risk`, a reason, which is required, and the
-  app configurations it applies to: app configuration file names, which apply without `--client-id`, or client IDs
-  passed with `--client-id`. A finding that an entry matches is suppressed: it doesn't count for `--blocking`, and it's
-  always listed with its kind and reason. Findings that the agent suppressed, and superseded deterministic findings,
-  which a check's prefer-agent agent result replaces, don't count either. An entry's `code` matches the code excerpt
-  that the results file saved with the finding. A results file that would be larger than 5 MB with excerpts is saved
-  without them, and results written before excerpts existed have none; then an entry with `code` matches only the
-  finding's message. An entry that matches no finding is stale, and an entry whose code matches more than one finding is
-  ambiguous. Neither suppresses anything, and the review lists both, so you can remove or update them. When an edit to
-  the flagged code, such as a rename, makes an entry stale, the review names the entry's likely finding: the one finding
-  of its source and check in its file that nothing suppresses and whose flagged line holds at least two thirds of the
-  words of the entry's code. It names none when the entry's code or that line holds a redacted secret, such as
-  `shpa[REDACTED:38]`: redaction hides the only text that tells two credentials apart, so suppress that finding again
-  with `--kind` and `--reason`. Entries for checks without a result, or for other app configurations, aren't evaluated.
-  An invalid file makes the command fail with every problem.
+  `code` text of the finding. It has a kind, `false-positive` or `accepted-risk`, a reason, which is required.
+  Suppressions apply to all app configurations and client-ID runs. A finding that an entry matches is suppressed: it
+  doesn't count for `--blocking`, and it's always listed with its kind and reason. Findings that the agent suppressed,
+  and superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count either. An
+  entry's `code` matches the code excerpt that the results file saved with the finding. A results file that would be
+  larger than 5 MB with excerpts is saved without them, and results written before excerpts existed have none; then an
+  entry with `code` matches only the finding's message. An entry that matches no finding is stale, and an entry whose
+  code matches more than one finding is ambiguous. Neither suppresses anything, and the review lists both, so you can
+  remove or update them. When an edit to the flagged code, such as a rename, makes an entry stale, the review names the
+  entry's likely finding: the one finding of its source and check in its file that nothing suppresses and whose flagged
+  line holds at least two thirds of the words of the entry's code. It names none when the entry's code or that line
+  holds a redacted secret, such as `shpa[REDACTED:38]`: redaction hides the only text that tells two credentials apart,
+  so suppress that finding again with `--kind` and `--reason`. Entries for checks without an executed result aren't
+  evaluated. An invalid file makes the command fail with every problem.
 
   Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
   every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
@@ -7297,14 +7285,14 @@ DESCRIPTION
   results changed since you read the number. The command saves an entry to `shopify.app-security.json` that matches only
   that finding, then shows the review with the finding suppressed. Review and commit the file. When the finding is the
   likely finding of a stale entry, `--suppress` re-attaches that entry instead of adding one: the entry gets the code
-  that names the finding alone, and keeps its kind, reason and configurations, so `--kind` and `--reason` are optional,
-  and replace the entry's kind and reason when you pass them. The output shows the old and the new code. Nothing
-  re-attaches an entry on its own: only `--suppress` and the Re-attach choice of `--interactive` change the file. When
-  the finding is an agent finding that supersedes a deterministic finding of the same check in the same file, `check
-  --blocking` still counts the deterministic finding, because it reads no agent results: the output names it, and
-  `--include-superseded` suppresses it too, with the same kind and reason. A superseded deterministic finding can also
-  be suppressed by its own number, for example when the agent result has no finding in its file: the review doesn't
-  count it, but `check --blocking` does, and the output says so.
+  that names the finding alone, and keeps its kind and reason, so `--kind` and `--reason` are optional, and replace the
+  entry's kind and reason when you pass them. The output shows the old and the new code. Nothing re-attaches an entry on
+  its own: only `--suppress` and the Re-attach choice of `--interactive` change the file. When the finding is an agent
+  finding that supersedes a deterministic finding of the same check in the same file, `check --blocking` still counts
+  the deterministic finding, because it reads no agent results: the output names it, and `--include-superseded`
+  suppresses it too, with the same kind and reason. A superseded deterministic finding can also be suppressed by its own
+  number, for example when the agent result has no finding in its file: the review doesn't count it, but `check
+  --blocking` does, and the output says so.
 
   Use `--interactive` in a terminal to go through the active findings one at a time, most severe first, each shown in
   full with its number. For each finding, choose Suppress, Continue or Quit, or Re-attach when the finding is the likely
@@ -7663,7 +7651,7 @@ DESCRIPTION
               "ambiguous",
               "not-evaluated"
             ],
-            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check."
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check."
           },
           "matchedFindingCount": {
             "type": "integer",
@@ -8641,10 +8629,9 @@ DESCRIPTION
             "type": "string",
             "enum": [
               "added",
-              "configuration-added",
               "code-replaced"
             ],
-            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced."
+            "description": "added: a new entry at the end of the file. code-replaced: a stale entry that review --suppress re-attached to its likely finding: it got the finding's code, and kept its other fields, apart from a kind or reason that --kind or --reason replaced."
           },
           "source": {
             "type": "string",
@@ -8685,13 +8672,6 @@ DESCRIPTION
           "reason": {
             "type": "string",
             "description": "Why the finding is suppressed."
-          },
-          "configurations": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
           },
           "previous": {
             "anyOf": [
@@ -8751,7 +8731,6 @@ DESCRIPTION
           "path",
           "code",
           "reason",
-          "configurations",
           "previous",
           "findingNumber"
         ],

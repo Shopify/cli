@@ -195,7 +195,6 @@ export default async function securityCheck(
     agent: null,
     suppressions: {
       entries: suppressionEntries,
-      resultsKey: resolution.resultsKey,
       missingPaths: await missingSuppressionPaths(appDirectory, suppressionEntries),
     },
   })
