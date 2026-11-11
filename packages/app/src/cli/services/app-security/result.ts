@@ -133,6 +133,5 @@ export function projectAppSecuritySavedSuppression(
     path: projectAppSecurityRelativePath(appDirectory, entry.path),
     code: entry.code ?? null,
     reason: entry.reason,
-    configurations: entry.configurations,
   }
 }

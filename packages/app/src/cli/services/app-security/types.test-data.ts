@@ -9,6 +9,5 @@ export function savedSuppressionFixture(path: string) {
     path,
     code: 'console.log(session.accessToken)',
     reason: 'The logger redacts tokens.',
-    configurations: ['shopify.app.toml'],
   }
 }

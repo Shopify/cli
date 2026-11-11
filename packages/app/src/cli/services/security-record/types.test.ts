@@ -52,9 +52,7 @@ describe('appSecurityRecordJsonOutputSchema', () => {
         ...result,
         suppressions: {
           ...suppressions,
-          entries: [
-            {...savedEntry, change: 'configuration-added', code: null, configurations: ['shopify.app.toml', 'abc']},
-          ],
+          entries: [{...savedEntry, change: 'added', code: null}],
         },
       },
     ],

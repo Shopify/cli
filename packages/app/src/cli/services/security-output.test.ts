@@ -483,7 +483,6 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     kind: 'false-positive',
     path: 'test/fixtures/session.ts',
     reason: 'Fake tokens in a unit test fixture.',
-    configurations: ['shopify.app.toml'],
   }
   const scriptTagEntry: SuppressionEntry = {
     source: 'deterministic',
@@ -492,7 +491,6 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     path: 'shopify.app.toml',
     code: 'write_script_tags',
     reason: 'Kept until the app embed ships.',
-    configurations: ['shopify.app.toml'],
   }
 
   /** The report of a scan with these issues, after `check` applied these entries to its deterministic findings. */
@@ -509,7 +507,7 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     const {checks, suppressions} = combineFindings({
       deterministic,
       agent: null,
-      suppressions: {entries, resultsKey: 'shopify.app'},
+      suppressions: {entries},
     })
     return reportInput({scan, checks, suppressions})
   }
@@ -560,7 +558,7 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
       // Both committed tokens have this message.
       {...fixtureEntry, code: 'A Shopify access token'},
       {...scriptTagEntry, source: 'agent', check: 'SCOPE_OVER_REQUEST'},
-      {...scriptTagEntry, configurations: ['shopify.app.staging.toml']},
+      {...scriptTagEntry, source: 'agent', check: 'CSRF_MISSING_PROTECTION'},
     ]
     const withoutFile = buildSecurityAlert(suppressedReportInput(issues, []))
 
@@ -584,7 +582,7 @@ describe('buildSecurityAlert with shopify.app-security.json', () => {
     expect(JSON.stringify(sections[5])).toContain('· matches 2 findings')
     expect(sections[7]).toEqual({
       body: {
-        subdued: 'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+        subdued: 'Not evaluated: 2 entries (no executed results for their checks).',
       },
     })
   })

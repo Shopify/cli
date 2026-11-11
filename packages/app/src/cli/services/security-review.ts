@@ -12,7 +12,6 @@ import {
   parseSuppressionFlags,
   planSuppression,
   saveAppSecuritySuppressions,
-  suppressionConfiguration,
   type SavedSuppression,
   type SuppressionChange,
   type SuppressionDecision,
@@ -302,8 +301,6 @@ async function suppressFinding(
   const suppressionResults = {
     deterministic: results.sources.deterministic?.document ?? null,
     agent: results.sources.agent?.document ?? null,
-    resultsKey: resultsKey(selection),
-    configuration: suppressionConfiguration(selection),
   }
   const entries = results.suppressions.map(({entry}) => entry)
   const changes = findings.flatMap((numberedFinding): {findingNumber: number; change: SuppressionChange}[] => {

@@ -160,15 +160,14 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
 
 /** The entries that `--suppress` saved, then the companions it left out, and a reminder to commit the file. */
 function savedSuppressionsAlert({saved, companionNumbers}: SavedReviewSuppressions): SecurityReviewAlert {
-  const entrySections: AlertCustomSection[] = saved.map(({index, change, entry, findingNumber}) => ({
-    title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
+  const entrySections: AlertCustomSection[] = saved.map(({index, entry, findingNumber}) => ({
+    title: `suppressions[${index}] · finding ${findingNumber} · added`,
     body: [
       `${entry.source} ${entry.check} in`,
       {filePath: entry.path},
       {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
       ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
       {subdued: `\nReason: ${entry.reason}`},
-      {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
     ],
   }))
   const companionSections: AlertCustomSection[] =

@@ -78,7 +78,6 @@ const fixtureEntry: SuppressionEntry = {
   kind: 'false-positive',
   path: 'app/routes/index.ts',
   reason: 'A fake token for the route tests.',
-  configurations: ['shopify.app.toml'],
 }
 
 /** A scan that reports `committedSecretIssue`, after `check` applied these entries of shopify.app-security.json. */
@@ -90,7 +89,7 @@ function scannedWithSuppressions(
   const {checks, suppressions} = combineFindings({
     deterministic: committedSecretExecution.deterministicFindings,
     agent: null,
-    suppressions: {entries, resultsKey: 'shopify.app', missingPaths},
+    suppressions: {entries, missingPaths},
   })
   return scanned({execution: committedSecretExecution, checks, suppressions, ...overrides})
 }
@@ -539,7 +538,7 @@ describe('renderSecurityCheckResult for a scan', () => {
     expect(report).toContain(
       'Stale entries in shopify.app-security.json • suppressions[0]: deterministic COMMITTED_SECRET in app/routes/session.ts · false positive The file was renamed. Maybe moved to app/routes/index.ts',
     )
-    expect(report).toContain('Not evaluated: 1 entry (1 for a check without an executed result).')
+    expect(report).toContain('Not evaluated: 1 entry (no executed result for its check).')
     expect(process.exitCode).toBe(1)
   })
 })
