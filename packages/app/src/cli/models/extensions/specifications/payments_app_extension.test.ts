@@ -43,6 +43,7 @@ describe('PaymentsAppExtension', () => {
   const acceleratedWalletConfig: AcceleratedWalletPaymentsAppExtensionConfigType = {
     ...config,
     targeting: [{target: 'payments.accelerated-wallet.render'}],
+    buyer_label: 'Example Wallet',
     wallet_session_create_url: 'https://example.com/wallet-sessions',
     wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
     button_logo_path: 'assets/logo.png',
@@ -119,6 +120,7 @@ describe('PaymentsAppExtension', () => {
     // Then
     expect(result).toMatchObject({
       start_payment_session_url: acceleratedWalletConfig.payment_session_url,
+      default_buyer_label: acceleratedWalletConfig.buyer_label,
       wallet_session_create_url: acceleratedWalletConfig.wallet_session_create_url,
       wallet_session_verify_url: acceleratedWalletConfig.wallet_session_verify_url,
       button_logo_path: acceleratedWalletConfig.button_logo_path,

@@ -46,6 +46,8 @@ export const AcceleratedWalletPaymentsAppExtensionSchema = BasePaymentsAppExtens
   .merge(SupportedBuyerContextsSchema)
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(ACCELERATED_WALLET_TARGET)})).length(1),
+    // The wallet button shows only a logo, so this label is its accessible name and can't be left out or empty.
+    buyer_label: BuyerLabelSchema.shape.buyer_label.unwrap().min(1),
     supports_oversell_protection: zod.boolean().optional(),
     supports_3ds: zod.boolean().optional(),
     wallet_session_create_url: zod.string().url(),
@@ -70,7 +72,7 @@ export interface AcceleratedWalletPaymentsAppExtensionDeployConfigType extends B
   multiple_capture?: boolean
 
   // BuyerLabelSchema
-  default_buyer_label?: string
+  default_buyer_label: string
   buyer_label_to_locale?: {locale: string; label: string}[]
 
   // DeferredPaymentsSchema

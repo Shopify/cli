@@ -70,6 +70,7 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
   })
 
   test.each([
+    'buyer_label',
     'wallet_session_create_url',
     'wallet_session_verify_url',
     'button_logo_path',
@@ -88,6 +89,42 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
           received: 'undefined',
           path: [key],
           message: 'Required',
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if buyer_label is empty', async () => {
+    // When/Then
+    expect(() => AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, buyer_label: ''})).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_small,
+          minimum: 1,
+          type: 'string',
+          inclusive: true,
+          exact: false,
+          message: 'String must contain at least 1 character(s)',
+          path: ['buyer_label'],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if buyer_label is longer than 50 characters', async () => {
+    // When/Then
+    expect(() =>
+      AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, buyer_label: 'a'.repeat(51)}),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_big,
+          maximum: 50,
+          type: 'string',
+          inclusive: true,
+          exact: false,
+          message: 'String must contain at most 50 character(s)',
+          path: ['buyer_label'],
         },
       ]),
     )
@@ -235,7 +272,6 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
   test('parses successfully when optional fields are omitted', async () => {
     // Given
     const configWithoutOptionalFields = {...config}
-    delete configWithoutOptionalFields.buyer_label
     delete configWithoutOptionalFields.buyer_label_translations
     delete configWithoutOptionalFields.multiple_capture
     delete configWithoutOptionalFields.supports_installments
