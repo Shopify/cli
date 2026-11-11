@@ -1,6 +1,6 @@
 ---
 id: THEME_EXTENSION_XSS
-version: 3
+version: 4
 severity: high
 ---
 
@@ -90,6 +90,12 @@ Do not report:
 
 - Output whose value and destination are both proven safe
 - Apparent Liquid output inside `{% raw %}...{% endraw %}`, because the raw tag suppresses Liquid parsing and leaves those delimiters as literal text
-- `{{ variable | escape }}` or `{{ variable | escape_once }}` (escaped)
-- JavaScript `textContent` assignments (safe)
+- `{{ variable | escape }}` or `{{ variable | escape_once }}` in HTML text
+  or a quoted ordinary attribute. This does not cover event handler
+  attributes (`onclick` and other `on*`), `srcdoc`, `style`, URL attributes
+  such as `href` and `src`, or output inside `<script>`: browsers decode HTML
+  entities before running a handler, and `escape` does not stop a
+  `javascript:` URL. Step 2 decides those contexts.
+- JavaScript `textContent` assignments on elements other than `<script>`.
+  Setting `textContent` on a `<script>` element sets the code it runs.
 - Test files
