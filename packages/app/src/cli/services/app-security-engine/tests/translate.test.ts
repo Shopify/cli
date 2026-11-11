@@ -3,7 +3,7 @@ import {combineFindings} from '../results/combine.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {STORED_TYPES_MATCH_SCHEMA_V1} from '../results/schema.js'
 import {describe, expect, test} from 'vitest'
-import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocument} from '../types.js'
+import type {AgentFindingsDocument, DeterministicFindingsDocument} from '../types.js'
 
 /** A JSON round trip, so the input is a plain value with no shared references to the fixture. */
 const asJson = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
@@ -235,32 +235,21 @@ describe('translateFindingsDocument', () => {
   })
 
   test('parses and combines files without code excerpts, as the current CLI writes them, as before', () => {
-    const withExcerpts = (document: FindingsDocument) => ({
-      ...document,
-      checks: document.checks.map((check) => ({
-        ...check,
-        findings: check.findings.map((finding) => ({
-          ...finding,
-          code_excerpt: [{line: finding.location.line ?? 1, text: 'an excerpt'}],
-        })),
-      })),
-    })
-    const translated = (document: unknown) => {
-      const result = translateFindingsDocument(asJson(document))
-      if (!result.ok) throw new Error(result.errors.join('; '))
-      return result.document
+    const documents = {
+      deterministic: asJson(deterministicFindingsDocument) as DeterministicFindingsDocument,
+      agent: asJson(agentFindingsDocument) as AgentFindingsDocument,
     }
-    const deterministic = translated(deterministicFindingsDocument) as DeterministicFindingsDocument
-    const agent = translated(agentFindingsDocument) as AgentFindingsDocument
+    const combined = combineFindings(documents)
+    for (const document of Object.values(documents)) {
+      expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+      for (const finding of document.checks.flatMap((check) => check.findings)) {
+        finding.code_excerpt = [{line: finding.location.line ?? 1, text: 'an excerpt'}]
+      }
+      expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+    }
 
-    expect({deterministic, agent}).toEqual({deterministic: deterministicFindingsDocument, agent: agentFindingsDocument})
-    const combined = combineFindings({deterministic, agent})
-    const combinedWithExcerpts = combineFindings({
-      deterministic: translated(withExcerpts(deterministic)) as DeterministicFindingsDocument,
-      agent: translated(withExcerpts(agent)) as AgentFindingsDocument,
-    })
     expect(
-      combinedWithExcerpts.map((check) => ({
+      combineFindings(documents).map((check) => ({
         ...check,
         findings: check.findings.map(({code_excerpt: _excerpt, ...finding}) => finding),
       })),
