@@ -22,7 +22,7 @@ export function renderHistoricalLogs(result: LogsResult, json: boolean, limit: n
     rows: result.logs.map((record) => ({
       timestamp: terminalValue(record.timestamp),
       type: terminalValue(record.type),
-      result: terminalValue(record.resultStatus),
+      result: record.type === 'APP_EVENT' ? '—' : terminalValue(record.resultStatus),
       store: terminalValue(record.shopMyshopifyDomain),
       details: terminalValue(logDetails(record)),
       ...(showApi ? {api: record.type === 'GRAPHQL_REQUEST' ? terminalValue(record.api) : '—'} : {}),
@@ -53,6 +53,8 @@ function logDetails(record: LogsResult['logs'][number]): unknown {
       return record.operationName
     case 'FUNCTION_RUN':
       return record.functionHandle ?? record.target
+    case 'APP_EVENT':
+      return record.eventHandle
     default:
       return undefined
   }

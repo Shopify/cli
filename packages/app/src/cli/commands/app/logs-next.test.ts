@@ -123,6 +123,24 @@ test.each([
   ])
 })
 
+test.each([
+  {argv: []},
+  {argv: ['--type=app-event', '--event-handle=onboarding_completed']},
+  {argv: ['--type', 'app-event', '--event-handle', 'onboarding_completed']},
+])('parses app event filters from environment variables with flag precedence for $argv', async ({argv}) => {
+  vi.stubEnv('SHOPIFY_FLAG_TYPE', 'app-event')
+  vi.stubEnv('SHOPIFY_FLAG_EVENT_HANDLE', 'environment-handle')
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(argv, await Config.load()).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'app-event', backend: 'APP_EVENT'}])
+  expect(input.filters).toEqual([
+    {field: 'EVENT_HANDLE', operator: 'EQUALS', value: argv.length ? 'onboarding_completed' : 'environment-handle'},
+  ])
+})
+
 test('accepts the maximum limit through parsing and input validation', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
@@ -137,12 +155,23 @@ test('omitted type and repeated type flags are passed to the service without inv
   await new Logs(['--client-id', 'explicit-app'], await Config.load()).run()
   expect(vi.mocked(retrieveLogs).mock.calls[0]?.[0].type).toBeUndefined()
   await new Logs(
-    ['--type', 'webhook', '--type', 'graphql', '--type', 'function', '--request-id', 'request-123'],
+    [
+      '--type',
+      'webhook',
+      '--type',
+      'graphql',
+      '--type',
+      'function',
+      '--type',
+      'app-event',
+      '--request-id',
+      'request-123',
+    ],
     await Config.load(),
   ).run()
   expect(retrieveLogs).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      type: ['webhook', 'graphql', 'function'],
+      type: ['webhook', 'graphql', 'function', 'app-event'],
       'request-id': 'request-123',
     }),
   )
@@ -197,6 +226,7 @@ test.each([
   ['--operation-name', 'one', '--operation-name=two'],
   ['--function-handle', 'one', '--function-handle=two'],
   ['--target', 'one', '--target=two'],
+  ['--event-handle', 'one', '--event-handle=two'],
   ['--since', '1h', '--since=2h'],
   ['--limit', '10', '--limit=20'],
   ['--until', '2026-10-06T13:00:00Z', '--until=2026-10-06T14:00:00Z'],
@@ -334,6 +364,25 @@ test.each([
   },
 )
 
+test.each([
+  {eventHandle: 'onboarding_completed', details: 'onboarding_completed'},
+  {eventHandle: null, details: 'unknown'},
+  {eventHandle: undefined, details: 'unknown'},
+  {eventHandle: `event\n${'a'.repeat(100)}`, details: `event\\u000a${'a'.repeat(88)}…`},
+])('app event human output shows $details and no result status', async ({eventHandle, details}) => {
+  const data = result()
+  data.logs = [{timestamp: data.logs[0]!.timestamp, type: 'APP_EVENT', shopMyshopifyDomain: null, eventHandle}]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'app-event'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([data.logs[0]!.timestamp, 'APP_EVENT', '—', 'unknown', details])
+  })
+})
+
 test('human output aligns headers with mixed log rows between the warning and JSON hint', async () => {
   const data = result()
   data.logs.push({
@@ -353,6 +402,12 @@ test('human output aligns headers with mixed log rows between the warning and JS
     functionHandle: 'discount',
     target: 'cart.lines.discounts.generate.run',
   })
+  data.logs.push({
+    timestamp: '2026-10-06T13:33:00Z',
+    type: 'APP_EVENT',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    eventHandle: 'onboarding_completed',
+  })
   vi.mocked(retrieveLogs).mockResolvedValue(data)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await new Logs([], await Config.load()).run()
@@ -360,23 +415,24 @@ test('human output aligns headers with mixed log rows between the warning and JS
     const lines = stderr().trim().split('\n')
     expect(lines[0]).toBe('Used fast retrieval: returned records shown oldest first.')
     expect(lines.at(-1)).toBe('Use --json for full records.')
-    expect(lines).toHaveLength(8)
-    expect(lines.at(-2)).toBe('Returned all 3 matching records available at query time.')
+    expect(lines).toHaveLength(9)
+    expect(lines.at(-2)).toBe('Returned all 4 matching records available at query time.')
     const headers = ['Timestamp', 'Type', 'Result', 'Store', 'Details', 'API']
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(headers)
     for (const [index, record] of data.logs.entries()) {
       const values = [
         record.timestamp,
         record.type,
-        record.resultStatus,
+        record.resultStatus ?? '—',
         record.shopMyshopifyDomain,
-        record.topic ?? record.operationName ?? record.functionHandle,
+        record.topic ?? record.operationName ?? record.functionHandle ?? record.eventHandle,
         record.api ?? '—',
       ]
       const row = lines[index + 3]!
       expect(row.trim().split(/ {2,}/)).toEqual(values)
       for (const [column, header] of headers.entries()) {
-        expect(row.indexOf(String(values[column]))).toBe(lines[1]!.indexOf(header))
+        const start = lines[1]!.indexOf(header)
+        expect(row.slice(start, start + String(values[column]).length)).toBe(String(values[column]))
       }
     }
   })

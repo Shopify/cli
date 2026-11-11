@@ -3920,6 +3920,14 @@
           "name": "config",
           "type": "option"
         },
+        "event-handle": {
+          "description": "Exact app event handle; excludes non-app-event records.",
+          "env": "SHOPIFY_FLAG_EVENT_HANDLE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "event-handle",
+          "type": "option"
+        },
         "function-handle": {
           "description": "Exact Function extension handle; excludes non-Function records.",
           "env": "SHOPIFY_FLAG_FUNCTION_HANDLE",
@@ -4090,7 +4098,8 @@
           "options": [
             "webhook",
             "graphql",
-            "function"
+            "function",
+            "app-event"
           ],
           "type": "option"
         },
