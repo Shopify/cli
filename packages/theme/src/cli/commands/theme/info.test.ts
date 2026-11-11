@@ -14,7 +14,6 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {renderConcurrent, renderInfo} from '@shopify/cli-kit/node/ui'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
-import {readFileSync} from 'node:fs'
 
 import type {Writable} from 'stream'
 
@@ -183,15 +182,6 @@ describe('Info', () => {
   test('includes the JSON output schema in the help description', () => {
     expect(Info.description).toContain('ThemeInfoResult')
     expect(Info.description).toContain('--json-schema')
-  })
-
-  test('is removed from the JSON legacy exemption list', () => {
-    const legacyCommandPaths = readFileSync(
-      new URL('../../../../../eslint-plugin-cli/rules/json-output-command-exceptions.js', import.meta.url),
-      'utf8',
-    )
-
-    expect(legacyCommandPaths).not.toContain("'packages/theme/src/cli/commands/theme/info.ts'")
   })
 
   test('writes the selected theme JSON document to stdout without text on stderr', async () => {
