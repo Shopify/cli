@@ -148,7 +148,7 @@ It replaces the scan results and agent checks and never touches the recorded age
 
 ## Suppressing findings
 
-A suppression marks a finding as a false positive or an accepted risk. The CLI still shows a suppressed finding with its reason, but the finding isn't active and `--blocking` doesn't count it. Every suppression is the user's decision:
+A suppression marks a finding as a false positive or an accepted risk. The CLI still shows a suppressed finding with its reason, but the finding isn't active and `--blocking` doesn't count it. Persisted suppressions apply to all app configurations and client-ID runs. Every suppression is the user's decision:
 
 - Suppress a finding only when the user explicitly asks you to suppress that finding. Never suppress one on your own initiative.
 - Use the user's kind and reason. The kind is `false-positive`, when the finding is wrong, or `accepted-risk`, when the team accepts the risk. If the user didn't give both, ask. Never invent a reason.
