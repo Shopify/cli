@@ -962,7 +962,6 @@ describe('securityReview --suppress', () => {
                 kind: 'accepted-risk',
                 path,
                 reason: 'The results are old.',
-                configurations: ['shopify.app.toml'],
               },
             ],
           }),
