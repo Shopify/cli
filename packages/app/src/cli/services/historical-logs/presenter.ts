@@ -63,6 +63,7 @@ function logDetails(record: LogsResult['logs'][number]): unknown {
           .join(' ') || undefined
       )
     case 'SIDEKICK_EVENT':
+    case 'UI_EXTENSION':
       return record.target
     default:
       return undefined

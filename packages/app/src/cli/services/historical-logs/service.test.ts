@@ -523,6 +523,68 @@ test('requests Sidekick events with exact shared filters and preserves native JS
   })
 })
 
+test.each([
+  {status: 'SUCCESS', mountFailure: false},
+  {status: 'FAILURE', mountFailure: false},
+  {status: 'FAILURE', mountFailure: true},
+  {status: null, mountFailure: false},
+  {status: undefined, mountFailure: false},
+])(
+  'requests UI extension logs and preserves native JSON with status $status and mountFailure $mountFailure',
+  async ({status, mountFailure}) => {
+    const uiExtensionRecord = {
+      timestamp: record.timestamp,
+      type: 'UI_EXTENSION',
+      shopMyshopifyDomain: 'example.myshopify.com',
+      ...(status === undefined ? {} : {resultStatus: status}),
+      mountFailure,
+      target: 'purchase.checkout.block.render',
+      extensionRegistrationId: 'extension-registration-123',
+      extensionVersionId: 'extension-version-123',
+      extensionPlacementReference: 'checkout-block',
+      errorCode: 'EXTENSION_ERROR',
+      errorName: 'ExtensionError',
+      errorType: 'RuntimeError',
+      errorMessage: `Extension failed\n${'a'.repeat(150)}`,
+      userAgent: 'example-agent',
+    }
+    authorize()
+    logResponse([uiExtensionRecord])
+
+    const result = await retrieveLogs({
+      ...scope,
+      type: ['ui-extension'],
+      store: 'example',
+      status: 'failure',
+      target: 'purchase.checkout.block.render',
+    })
+
+    expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+      clientId,
+      types: ['UI_EXTENSION'],
+      timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+      limit: 20,
+      filters: [
+        {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+        {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+        {field: 'TARGET', operator: 'EQUALS', value: 'purchase.checkout.block.render'},
+      ],
+    })
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
+    expect(result.logs).toEqual([uiExtensionRecord])
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderHistoricalLogs(result, true, 20)
+      expect(JSON.parse(stdout())).toEqual({
+        logs: [uiExtensionRecord],
+        ordering: 'subset-timestamp-asc',
+        limitations: [],
+      })
+      expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+      expect(stderr()).toBe('')
+    })
+  },
+)
+
 test('an empty successful search has no result-limit warning', async () => {
   authorize()
   logResponse([])
@@ -556,9 +618,15 @@ test('default mixed-type search shares one query and limit, preserving every pre
     shopMyshopifyDomain: null,
     eventHandle: 'onboarding_completed',
   }
-  logResponse([record, appEventRecord, graphqlRecord])
-  const result = await retrieveLogs({'client-id': clientId, limit: 3})
-  expect(result.logs).toEqual([graphqlRecord, record, appEventRecord])
+  const uiExtensionRecord = {
+    timestamp: '2026-10-06T13:32:00Z',
+    type: 'UI_EXTENSION',
+    shopMyshopifyDomain: null,
+    mountFailure: true,
+  }
+  logResponse([record, appEventRecord, graphqlRecord, uiExtensionRecord])
+  const result = await retrieveLogs({'client-id': clientId, limit: 4})
+  expect(result.logs).toEqual([graphqlRecord, record, appEventRecord, uiExtensionRecord])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
     types: [
       'WEBHOOK',
@@ -568,8 +636,9 @@ test('default mixed-type search shares one query and limit, preserving every pre
       'APP_BILLING_EVENT',
       'REST_REQUEST',
       'SIDEKICK_EVENT',
+      'UI_EXTENSION',
     ],
-    limit: 3,
+    limit: 4,
     filters: [],
   })
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
@@ -589,6 +658,7 @@ test('cross-type filters are sent together and an empty intersection is not an e
       'APP_BILLING_EVENT',
       'REST_REQUEST',
       'SIDEKICK_EVENT',
+      'UI_EXTENSION',
     ],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},

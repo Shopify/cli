@@ -195,6 +195,23 @@ test('parses Sidekick events with shared target, store, and status filters', asy
   ])
 })
 
+test('parses UI extension errors with shared target, store, and status filters', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    ['--type', 'ui-extension', '--target=purchase.checkout.block.render', '--store', 'example', '--status=failure'],
+    await Config.load(),
+  ).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'ui-extension', backend: 'UI_EXTENSION'}])
+  expect(input.filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'TARGET', operator: 'EQUALS', value: 'purchase.checkout.block.render'},
+  ])
+})
+
 test('accepts the maximum limit through parsing and input validation', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
@@ -224,6 +241,8 @@ test('omitted type and repeated type flags are passed to the service without inv
       'rest',
       '--type',
       'sidekick',
+      '--type',
+      'ui-extension',
       '--request-id',
       'request-123',
     ],
@@ -231,7 +250,7 @@ test('omitted type and repeated type flags are passed to the service without inv
   ).run()
   expect(retrieveLogs).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      type: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest', 'sidekick'],
+      type: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest', 'sidekick', 'ui-extension'],
       'request-id': 'request-123',
     }),
   )
@@ -529,6 +548,34 @@ test.each([
   })
 })
 
+test.each([
+  {target: 'purchase.checkout.block.render', details: 'purchase.checkout.block.render', status: 'FAILURE'},
+  {target: null, details: 'unknown', status: null},
+  {target: undefined, details: 'unknown', status: undefined},
+  {target: `extensions/\n${'a'.repeat(100)}`, details: `extensions/\\u000a${'a'.repeat(82)}…`, status: 'SUCCESS'},
+])('UI extension error human output shows $details with the recorded result', async ({target, details, status}) => {
+  const data = result()
+  data.logs = [
+    {...data.logs[0]!, type: 'UI_EXTENSION', target, resultStatus: status, errorMessage: 'not-in-human-summary'},
+  ]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'ui-extension'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'UI_EXTENSION',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+    expect(stderr()).not.toContain('not-in-human-summary')
+  })
+})
+
 test('human output aligns headers with mixed log rows between the warning and JSON hint', async () => {
   const data = result()
   data.logs.push({
@@ -576,6 +623,13 @@ test('human output aligns headers with mixed log rows between the warning and JS
     shopMyshopifyDomain: 'example.myshopify.com',
     target: 'extensions/security_scan',
   })
+  data.logs.push({
+    timestamp: '2026-10-06T13:37:00Z',
+    type: 'UI_EXTENSION',
+    resultStatus: 'SUCCESS',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    target: 'purchase.checkout.block.render',
+  })
   vi.mocked(retrieveLogs).mockResolvedValue(data)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await new Logs([], await Config.load()).run()
@@ -583,8 +637,8 @@ test('human output aligns headers with mixed log rows between the warning and JS
     const lines = stderr().trim().split('\n')
     expect(lines[0]).toBe('Used fast retrieval: returned records shown oldest first.')
     expect(lines.at(-1)).toBe('Use --json for full records.')
-    expect(lines).toHaveLength(12)
-    expect(lines.at(-2)).toBe('Returned all 7 matching records available at query time.')
+    expect(lines).toHaveLength(13)
+    expect(lines.at(-2)).toBe('Returned all 8 matching records available at query time.')
     const headers = ['Timestamp', 'Type', 'Result', 'Store', 'Details', 'API']
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(headers)
     for (const [index, record] of data.logs.entries()) {

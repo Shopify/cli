@@ -21,6 +21,7 @@ test('defaults to all supported types and a bounded shared limit', () => {
       {backend: 'APP_BILLING_EVENT'},
       {backend: 'REST_REQUEST'},
       {backend: 'SIDEKICK_EVENT'},
+      {backend: 'UI_EXTENSION'},
     ],
     limit: 20,
     filters: [],
@@ -126,7 +127,7 @@ test.each([
 
 test('unsupported types list the supported selections', () => {
   expect(() => prepareLogInput({type: 'unsupported'})).toThrow(
-    'Supported log types are webhook, graphql, function, app-event, app-billing-event, rest, and sidekick.',
+    'Supported log types are webhook, graphql, function, app-event, app-billing-event, rest, sidekick, and ui-extension.',
   )
 })
 
