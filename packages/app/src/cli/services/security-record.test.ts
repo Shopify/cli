@@ -543,12 +543,8 @@ describe('securityRecord', () => {
         const secret = '0123456789abcdef'.repeat(2)
         await writeFile(joinPath(appRoot, targetFile), `SHOPIFY_API_SECRET=${secret}\n`)
         await symlink(joinPath(appRoot, targetFile), joinPath(appRoot, citedFile))
-        const document = {
-          ...validDocument(),
-          findings: [finding({file: citedFile, line: 1, evidence: [{file: citedFile, line: 1}]})],
-        }
 
-        await record(appRoot, testDependencies(JSON.stringify(document)))
+        await recordedExcerpts(appRoot, [citedFile])
 
         const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
         expect(written).not.toContain('code_excerpt')
@@ -565,9 +561,8 @@ describe('securityRecord', () => {
           const secret = 'fedcba9876543210'.repeat(2)
           await mkdir(dirname(joinPath(appRoot, file)))
           await writeFile(joinPath(appRoot, file), `${secret}\n`)
-          const document = {...validDocument(), findings: [finding({file, line: 1, evidence: [{file, line: 1}]})]}
 
-          await record(appRoot, testDependencies(JSON.stringify(document)))
+          await recordedExcerpts(appRoot, [file])
 
           const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
           expect(written).not.toContain('code_excerpt')
@@ -701,26 +696,13 @@ describe('securityRecord', () => {
       return appRoot
     }
 
-    test('reads a cited file in an --include-dir directory outside the app that the check run recorded', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithIncludeDirectory(directory)
-
-        const excerpts = await recordedExcerpts(appRoot, ['../shared/util.ts'], {
-          include_dirs: ['../shared'],
-          excludes: [],
-          no_git_ignore: false,
-        })
-
-        expect(excerpts).toEqual({'../shared/util.ts': excerptOf(1, 3)})
-      })
-    })
-
     test.each([
-      ['the document names other include directories', ['../other']],
-      ['the document names none', []],
+      ['matches the check run', ['../shared'], true],
+      ['names other include directories', ['../other'], false],
+      ['names none', [], false],
     ])(
-      "doesn't read a cited file in the check run's include directories when %s",
-      async (_description, includeDirs) => {
+      'captures a cited file in --include-dir only when the document %s',
+      async (_description, includeDirs, captured) => {
         await inTemporaryDirectory(async (directory) => {
           const appRoot = await createAppWithIncludeDirectory(directory)
 
@@ -730,7 +712,7 @@ describe('securityRecord', () => {
             no_git_ignore: false,
           })
 
-          expect(excerpts).toEqual({'../shared/util.ts': undefined})
+          expect(excerpts).toEqual({'../shared/util.ts': captured ? excerptOf(1, 3) : undefined})
         })
       },
     )
