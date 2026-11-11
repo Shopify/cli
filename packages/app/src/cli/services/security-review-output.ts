@@ -174,16 +174,15 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
 type NumberedSavedSuppression = SavedReviewSuppressions['saved'][number]
 
 /** One saved entry: its index, the finding it was saved for and the change, then what it holds. */
-function savedEntrySection({index, change, entry, findingNumber}: NumberedSavedSuppression): AlertCustomSection {
+function savedEntrySection({index, entry, findingNumber}: NumberedSavedSuppression): AlertCustomSection {
   return {
-    title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
+    title: `suppressions[${index}] · finding ${findingNumber} · added`,
     body: [
       `${entry.source} ${entry.check} in`,
       {filePath: entry.path},
       {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
       ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
       {subdued: `\nReason: ${entry.reason}`},
-      {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
     ],
   }
 }

@@ -527,7 +527,6 @@ describe('buildSecurityReviewAlerts', () => {
       kind: 'accepted-risk',
       path: 'shopify.app.toml',
       reason: 'The upgrade ships with the next release.',
-      configurations: ['shopify.app.toml'],
     }
     const suppressedBox = (input: SecurityReviewPresenterInput) =>
       buildSecurityReviewAlerts(input).find((alert) => String(alert.options.headline).endsWith('suppressed.'))
@@ -590,7 +589,6 @@ describe('buildSecurityReviewAlerts', () => {
           kind: 'false-positive',
           path: 'app/routes/orders.tsx',
           reason: 'The token is a placeholder.',
-          configurations: ['shopify.app.toml'],
           ...entry,
         },
       }
@@ -601,8 +599,8 @@ describe('buildSecurityReviewAlerts', () => {
         not_evaluated_reason: 'no-executed-result',
       },
       {
-        ...entryResult(3, 'not-evaluated', {configurations: ['shopify.app.staging.toml']}),
-        not_evaluated_reason: 'other-configurations',
+        ...entryResult(3, 'not-evaluated', {}),
+        not_evaluated_reason: 'no-executed-result',
       },
     ]
     function inputWithEntries(suppressions: SuppressionEntryResult[], checkIds: string[] = []) {
@@ -645,8 +643,7 @@ describe('buildSecurityReviewAlerts', () => {
       expect(JSON.stringify(alerts.at(-2))).toContain('suppressions[0]:')
       expect(alerts.at(-2)?.options.customSections?.at(-1)).toEqual({
         body: {
-          subdued:
-            'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+          subdued: 'Not evaluated: 2 entries (no executed results for their checks).',
         },
       })
     })
@@ -669,7 +666,7 @@ describe('buildSecurityReviewAlerts', () => {
       const withoutResult = entriesBox(inputWithEntries(entries, ['UNSAFE_INNERHTML']))
 
       expect(leakOnly?.options.customSections?.at(-1)).toEqual({
-        body: {subdued: 'Not evaluated: 1 entry (1 for other app configurations).'},
+        body: {subdued: 'Not evaluated: 1 entry (no executed result for its check).'},
       })
       expect(JSON.stringify(leakOnly)).toContain('suppressions[0]:')
       expect(JSON.stringify(leakOnly)).not.toContain('UNSAFE_INNERHTML')
@@ -1128,7 +1125,6 @@ describe('renderSecurityReview', () => {
       path: 'app/routes/orders.tsx',
       code: 'console.log(session.accessToken)',
       reason: 'The logger redacts tokens.',
-      configurations: ['shopify.app.toml', 'shopify.app.staging.toml'],
     }
     const input: SecurityReviewPresenterInput = {
       ...presenterInput(both),
@@ -1147,7 +1143,7 @@ describe('renderSecurityReview', () => {
     const rendered = unstyled(output.info()).replace(/[│\s]+/g, ' ')
     expect(rendered).toContain('Saved 1 suppression to shopify.app-security.json.')
     expect(rendered).toContain(
-      'suppressions[3] · finding 2 · added agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx Kind: false positive Code: console.log(session.accessToken) Reason: The logger redacts tokens. Configurations: shopify.app.toml, shopify.app.staging.toml',
+      'suppressions[3] · finding 2 · added agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx Kind: false positive Code: console.log(session.accessToken) Reason: The logger redacts tokens.',
     )
     expect(rendered).toContain(
       'Not suppressed Finding 1 is a superseded deterministic finding of the same check in the same file, so check --blocking, which reads no agent results, still counts it. To suppress it with the same kind and reason, run the command again with --include-superseded.',
@@ -1155,26 +1151,25 @@ describe('renderSecurityReview', () => {
     expect(rendered).toContain('Next steps • Review and commit shopify.app-security.json.')
   })
 
-  test('names several companions and an entry that got a configuration', () => {
+  test('names several companions and a newly saved entry', () => {
     const entry: AppSecuritySuppression = {
       source: 'deterministic',
       check: 'EOL_API_VERSION',
       kind: 'accepted-risk',
       path: 'shopify.app.toml',
       reason: 'Later.',
-      configurations: ['shopify.app.staging.toml', 'shopify.app.toml'],
     }
     const alert = buildSecurityReviewAlerts({
       ...presenterInput(both),
       savedSuppressions: {
         path: `${appRoot}/shopify.app-security.json`,
-        saved: [{index: 0, change: 'configuration-added', entry, findingNumber: 6}],
+        saved: [{index: 0, change: 'added', entry, findingNumber: 6}],
         companionNumbers: [1, 3, 7],
       },
     }).at(-1)!
 
     expect(alert.options.customSections!.map((section) => section.title)).toStrictEqual([
-      'suppressions[0] · finding 6 · configuration added',
+      'suppressions[0] · finding 6 · added',
       'Not suppressed',
       'Next steps',
     ])
@@ -1249,7 +1244,6 @@ const credentialEntry: AppSecuritySuppression = {
   path: 'app/routes/orders.tsx',
   code: 'console.log(session.accessToken)',
   reason: 'The logger redacts tokens.',
-  configurations: ['shopify.app.toml'],
 }
 /** The entry for finding 1, its superseded deterministic companion. */
 const companionEntry: AppSecuritySuppression = {...credentialEntry, source: 'deterministic'}
@@ -1260,7 +1254,6 @@ const eolApiVersionEntry: AppSecuritySuppression = {
   path: 'shopify.app.toml',
   code: 'api_version = "2024-01"',
   reason: 'The upgrade ships with the next release.',
-  configurations: ['shopify.app.toml'],
 }
 
 function savedResult(
@@ -1308,7 +1301,6 @@ function interactiveSession(answers: FindingSuppressionResult[] = []) {
   const queue = [...answers]
   return {
     result,
-    configuration: 'shopify.app.toml',
     findings: numberFindings(result.allChecks).filter(({finding}) => finding.disposition === 'active'),
     suppress: vi.fn(async (_request: InteractiveSuppressionRequest) => {
       const answer = queue.shift()
@@ -1427,8 +1419,9 @@ describe('interactiveSecurityReview', () => {
     ])
     expect(session.suppress).not.toHaveBeenCalled()
     const rendered = unstyled(output.info() + output.warn() + output.error()).replace(/[│\s]+/g, ' ')
+    expect(rendered).toContain('The suppressions you save apply to all app configurations')
     expect(rendered).toContain(
-      'Reviewing 3 active findings for shopify.app.toml, most severe first. For each finding, choose Suppress to save an entry for it to shopify.app-security.json at once, Continue to leave it active, or Quit to stop.',
+      'Reviewing 3 active findings, most severe first. For each finding, choose Suppress to save an entry for it to shopify.app-security.json at once, Continue to leave it active, or Quit to stop.',
     )
     expect(rendered).toContain(
       'High · CREDENTIAL_LOG_LEAKAGE · Credential reaches a log sink Active finding 1 of 3 #2 · agent · app/routes/orders.tsx:12 The session access token is written to the server log.',
@@ -1468,7 +1461,7 @@ describe('interactiveSecurityReview', () => {
     expect(promptMessages(prompts.enterReason)).toStrictEqual(['Why should finding #6 be suppressed?'])
     const rendered = unstyled(output.info()).replace(/[│\s]+/g, ' ')
     expect(rendered).toContain(
-      'Saved 1 suppression to shopify.app-security.json. suppressions[0] · finding 6 · added deterministic EOL_API_VERSION in shopify.app.toml Kind: accepted risk Code: api_version = "2024-01" Reason: The upgrade ships with the next release. Configurations: shopify.app.toml',
+      'Saved 1 suppression to shopify.app-security.json. suppressions[0] · finding 6 · added deterministic EOL_API_VERSION in shopify.app.toml Kind: accepted risk Code: api_version = "2024-01" Reason: The upgrade ships with the next release.',
     )
   })
 
@@ -1641,7 +1634,7 @@ describe('interactiveSecurityReview', () => {
 
     expect(outcome).toStrictEqual({saved: [], declinedCompanions: [], ending: 'finished'})
     expect(prompts.selectAction).not.toHaveBeenCalled()
-    expect(unstyled(output.info())).toContain('No active findings to review for shopify.app.toml.')
+    expect(unstyled(output.info())).toContain('No active findings to review.')
   })
 })
 

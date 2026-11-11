@@ -88,7 +88,6 @@ const eolApiVersionEntry: SuppressionEntry = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'The upgrade ships with the next release.',
-  configurations: ['shopify.app.toml'],
 }
 const tenantIsolationEntry: SuppressionEntry = {
   source: 'agent',
@@ -97,7 +96,6 @@ const tenantIsolationEntry: SuppressionEntry = {
   path: 'app/routes/orders.tsx',
   code: 'the query has no shop filter',
   reason: 'Every order table holds one shop.',
-  configurations: ['shopify.app.toml'],
 }
 
 function dispositionsOf(checks: CombinedCheck[], id: string) {
@@ -440,7 +438,6 @@ describe('securityReview --suppress', () => {
         path: 'shopify.app.toml',
         code: 'api_version = "2024-01"',
         reason: 'The upgrade ships with the next release.',
-        configurations: ['shopify.app.toml'],
       }
       expect(reviewed.savedSuppressions).toStrictEqual({
         path: appSecuritySuppressionsPath(appRoot),
@@ -570,26 +567,20 @@ describe('securityReview --suppress', () => {
     })
   })
 
-  test('adds the configuration to the entry of another configuration that names the same finding', async () => {
+  test('refuses to suppress an already suppressed finding without changing its entry', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, bothWithExcerpts)
-      const stagingEntry = {
+      const entry = {
         source: 'deterministic',
         check: 'EOL_API_VERSION',
         kind: 'accepted-risk',
         path: 'shopify.app.toml',
         code: 'api_version = "2024-01"',
-        reason: 'Staging follows production.',
-        configurations: ['shopify.app.staging.toml'],
+        reason: 'The API version upgrade is planned.',
       }
-      await writeAppSecuritySuppressionsFixture(appRoot, [stagingEntry])
+      await writeAppSecuritySuppressionsFixture(appRoot, [entry])
 
-      const reviewed = await suppress(appRoot, {findingNumber: 6})
-
-      const entry = {...stagingEntry, configurations: ['shopify.app.staging.toml', 'shopify.app.toml']}
-      expect(reviewed.savedSuppressions?.saved).toStrictEqual([
-        {index: 0, change: 'configuration-added', entry, findingNumber: 6},
-      ])
+      await expect(suppress(appRoot, {findingNumber: 6})).rejects.toMatchObject({code: 'finding-not-suppressible'})
       await expect(readEntries(appRoot)).resolves.toStrictEqual([entry])
     })
   })
@@ -724,7 +715,6 @@ describe('securityReview --interactive', () => {
       const offered: string[][] = []
       const record = async (session: InteractiveReviewSession) => {
         offered.push(session.findings.map(({number, check, finding}) => `${number} ${check.id} ${finding.source}`))
-        expect(session.configuration).toBe('shopify.app.toml')
         expect(session.result.resultsDigest).toMatch(/^[0-9a-f]{12}$/)
         return outcomeOf()
       }
@@ -750,7 +740,6 @@ describe('securityReview --interactive', () => {
         path: 'shopify.app.toml',
         code: 'api_version = "2024-01"',
         reason: 'The logger redacts tokens.',
-        configurations: ['shopify.app.toml'],
       }
       let outcome: InteractiveReviewOutcome | undefined
 
