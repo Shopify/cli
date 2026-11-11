@@ -11,7 +11,6 @@ import {
   reportingSourcesByCheckId,
   type FindingsSource,
 } from './app-security-engine/index.js'
-import {isValidFormatAppConfigurationFileName} from '../models/app/config-file-naming.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -58,17 +57,6 @@ function pathProblem(path: string): string | undefined {
   return undefined
 }
 
-/**
- * An entry names each app configuration it applies to by its file name (`shopify.app.toml` or
- * `shopify.app.<name>.toml`), or by a client ID passed with `--client-id`: a token without dots, whitespace, or path
- * separators. Any other name could never match.
- */
-function configurationProblem(name: string): string | undefined {
-  if (name.trim() !== name) return 'must not start or end with whitespace'
-  if (isValidFormatAppConfigurationFileName(name) || /^[^\s./\\]+$/.test(name)) return undefined
-  return 'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
-}
-
 const suppressionSchema = zod.strictObject(
   {
     source: choice(FINDINGS_SOURCES),
@@ -87,15 +75,6 @@ const suppressionSchema = zod.strictObject(
       )
       .optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
-    configurations: zod
-      .array(
-        requiredString().superRefine((name, context) => {
-          const problem = configurationProblem(name)
-          if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
-        }),
-        {required_error: 'required', invalid_type_error: 'must be an array'},
-      )
-      .min(1, 'must list at least one app configuration'),
   },
   {invalid_type_error: 'must be an object'},
 )
@@ -141,6 +120,9 @@ const MAX_QUOTED_KEY_LENGTH = 40
 
 /** Names an unknown key, and the known key it differs from only in case, as in `Code` for `code`. */
 function describeUnknownKey(key: string, knownKeys: string[]): string {
+  if (key === 'configurations') {
+    return 'configurations is no longer supported. Suppressions apply to all app configurations; remove this field.'
+  }
   const shortKey = key.length > MAX_QUOTED_KEY_LENGTH ? `${key.slice(0, MAX_QUOTED_KEY_LENGTH)}\u2026` : key
   const knownKey = knownKeys.find((candidate) => candidate.toLowerCase() === key.toLowerCase())
   const hint = knownKey === undefined ? '' : `. Did you mean ${JSON.stringify(knownKey)}?`
@@ -199,8 +181,8 @@ function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
 }
 
 /**
- * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code), and the
- * same set of app configurations. Only one of them could apply, so a duplicate is a problem even when its kind or
+ * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code).
+ * Only one of them could apply, so a duplicate is a problem even when its kind or
  * reason differs. Only entries that are valid on their own are compared; the schema reports the others.
  */
 function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
@@ -209,8 +191,8 @@ function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
   return entries.flatMap((entry: unknown, entryIndex): SuppressionsFileProblem[] => {
     const parsed = suppressionSchema.safeParse(entry)
     if (!parsed.success) return []
-    const {source, check, path, code, configurations} = parsed.data
-    const match = JSON.stringify([source, check, path, code ?? null, [...new Set(configurations)].sort()])
+    const {source, check, path, code} = parsed.data
+    const match = JSON.stringify([source, check, path, code ?? null])
     const firstIndex = firstIndexByMatch.get(match)
     if (firstIndex === undefined) {
       firstIndexByMatch.set(match, entryIndex)
