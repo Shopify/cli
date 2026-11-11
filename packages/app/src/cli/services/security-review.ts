@@ -12,7 +12,6 @@ import {
   parseSuppressionFlags,
   planSuppression,
   saveAppSecuritySuppressions,
-  suppressionConfiguration,
   type SavedSuppression,
   type SuppressionDecision,
   type SuppressionTarget,
@@ -139,8 +138,6 @@ export type InteractiveSecurityReview = (session: InteractiveReviewSession) => P
 export interface InteractiveReviewSession {
   /** The reviewed results when the session starts. */
   result: SecurityReviewResult
-  /** The app configuration that new entries list, such as `shopify.app.toml`. */
-  configuration: string
   /** The active findings of the checks that `--check-id` selects, most severe first: the findings the session offers. */
   findings: NumberedFinding[]
   /**
@@ -300,7 +297,6 @@ export default async function securityReview(
   const interactiveReview = options.interactive
     ? await options.interactive({
         result: loaded.result,
-        configuration: suppressionConfiguration(selection),
         findings: interactiveReviewFindings(loaded.result, isActive),
         supersededFindings: interactiveReviewFindings(loaded.result, isCountedByCheckBlocking),
         suppress: async ({findingNumber, decision: requestDecision, includeSuperseded}) => {
@@ -417,8 +413,6 @@ async function suppressFinding(
   const suppressionResults = {
     deterministic: results.sources.deterministic?.document ?? null,
     agent: results.sources.agent?.document ?? null,
-    resultsKey: resultsKey(selection),
-    configuration: suppressionConfiguration(selection),
   }
   const entries = results.suppressions.map(({entry}) => entry)
   const plans = findings.map((numberedFinding) => ({

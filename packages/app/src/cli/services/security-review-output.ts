@@ -189,18 +189,17 @@ export function supersededFindingNumbers(result: SecurityReviewResult): Readonly
  * finding, a last line says why it needs an entry.
  */
 function savedEntrySection(
-  {index, change, entry, findingNumber}: NumberedSavedSuppression,
+  {index, entry, findingNumber}: NumberedSavedSuppression,
   supersededNumbers: ReadonlySet<number>,
 ): AlertCustomSection {
   return {
-    title: `suppressions[${index}] · finding ${findingNumber} · ${change === 'added' ? 'added' : 'configuration added'}`,
+    title: `suppressions[${index}] · finding ${findingNumber} · added`,
     body: [
       `${entry.source} ${entry.check} in`,
       {filePath: entry.path},
       {subdued: `\nKind: ${SUPPRESSION_KIND_LABEL[entry.kind]}`},
       ...(entry.code === undefined ? [] : [{subdued: `\nCode: ${entry.code}`}]),
       {subdued: `\nReason: ${entry.reason}`},
-      {subdued: `\nConfigurations: ${entry.configurations.join(', ')}`},
       ...(supersededNumbers.has(findingNumber) ? [`\n${supersededEntryLine(findingNumber)}`] : []),
     ],
   }
