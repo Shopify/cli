@@ -154,7 +154,7 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', this.handleFileEvent)
+    this.watcher.on('all', this.onWatcherCreated(this.watcher, this.handleFileEvent))
     this.addAbortListener()
 
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
@@ -168,6 +168,11 @@ export class FileWatcher {
     this.extensionPaths.forEach((path) => {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
+  }
+
+  /** Lets subclasses observe native startup and set the file event listener's async context. */
+  protected onWatcherCreated(_watcher: FSWatcher, listener: (event: string, path: string) => void) {
+    return listener
   }
 
   private addAbortListener() {
