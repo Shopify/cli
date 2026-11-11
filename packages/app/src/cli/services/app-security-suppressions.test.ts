@@ -14,7 +14,6 @@ const deterministicEntry: AppSecuritySuppression = {
   path: 'test/fixtures/session.ts',
   code: 'accessToken: "shpa[REDACTED:38]"',
   reason: 'Fake token in a unit test fixture.',
-  configurations: ['shopify.app.toml'],
 }
 
 const agentEntry: AppSecuritySuppression = {
@@ -23,11 +22,7 @@ const agentEntry: AppSecuritySuppression = {
   kind: 'accepted-risk',
   path: 'shopify.app.toml',
   reason: 'Kept until the app embed migration ships.',
-  configurations: ['shopify.app.toml', 'shopify.app.production.toml'],
 }
-
-const CONFIGURATION_PROBLEM =
-  'must be an app configuration file name, such as shopify.app.toml, or a client ID passed with --client-id'
 
 async function writeSuppressionsFile(appDirectory: string, contents: string): Promise<string> {
   const path = appSecuritySuppressionsPath(appDirectory)
@@ -314,19 +309,13 @@ describe('readAppSecuritySuppressions', () => {
     })
   })
 
-  describe('code and configurations', () => {
+  describe('code', () => {
     test.each([
       ['an empty code', {code: ' '}, 'suppressions[0].code: must not be empty'],
       [
         'a code longer than a finding snippet can be',
         {code: 'x'.repeat(4_001)},
         'suppressions[0].code: must be at most 4000 characters',
-      ],
-      ['a missing configurations list', {configurations: undefined}, 'suppressions[0].configurations: required'],
-      [
-        'an empty configurations list',
-        {configurations: []},
-        'suppressions[0].configurations: must list at least one app configuration',
       ],
       ...[';', ' , ', ',;\n'].map((code): [string, Record<string, unknown>, string] => [
         `the code ${JSON.stringify(code)}`,
@@ -337,29 +326,6 @@ describe('readAppSecuritySuppressions', () => {
       await expect(entryProblems(changes)).resolves.toStrictEqual([problem])
     })
 
-    test.each([
-      ['a configuration path', 'config/shopify.app.toml'],
-      ['a configuration name without .toml', 'shopify.app.production'],
-      ['a file name that is not an app configuration', 'shopify.app.toml.bak'],
-      ['an app configuration file name with a space', 'shopify.app.my store.toml'],
-      ['a name with a dot that is not an app configuration', 'production.toml'],
-      ['a client ID with a space', 'client id'],
-      ['an empty name', ''],
-    ])('rejects %s as a configuration', async (_name, configuration) => {
-      await expect(entryProblems({configurations: ['shopify.app.toml', configuration]})).resolves.toStrictEqual([
-        `suppressions[0].configurations[1]: ${CONFIGURATION_PROBLEM}`,
-      ])
-    })
-
-    test.each([' shopify.app.toml', 'shopify.app.toml ', '1234567890abcdef\t'])(
-      'rejects the configuration %j, with whitespace around it',
-      async (configuration) => {
-        await expect(entryProblems({configurations: [configuration]})).resolves.toStrictEqual([
-          'suppressions[0].configurations[0]: must not start or end with whitespace',
-        ])
-      },
-    )
-
     test('accepts a code as long as a finding snippet can be', async () => {
       await inTemporaryDirectory(async (directory) => {
         const entry = {...deterministicEntry, code: 'x'.repeat(4_000)}
@@ -369,25 +335,15 @@ describe('readAppSecuritySuppressions', () => {
       })
     })
 
-    test('accepts app configuration file names and client IDs as configurations', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const configurations = [
-          'shopify.app.toml',
-          'shopify.app.production.toml',
-          'shopify.app.my-store_2.toml',
-          '1234567890abcdef1234567890abcdef',
-          'test-client-id',
-        ]
-        const entry = {...agentEntry, configurations}
-        await writeSuppressionsFile(directory, suppressionsJson([entry]))
-
-        await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([entry])
-      })
+    test('rejects configuration scoping from prototype files instead of silently widening it', async () => {
+      await expect(entryProblems({configurations: ['shopify.app.production.toml']})).resolves.toStrictEqual([
+        'suppressions[0]: configurations is no longer supported. Suppressions apply to all app configurations; remove this field.',
+      ])
     })
   })
 
   describe('duplicates', () => {
-    test('rejects an entry with the same source, check, path, code, and configurations as an earlier one', async () => {
+    test('rejects an entry with the same source, check, path and code as an earlier one', async () => {
       await inTemporaryDirectory(async (directory) => {
         await writeSuppressionsFile(
           directory,
@@ -399,21 +355,18 @@ describe('readAppSecuritySuppressions', () => {
               ...agentEntry,
               kind: 'false-positive',
               reason: 'Another reason.',
-              configurations: [...agentEntry.configurations].reverse(),
             },
-            {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.toml']},
           ]),
         )
 
         await expect(readProblems(directory)).resolves.toStrictEqual([
           'suppressions[2]: duplicates suppressions[0]',
           'suppressions[3]: duplicates suppressions[1]',
-          'suppressions[4]: duplicates suppressions[0]',
         ])
       })
     })
 
-    test('accepts entries that differ in source, check, path, code, or configurations', async () => {
+    test('accepts entries that differ in source, check, path or code', async () => {
       await inTemporaryDirectory(async (directory) => {
         const entries = [
           deterministicEntry,
@@ -427,9 +380,7 @@ describe('readAppSecuritySuppressions', () => {
             kind: deterministicEntry.kind,
             path: deterministicEntry.path,
             reason: deterministicEntry.reason,
-            configurations: deterministicEntry.configurations,
           },
-          {...deterministicEntry, configurations: ['shopify.app.toml', 'shopify.app.production.toml']},
         ]
         await writeSuppressionsFile(directory, suppressionsJson(entries))
 
