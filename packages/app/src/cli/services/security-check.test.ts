@@ -552,7 +552,6 @@ describe('securityCheck suppressions', () => {
     kind: 'false-positive',
     path: 'app/routes/index.ts',
     reason: 'A fake token in a test fixture.',
-    configurations: ['shopify.app.toml'],
   }
 
   test('reads shopify.app-security.json before scanning, and a suppressed finding no longer fails --blocking', async () => {
@@ -573,7 +572,7 @@ describe('securityCheck suppressions', () => {
     })
   })
 
-  test('applies only the entries of the selected configuration', async () => {
+  test('applies the same suppression when another configuration is selected', async () => {
     const dependencies = testDependencies(committedSecretExecution, stagingSelection())
     dependencies.readSuppressions.mockResolvedValue([secretEntry])
 
@@ -581,8 +580,8 @@ describe('securityCheck suppressions', () => {
 
     expect(check).toMatchObject({
       resultsKey: 'shopify.app.staging',
-      suppressions: [{status: 'not-evaluated', matched_finding_count: 0}],
-      blocking: {level: 'high', blockedChecks: 1},
+      suppressions: [{status: 'matched', matched_finding_count: 1}],
+      blocking: {level: 'high', blockedChecks: 0},
     })
   })
 

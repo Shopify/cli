@@ -506,7 +506,6 @@ describe('buildSecurityReviewAlerts', () => {
       kind: 'accepted-risk',
       path: 'shopify.app.toml',
       reason: 'The upgrade ships with the next release.',
-      configurations: ['shopify.app.toml'],
     }
     const suppressedBox = (input: SecurityReviewPresenterInput) =>
       buildSecurityReviewAlerts(input).find((alert) => String(alert.options.headline).endsWith('suppressed.'))
@@ -569,7 +568,6 @@ describe('buildSecurityReviewAlerts', () => {
           kind: 'false-positive',
           path: 'app/routes/orders.tsx',
           reason: 'The token is a placeholder.',
-          configurations: ['shopify.app.toml'],
           ...entry,
         },
       }
@@ -580,8 +578,8 @@ describe('buildSecurityReviewAlerts', () => {
         not_evaluated_reason: 'no-executed-result',
       },
       {
-        ...entryResult(3, 'not-evaluated', {configurations: ['shopify.app.staging.toml']}),
-        not_evaluated_reason: 'other-configurations',
+        ...entryResult(3, 'not-evaluated', {}),
+        not_evaluated_reason: 'no-executed-result',
       },
     ]
     function inputWithEntries(suppressions: SuppressionEntryResult[], checkIds: string[] = []) {
@@ -624,8 +622,7 @@ describe('buildSecurityReviewAlerts', () => {
       expect(JSON.stringify(alerts.at(-2))).toContain('suppressions[0]:')
       expect(alerts.at(-2)?.options.customSections?.at(-1)).toEqual({
         body: {
-          subdued:
-            'Not evaluated: 2 entries (1 for a check without an executed result, 1 for other app configurations).',
+          subdued: 'Not evaluated: 2 entries (no executed results for their checks).',
         },
       })
     })
@@ -648,7 +645,7 @@ describe('buildSecurityReviewAlerts', () => {
       const withoutResult = entriesBox(inputWithEntries(entries, ['UNSAFE_INNERHTML']))
 
       expect(leakOnly?.options.customSections?.at(-1)).toEqual({
-        body: {subdued: 'Not evaluated: 1 entry (1 for other app configurations).'},
+        body: {subdued: 'Not evaluated: 1 entry (no executed result for its check).'},
       })
       expect(JSON.stringify(leakOnly)).toContain('suppressions[0]:')
       expect(JSON.stringify(leakOnly)).not.toContain('UNSAFE_INNERHTML')
@@ -1107,7 +1104,6 @@ describe('renderSecurityReview', () => {
       path: 'app/routes/orders.tsx',
       code: 'console.log(session.accessToken)',
       reason: 'The logger redacts tokens.',
-      configurations: ['shopify.app.toml', 'shopify.app.staging.toml'],
     }
     const input: SecurityReviewPresenterInput = {
       ...presenterInput(both),
@@ -1126,7 +1122,7 @@ describe('renderSecurityReview', () => {
     const rendered = unstyled(output.info()).replace(/[│\s]+/g, ' ')
     expect(rendered).toContain('Saved 1 suppression to shopify.app-security.json.')
     expect(rendered).toContain(
-      'suppressions[3] · finding 2 · added agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx Kind: false positive Code: console.log(session.accessToken) Reason: The logger redacts tokens. Configurations: shopify.app.toml, shopify.app.staging.toml',
+      'suppressions[3] · finding 2 · added agent CREDENTIAL_LOG_LEAKAGE in app/routes/orders.tsx Kind: false positive Code: console.log(session.accessToken) Reason: The logger redacts tokens.',
     )
     expect(rendered).toContain(
       'Not suppressed Finding 1 is a superseded deterministic finding of the same check in the same file, so check --blocking, which reads no agent results, still counts it. To suppress it with the same kind and reason, run the command again with --include-superseded.',
@@ -1134,26 +1130,25 @@ describe('renderSecurityReview', () => {
     expect(rendered).toContain('Next steps • Review and commit shopify.app-security.json.')
   })
 
-  test('names several companions and an entry that got a configuration', () => {
+  test('names several companions and a newly saved entry', () => {
     const entry: AppSecuritySuppression = {
       source: 'deterministic',
       check: 'EOL_API_VERSION',
       kind: 'accepted-risk',
       path: 'shopify.app.toml',
       reason: 'Later.',
-      configurations: ['shopify.app.staging.toml', 'shopify.app.toml'],
     }
     const alert = buildSecurityReviewAlerts({
       ...presenterInput(both),
       savedSuppressions: {
         path: `${appRoot}/shopify.app-security.json`,
-        saved: [{index: 0, change: 'configuration-added', entry, findingNumber: 6}],
+        saved: [{index: 0, change: 'added', entry, findingNumber: 6}],
         companionNumbers: [1, 3, 7],
       },
     }).at(-1)!
 
     expect(alert.options.customSections!.map((section) => section.title)).toStrictEqual([
-      'suppressions[0] · finding 6 · configuration added',
+      'suppressions[0] · finding 6 · added',
       'Not suppressed',
       'Next steps',
     ])

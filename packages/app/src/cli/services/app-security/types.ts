@@ -104,7 +104,7 @@ export const appSecuritySuppressionEntrySchema = zod
     status: zod
       .enum(['matched', 'stale', 'ambiguous', 'not-evaluated'])
       .describe(
-        "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check.",
+        "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check.",
       ),
     matchedFindingCount: zod
       .number()
@@ -172,11 +172,7 @@ export type AppSecuritySuppressions = zod.infer<typeof appSecuritySuppressionsSc
 export const appSecuritySavedSuppressionSchema = zod
   .object({
     index: zod.number().int().nonnegative().describe("The entry's index in the file's suppressions array, from 0."),
-    change: zod
-      .enum(['added', 'configuration-added'])
-      .describe(
-        'added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding.',
-      ),
+    change: zod.enum(['added']).describe('added: a new entry at the end of the file.'),
     source: zod.enum(['deterministic', 'agent']).describe('The source whose findings the entry suppresses.'),
     check: zod.string().describe('The check ID that the entry names.'),
     kind: createAppSecuritySuppressionKindSchema(),
@@ -189,11 +185,6 @@ export const appSecuritySavedSuppressionSchema = zod
         "The entry's code, redacted, which names the finding in the file. Null for a finding without a line: the entry then covers every finding of the check in the file.",
       ),
     reason: zod.string().describe('Why the finding is suppressed.'),
-    configurations: zod
-      .array(zod.string())
-      .describe(
-        'The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to.',
-      ),
   })
   .strict()
   .describe('An entry of shopify.app-security.json that the command saved, as the file now holds it.')

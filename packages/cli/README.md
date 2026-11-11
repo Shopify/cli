@@ -5939,13 +5939,11 @@ DESCRIPTION
   of `shopify.app-security.json` applied, but not the findings: run `shopify app security review --json` for those.
 
   Findings that an entry of `shopify.app-security.json` in the app directory suppresses don't count for `--blocking`.
-  The results files still hold every finding. An entry applies to the results that its `configurations` name: an app
-  configuration file name, such as `shopify.app.toml`, names the results of that configuration without `--client-id`,
-  and a client ID names the results of a run with that `--client-id`. An entry's `code` matches the code excerpt that
-  the results file saves with the finding. A results file that would be larger than 5 MB with excerpts is saved without
-  them; then an entry with `code` matches only the finding's message, so it can go stale and leave the finding active.
-  The check reads `shopify.app-security.json` before it scans, so an invalid file stops the command before any results
-  file is replaced.
+  The results files still hold every finding. Suppressions apply to all app configurations and client-ID runs. An
+  entry's `code` matches the code excerpt that the results file saves with the finding. A results file that would be
+  larger than 5 MB with excerpts is saved without them; then an entry with `code` matches only the finding's message, so
+  it can go stale and leave the finding active. The check reads `shopify.app-security.json` before it scans, so an
+  invalid file stops the command before any results file is replaced.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
@@ -6249,7 +6247,7 @@ DESCRIPTION
               "ambiguous",
               "not-evaluated"
             ],
-            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check."
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check."
           },
           "matchedFindingCount": {
             "type": "integer",
@@ -6988,10 +6986,9 @@ DESCRIPTION
           "change": {
             "type": "string",
             "enum": [
-              "added",
-              "configuration-added"
+              "added"
             ],
-            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding."
+            "description": "added: a new entry at the end of the file."
           },
           "source": {
             "type": "string",
@@ -7032,13 +7029,6 @@ DESCRIPTION
           "reason": {
             "type": "string",
             "description": "Why the finding is suppressed."
-          },
-          "configurations": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
           }
         },
         "required": [
@@ -7049,8 +7039,7 @@ DESCRIPTION
           "kind",
           "path",
           "code",
-          "reason",
-          "configurations"
+          "reason"
         ],
         "additionalProperties": false,
         "description": "An entry of shopify.app-security.json that the command saved, as the file now holds it."
@@ -7160,13 +7149,12 @@ DESCRIPTION
   `shopify.app-security.json` applied.
 
   Suppressed findings don't count for `--blocking`: those the agent suppressed, and those that an entry of
-  `shopify.app-security.json` in the app directory suppresses. An entry applies to the results that its `configurations`
-  name: an app configuration file name without `--client-id`, or a client ID passed with `--client-id`. An entry's
-  `code` matches the code excerpt that the results file saved with the finding. A results file that would be larger than
-  5 MB with excerpts is saved without them, and results written before excerpts existed have none; then an entry with
-  `code` matches only the finding's message, so it can go stale and leave the finding active. Superseded deterministic
-  findings, which a check's prefer-agent agent result replaces, don't count either. An invalid
-  `shopify.app-security.json` stops the command.
+  `shopify.app-security.json` in the app directory suppresses. Suppressions apply to all app configurations and
+  client-ID runs. An entry's `code` matches the code excerpt that the results file saved with the finding. A results
+  file that would be larger than 5 MB with excerpts is saved without them, and results written before excerpts existed
+  have none; then an entry with `code` matches only the finding's message, so it can go stale and leave the finding
+  active. Superseded deterministic findings, which a check's prefer-agent agent result replaces, don't count either. An
+  invalid `shopify.app-security.json` stops the command.
 
   Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
   every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
@@ -7523,7 +7511,7 @@ DESCRIPTION
               "ambiguous",
               "not-evaluated"
             ],
-            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because the entry names other app configurations or its source has no executed result for the check."
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check."
           },
           "matchedFindingCount": {
             "type": "integer",
@@ -8459,10 +8447,9 @@ DESCRIPTION
           "change": {
             "type": "string",
             "enum": [
-              "added",
-              "configuration-added"
+              "added"
             ],
-            "description": "added: a new entry at the end of the file. configuration-added: an existing entry for another app configuration that now lists this one too, because it suppresses the same finding."
+            "description": "added: a new entry at the end of the file."
           },
           "source": {
             "type": "string",
@@ -8504,13 +8491,6 @@ DESCRIPTION
             "type": "string",
             "description": "Why the finding is suppressed."
           },
-          "configurations": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The app configuration file names, such as shopify.app.toml, and client IDs that the entry applies to."
-          },
           "findingNumber": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -8526,7 +8506,6 @@ DESCRIPTION
           "path",
           "code",
           "reason",
-          "configurations",
           "findingNumber"
         ],
         "additionalProperties": false,
