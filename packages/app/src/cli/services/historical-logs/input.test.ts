@@ -21,7 +21,7 @@ test('defaults to all supported types and a bounded shared limit', () => {
       {backend: 'APP_BILLING_EVENT'},
       {backend: 'REST_REQUEST'},
       {backend: 'SIDEKICK_EVENT'},
-      {backend: 'UI_EXTENSION_ERROR'},
+      {backend: 'UI_EXTENSION'},
     ],
     limit: 20,
     filters: [],

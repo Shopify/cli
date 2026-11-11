@@ -8,7 +8,7 @@ const logTypes = [
   {name: 'app-billing-event', backend: 'APP_BILLING_EVENT'},
   {name: 'rest', backend: 'REST_REQUEST'},
   {name: 'sidekick', backend: 'SIDEKICK_EVENT'},
-  {name: 'ui-extension', backend: 'UI_EXTENSION_ERROR'},
+  {name: 'ui-extension', backend: 'UI_EXTENSION'},
 ] as const
 
 export const logFilters = [

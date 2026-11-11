@@ -204,7 +204,7 @@ test('parses UI extension errors with shared target, store, and status filters',
   ).run()
 
   const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
-  expect(input.types).toEqual([{name: 'ui-extension', backend: 'UI_EXTENSION_ERROR'}])
+  expect(input.types).toEqual([{name: 'ui-extension', backend: 'UI_EXTENSION'}])
   expect(input.filters).toEqual([
     {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
     {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
@@ -556,7 +556,7 @@ test.each([
 ])('UI extension error human output shows $details with the recorded result', async ({target, details, status}) => {
   const data = result()
   data.logs = [
-    {...data.logs[0]!, type: 'UI_EXTENSION_ERROR', target, resultStatus: status, errorMessage: 'not-in-human-summary'},
+    {...data.logs[0]!, type: 'UI_EXTENSION', target, resultStatus: status, errorMessage: 'not-in-human-summary'},
   ]
   vi.mocked(retrieveLogs).mockResolvedValue(data)
 
@@ -567,7 +567,7 @@ test.each([
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
     expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
       data.logs[0]!.timestamp,
-      'UI_EXTENSION_ERROR',
+      'UI_EXTENSION',
       status ?? 'unknown',
       'example.myshopify.com',
       details,
@@ -625,7 +625,7 @@ test('human output aligns headers with mixed log rows between the warning and JS
   })
   data.logs.push({
     timestamp: '2026-10-06T13:37:00Z',
-    type: 'UI_EXTENSION_ERROR',
+    type: 'UI_EXTENSION',
     resultStatus: 'SUCCESS',
     shopMyshopifyDomain: 'example.myshopify.com',
     target: 'purchase.checkout.block.render',
