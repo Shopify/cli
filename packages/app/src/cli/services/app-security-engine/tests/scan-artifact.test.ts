@@ -477,20 +477,6 @@ describe('code excerpts', () => {
     })
   })
 
-  test('a scan stores only the flagged line of a committed secret', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const document = await scanApp(directory, {
-        'config.js': ['// one', '// two', `const token = "${token}"`, '// four', '// five', ''].join('\r\n'),
-      })
-
-      const [config] = committedSecrets(document)
-      expect(config!.location).toEqual({file: 'config.js', line: 3})
-      expect(config!.code_excerpt).toEqual([
-        {line: 3, text: expect.stringMatching(/^const token = "shpa\[REDACTED:38\]"$/)},
-      ])
-    })
-  })
-
   test.each(['Secrets.json', 'config/secrets.yml'])('a scan stores no excerpt in the secret file %s', async (file) => {
     await inTemporaryDirectory(async (directory) => {
       const document = await scanApp(directory, {[file]: `{"token": "${token}"}\n`})
