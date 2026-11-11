@@ -203,7 +203,7 @@ describe('appSecurityReviewJsonOutputSchema', () => {
         ...result,
         savedSuppressions: {
           ...savedSuppressions,
-          entries: [{...savedEntry, change: 'configuration-added', code: null, configurations: ['a', 'b']}],
+          entries: [{...savedEntry, change: 'added', code: null}],
           companionFindingNumbers: [],
         },
       },
