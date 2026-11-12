@@ -26,7 +26,6 @@ import type {
   Severity,
   StoredCheck,
   StoredFinding,
-  SuppressionKind,
 } from '../types.js'
 
 /**
@@ -142,13 +141,12 @@ Write ONE findings document that covers every check you ran. Copy each check's
 "scope" is the flags the check run used: copy it unchanged from the instructions you were given.
 
 Optional finding fields: "snippet", "confidence" (high, medium, or low),
-"reasoning", and "suppression": { "kind": "false-positive", "justification": "..." }.
-Add a suppression only when the user explicitly asked you to suppress that
-finding: "kind" is the user's false-positive or accepted-risk, and
-"justification" is the user's reason. Never suppress a finding on your own
-initiative, and never invent a reason. record saves each suppression to
-shopify.app-security.json; tell the user to review and commit that file.
-Persisted suppressions apply to all app configurations and client-ID runs.
+"reasoning", and "suppression": { "justification": "..." }.
+A suppression in this document applies to these results only, and review
+--suppress can't save it later. So don't add one for a decision that the user
+wants to keep: record the finding without it, then suppress it with review
+--suppress, as the instructions command explains. Never suppress a finding on
+your own initiative, and never invent a reason.
 
 Pipe the whole document on stdin to \`shopify app security record\`, using the
 exact command from the instructions you were given: its flags select where the
@@ -209,7 +207,7 @@ interface AgentFinding {
   snippet?: string
   confidence?: 'high' | 'medium' | 'low'
   reasoning?: string
-  suppression?: {justification: string; kind: SuppressionKind}
+  suppression?: {justification: string}
 }
 
 /** One checks_executed entry in the record input, after validation. */
@@ -230,7 +228,6 @@ const MAX_QUOTE_LENGTH = 4_000
 const MAX_FINDINGS = 1_000
 
 const AGENT_CHECK_STATUSES: ReadonlyArray<string> = ['executed', 'not_applicable', 'unresolved']
-const SUPPRESSION_KINDS: ReadonlyArray<unknown> = ['false-positive', 'accepted-risk'] satisfies SuppressionKind[]
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -283,9 +280,6 @@ export const validateFinding = (value: unknown): string | undefined => {
       return 'suppression requires a justification'
     if (suppression.justification.length > MAX_JUSTIFICATION_LENGTH)
       return `suppression justification exceeds ${MAX_JUSTIFICATION_LENGTH} characters`
-    // `record` saves the suppression to shopify.app-security.json, where every entry has a kind.
-    if (suppression.kind === undefined) return 'suppression.kind is required: false-positive or accepted-risk'
-    if (!SUPPRESSION_KINDS.includes(suppression.kind)) return 'suppression.kind must be false-positive or accepted-risk'
   }
   for (const evidence of finding.evidence) {
     if (!isRecord(evidence)) return 'evidence citation must be an object'
@@ -411,12 +405,7 @@ const redactFinding = (finding: AgentFinding, excerpts: CodeExcerpts): StoredFin
   ...(finding.reasoning === undefined ? {} : {reasoning: redactText(finding.reasoning)}),
   ...(finding.suppression === undefined
     ? {}
-    : {
-        suppression: {
-          justification: redactText(finding.suppression.justification),
-          kind: finding.suppression.kind,
-        },
-      }),
+    : {suppression: {justification: redactText(finding.suppression.justification)}}),
 })
 
 interface CheckGroup {
@@ -523,19 +512,11 @@ export type RecordAgentFindingsResult = {ok: true; document: AgentFindingsDocume
  * is recorded as claimed. The per-check snapshot makes the document
  * self-describing, so it can be shown without the catalog that produced it.
  */
-/** Version 1 documents have no `suppression.kind`, so an agent that follows older instructions is told to get new ones. */
-function schemaVersionError(schemaVersion: unknown): string {
-  const required = `schema_version must be ${RECORD_INPUT_SCHEMA_VERSION}`
-  const isEarlierVersion = typeof schemaVersion === 'number' && schemaVersion < RECORD_INPUT_SCHEMA_VERSION
-  return isEarlierVersion
-    ? `${required}. Version ${schemaVersion} is from an earlier Shopify CLI: run check again and follow its instructions.`
-    : required
-}
-
 export function recordAgentFindings(document: unknown, options: RecordAgentFindingsOptions): RecordAgentFindingsResult {
   if (!isRecord(document)) return {ok: false, errors: ['The findings document must be a JSON object.']}
   const errors: string[] = []
-  if (document.schema_version !== RECORD_INPUT_SCHEMA_VERSION) errors.push(schemaVersionError(document.schema_version))
+  if (document.schema_version !== RECORD_INPUT_SCHEMA_VERSION)
+    errors.push(`schema_version must be ${RECORD_INPUT_SCHEMA_VERSION}`)
   const scope = readScope(document.scope)
   if ('error' in scope) errors.push(scope.error)
   const claims = optionalArray(document, 'checks_executed', errors)

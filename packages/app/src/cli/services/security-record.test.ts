@@ -2,7 +2,6 @@ import securityRecord from './security-record.js'
 import {git, isolateGitConfig} from './app-security-engine/tests/git-test-helpers.js'
 import {
   appSecurityArtifactPaths,
-  appSecuritySuppressionsPath,
   readFindingsDocument,
   writeAgentFindings,
   writeCheckArtifacts,
@@ -48,7 +47,7 @@ const NO_SCOPE = {include_dirs: [], excludes: [], no_git_ignore: false}
 
 function validDocument(): Record<string, unknown> {
   return {
-    schema_version: 2,
+    schema_version: 1,
     scope: NO_SCOPE,
     checks_executed: [
       {check_id: 'MISSING_TENANT_ISOLATION', check_version: 1, status: 'executed'},
@@ -136,12 +135,7 @@ describe('securityRecord', () => {
 
       const result = await record(appRoot, testDependencies(JSON.stringify(validDocument())))
 
-      expect(result).toStrictEqual({
-        path: artifactPaths(appRoot).agentFindingsPath,
-        checks: 2,
-        findings: 2,
-        suppressions: null,
-      })
+      expect(result).toStrictEqual({path: artifactPaths(appRoot).agentFindingsPath, checks: 2, findings: 2})
       const recorded = await readRecorded(appRoot)
       expect(recorded.engine.version).toBe('3.99.0')
       expect(recorded).not.toHaveProperty('project')
@@ -200,7 +194,7 @@ describe('securityRecord', () => {
       const paths = artifactPaths(appRoot)
       await mkdir(paths.resultsDirectory)
       const staleScan = JSON.stringify({
-        schema_version: 2,
+        schema_version: 1,
         commit: 'zzz999-does-not-match',
         generated_at: '2000-01-01T00:00:00.000Z',
         findings: [],
@@ -223,7 +217,7 @@ describe('securityRecord', () => {
       await writeFile(paths.agentFindingsPath, previousFindings)
       const dependencies = testDependencies(
         JSON.stringify({
-          schema_version: 2,
+          schema_version: 1,
           scope: NO_SCOPE,
           checks_executed: [{check_id: 'OPEN_REDIRECT', check_version: 1, status: 'unresolved'}],
           findings: [finding(), finding({line: 0}), finding({evidence: []})],
@@ -252,7 +246,7 @@ describe('securityRecord', () => {
   test('rejects an unknown check', async () => {
     await expectRejected(
       JSON.stringify({
-        schema_version: 2,
+        schema_version: 1,
         scope: NO_SCOPE,
         checks_executed: [{check_id: 'NOT_A_CHECK', check_version: 1, status: 'executed'}],
       }),
@@ -261,9 +255,7 @@ describe('securityRecord', () => {
   })
 
   test('rejects an unsupported schema version', async () => {
-    await expectRejected(JSON.stringify({schema_version: 1, scope: NO_SCOPE}), [
-      'schema_version must be 2. Version 1 is from an earlier Shopify CLI: run check again and follow its instructions.',
-    ])
+    await expectRejected(JSON.stringify({schema_version: 2, scope: NO_SCOPE}), ['schema_version must be 1'])
   })
 
   test('rejects a document without a scope', async () => {
@@ -298,7 +290,7 @@ describe('securityRecord', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const document = {
-        schema_version: 2,
+        schema_version: 1,
         scope: NO_SCOPE,
         checks_executed: [{check_id: 'MISSING_TENANT_ISOLATION', check_version: 99, status: 'executed'}],
         findings: [finding({check_version: 99})],
@@ -325,7 +317,7 @@ describe('securityRecord', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const document = {
-        schema_version: 2,
+        schema_version: 1,
         scope: NO_SCOPE,
         findings: [
           finding({
@@ -346,7 +338,7 @@ describe('securityRecord', () => {
 
   describe('redacts secrets quoted in validation errors', () => {
     const documentWithSecrets = JSON.stringify({
-      schema_version: 2,
+      schema_version: 1,
       scope: NO_SCOPE,
       checks_executed: [{check_id: FAKE_SHOPIFY_TOKEN, check_version: 1}],
       findings: [
@@ -443,7 +435,7 @@ describe('securityRecord', () => {
     // so the reasoning length decides which side of the limit the stored file lands on.
     function nearLimitDocument(reasoningLength: number): string {
       return JSON.stringify({
-        schema_version: 2,
+        schema_version: 1,
         scope: NO_SCOPE,
         findings: Array.from({length: 1_000}, (_, index) =>
           finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(reasoningLength)}),
@@ -732,7 +724,7 @@ describe('securityRecord', () => {
         await writeFile(joinPath(appRoot, 'app/routes/orders.tsx'), `${'x'.repeat(400)}\n`.repeat(1_000))
         // About 4.9 MB stored without excerpts; each finding's five excerpt lines add about 2 KB.
         const document = JSON.stringify({
-          schema_version: 2,
+          schema_version: 1,
           scope: NO_SCOPE,
           findings: Array.from({length: 1_000}, (_, index) =>
             finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(500)}),
@@ -749,258 +741,7 @@ describe('securityRecord', () => {
     })
   })
 
-  describe("the agent's suppressions", () => {
-    const orderLines = [
-      'export async function loader({request}) {',
-      '  const {session} = await authenticate.admin(request)',
-      '  const orders = await prisma.order.findMany()',
-      '  return json(orders)',
-      '}',
-      'export async function action({request}) {',
-      '  const {session} = await authenticate.admin(request)',
-      '  await prisma.order.deleteMany()',
-      '  return null',
-      '}',
-    ]
-    const suppression = {justification: 'Every order table holds one shop.', kind: 'false-positive'}
-
-    async function createAppWithRoute(directory: string): Promise<string> {
-      const appRoot = await createApp(directory)
-      await mkdir(joinPath(appRoot, 'app/routes'))
-      await writeFile(joinPath(appRoot, 'app/routes/orders.tsx'), `${orderLines.join('\n')}\n`)
-      return appRoot
-    }
-
-    function documentWith(findings: Record<string, unknown>[]): string {
-      return JSON.stringify({schema_version: 2, scope: NO_SCOPE, findings})
-    }
-
-    const savedEntry = {
-      source: 'agent',
-      check: 'MISSING_TENANT_ISOLATION',
-      kind: 'false-positive',
-      path: 'app/routes/orders.tsx',
-      code: 'const orders = await prisma.order.findMany()',
-      reason: 'Every order table holds one shop.',
-    }
-
-    test.each([
-      [
-        'its own line',
-        2,
-        'const password',
-        ['export function connect() {', '  const password: string = "hunter2xyz"', '}'],
-      ],
-      [
-        'a neighbouring line',
-        3,
-        'return $db->orders->all()',
-        [
-          'function load() {',
-          "  $db = connect(['password' => 'hunter2xyz']);",
-          '  return $db->orders->all();',
-          '}',
-          'function list() {',
-          '  $db = connect_readonly();',
-          '  return $db->orders->all();',
-          '}',
-        ],
-      ],
-    ])('never saves a secret that the code of an entry takes from %s', async (_description, line, quote, lines) => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        await mkdir(joinPath(appRoot, 'app'))
-        await writeFile(joinPath(appRoot, 'app/settings.php'), `${lines.join('\n')}\n`)
-        const document = documentWith([
-          finding({file: 'app/settings.php', line, evidence: [{file: 'app/settings.php', line, quote}], suppression}),
-          finding({
-            file: 'app/settings.php',
-            line: 7,
-            evidence: [{file: 'app/settings.php', line: 7, quote: 'return'}],
-          }),
-        ])
-
-        const result = await record(appRoot, testDependencies(document))
-
-        expect(result.suppressions?.saved).toHaveLength(1)
-        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.not.toContain('hunter2xyz')
-      })
-    })
-
-    test('saves each suppression to shopify.app-security.json with its kind, and saves it once', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        const document = documentWith([finding({line: 3, suppression}), finding({line: 8})])
-
-        const first = await record(appRoot, testDependencies(document))
-        const fileAfterFirst = await readFile(appSecuritySuppressionsPath(appRoot))
-        const second = await record(appRoot, testDependencies(document))
-
-        expect(first.suppressions).toStrictEqual({
-          path: appSecuritySuppressionsPath(appRoot),
-          saved: [{index: 0, change: 'added', entry: savedEntry}],
-          alreadySaved: 0,
-          notSaved: [],
-        })
-        expect(JSON.parse(fileAfterFirst)).toStrictEqual({schema_version: 1, suppressions: [savedEntry]})
-        expect(second.suppressions).toStrictEqual({
-          path: appSecuritySuppressionsPath(appRoot),
-          saved: [],
-          alreadySaved: 1,
-          notSaved: [],
-        })
-        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(fileAfterFirst)
-        // agent-findings.json keeps the kind with the agent's own suppression.
-        const [stored] = (await readRecorded(appRoot)).checks[0]!.findings
-        expect(stored!.suppression).toStrictEqual(suppression)
-      })
-    })
-
-    test('rejects oversized suppression output before replacing the recorded findings', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        await record(appRoot, testDependencies(documentWith([])))
-        const previousFindings = await readFile(artifactPaths(appRoot).agentFindingsPath)
-        // Unknown keys are invalid, so `$schema` pads the file.
-        const file = {$schema: '', schema_version: 1, suppressions: []}
-        const emptySize = Buffer.byteLength(`${JSON.stringify(file, null, 2)}\n`)
-        file.$schema = 'x'.repeat(5_000_000 - emptySize - 10)
-        const previousSuppressions = `${JSON.stringify(file, null, 2)}\n`
-        await writeFile(appSecuritySuppressionsPath(appRoot), previousSuppressions)
-        const dependencies = testDependencies(documentWith([finding({line: 3, suppression})]))
-
-        await expect(record(appRoot, dependencies)).rejects.toThrow('would be larger than 5 MB')
-
-        expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
-        await expect(readFile(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(previousFindings)
-        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(previousSuppressions)
-        await expect(fileExists(`${appSecuritySuppressionsPath(appRoot)}.lock`)).resolves.toBe(false)
-      })
-    })
-
-    test('reports a partial write if suppressions change after the findings were recorded', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        const dependencies = testDependencies(documentWith([finding({line: 3, suppression})]))
-        const edited = JSON.stringify({schema_version: 1, suppressions: [], editor: 'changed'})
-        dependencies.writeAgentFindings = async (...args) => {
-          const path = await writeAgentFindings(...args)
-          await writeFile(appSecuritySuppressionsPath(appRoot), edited)
-          return path
-        }
-
-        await expect(record(appRoot, dependencies)).rejects.toMatchObject({
-          code: 'suppressions-save-failed',
-          cause: {code: 'suppressions-file-changed'},
-        })
-        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(edited)
-        expect((await readRecorded(appRoot)).checks[0]?.findings[0]?.suppression).toStrictEqual(suppression)
-        await expect(fileExists(`${appSecuritySuppressionsPath(appRoot)}.lock`)).resolves.toBe(false)
-      })
-    })
-
-    test('saves a configuration-independent entry when recording by client ID', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        const selection = {...selectionFor(appRoot), clientIdOverride: 'other-client-id'}
-
-        const result = await securityRecord(
-          {selection, path: appRoot},
-          testDependencies(documentWith([finding({line: 3, suppression})])),
-        )
-
-        expect(result.suppressions?.saved).toStrictEqual([{index: 0, change: 'added', entry: {...savedEntry}}])
-      })
-    })
-
-    test('records a suppression that no entry can name alone, and reports it as not saved', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        // Both findings cite line 3 with the same message, so no code can tell them apart.
-        const document = documentWith([finding({line: 3, suppression}), finding({line: 3})])
-
-        const result = await record(appRoot, testDependencies(document))
-
-        expect(result.suppressions).toStrictEqual({
-          path: appSecuritySuppressionsPath(appRoot),
-          saved: [],
-          alreadySaved: 0,
-          notSaved: [
-            {
-              checkId: 'MISSING_TENANT_ISOLATION',
-              location: {file: 'app/routes/orders.tsx', line: 3},
-              problem:
-                'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
-              // Only an entry without code can suppress it, and that entry also suppresses the other finding.
-              withoutCode: {findingCount: 2},
-            },
-          ],
-        })
-        await expect(fileExists(appSecuritySuppressionsPath(appRoot))).resolves.toBe(false)
-        await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(true)
-      })
-    })
-
-    test('reports the broader option even when a manual message selector can select the finding', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        // The same line, and no word of it in either message, so the plan finds no code. Each message names its finding.
-        const document = documentWith([
-          finding({line: 3, message: "The loader reads every shop's data.", suppression}),
-          finding({line: 3, message: "Every shop's data is loaded."}),
-        ])
-
-        const result = await record(appRoot, testDependencies(document))
-
-        expect(result.suppressions?.notSaved).toStrictEqual([
-          {
-            checkId: 'MISSING_TENANT_ISOLATION',
-            location: {file: 'app/routes/orders.tsx', line: 3},
-            problem:
-              'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
-            withoutCode: {findingCount: 2},
-          },
-        ])
-      })
-    })
-
-    test('rejects a suppression without a kind, naming the finding and the field, and saves nothing', async () => {
-      await expectRejected(
-        documentWith([finding({suppression: {justification: 'Every order table holds one shop.'}})]),
-        ['findings[0] (MISSING_TENANT_ISOLATION): suppression.kind is required: false-positive or accepted-risk'],
-      )
-    })
-
-    test('refuses to write into an invalid shopify.app-security.json, and records nothing', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        await writeFile(appSecuritySuppressionsPath(appRoot), '{"schema_version": 2, "suppressions": []}')
-        const dependencies = testDependencies(documentWith([finding({line: 3, suppression})]))
-
-        const error = await recordError(appRoot, dependencies)
-
-        expect(error.code).toBe('suppressions-file-invalid')
-        expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
-        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe(
-          '{"schema_version": 2, "suppressions": []}',
-        )
-      })
-    })
-
-    test("doesn't read shopify.app-security.json when no finding is suppressed", async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createAppWithRoute(directory)
-        await writeFile(appSecuritySuppressionsPath(appRoot), '{not json')
-
-        const result = await record(appRoot, testDependencies(documentWith([finding({line: 3})])))
-
-        expect(result.suppressions).toBeNull()
-        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.toBe('{not json')
-      })
-    })
-  })
-
   test('rejects invalid JSON', async () => {
-    await expectRejected('{"schema_version": 2,', [expect.stringContaining('The findings document is not valid JSON')])
+    await expectRejected('{"schema_version": 1,', [expect.stringContaining('The findings document is not valid JSON')])
   })
 })
