@@ -7,6 +7,7 @@ import {
   MultipleCaptureSchema,
   SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
+import {isHttpsUrl} from '../../../app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type AcceleratedWalletPaymentsAppExtensionConfigType = zod.infer<
@@ -39,6 +40,57 @@ const ButtonLogoPathSchema = zod
     `Must be a relative path inside the extension folder to a ${BUTTON_LOGO_EXTENSIONS.join(', ')} file, like assets/logo.png`,
   )
 
+const HOST_NAME_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
+
+// A domain name of two or more labels that isn't an IP address or a localhost name. The URL parser writes an IPv4
+// address in dotted decimal, so a last label of only digits means one, and an IPv6 address keeps its brackets, which
+// fail the label check. The rule is strict on purpose: loosening it later won't break any extension, but tightening it
+// would.
+function isDomainName(hostname: string): boolean {
+  const labels = hostname.split('.')
+  const topLevelLabel = labels[labels.length - 1]!
+  return (
+    hostname.length <= 253 &&
+    labels.length >= 2 &&
+    labels.every((label) => HOST_NAME_LABEL.test(label)) &&
+    !/^\d+$/.test(topLevelLabel) &&
+    topLevelLabel !== 'localhost'
+  )
+}
+
+// An entry must already be the origin the URL parser derives from it, so it can be compared with a sheet URL's origin
+// as it is. Anything the parser leaves out or rewrites fails: a path or a lone trailing slash, a query, a fragment,
+// user info, whitespace, the default port and upper-case letters. The port is checked for shape only: an entry on a
+// port that browsers block can't open a sheet anyway.
+function isSheetOrigin(origin: string): boolean {
+  if (!isHttpsUrl(origin)) return false
+  const url = new URL(origin)
+  return url.origin === origin && isDomainName(url.hostname)
+}
+
+const SheetOriginsSchema = zod
+  .array(
+    zod
+      .string()
+      .refine(
+        isSheetOrigin,
+        'Must be an HTTPS origin in lower case, with a domain name (not an IP address, localhost or wildcard), an optional port (leave out :443) and no path or trailing slash, like https://example.com or https://example.com:8443',
+      ),
+  )
+  .nonempty({message: 'Must list at least one origin'})
+  .superRefine((origins, context) => {
+    origins.forEach((origin, index) => {
+      // An entry that isn't an origin already has its own error.
+      if (isSheetOrigin(origin) && origins.indexOf(origin) < index) {
+        context.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message: 'Must not repeat an origin listed earlier',
+          path: [index],
+        })
+      }
+    })
+  })
+
 export const AcceleratedWalletPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
@@ -52,6 +104,10 @@ export const AcceleratedWalletPaymentsAppExtensionSchema = BasePaymentsAppExtens
     supports_3ds: zod.boolean().optional(),
     wallet_session_create_url: zod.string().url(),
     wallet_session_verify_url: zod.string().url(),
+    // The platform opens the extension's sheet only on one of these origins, so the sheet can't be sent to another
+    // host. The key is required from the start because making a key required after the target ships would break every
+    // extension that already uses the target.
+    sheet_origins: SheetOriginsSchema,
     button_logo_path: ButtonLogoPathSchema,
     button_logo_path_dark: ButtonLogoPathSchema,
     button_background_color: HexColorSchema,
@@ -86,6 +142,7 @@ export interface AcceleratedWalletPaymentsAppExtensionDeployConfigType extends B
   // AcceleratedWallet-specific fields
   wallet_session_create_url: string
   wallet_session_verify_url: string
+  sheet_origins: [string, ...string[]]
   button_logo_path: string
   button_logo_path_dark: string
   button_background_color: string
@@ -118,6 +175,7 @@ export function acceleratedWalletDeployConfigToCLIConfig(
     supports_installments: config.supports_installments,
     wallet_session_create_url: config.wallet_session_create_url,
     wallet_session_verify_url: config.wallet_session_verify_url,
+    sheet_origins: config.sheet_origins,
     button_logo_path: config.button_logo_path,
     button_logo_path_dark: config.button_logo_path_dark,
     button_background_color: config.button_background_color,
@@ -151,6 +209,7 @@ export async function acceleratedWalletPaymentsAppExtensionDeployConfig(
     supports_installments: config.supports_installments,
     wallet_session_create_url: config.wallet_session_create_url,
     wallet_session_verify_url: config.wallet_session_verify_url,
+    sheet_origins: config.sheet_origins,
     button_logo_path: config.button_logo_path,
     button_logo_path_dark: config.button_logo_path_dark,
     button_background_color: config.button_background_color,

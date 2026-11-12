@@ -46,6 +46,7 @@ describe('PaymentsAppExtension', () => {
     buyer_label: 'Example Wallet',
     wallet_session_create_url: 'https://example.com/wallet-sessions',
     wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
+    sheet_origins: ['https://wallet.example.com'],
     button_logo_path: 'assets/logo.png',
     button_logo_path_dark: 'assets/logo-dark.png',
     button_background_color: '#000000',
@@ -123,6 +124,7 @@ describe('PaymentsAppExtension', () => {
       default_buyer_label: acceleratedWalletConfig.buyer_label,
       wallet_session_create_url: acceleratedWalletConfig.wallet_session_create_url,
       wallet_session_verify_url: acceleratedWalletConfig.wallet_session_verify_url,
+      sheet_origins: acceleratedWalletConfig.sheet_origins,
       button_logo_path: acceleratedWalletConfig.button_logo_path,
       button_logo_path_dark: acceleratedWalletConfig.button_logo_path_dark,
       button_background_color: acceleratedWalletConfig.button_background_color,
@@ -149,6 +151,28 @@ describe('PaymentsAppExtension', () => {
       expect.objectContaining({
         path: ['button_background_color'],
         message: 'Must be a 6-digit hex color, like #1A2B3C',
+      }),
+    ])
+  })
+
+  test('returns the field error for an accelerated wallet sheet origin with a path', async () => {
+    // Given
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+
+    // When
+    const parsed = specification.parseConfigurationObject({
+      ...acceleratedWalletConfig,
+      sheet_origins: ['https://wallet.example.com/sheet'],
+    })
+
+    // Then
+    expect(parsed.state).toBe('error')
+    expect(parsed.errors).toEqual([
+      expect.objectContaining({
+        path: ['sheet_origins', 0],
+        message:
+          'Must be an HTTPS origin in lower case, with a domain name (not an IP address, localhost or wildcard), an optional port (leave out :443) and no path or trailing slash, like https://example.com or https://example.com:8443',
       }),
     ])
   })

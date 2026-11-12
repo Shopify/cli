@@ -17,6 +17,7 @@ const config: AcceleratedWalletPaymentsAppExtensionConfigType = {
   confirmation_callback_url: 'https://example.com/confirm',
   wallet_session_create_url: 'https://example.com/wallet-sessions',
   wallet_session_verify_url: 'https://example.com/wallet-sessions/verify',
+  sheet_origins: ['https://wallet.example.com', 'https://wallet.example.com:8443'],
   button_logo_path: 'assets/logo.png',
   button_logo_path_dark: 'assets/logo-dark.png',
   button_background_color: '#000000',
@@ -39,6 +40,9 @@ const config: AcceleratedWalletPaymentsAppExtensionConfigType = {
   api_version: '2022-07',
   description: 'my payments app extension',
 }
+
+const SHEET_ORIGIN_MESSAGE =
+  'Must be an HTTPS origin in lower case, with a domain name (not an IP address, localhost or wildcard), an optional port (leave out :443) and no path or trailing slash, like https://example.com or https://example.com:8443'
 
 describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
   test('validates a configuration with valid fields', async () => {
@@ -146,6 +150,194 @@ describe('AcceleratedWalletPaymentsAppExtensionSchema', () => {
       )
     },
   )
+
+  describe('sheet_origins', () => {
+    test.each([
+      [['https://example.com']],
+      [['https://example.com:8443']],
+      [['https://wallet.example.com', 'https://checkout.example.com']],
+      [['https://xn--bcher-kva.example']],
+      [['https://123.example.com']],
+      [[`https://${'a'.repeat(63)}.example.com`]],
+      [[`https://${'a.'.repeat(123)}example`]],
+      [['https://example.com:65535']],
+    ])('accepts %j', async (origins) => {
+      // When
+      const {success} = AcceleratedWalletPaymentsAppExtensionSchema.safeParse({...config, sheet_origins: origins})
+
+      // Then
+      expect(success).toBe(true)
+    })
+
+    test('returns an error if sheet_origins is not provided', async () => {
+      // When/Then
+      expect(() =>
+        AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, sheet_origins: undefined}),
+      ).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.invalid_type,
+            expected: 'array',
+            received: 'undefined',
+            path: ['sheet_origins'],
+            message: 'Required',
+          },
+        ]),
+      )
+    })
+
+    test('returns an error if sheet_origins is not a list', async () => {
+      // When/Then
+      expect(() =>
+        AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, sheet_origins: 'https://example.com'}),
+      ).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.invalid_type,
+            expected: 'array',
+            received: 'string',
+            path: ['sheet_origins'],
+            message: 'Expected array, received string',
+          },
+        ]),
+      )
+    })
+
+    test('returns an error if sheet_origins is empty', async () => {
+      // When/Then
+      expect(() => AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, sheet_origins: []})).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.too_small,
+            minimum: 1,
+            type: 'array',
+            inclusive: true,
+            exact: false,
+            message: 'Must list at least one origin',
+            path: ['sheet_origins'],
+          },
+        ]),
+      )
+    })
+
+    test('returns an error for each repeat of an origin', async () => {
+      // When/Then
+      expect(() =>
+        AcceleratedWalletPaymentsAppExtensionSchema.parse({
+          ...config,
+          sheet_origins: [
+            'https://example.com',
+            'https://wallet.example.com',
+            'https://example.com',
+            'https://example.com',
+          ],
+        }),
+      ).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.custom,
+            message: 'Must not repeat an origin listed earlier',
+            path: ['sheet_origins', 2],
+          },
+          {
+            code: zod.ZodIssueCode.custom,
+            message: 'Must not repeat an origin listed earlier',
+            path: ['sheet_origins', 3],
+          },
+        ]),
+      )
+    })
+
+    test('returns only the format error for a repeated entry that is not an origin', async () => {
+      // When/Then
+      expect(() =>
+        AcceleratedWalletPaymentsAppExtensionSchema.parse({
+          ...config,
+          sheet_origins: ['http://example.com', 'http://example.com'],
+        }),
+      ).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.custom,
+            message: SHEET_ORIGIN_MESSAGE,
+            path: ['sheet_origins', 0],
+          },
+          {
+            code: zod.ZodIssueCode.custom,
+            message: SHEET_ORIGIN_MESSAGE,
+            path: ['sheet_origins', 1],
+          },
+        ]),
+      )
+    })
+
+    test('returns an error if an origin is not a string', async () => {
+      // When/Then
+      expect(() =>
+        AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, sheet_origins: ['https://example.com', 443]}),
+      ).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.invalid_type,
+            expected: 'string',
+            received: 'number',
+            path: ['sheet_origins', 1],
+            message: 'Expected string, received number',
+          },
+        ]),
+      )
+    })
+
+    test.each([
+      ['an empty string', ''],
+      ['an HTTP origin', 'http://example.com'],
+      ['an upper-case scheme', 'HTTPS://example.com'],
+      ['a missing //', 'https:example.com'],
+      ['a host name with no scheme', 'example.com'],
+      ['a protocol-relative URL', '//example.com'],
+      ['a trailing slash', 'https://example.com/'],
+      ['a path', 'https://example.com/sheet'],
+      ['a query', 'https://example.com?sheet=1'],
+      ['an empty query', 'https://example.com?'],
+      ['a fragment', 'https://example.com#sheet'],
+      ['user info', 'https://user@example.com'],
+      ['a wildcard', 'https://*.example.com'],
+      ['an IPv4 address', 'https://192.0.2.1'],
+      ['a shortened IPv4 address', 'https://192.0.513'],
+      ['an IPv6 address', 'https://[2001:db8::1]'],
+      ['a one-label host name', 'https://wallet'],
+      ['localhost', 'https://localhost'],
+      ['localhost with a port', 'https://localhost:8443'],
+      ['a localhost subdomain', 'https://wallet.localhost'],
+      ['an upper-case host name', 'https://Example.com'],
+      ['a host name that is not ASCII', 'https://bücher.example'],
+      ['a host name with a trailing dot', 'https://example.com.'],
+      ['a host name with an underscore', 'https://wallet_sheet.example.com'],
+      ['a label that starts with a hyphen', 'https://-wallet.example.com'],
+      ['a label longer than 63 characters', `https://${'a'.repeat(64)}.example.com`],
+      ['a host name longer than 253 characters', `https://${'a.'.repeat(123)}example1`],
+      ['the default port', 'https://example.com:443'],
+      ['a port with a leading zero', 'https://example.com:08443'],
+      ['a port out of range', 'https://example.com:65536'],
+      ['a leading space', ' https://example.com'],
+      ['a trailing space', 'https://example.com '],
+      ['a tab', 'https://exam\tple.com'],
+      ['a newline', 'https://example.com\n'],
+    ])('returns an error for %s', async (_description, value) => {
+      // When/Then
+      expect(() =>
+        AcceleratedWalletPaymentsAppExtensionSchema.parse({...config, sheet_origins: ['https://example.com', value]}),
+      ).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.custom,
+            message: SHEET_ORIGIN_MESSAGE,
+            path: ['sheet_origins', 1],
+          },
+        ]),
+      )
+    })
+  })
 
   describe.each(['button_logo_path', 'button_logo_path_dark'] as const)('%s', (key) => {
     test.each([
@@ -332,6 +524,7 @@ describe('acceleratedWalletPaymentsAppExtensionDeployConfig', () => {
       supports_installments: config.supports_installments,
       wallet_session_create_url: config.wallet_session_create_url,
       wallet_session_verify_url: config.wallet_session_verify_url,
+      sheet_origins: config.sheet_origins,
       button_logo_path: config.button_logo_path,
       button_logo_path_dark: config.button_logo_path_dark,
       button_background_color: config.button_background_color,
