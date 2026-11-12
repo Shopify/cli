@@ -471,7 +471,7 @@ describe('outputActiveConfig', () => {
     await outputActiveConfig('/my-theme', 'theme-check:recommended')
 
     expect(isDirectory).not.toHaveBeenCalled()
-    expect(loadConfig).toHaveBeenCalledWith('theme-check:recommended', '/my-theme')
+    expect(loadConfig).toHaveBeenCalledWith('theme-check:recommended', '/my-theme', {})
   })
 })
 
@@ -509,6 +509,6 @@ describe('outputActiveChecks', () => {
     await outputActiveChecks('/my-theme', 'theme-check:recommended')
 
     expect(isDirectory).not.toHaveBeenCalled()
-    expect(loadConfig).toHaveBeenCalledWith('theme-check:recommended', '/my-theme')
+    expect(loadConfig).toHaveBeenCalledWith('theme-check:recommended', '/my-theme', {})
   })
 })
