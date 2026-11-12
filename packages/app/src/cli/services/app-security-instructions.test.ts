@@ -532,17 +532,16 @@ describe('appSecurityInstructions suppressions', () => {
     })
   })
 
-  test('advise an entry by hand only when the advice of an unsaved suppression does', async () => {
+  test('advise an entry by hand only when the advice of a failed review --suppress does', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
       const suppressing = sectionText(instructions, '## Suppressing findings')
 
       expect(suppressing).not.toContain('The user can add an entry by hand')
-      expect(suppressing).toContain('Suggest an entry by hand only when the advice does.')
-      for (const field of ['suppressions.notSaved', 'advice', 'invalidFields', 'findingCountWithoutCode']) {
-        expect(suppressing).toContain(`\`${field}\``)
-      }
+      expect(suppressing).toContain('Suggest an entry by hand only when that advice does.')
+      expect(suppressing).toContain('tell the user its `error.message` and `error.tryMessage` as they are')
+      expect(instructions).not.toContain('notSaved')
     })
   })
 
