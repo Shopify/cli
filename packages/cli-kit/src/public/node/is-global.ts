@@ -62,6 +62,16 @@ export async function installGlobalShopifyCLI(packageManager: PackageManager): P
   await exec(packageManager, args, jsonOutputEnabled() ? {} : {stdio: 'inherit'})
 }
 
+/**
+ * Returns the Homebrew formula that installed the running CLI.
+ *
+ * @param env - Environment variables set by the Homebrew wrapper.
+ * @returns The wrapper's formula name, or the unversioned formula for older installs.
+ */
+export function getHomebrewCLIFormula(env = process.env): string {
+  return env.SHOPIFY_HOMEBREW_FORMULA ?? 'shopify-cli'
+}
+
 export interface InstallGlobalCLIPromptResult {
   install: boolean
   alreadyInstalled: boolean

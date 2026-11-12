@@ -331,6 +331,7 @@
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
           "**/public/**/*.{ts,tsx}!",
+          "type-tests/**/*.ts",
           "bin/**/*.ts"
         ],
         "ignore": [
