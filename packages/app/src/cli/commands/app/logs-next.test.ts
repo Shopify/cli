@@ -65,7 +65,7 @@ test('parses space/equals forms and forwards effective defaults', async () => {
   expect(vi.mocked(retrieveLogs).mock.calls[0]![0].order).toBeUndefined()
 })
 
-test('connects all seven filter flags to their exact API filters together', async () => {
+test('connects existing webhook and GraphQL filter flags to their exact API filters together', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
   await new Logs(
@@ -100,6 +100,118 @@ test('connects all seven filter flags to their exact API filters together', asyn
   ])
 })
 
+test.each([
+  {argv: []},
+  {argv: ['--type=function', '--function-handle=discount', '--target', 'cart.lines.discounts.generate.run']},
+])('parses Function filters from environment variables with flag precedence for $argv', async ({argv}) => {
+  vi.stubEnv('SHOPIFY_FLAG_TYPE', 'function')
+  vi.stubEnv('SHOPIFY_FLAG_FUNCTION_HANDLE', 'environment-handle')
+  vi.stubEnv('SHOPIFY_FLAG_TARGET', 'environment-target')
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(argv, await Config.load()).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'function', backend: 'FUNCTION_RUN'}])
+  expect(input.filters).toEqual([
+    {field: 'FUNCTION_HANDLE', operator: 'EQUALS', value: argv.length ? 'discount' : 'environment-handle'},
+    {
+      field: 'TARGET',
+      operator: 'EQUALS',
+      value: argv.length ? 'cart.lines.discounts.generate.run' : 'environment-target',
+    },
+  ])
+})
+
+test.each([
+  {argv: []},
+  {argv: ['--type=app-event', '--event-handle=onboarding_completed']},
+  {argv: ['--type', 'app-event', '--event-handle', 'onboarding_completed']},
+])('parses app event filters from environment variables with flag precedence for $argv', async ({argv}) => {
+  vi.stubEnv('SHOPIFY_FLAG_TYPE', 'app-event')
+  vi.stubEnv('SHOPIFY_FLAG_EVENT_HANDLE', 'environment-handle')
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(argv, await Config.load()).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'app-event', backend: 'APP_EVENT'}])
+  expect(input.filters).toEqual([
+    {field: 'EVENT_HANDLE', operator: 'EQUALS', value: argv.length ? 'onboarding_completed' : 'environment-handle'},
+  ])
+})
+
+test('parses app billing events with shared event handle, store, and status filters', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    ['--type', 'app-billing-event', '--event-handle=sms_sent', '--store', 'example', '--status=failure'],
+    await Config.load(),
+  ).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'app-billing-event', backend: 'APP_BILLING_EVENT'}])
+  expect(input.filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'EVENT_HANDLE', operator: 'EQUALS', value: 'sms_sent'},
+  ])
+})
+
+test.each([
+  {argv: []},
+  {argv: ['--type=rest', '--method=GET', '--request-path=/admin/api/products.json']},
+  {argv: ['--type', 'rest', '--method', 'GET', '--request-path', '/admin/api/products.json']},
+])('parses REST filters from environment variables with flag precedence for $argv', async ({argv}) => {
+  vi.stubEnv('SHOPIFY_FLAG_TYPE', 'rest')
+  vi.stubEnv('SHOPIFY_FLAG_METHOD', 'POST')
+  vi.stubEnv('SHOPIFY_FLAG_REQUEST_PATH', '/environment-path')
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(argv, await Config.load()).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'rest', backend: 'REST_REQUEST'}])
+  expect(input.filters).toEqual([
+    {field: 'METHOD', operator: 'EQUALS', value: argv.length ? 'GET' : 'POST'},
+    {field: 'REQUEST_PATH', operator: 'EQUALS', value: argv.length ? '/admin/api/products.json' : '/environment-path'},
+  ])
+})
+
+test('parses Sidekick events with shared target, store, and status filters', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    ['--type', 'sidekick', '--target=extensions/security_scan', '--store', 'example', '--status=failure'],
+    await Config.load(),
+  ).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'sidekick', backend: 'SIDEKICK_EVENT'}])
+  expect(input.filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'TARGET', operator: 'EQUALS', value: 'extensions/security_scan'},
+  ])
+})
+
+test('parses UI extension errors with shared target, store, and status filters', async () => {
+  vi.mocked(retrieveLogs).mockResolvedValue(result())
+
+  await new Logs(
+    ['--type', 'ui-extension', '--target=purchase.checkout.block.render', '--store', 'example', '--status=failure'],
+    await Config.load(),
+  ).run()
+
+  const input = prepareLogInput(vi.mocked(retrieveLogs).mock.calls[0]![0])
+  expect(input.types).toEqual([{name: 'ui-extension', backend: 'UI_EXTENSION'}])
+  expect(input.filters).toEqual([
+    {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+    {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+    {field: 'TARGET', operator: 'EQUALS', value: 'purchase.checkout.block.render'},
+  ])
+})
+
 test('accepts the maximum limit through parsing and input validation', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
 
@@ -113,10 +225,32 @@ test('omitted type and repeated type flags are passed to the service without inv
   vi.mocked(retrieveLogs).mockResolvedValue(result())
   await new Logs(['--client-id', 'explicit-app'], await Config.load()).run()
   expect(vi.mocked(retrieveLogs).mock.calls[0]?.[0].type).toBeUndefined()
-  await new Logs(['--type', 'webhook', '--type', 'graphql', '--request-id', 'request-123'], await Config.load()).run()
+  await new Logs(
+    [
+      '--type',
+      'webhook',
+      '--type',
+      'graphql',
+      '--type',
+      'function',
+      '--type',
+      'app-event',
+      '--type',
+      'app-billing-event',
+      '--type',
+      'rest',
+      '--type',
+      'sidekick',
+      '--type',
+      'ui-extension',
+      '--request-id',
+      'request-123',
+    ],
+    await Config.load(),
+  ).run()
   expect(retrieveLogs).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      type: ['webhook', 'graphql'],
+      type: ['webhook', 'graphql', 'function', 'app-event', 'app-billing-event', 'rest', 'sidekick', 'ui-extension'],
       'request-id': 'request-123',
     }),
   )
@@ -169,6 +303,11 @@ test.each([
   ['--store', 'one', '--store=two'],
   ['--topic', 'orders/create', '--topic=orders/delete'],
   ['--operation-name', 'one', '--operation-name=two'],
+  ['--function-handle', 'one', '--function-handle=two'],
+  ['--target', 'one', '--target=two'],
+  ['--event-handle', 'one', '--event-handle=two'],
+  ['--method', 'GET', '--method=POST'],
+  ['--request-path', '/one', '--request-path=/two'],
   ['--since', '1h', '--since=2h'],
   ['--limit', '10', '--limit=20'],
   ['--until', '2026-10-06T13:00:00Z', '--until=2026-10-06T14:00:00Z'],
@@ -182,7 +321,7 @@ test.each([
 })
 
 test.each([
-  ['--type', 'function'],
+  ['--type', 'unsupported'],
   ['--sort', 'id'],
   ['--sort', 'timestamp', '--order', 'ascending'],
   ['--order', 'asc'],
@@ -225,7 +364,7 @@ test('webhook-only human output omits the inapplicable API column', async () => 
     await new Logs(['--type', 'webhook'], await Config.load()).run()
     expect(stdout()).toBe('')
     const lines = stderr().trim().split('\n')
-    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Topic / operation'])
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
     expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
       '2026-10-06T13:30:00.123456789Z',
       'WEBHOOK',
@@ -274,6 +413,169 @@ test.each(['ADMIN', undefined])('GraphQL-only human output keeps the API column 
   })
 })
 
+test.each([
+  {functionHandle: 'discount', target: 'cart.lines.discounts.generate.run', details: 'discount', status: 'FAILURE'},
+  {functionHandle: null, target: 'cart.lines.discounts.generate.run', details: 'cart.lines.discounts.generate.run'},
+  {target: 'cart.lines.discounts.generate.run', details: 'cart.lines.discounts.generate.run', status: null},
+  {functionHandle: null, target: null, details: 'unknown'},
+  {
+    functionHandle: `discount\n${'a'.repeat(100)}`,
+    details: `discount\\u000a${'a'.repeat(85)}…`,
+    status: 'SUCCESS',
+  },
+])(
+  'Function human output shows $details with the recorded result',
+  async ({functionHandle, target, details, status}) => {
+    const data = result()
+    data.logs = [{...data.logs[0]!, type: 'FUNCTION_RUN', functionHandle, target, resultStatus: status}]
+    vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+    await withCapturedStandardStreams(async ({stderr}) => {
+      await new Logs(['--type', 'function'], await Config.load()).run()
+      const lines = stderr().trim().split('\n')
+      expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+      expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+        data.logs[0]!.timestamp,
+        'FUNCTION_RUN',
+        status ?? 'unknown',
+        'example.myshopify.com',
+        details,
+      ])
+    })
+  },
+)
+
+test.each([
+  {eventHandle: 'onboarding_completed', details: 'onboarding_completed'},
+  {eventHandle: null, details: 'unknown'},
+  {eventHandle: undefined, details: 'unknown'},
+  {eventHandle: `event\n${'a'.repeat(100)}`, details: `event\\u000a${'a'.repeat(88)}…`},
+])('app event human output shows $details and no result status', async ({eventHandle, details}) => {
+  const data = result()
+  data.logs = [{timestamp: data.logs[0]!.timestamp, type: 'APP_EVENT', shopMyshopifyDomain: null, eventHandle}]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'app-event'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([data.logs[0]!.timestamp, 'APP_EVENT', '—', 'unknown', details])
+  })
+})
+
+test.each([
+  {eventHandle: 'sms_sent', details: 'sms_sent', status: 'FAILURE'},
+  {eventHandle: null, details: 'unknown', status: null},
+  {eventHandle: undefined, details: 'unknown', status: undefined},
+  {eventHandle: `event\n${'a'.repeat(100)}`, details: `event\\u000a${'a'.repeat(88)}…`, status: 'SUCCESS'},
+])('app billing event human output shows $details with the recorded result', async ({eventHandle, details, status}) => {
+  const data = result()
+  data.logs = [{...data.logs[0]!, type: 'APP_BILLING_EVENT', eventHandle, resultStatus: status}]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'app-billing-event'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'APP_BILLING_EVENT',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+  })
+})
+
+test.each([
+  {method: 'GET', requestPath: '/products.json', details: 'GET /products.json', status: 'FAILURE'},
+  {method: 'GET', requestPath: null, details: 'GET', status: null},
+  {method: undefined, requestPath: '/products.json', details: '/products.json'},
+  {method: null, requestPath: null, details: 'unknown'},
+  {method: undefined, requestPath: undefined, details: 'unknown'},
+  {method: '', requestPath: '', details: 'unknown'},
+  {method: '', requestPath: '/products.json', details: '/products.json'},
+  {method: 'GET', requestPath: '', details: 'GET'},
+  {method: 42, requestPath: false, details: 'unknown'},
+  {method: 'GET', requestPath: `/\n${'a'.repeat(100)}`, details: `GET /\\u000a${'a'.repeat(88)}…`, status: 'SUCCESS'},
+])('REST human output shows $details with the recorded result', async ({method, requestPath, details, status}) => {
+  const data = result()
+  data.logs = [{...data.logs[0]!, type: 'REST_REQUEST', method, requestPath, resultStatus: status, statusCode: 200}]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'rest'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'REST_REQUEST',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+  })
+})
+
+test.each([
+  {target: 'extensions/security_scan', details: 'extensions/security_scan', status: 'FAILURE'},
+  {target: null, details: 'unknown', status: null},
+  {target: undefined, details: 'unknown', status: undefined},
+  {target: `extensions/\n${'a'.repeat(100)}`, details: `extensions/\\u000a${'a'.repeat(82)}…`, status: 'SUCCESS'},
+])('Sidekick human output shows $details with the recorded result', async ({target, details, status}) => {
+  const data = result()
+  data.logs = [
+    {...data.logs[0]!, type: 'SIDEKICK_EVENT', target, resultStatus: status, errorMessage: 'not-in-human-summary'},
+  ]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'sidekick'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'SIDEKICK_EVENT',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+    expect(stderr()).not.toContain('not-in-human-summary')
+  })
+})
+
+test.each([
+  {target: 'purchase.checkout.block.render', details: 'purchase.checkout.block.render', status: 'FAILURE'},
+  {target: null, details: 'unknown', status: null},
+  {target: undefined, details: 'unknown', status: undefined},
+  {target: `extensions/\n${'a'.repeat(100)}`, details: `extensions/\\u000a${'a'.repeat(82)}…`, status: 'SUCCESS'},
+])('UI extension error human output shows $details with the recorded result', async ({target, details, status}) => {
+  const data = result()
+  data.logs = [
+    {...data.logs[0]!, type: 'UI_EXTENSION', target, resultStatus: status, errorMessage: 'not-in-human-summary'},
+  ]
+  vi.mocked(retrieveLogs).mockResolvedValue(data)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await new Logs(['--type', 'ui-extension'], await Config.load()).run()
+    expect(stdout()).toBe('')
+    const lines = stderr().trim().split('\n')
+    expect(lines[1]!.trim().split(/ {2,}/)).toEqual(['Timestamp', 'Type', 'Result', 'Store', 'Details'])
+    expect(lines[3]!.trim().split(/ {2,}/)).toEqual([
+      data.logs[0]!.timestamp,
+      'UI_EXTENSION',
+      status ?? 'unknown',
+      'example.myshopify.com',
+      details,
+    ])
+    expect(stderr()).not.toContain('not-in-human-summary')
+  })
+})
+
 test('human output aligns headers with mixed log rows between the warning and JSON hint', async () => {
   const data = result()
   data.logs.push({
@@ -285,6 +587,49 @@ test('human output aligns headers with mixed log rows between the warning and JS
     operationName: 'QueryWithALongerOperationName',
     api: 'STOREFRONT',
   })
+  data.logs.push({
+    timestamp: '2026-10-06T13:32:00Z',
+    type: 'FUNCTION_RUN',
+    resultStatus: 'FAILURE',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    functionHandle: 'discount',
+    target: 'cart.lines.discounts.generate.run',
+  })
+  data.logs.push({
+    timestamp: '2026-10-06T13:33:00Z',
+    type: 'APP_EVENT',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    eventHandle: 'onboarding_completed',
+  })
+  data.logs.push({
+    timestamp: '2026-10-06T13:34:00Z',
+    type: 'APP_BILLING_EVENT',
+    resultStatus: 'SUCCESS',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    eventHandle: 'sms_sent',
+  })
+  data.logs.push({
+    timestamp: '2026-10-06T13:35:00Z',
+    type: 'REST_REQUEST',
+    resultStatus: 'FAILURE',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    method: 'GET',
+    requestPath: '/products.json',
+  })
+  data.logs.push({
+    timestamp: '2026-10-06T13:36:00Z',
+    type: 'SIDEKICK_EVENT',
+    resultStatus: 'SUCCESS',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    target: 'extensions/security_scan',
+  })
+  data.logs.push({
+    timestamp: '2026-10-06T13:37:00Z',
+    type: 'UI_EXTENSION',
+    resultStatus: 'SUCCESS',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    target: 'purchase.checkout.block.render',
+  })
   vi.mocked(retrieveLogs).mockResolvedValue(data)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await new Logs([], await Config.load()).run()
@@ -292,23 +637,29 @@ test('human output aligns headers with mixed log rows between the warning and JS
     const lines = stderr().trim().split('\n')
     expect(lines[0]).toBe('Used fast retrieval: returned records shown oldest first.')
     expect(lines.at(-1)).toBe('Use --json for full records.')
-    expect(lines).toHaveLength(7)
-    expect(lines.at(-2)).toBe('Returned all 2 matching records available at query time.')
-    const headers = ['Timestamp', 'Type', 'Result', 'Store', 'Topic / operation', 'API']
+    expect(lines).toHaveLength(13)
+    expect(lines.at(-2)).toBe('Returned all 8 matching records available at query time.')
+    const headers = ['Timestamp', 'Type', 'Result', 'Store', 'Details', 'API']
     expect(lines[1]!.trim().split(/ {2,}/)).toEqual(headers)
     for (const [index, record] of data.logs.entries()) {
       const values = [
         record.timestamp,
         record.type,
-        record.resultStatus,
+        record.resultStatus ?? '—',
         record.shopMyshopifyDomain,
-        record.topic ?? record.operationName,
+        record.topic ??
+          record.operationName ??
+          record.functionHandle ??
+          record.eventHandle ??
+          record.target ??
+          `${record.method} ${record.requestPath}`,
         record.api ?? '—',
       ]
       const row = lines[index + 3]!
       expect(row.trim().split(/ {2,}/)).toEqual(values)
       for (const [column, header] of headers.entries()) {
-        expect(row.indexOf(String(values[column]))).toBe(lines[1]!.indexOf(header))
+        const start = lines[1]!.indexOf(header)
+        expect(row.slice(start, start + String(values[column]).length)).toBe(String(values[column]))
       }
     }
   })
