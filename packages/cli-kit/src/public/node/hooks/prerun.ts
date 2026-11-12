@@ -95,7 +95,7 @@ function findAlias(aliases: string[]) {
 }
 
 /**
- * Starts a shared background lookup for manual-upgrade hints and automatic upgrades.
+ * Starts a shared background lookup for release notices, manual-upgrade hints and automatic upgrades.
  * The postrun hook reads fresh cached versions without waiting for an in-flight lookup.
  */
 export async function checkForNewVersionInBackground(): Promise<void> {
