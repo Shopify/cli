@@ -196,7 +196,7 @@ export interface ScanMetadata {
 export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const AGENT_CHECKS_SCHEMA_VERSION = 1 as const
 /** Schema version of the findings document an agent pipes to `app security record`. */
-export const RECORD_INPUT_SCHEMA_VERSION = 1 as const
+export const RECORD_INPUT_SCHEMA_VERSION = 2 as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
 export interface FindingEvidence {
