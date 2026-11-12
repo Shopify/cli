@@ -8,6 +8,8 @@ import {
   MAX_JUSTIFICATION_LENGTH,
   MAX_PATH_LENGTH,
   MAX_SNIPPET_LENGTH,
+  MIN_SUPPRESSION_CODE_LENGTH,
+  isSpecificSuppressionCode,
   reportingSourcesByCheckId,
   type FindingsSource,
 } from './app-security-engine/index.js'
@@ -69,12 +71,12 @@ const suppressionSchema = zod.strictObject(
       const problem = pathProblem(path)
       if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
     }),
-    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs another
-    // character. Without `code`, the entry covers every finding of the check in the file.
+    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs enough
+    // other characters to name its finding. Without `code`, the entry covers every finding of the check in the file.
     code: nonBlankText(MAX_SNIPPET_LENGTH)
       .refine(
-        (code) => code.trim() === '' || /[^\s,;]/.test(code),
-        'must contain more than whitespace, commas, and semicolons',
+        (code) => code.trim() === '' || isSpecificSuppressionCode(code),
+        `must contain at least ${MIN_SUPPRESSION_CODE_LENGTH} characters that are not whitespace, commas, or semicolons`,
       )
       .optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),

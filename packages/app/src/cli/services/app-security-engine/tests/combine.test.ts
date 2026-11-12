@@ -520,6 +520,19 @@ describe('combineFindings', () => {
       expect(statuses(neighbor.suppressions)).toEqual([{status: 'stale', count: 0}])
     })
 
+    test('does not match a code that holds a neighboring line and only some characters of the flagged line', () => {
+      const flagged = finding({
+        location: {file: path, line: 10},
+        code_excerpt: excerpt(9, 'logger.info(', '  session.accessToken', ')', 'return null'),
+      })
+
+      const {suppressions} = combineWith([entry({code: 'Token ) return null'})], {
+        deterministic: [check({findings: [flagged]})],
+      })
+
+      expect(statuses(suppressions)).toEqual([{status: 'stale', count: 0}])
+    })
+
     test('an entry still matches after unrelated lines are inserted above the finding', () => {
       const suppression = entry({code: 'console.log(session.accessToken)'})
       const moved = finding({...loggedToken, location: {file: path, line: 17}, code_excerpt: excerpt(15, ...loader)})

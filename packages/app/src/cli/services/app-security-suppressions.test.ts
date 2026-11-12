@@ -321,10 +321,10 @@ describe('readAppSecuritySuppressions', () => {
         {code: 'x'.repeat(4_001)},
         'suppressions[0].code: must be at most 4000 characters',
       ],
-      ...[';', ' , ', ',;\n'].map((code): [string, Record<string, unknown>, string] => [
-        `the code ${JSON.stringify(code)}`,
+      ...[';', ' , ', ',;\n', ')', '});', 'f(a, b);'].map((code): [string, Record<string, unknown>, string] => [
+        `the code ${JSON.stringify(code)}, which is too short to name one finding`,
         {code},
-        'suppressions[0].code: must contain more than whitespace, commas, and semicolons',
+        'suppressions[0].code: must contain at least 8 characters that are not whitespace, commas, or semicolons',
       ]),
     ])('rejects %s', async (_name, changes, problem) => {
       await expect(entryProblems(changes)).resolves.toStrictEqual([problem])

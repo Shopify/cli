@@ -123,7 +123,7 @@ const committedSecretEntry = {
   check: 'COMMITTED_SECRET',
   kind: 'false-positive',
   path: 'app/routes/index.ts',
-  code: 'const access_token = "shpa[REDACTED:38]"',
+  code: 'const access_token = "shpa[REDACTED:38:a5e9444f]"',
   reason: 'A fake token for the session tests.',
 }
 
