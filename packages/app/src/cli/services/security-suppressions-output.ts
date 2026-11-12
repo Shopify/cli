@@ -285,10 +285,21 @@ function ambiguousEntryItem(result: SuppressionEntryResult): TokenItem<InlineTok
   ]
 }
 
-/** Entries whose source has no executed result for the check. */
+/** Entries whose source has no executed result for the check, then entries whose file the run didn't scan. */
 function notEvaluatedLine(results: SuppressionEntryResult[]): string {
-  const reason = results.length === 1 ? 'no executed result for its check' : 'no executed results for their checks'
-  return `Not evaluated: ${entryCountLabel(results.length)} (${reason}).`
+  const unscanned = results.filter((result) => result.not_evaluated_reason === 'path-not-scanned').length
+  const withoutResult = results.length - unscanned
+  const groups = [
+    withoutResult > 0
+      ? `${entryCountLabel(withoutResult)} (${
+          withoutResult === 1 ? 'no executed result for its check' : 'no executed results for their checks'
+        })`
+      : undefined,
+    unscanned > 0
+      ? `${entryCountLabel(unscanned)} (this run didn't scan ${unscanned === 1 ? 'its file' : 'their files'})`
+      : undefined,
+  ].filter((group) => group !== undefined)
+  return `Not evaluated: ${groups.join(', ')}.`
 }
 
 function entryCountLabel(total: number): string {

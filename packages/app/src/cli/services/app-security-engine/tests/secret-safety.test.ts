@@ -231,7 +231,7 @@ describe('code excerpts never hold a secret', () => {
 
     const secrets = document.checks.find((check) => check.id === 'COMMITTED_SECRET')!.findings
     expect(secrets.map((finding) => finding.code_excerpt)).toEqual([
-      [{line: 4, text: expect.stringMatching(/^const shopifyToken = "shpa\[REDACTED:\d+\]"$/)}],
+      [{line: 4, text: expect.stringMatching(/^const shopifyToken = "shpa\[REDACTED:\d+:[0-9a-f]{8}\]"$/)}],
     ])
     const serialized = JSON.stringify(document)
     expect(serialized).not.toContain(PROBES.shopifyToken)
@@ -258,7 +258,7 @@ describe('code excerpts never hold a secret', () => {
 
     const secrets = document.checks.find((check) => check.id === 'COMMITTED_SECRET')!.findings
     expect(secrets.map((finding) => [finding.location, finding.code_excerpt])).toEqual([
-      [{file: 'config/settings.yml', line: 3}, [{line: 3, text: '  admin_token: "shpa[REDACTED:38]"'}]],
+      [{file: 'config/settings.yml', line: 3}, [{line: 3, text: '  admin_token: "shpa[REDACTED:38:a5e9444f]"'}]],
     ])
     const serialized = JSON.stringify(document)
     expect(serialized).not.toContain(unprefixedSecret)
@@ -279,7 +279,7 @@ describe('code excerpts never hold a secret', () => {
 
     const result = recordAgentFindings(
       {
-        schema_version: 1,
+        schema_version: 2,
         scope: {include_dirs: [], excludes: [], no_git_ignore: false},
         findings: [
           {
@@ -328,7 +328,7 @@ describe('code excerpts never hold a secret', () => {
       'export SHOPIFY_API_TOKEN=[REDACTED:32]',
       '"apiKey": "[REDACTED:32]", "private_key": \'[REDACTED:1]\'',
       'url = https://deploy:[REDACTED:21]@git.example.com/app.git',
-      'token: "shpa[REDACTED:38]"',
+      'token: "shpa[REDACTED:38:a5e9444f]"',
       'password: ""',
       'if (token === expected) return',
       'const credentials = [REDACTED:19]',
@@ -362,7 +362,7 @@ describe('code excerpts never hold a secret', () => {
       'between',
       '[REDACTED LINE]',
       '[REDACTED LINE]',
-      expect.stringMatching(/^token = "ghp_\[REDACTED:\d+\]"$/),
+      expect.stringMatching(/^token = "ghp_\[REDACTED:\d+:[0-9a-f]{8}\]"$/),
       'after',
     ])
   })
@@ -437,7 +437,7 @@ describe('code excerpts never hold a secret', () => {
 
     const result = recordAgentFindings(
       {
-        schema_version: 1,
+        schema_version: 2,
         scope: {include_dirs: [], excludes: [], no_git_ignore: false},
         findings: Object.keys(files).map(cite),
       },

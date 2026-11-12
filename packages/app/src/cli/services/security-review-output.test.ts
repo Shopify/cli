@@ -138,6 +138,23 @@ describe('buildSecurityReviewSummary', () => {
       expect(summary.headline).toBe('No findings in 2 checks.')
     })
 
+    test("is a success that doesn't say there are no findings when every finding is suppressed", () => {
+      const entry: SuppressionEntry = {
+        source: 'deterministic',
+        check: 'EOL_API_VERSION',
+        kind: 'accepted-risk',
+        path: 'shopify.app.toml',
+        reason: 'Upgrade planned.',
+      }
+
+      const summary = buildSecurityReviewSummary(
+        presenterInput(deterministicOnly, {checkIds: ['EOL_API_VERSION'], entries: [entry]}),
+      )
+
+      expect(summary.type).toBe('success')
+      expect(summary.headline).toBe('No active findings in 1 check.')
+    })
+
     test('is an info box when neither file is present', () => {
       const summary = buildSecurityReviewSummary(presenterInput(none))
 
@@ -2003,7 +2020,7 @@ describe('interactiveSecurityReview in a terminal', () => {
     const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}])])
 
     const review = interactiveSecurityReview(prompts)(session)
-    await type('What do you want to do with finding #2?', '\r')
+    await type('What do you want to do with finding #2?', 's')
     await type('Is finding #2 a false positive or an accepted risk?', '\r')
     await type('Why should finding #2 be suppressed?', '\r')
     await type('The reason must not be empty.', 'The logger redacts tokens.')

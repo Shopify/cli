@@ -36,6 +36,10 @@ const suppressions = {
       location: {filePath: routeFile, line: 40},
       message:
         'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+      advice:
+        'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. Omit code only if you intend to suppress all of these findings.',
+      invalidFields: null,
+      findingCountWithoutCode: 2,
     },
   ],
 }
