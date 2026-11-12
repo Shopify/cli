@@ -730,7 +730,7 @@ describe('securityReview --suppress', () => {
       4,
       'finding-not-suppressible',
       'Finding 4 is already suppressed by the agent. Nothing was saved.',
-      'To change the suppression, edit shopify.app-security.json.',
+      "The agent's suppression applies to these results only. To save one in shopify.app-security.json, record the agent findings again without it, then suppress the finding.",
     ],
     [
       'a finding whose line the results hold no code for',
