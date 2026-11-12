@@ -40,16 +40,21 @@ export interface SuppressionsInput {
  * - `stale`: the entry matched nothing, although its source's executed result for the check could hold the finding.
  * - `ambiguous`: `code` matched more than one finding, so the entry suppresses none.
  * - `not-evaluated`: the run has no result that could hold the finding: its
- *   source recorded no result for the check (the agent didn't record it, or the deterministic check didn't run), or
- *   that result is unresolved or not applicable and nothing matched.
+ *   source recorded no result for the check (the agent didn't record it, or the deterministic check didn't run),
+ *   that result is unresolved or not applicable and nothing matched, or the run didn't scan the entry's file.
  */
 export type SuppressionEntryStatus = 'matched' | 'stale' | 'ambiguous' | 'not-evaluated'
 
 /**
- * Why an entry is not evaluated: its source has no
- * executed result for the check that could hold the finding.
+ * Why an entry is not evaluated:
+ * - `no-executed-result`: its source has no executed result for the check that could hold the finding.
+ * - `path-not-scanned`: its source's run didn't look at the entry's file (`isPathOutsideRun`), so the run can't tell
+ *   whether the finding is gone. Another run, such as one without `--exclude`, can still match the entry.
  */
-export type SuppressionNotEvaluatedReason = 'no-executed-result'
+export type SuppressionNotEvaluatedReason = 'no-executed-result' | 'path-not-scanned'
+
+/** Whether a source's run left a path out, so its results can't hold a finding there. */
+export type PathOutsideRunLookup = (source: FindingsSource, path: string) => boolean
 
 export interface SuppressionEntryResult {
   /** The entry's index in the file, from 0. */
@@ -122,6 +127,7 @@ interface ScoredCandidate {
 export function matchSuppressionEntries(
   {entries: suppressionEntries, missingPaths = []}: SuppressionsInput = {entries: []},
   recordedCheck: RecordedCheckLookup,
+  isPathOutsideRun: PathOutsideRunLookup = () => false,
 ): SuppressionMatches {
   const missing = new Set(missingPaths)
   const entries = suppressionEntries.map((entry, index): EntryResult => {
@@ -129,6 +135,9 @@ export function matchSuppressionEntries(
     if (!check) return notEvaluated(index, entry, 'no-executed-result')
 
     const {status, findingIndexes, candidateIndexes} = matchEntry(entry, check)
+    if (status === 'stale' && isPathOutsideRun(entry.source, entry.path)) {
+      return notEvaluated(index, entry, 'path-not-scanned')
+    }
     const likelyPath = status === 'stale' && missing.has(entry.path) ? likelyNewPath(entry, check) : undefined
     return {
       index,

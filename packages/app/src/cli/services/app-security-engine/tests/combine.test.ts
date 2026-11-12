@@ -822,6 +822,68 @@ describe('combineFindings', () => {
       }
     })
 
+    const fixturePath = 'test/fixtures/session.ts'
+    const {coverage} = deterministicFindingsDocument
+    const scannedAppDirectory = {...coverage, scan_directories: [{directory: '.', origin: 'app_directory' as const}]}
+    const withExcludes = (excludes: string[]) => ({
+      ...scannedAppDirectory,
+      scope: {...coverage.scope, excludes},
+    })
+
+    function combineWithCoverage(path: string, deterministicCoverage: DeterministicFindingsDocument['coverage']) {
+      return combineFindings({
+        deterministic: {
+          ...deterministicDocument([check({findings: [loggedToken]})]),
+          coverage: deterministicCoverage,
+        },
+        agent: null,
+        suppressions: {entries: [entry({path})]},
+      }).suppressions
+    }
+
+    test.each([
+      ['an --exclude glob matches the file', fixturePath, withExcludes(['test/**'])],
+      ['an --exclude names a directory that holds the file', fixturePath, withExcludes(['./test/'])],
+      [
+        'the scan skipped the file',
+        fixturePath,
+        {...scannedAppDirectory, files_skipped: [{path: fixturePath, reason: 'too_large' as const}]},
+      ],
+      ['no scan directory holds the file', '../backend/session.ts', scannedAppDirectory],
+      [
+        'only another scan directory was scanned',
+        fixturePath,
+        {...scannedAppDirectory, scan_directories: [{directory: 'web', origin: 'include_dir' as const}]},
+      ],
+    ])(
+      "an entry for a file that its source's run didn't scan is not evaluated, and not stale, when %s",
+      (_description, path, deterministicCoverage) => {
+        const suppressions = combineWithCoverage(path, deterministicCoverage)
+
+        expect(statuses(suppressions)).toEqual([{status: 'not-evaluated', count: 0}])
+        expect(suppressions[0]!.not_evaluated_reason).toBe('path-not-scanned')
+      },
+    )
+
+    test('an entry is stale when the run scanned its file, with an --exclude for other files', () => {
+      const suppressions = combineWithCoverage(fixturePath, withExcludes(['docs/**', 'test/e2e']))
+
+      expect(statuses(suppressions)).toEqual([{status: 'stale', count: 0}])
+    })
+
+    test("an agent entry is not evaluated when the agent's scope excludes its file", () => {
+      const {suppressions} = combineFindings({
+        deterministic: null,
+        agent: {
+          ...agentDocument([check({findings: [loggedToken]})]),
+          scope: {include_dirs: [], excludes: ['test/**'], no_git_ignore: false},
+        },
+        suppressions: {entries: [entry({source: 'agent', path: fixturePath})]},
+      })
+
+      expect(suppressions[0]).toMatchObject({status: 'not-evaluated', not_evaluated_reason: 'path-not-scanned'})
+    })
+
     test.each<StoredCheckStatus>(['unresolved', 'not_applicable'])(
       "an entry that matches nothing is not evaluated when its source's result is %s",
       (status) => {
