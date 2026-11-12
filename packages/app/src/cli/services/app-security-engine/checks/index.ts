@@ -141,13 +141,12 @@ Write ONE findings document that covers every check you ran. Copy each check's
 "scope" is the flags the check run used: copy it unchanged from the instructions you were given.
 
 Optional finding fields: "snippet", "confidence" (high, medium, or low),
-"reasoning", and "suppression": { "kind": "false-positive", "justification": "..." }.
-Add a suppression only when the user explicitly asked you to suppress that
-finding: "kind" is the user's false-positive or accepted-risk, and
-"justification" is the user's reason. Never suppress a finding on your own
-initiative, and never invent a reason. record saves each suppression to
-shopify.app-security.json; tell the user to review and commit that file.
-Persisted suppressions apply to all app configurations and client-ID runs.
+"reasoning", and "suppression": { "justification": "..." }.
+A suppression in this document applies to these results only, and review
+--suppress can't save it later. So don't add one for a decision that the user
+wants to keep: record the finding without it, then suppress it with review
+--suppress, as the instructions command explains. Never suppress a finding on
+your own initiative, and never invent a reason.
 
 Pipe the whole document on stdin to \`shopify app security record\`, using the
 exact command from the instructions you were given: its flags select where the
