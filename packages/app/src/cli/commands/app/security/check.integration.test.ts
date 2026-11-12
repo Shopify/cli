@@ -852,7 +852,7 @@ describe('app security check --json command boundary', () => {
       expect(suppressed.exitCode).toBe(0)
       // The entry names the redacted line that the results hold, never the token.
       expect(JSON.parse(suppressed.stdout).savedSuppressions.entries).toMatchObject([
-        {source: 'deterministic', check: 'COMMITTED_SECRET', code: 'const access_token = "shpa[REDACTED:38]"'},
+        {source: 'deterministic', check: 'COMMITTED_SECRET', code: 'const access_token = "shpa[REDACTED:38:a5e9444f]"'},
       ])
       await expect(readFile(appSecuritySuppressionsPath(directory), 'utf8')).resolves.not.toContain('0123456789abcdef')
       for (const result of [passed, moved]) {
