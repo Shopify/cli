@@ -200,6 +200,11 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
+  /** Filters configuration flags before they are applied, validated, or reported. */
+  protected filterEnvironmentFlags(environment: FlagOutput): FlagOutput {
+    return environment
+  }
+
   protected async parseEnvironmentFlags<
     TFlags extends FlagOutput,
     TGlobalFlags extends FlagOutput,
@@ -209,7 +214,7 @@ abstract class BaseCommand extends Command {
     try {
       const result = await super.parse(options, [
         ...originalArgv,
-        ...argsFromEnvironment(environment, options, explicitFlags),
+        ...argsFromEnvironment(this.filterEnvironmentFlags(environment), options, explicitFlags),
       ])
       return result.flags
     } finally {
@@ -361,11 +366,11 @@ ${explanation} in non-interactive terminal environments, such as a CI environmen
     const {loadEnvironment} = await import('./environments.js')
     if (specifiedEnvironment) {
       const environment = await loadEnvironment(specifiedEnvironment, environmentsFileName, {from: path})
-      return {environment, isDefaultEnvironment: false}
+      return {environment: environment && this.filterEnvironmentFlags(environment), isDefaultEnvironment: false}
     }
 
     const environment = await loadEnvironment('default', environmentsFileName, {from: path, silent: true})
-    return {environment, isDefaultEnvironment: true}
+    return {environment: environment && this.filterEnvironmentFlags(environment), isDefaultEnvironment: true}
   }
 }
 
