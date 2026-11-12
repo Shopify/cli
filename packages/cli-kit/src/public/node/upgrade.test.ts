@@ -311,6 +311,20 @@ describe('runCLIUpgrade', () => {
     expect(globalCLIVersion).toHaveBeenCalledWith(`shopify${major}`)
   })
 
+  test('does not announce a version change when the Homebrew formula is at the running version', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli')
+    vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await expect(runCLIUpgrade()).resolves.toBeUndefined()
+    expect(outputMock.info()).toContain('New version of Shopify CLI available!')
+    expect(outputMock.info()).not.toContain('→')
+  })
+
   test('installs exactly the requested version, not latest, when the auto-upgrade hook passes one', async () => {
     // Given: the cache already knows about a newer major, but the hook vetted a minor.
     // Derived from CLI_KIT_VERSION so the test keeps working after release bumps.

@@ -1,7 +1,10 @@
-import {captureOutput} from './system.js'
+import {captureOutput, exec} from './system.js'
 import {getHomebrewCLIFormula} from './is-global.js'
 import which from 'which'
 import {satisfies, SemVer, valid} from 'semver'
+
+const homebrewRefreshTimeoutMs = 30 * 1000
+
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -48,12 +51,15 @@ export async function globalCLIVersion(binary = 'shopify'): Promise<string | und
 /**
  * Refreshes Homebrew metadata and returns the stable version of the running CLI's formula.
  *
- * @returns The available version, or undefined when the formula cannot be read.
+ * @returns The available version, or undefined when the refresh fails or takes too long, or the formula cannot be read.
  */
 export async function availableHomebrewCLIVersion(): Promise<string | undefined> {
   try {
     const options = {env: {HOMEBREW_NO_AUTO_UPDATE: '1'}}
-    await captureOutput('brew', ['update', '--quiet'], options)
+    // The automatic upgrade hook waits for this refresh without showing output, so it must end.
+    const refreshTimeout = AbortSignal.timeout(homebrewRefreshTimeoutMs)
+    await exec('brew', ['update', '--quiet'], {...options, signal: refreshTimeout})
+    if (refreshTimeout.aborted) return undefined
     const output = await captureOutput('brew', ['info', '--json=v2', getHomebrewCLIFormula()], options)
     const info: {formulae?: {versions?: {stable?: string}}[]} = JSON.parse(output)
     const version = info.formulae?.[0]?.versions?.stable

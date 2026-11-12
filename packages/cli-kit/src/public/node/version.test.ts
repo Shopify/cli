@@ -1,4 +1,4 @@
-import {captureOutput} from './system.js'
+import {captureOutput, exec} from './system.js'
 import {localCLIVersion, globalCLIVersion, availableHomebrewCLIVersion, isPreReleaseVersion} from './version.js'
 import {inTemporaryDirectory} from './fs.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -96,12 +96,31 @@ describe('availableHomebrewCLIVersion', () => {
     vi.mocked(captureOutput).mockResolvedValue(JSON.stringify({formulae: [{versions: {stable: '5.0.1'}}]}))
 
     await expect(availableHomebrewCLIVersion()).resolves.toBe('5.0.1')
-    expect(captureOutput).toHaveBeenNthCalledWith(1, 'brew', ['update', '--quiet'], {
+    expect(exec).toHaveBeenCalledWith('brew', ['update', '--quiet'], {
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+      signal: expect.any(AbortSignal),
+    })
+    expect(captureOutput).toHaveBeenCalledExactlyOnceWith('brew', ['info', '--json=v2', 'shopify-cli'], {
       env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
     })
-    expect(captureOutput).toHaveBeenNthCalledWith(2, 'brew', ['info', '--json=v2', 'shopify-cli'], {
-      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
-    })
+    expect(vi.mocked(exec).mock.invocationCallOrder[0]!).toBeLessThan(
+      vi.mocked(captureOutput).mock.invocationCallOrder[0]!,
+    )
+  })
+
+  test('returns undefined without reading the formula when the metadata refresh takes too long', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(AbortSignal.abort())
+
+    await expect(availableHomebrewCLIVersion()).resolves.toBeUndefined()
+    expect(timeout).toHaveBeenCalledWith(30 * 1000)
+    expect(captureOutput).not.toHaveBeenCalled()
+  })
+
+  test('returns undefined without reading the formula when the metadata refresh fails', async () => {
+    vi.mocked(exec).mockRejectedValue(new Error('No network'))
+
+    await expect(availableHomebrewCLIVersion()).resolves.toBeUndefined()
+    expect(captureOutput).not.toHaveBeenCalled()
   })
 
   test('looks up the versioned formula that installed the CLI', async () => {

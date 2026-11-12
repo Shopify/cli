@@ -133,9 +133,11 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
       (packageManager === 'homebrew'
         ? await availableHomebrewCLIVersion()
         : await checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24}))
-    const headline = newerVersion
-      ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
-      : '✨ New version of Shopify CLI available!'
+    // A Homebrew formula can be at the running version, which is not an upgrade to announce.
+    const headline =
+      newerVersion && semverLt(CLI_KIT_VERSION, newerVersion)
+        ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
+        : '✨ New version of Shopify CLI available!'
     outputInfo(
       outputContent`${headline}
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
