@@ -9,6 +9,8 @@ import {
   MAX_JUSTIFICATION_LENGTH,
   MAX_PATH_LENGTH,
   MAX_SNIPPET_LENGTH,
+  MIN_SUPPRESSION_CODE_LENGTH,
+  isSpecificSuppressionCode,
   matchSuppressionEntries,
   reportingSourcesByCheckId,
   type AgentFindingsDocument,
@@ -78,12 +80,12 @@ const suppressionSchema = zod.strictObject(
       const problem = pathProblem(path)
       if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
     }),
-    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs another
-    // character. Without `code`, the entry covers every finding of the check in the file.
+    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs enough
+    // other characters to name its finding. Without `code`, the entry covers every finding of the check in the file.
     code: nonBlankText(MAX_SNIPPET_LENGTH)
       .refine(
-        (code) => code.trim() === '' || /[^\s,;]/.test(code),
-        'must contain more than whitespace, commas, and semicolons',
+        (code) => code.trim() === '' || isSpecificSuppressionCode(code),
+        `must contain at least ${MIN_SUPPRESSION_CODE_LENGTH} characters that are not whitespace, commas, or semicolons`,
       )
       .optional(),
     reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
@@ -393,7 +395,7 @@ const CODE_WINDOWS: [number, number][] = [
  * 1. An entry that already suppresses the finding leaves the file as it is.
  * 2. Otherwise a new entry gets the shortest `code` that names the finding alone: its flagged line, then wider parts
  *    of the statement, then a word of the line that the finding's message names (the matching keeps the finding whose
- *    code and message both hold the text).
+ *    code and message both hold the text). A candidate that the file would reject as too short is skipped.
  */
 export function planSuppression(
   target: SuppressionTarget,
@@ -454,7 +456,7 @@ function codeCandidates(finding: StoredFinding): (string | undefined)[] {
     .filter((word) => finding.message.includes(word))
     .sort((left, right) => right.length - left.length)
   return [...new Set([...windows, ...wordsInMessage])].filter(
-    (code) => code !== '' && code.length <= MAX_SNIPPET_LENGTH,
+    (code) => isSpecificSuppressionCode(code) && code.length <= MAX_SNIPPET_LENGTH,
   )
 }
 
@@ -508,7 +510,8 @@ export interface SavedSuppression {
 /**
  * Applies the changes to `<app directory>/shopify.app-security.json` in one atomic write, creating the file with
  * schema_version 1 when it doesn't exist. Refuses an invalid file with the error of `readAppSecuritySuppressions`, and
- * writes nothing. Checks the entries used to plan the changes and serializes CLI writers with a file lock.
+ * writes nothing. Checks the entries used to plan the changes and serializes CLI writers with a file lock, which a
+ * writer waits for.
  * Validates the final bytes before `beforeCommit`, then commits those same bytes. New entries go at the end. Every
  * other key, value and order stays as the file has them, in two-space
  * JSON with a trailing newline, so a file in that format changes only where an entry is added.
@@ -520,7 +523,7 @@ export async function saveAppSecuritySuppressions(
   beforeCommit?: () => Promise<void>,
 ): Promise<{path: string; saved: SavedSuppression[]}> {
   const path = appSecuritySuppressionsPath(appDirectory)
-  const release = await lockfile.lock(appDirectory, {lockfilePath: `${path}.lock`})
+  const release = await lockSuppressionsFile(appDirectory, path)
   try {
     const document = await readSuppressionDocument(appDirectory)
     const parsed = parseSuppressionsFile(document)
@@ -542,6 +545,24 @@ export async function saveAppSecuritySuppressions(
     return {path, saved}
   } finally {
     await release()
+  }
+}
+
+/** A save takes milliseconds, so a writer waits for another one: five attempts over about 1.5 seconds. */
+const LOCK_RETRIES = {retries: 4, minTimeout: 100, factor: 2}
+
+/** Locks the file for one CLI writer, and returns the function that releases it. */
+async function lockSuppressionsFile(appDirectory: string, path: string): Promise<() => Promise<void>> {
+  try {
+    return await lockfile.lock(appDirectory, {lockfilePath: `${path}.lock`, retries: LOCK_RETRIES})
+  } catch (error) {
+    if (!(error instanceof Error) || !('code' in error) || error.code !== 'ELOCKED') throw error
+    const locked = new AbortError(
+      `Another Shopify CLI command is saving ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+      'Run the command again.',
+    )
+    locked.code = 'suppressions-file-locked'
+    throw locked
   }
 }
 
