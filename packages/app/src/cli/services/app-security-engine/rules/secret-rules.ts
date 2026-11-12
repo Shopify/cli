@@ -1,4 +1,5 @@
 import {runGit} from '../scanners/git.js'
+import {sha256} from '@shopify/cli-kit/node/crypto'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
 import type {ScanContext, SourceFile} from './types.js'
 import type {AppSecurityScope, Issue} from '../types.js'
@@ -108,10 +109,19 @@ export function redactMatch(line: string, pattern: SecretPattern): string {
   // Keep a short prefix for identification (e.g. "AKIA…") but never enough to use.
   const keep = Math.min(4, Math.floor(secret.length / 4))
   const hint = keep > 0 ? secret.slice(0, keep) : ''
-  const replaced = line.split(secret).join(`${hint}[REDACTED:${secret.length}]`)
+  const replaced = line.split(secret).join(`${hint}[REDACTED:${secret.length}:${secretFingerprint(secret)}]`)
 
   // Belt and braces: if the secret somehow survived, drop the line entirely.
   return replaced.includes(secret) ? '[REDACTED LINE]' : replaced
+}
+
+/**
+ * A short text that differs between two secrets of one type and length, which are the same text once redacted. A
+ * suppression entry for one secret then doesn't match another secret that replaces it on the line. Only a secret that a
+ * pattern knows gets one: such a secret is long and random, so 32 bits of its hash don't help to find it.
+ */
+function secretFingerprint(secret: string): string {
+  return sha256(secret).toString('hex').slice(0, 8)
 }
 
 /** Redact every known secret occurrence from arbitrary scanner or agent text. */
