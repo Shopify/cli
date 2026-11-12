@@ -10,6 +10,7 @@ import {cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {Severity} from '@shopify/theme-check-node'
+import type {LoadConfigOptions} from '@shopify/theme-check-node'
 
 export {themePushJsonResult} from './types.js'
 
@@ -48,12 +49,16 @@ export function renderThemePushResult(result: ThemePushResult, format: 'text' | 
   })
 }
 
-export async function checkThemeBeforePush(flags: PushFlags, legacyOutput = false): Promise<void> {
+export async function checkThemeBeforePush(
+  flags: PushFlags,
+  legacyOutput = false,
+  options: LoadConfigOptions = {},
+): Promise<void> {
   if (!flags.strict) return
   const environment = flags.environment?.[0]
   const jsonFormat = legacyOutput ? 'json' : 'silent'
   const outputFormat = flags.json ? jsonFormat : 'text'
-  const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputFormat)
+  const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputFormat, undefined, environment, options)
   if (flags.json && !legacyOutput) {
     for (const offense of offenses) {
       emitCommandEvent({
