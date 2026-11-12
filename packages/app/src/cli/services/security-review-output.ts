@@ -267,7 +267,10 @@ function summaryAlertType(
 
 function summaryHeadline(checks: CombinedCheck[], summary: CombinedChecksSummary, anyFilePresent: boolean): string {
   if (!anyFilePresent) return 'No app security check results to review.'
-  if (summary.withFindings === 0) return `No findings in ${countLabel(checks.length, 'check')}.`
+  if (summary.withFindings === 0) {
+    const findings = summary.suppressed > 0 ? 'active findings' : 'findings'
+    return `No ${findings} in ${countLabel(checks.length, 'check')}.`
+  }
   const unresolved = summary.unresolved > 0 ? ` ${countLabel(summary.unresolved, 'check')} unresolved.` : ''
   return `${checksWithFindingsLabel(summary)}.${unresolved}`
 }
