@@ -6954,12 +6954,45 @@ DESCRIPTION
                 "message": {
                   "type": "string",
                   "description": "Why no entry could be saved for the suppression."
+                },
+                "advice": {
+                  "type": "string",
+                  "description": "What the user can do to keep the suppression, or that no entry can keep it. Tell the user this text."
+                },
+                "invalidFields": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The fields of the entry that shopify.app-security.json rejects. An entry written by hand with the same values makes the file invalid too. Null when the file accepts the entry."
+                },
+                "findingCountWithoutCode": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The number of agent findings of the check in the file that an entry without code suppresses, when no automatic code names the finding alone. Null when that isn't why the suppression wasn't saved."
                 }
               },
               "required": [
                 "checkId",
                 "location",
-                "message"
+                "message",
+                "advice",
+                "invalidFields",
+                "findingCountWithoutCode"
               ],
               "additionalProperties": false
             },
