@@ -169,7 +169,7 @@ Ask the user whether to suppress those companions too. Only if the user approves
 
 A `superseded` deterministic finding can also be suppressed by its own `number` with `review --suppress`, for example when the agent result has no finding in its file, so no agent finding has it as a companion. `check --blocking` still counts it. As for any finding, suppress it only when the user explicitly asks you to.
 
-After a suppression is saved, tell the user to review and commit `shopify.app-security.json`. When a suppression isn't saved, tell the user why. The user can add an entry by hand; don't edit the file yourself.
+After a suppression is saved, tell the user to review and commit `shopify.app-security.json`. When a suppression isn't saved, tell the user why: `record` lists it in `suppressions.notSaved` with a `message` and an `advice`, and a failed `review --suppress` gives its advice in `error.tryMessage`. Tell the user the advice as it is. Suggest an entry by hand only when the advice does. When `invalidFields` isn't `null`, an entry by hand with the same values makes `shopify.app-security.json` invalid, and then every `check` and `review` fails. When `findingCountWithoutCode` isn't `null`, an entry without `code` suppresses that many findings of the check in the file, so tell the user the number. Don't edit the file yourself.
 
 ## Removing local artifacts
 

@@ -143,13 +143,19 @@ function projectRecordedSuppressions(
     filePath: projectAppSecurityPath(path),
     entries: saved.map((savedSuppression) => projectAppSecuritySavedSuppression(appDirectory, savedSuppression)),
     alreadySavedCount: alreadySaved,
-    notSaved: notSaved.map(({checkId, location, problem}) => ({
-      checkId,
-      location: {
-        filePath: projectAppSecurityRelativePath(appDirectory, location.file),
-        line: location.line ?? null,
-      },
-      message: problem,
-    })),
+    notSaved: notSaved.map((suppression) => {
+      const {checkId, location, problem, invalidFields, withoutCode} = suppression
+      return {
+        checkId,
+        location: {
+          filePath: projectAppSecurityRelativePath(appDirectory, location.file),
+          line: location.line ?? null,
+        },
+        message: problem,
+        advice: notSavedAdvice(suppression),
+        invalidFields: invalidFields ?? null,
+        findingCountWithoutCode: withoutCode?.findingCount ?? null,
+      }
+    }),
   }
 }

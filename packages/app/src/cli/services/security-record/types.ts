@@ -32,6 +32,25 @@ const appSecurityRecordedSuppressionsSchema = zod
               .strict()
               .describe("The finding's location."),
             message: zod.string().describe('Why no entry could be saved for the suppression.'),
+            advice: zod
+              .string()
+              .describe(
+                'What the user can do to keep the suppression, or that no entry can keep it. Tell the user this text.',
+              ),
+            invalidFields: zod
+              .array(zod.string())
+              .nullable()
+              .describe(
+                'The fields of the entry that shopify.app-security.json rejects. An entry written by hand with the same values makes the file invalid too. Null when the file accepts the entry.',
+              ),
+            findingCountWithoutCode: zod
+              .number()
+              .int()
+              .nonnegative()
+              .nullable()
+              .describe(
+                "The number of agent findings of the check in the file that an entry without code suppresses, when no automatic code names the finding alone. Null when that isn't why the suppression wasn't saved.",
+              ),
           })
           .strict(),
       )

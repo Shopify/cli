@@ -308,7 +308,7 @@ describe('renderSecurityRecordResult', () => {
       expect(text).not.toContain('add entries')
     })
 
-    test('keep the JSON fields of a suppression whose entry would be invalid', async () => {
+    test('give the advice and the invalid fields of a suppression whose entry would be invalid, in the JSON result', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
         const suppressions = {path: joinPath(appRoot, 'shopify.app-security.json'), saved: [], alreadySaved: 0}
@@ -330,6 +330,10 @@ describe('renderSecurityRecordResult', () => {
               checkId: 'MISSING_TENANT_ISOLATION',
               location: {filePath: resolve(appRoot, 'app', 'routes', '*.tsx'), line: 3},
               message: "its entry would be invalid: path: can't contain wildcards: name one file",
+              advice:
+                "shopify.app-security.json can't name this path, so no entry can keep it. An entry for it by hand would make the file invalid too.",
+              invalidFields: ['path'],
+              findingCountWithoutCode: null,
             },
           ])
         })
@@ -388,12 +392,19 @@ describe('renderSecurityRecordResult', () => {
                 location: {filePath: resolve(appRoot, 'shopify.app.toml'), line: 4},
                 message:
                   'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
+                advice: 'Give its entry a code that names it alone.',
+                invalidFields: null,
+                findingCountWithoutCode: null,
               },
               {
                 checkId: 'MISSING_TENANT_ISOLATION',
                 location: {filePath: resolve(appRoot, 'app', 'routes', 'orders.tsx'), line: 3},
                 message:
                   'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
+                advice:
+                  'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. Omit code only if you intend to suppress all of these findings.',
+                invalidFields: null,
+                findingCountWithoutCode: 2,
               },
             ],
           })
