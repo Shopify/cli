@@ -6807,12 +6807,6 @@ DESCRIPTION
   The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
   and exits with a non-zero code. It needs the results directory that `shopify app security check` creates.
 
-  A finding's `suppression` needs a `justification` and a `kind`, `false-positive` or `accepted-risk`. The command saves
-  each suppression as an entry of `shopify.app-security.json` in the app directory, so it also applies to later results,
-  and says how many it saved. Review and commit that file. A suppression that no entry can name alone is reported, and
-  applies to the recorded findings only. Run `shopify app security review` to see the findings with every suppression
-  applied.
-
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 
@@ -6848,17 +6842,6 @@ DESCRIPTION
         "type": "integer",
         "minimum": 0,
         "description": "The number of findings recorded, across every check."
-      },
-      "suppressions": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/AppSecurityRecordedSuppressions"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "description": "How the suppressions in the document were saved to shopify.app-security.json, or null when no finding has a suppression."
       }
     },
     "required": [
@@ -6867,8 +6850,7 @@ DESCRIPTION
       "resultsDirectory",
       "path",
       "checkCount",
-      "findingCount",
-      "suppressions"
+      "findingCount"
     ],
     "additionalProperties": false,
     "title": "AppSecurityRecordResult",

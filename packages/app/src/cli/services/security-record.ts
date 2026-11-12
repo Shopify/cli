@@ -1,6 +1,5 @@
 import {
   appSecurityArtifactPaths,
-  appSecuritySuppressionsPath,
   encodedArtifactSize,
   MAX_ARTIFACT_FILE_SIZE_BYTES,
   readFindingsDocument,
@@ -17,18 +16,8 @@ import {
   type AgentFindingsDocument,
   type AppSecurityScope,
   type SourceTextReader,
-  type StoredFinding,
 } from './app-security-engine/index.js'
 import {mergeScanDirectories, resultsKey, type AppSecuritySelection} from './app-security-selection.js'
-import {
-  planSuppression,
-  readAppSecuritySuppressions,
-  saveAppSecuritySuppressions,
-  type AppSecuritySuppression,
-  type SavedSuppression,
-  type SuppressionChange,
-  type SuppressionResults,
-} from './app-security-suppressions.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
 import {resolvePath} from '@shopify/cli-kit/node/path'
@@ -42,28 +31,8 @@ export interface SecurityRecordResult {
   path: string
   checks: number
   findings: number
-  /** How the agent's suppressions were saved to shopify.app-security.json, or null when the document has none. */
-  suppressions: RecordedSuppressions | null
   /** True when the document was written without code excerpts, which would have made it too large. */
   codeExcerptsOmitted?: boolean
-}
-
-/** The agent's suppressions, each saved to shopify.app-security.json, already there, or not saved with the reason. */
-export interface RecordedSuppressions {
-  /** The absolute path of shopify.app-security.json. */
-  path: string
-  saved: SavedSuppression[]
-  /** The number of suppressions that an entry of the file already held, so the file didn't change for them. */
-  alreadySaved: number
-  notSaved: {
-    checkId: string
-    location: StoredFinding['location']
-    problem: string
-    /** The number of findings covered by the broader entry without `code`. */
-    withoutCode?: {findingCount: number}
-    /** Set when the entry would be invalid, also by hand: the fields that the file's validation rejects. */
-    invalidFields?: string[]
-  }[]
 }
 
 export interface SecurityRecordOptions {
@@ -236,111 +205,8 @@ export default async function securityRecord(
     )
   }
 
-  const suppressions = await planAgentSuppressions(selection, document)
-  let path: string | undefined
-  const writeFindings = async () => {
-    path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
-  }
-  let saved: SavedSuppression[] = []
-  try {
-    if (suppressions && suppressions.changes.length > 0) {
-      saved = (
-        await saveAppSecuritySuppressions(
-          selection.appDirectory,
-          suppressions.changes,
-          suppressions.entries,
-          writeFindings,
-        )
-      ).saved
-    } else {
-      await writeFindings()
-    }
-  } catch (error) {
-    if (path === undefined) throw error
-    const partialWrite = new AbortError(
-      'Agent findings were recorded, but the suppressions could not be saved.',
-      'Review the results and run record again to save the suppressions.',
-    )
-    partialWrite.cause = error
-    partialWrite.code = 'suppressions-save-failed'
-    partialWrite.details = {findingsPath: path, suppressionsPath: appSecuritySuppressionsPath(selection.appDirectory)}
-    throw partialWrite
-  }
+  const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), document)
   const findings = document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
-  return {
-    path: path!,
-    checks: document.checks.length,
-    findings,
-    suppressions: suppressions
-      ? {
-          path: appSecuritySuppressionsPath(selection.appDirectory),
-          saved,
-          alreadySaved: suppressions.alreadySaved,
-          notSaved: suppressions.notSaved,
-        }
-      : null,
-    ...(codeExcerptsOmitted ? {codeExcerptsOmitted} : {}),
-  }
-}
-
-/**
- * Plans an entry of shopify.app-security.json for each finding that the agent suppressed, with the writer and the
- * matching rules of `review --suppress`, against the recorded document. Returns null when no finding is suppressed, and
- * then doesn't read the file. An invalid file aborts before anything is written. A suppression that the automatic candidates cannot select
- * is recorded in agent-findings.json as usual, and reported as not saved.
- */
-async function planAgentSuppressions(
-  selection: AppSecuritySelection,
-  document: AgentFindingsDocument,
-): Promise<{
-  entries: AppSecuritySuppression[]
-  changes: SuppressionChange[]
-  alreadySaved: number
-  notSaved: RecordedSuppressions['notSaved']
-} | null> {
-  const targets = document.checks.flatMap((check) =>
-    check.findings.flatMap((finding, findingIndex) =>
-      finding.suppression?.kind === undefined
-        ? []
-        : [
-            {
-              checkId: check.id,
-              findingIndex,
-              finding,
-              kind: finding.suppression.kind,
-              reason: finding.suppression.justification,
-            },
-          ],
-    ),
-  )
-  if (targets.length === 0) return null
-
-  const entries = await readAppSecuritySuppressions(selection.appDirectory)
-  const results: SuppressionResults = {
-    deterministic: null,
-    agent: document,
-  }
-  const plans = targets.map(({kind, reason, ...target}) => ({
-    target,
-    plan: planSuppression({source: 'agent', ...target}, {kind, reason}, results, entries),
-  }))
-  return {
-    entries,
-    changes: plans.flatMap(({plan}) => (plan.status === 'change' ? [plan.change] : [])),
-    alreadySaved: plans.filter(({plan}) => plan.status === 'saved').length,
-    notSaved: plans.flatMap(({target, plan}) =>
-      plan.status === 'refused'
-        ? [
-            {
-              checkId: target.checkId,
-              location: target.finding.location,
-              problem: plan.problem,
-              ...(plan.withoutCode ? {withoutCode: plan.withoutCode} : {}),
-              ...(plan.invalidFields ? {invalidFields: plan.invalidFields} : {}),
-            },
-          ]
-        : [],
-    ),
-  }
+  return {path, checks: document.checks.length, findings, ...(codeExcerptsOmitted ? {codeExcerptsOmitted} : {})}
 }
