@@ -1697,7 +1697,7 @@ describe('interactiveSecurityReview in a terminal', () => {
     const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}])])
 
     const review = interactiveSecurityReview(prompts)(session)
-    await type('What do you want to do with finding #2?', '\r')
+    await type('What do you want to do with finding #2?', 's')
     await type('Is finding #2 a false positive or an accepted risk?', '\r')
     await type('Why should finding #2 be suppressed?', '\r')
     await type('The reason must not be empty.', 'The logger redacts tokens.')
