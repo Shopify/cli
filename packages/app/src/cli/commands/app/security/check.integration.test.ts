@@ -124,7 +124,7 @@ const committedSecretEntry = {
   check: 'COMMITTED_SECRET',
   kind: 'false-positive',
   path: 'app/routes/index.ts',
-  code: 'const access_token = "shpa[REDACTED:38]"',
+  code: 'const access_token = "shpa[REDACTED:38:a5e9444f]"',
   reason: 'A fake token for the session tests.',
 }
 
@@ -615,6 +615,26 @@ describe('app security check --json command boundary', () => {
     })
   })
 
+  test('blocks again when another token replaces the token that an entry suppresses', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+      await writeAppSecuritySuppressionsFixture(directory, [committedSecretEntry])
+      const suppressed = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+      const otherToken = ['shpat', 'fedcba9876543210fedcba9876543210'].join('_')
+      await writeFile(joinPath(directory, 'app', 'routes', 'index.ts'), `const access_token = "${otherToken}"\n`)
+
+      const replaced = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(suppressed.exitCode).toBe(0)
+      expect(replaced.exitCode).toBe(1)
+      expect(JSON.parse(replaced.stdout)).toMatchObject({
+        valid: false,
+        blocking: {level: 'high', blockedCheckCount: 1},
+        suppressions: {entries: [{status: 'stale'}]},
+      })
+    })
+  })
+
   test('shows a suppressed finding with its kind and reason without --verbose, and reports the entry as JSON', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createAppWithSecret(directory)
@@ -720,7 +740,9 @@ describe('app security check --json command boundary', () => {
         joinPath(directory, 'app', 'routes', 'index.ts'),
         `const access_token = "${testToken}"\nconst refresh_token = "${testToken}"\n`,
       )
-      await writeAppSecuritySuppressionsFixture(directory, [{...committedSecretEntry, code: '"shpa[REDACTED:38]"'}])
+      await writeAppSecuritySuppressionsFixture(directory, [
+        {...committedSecretEntry, code: '"shpa[REDACTED:38:a5e9444f]"'},
+      ])
 
       const json = await runJsonCommand(['--path', directory, '--blocking', 'high'])
       const text = await runCommand(['--path', directory, '--skip-instructions'])

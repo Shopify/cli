@@ -1,3 +1,4 @@
+import {pathOutsideRunLookup} from './run-coverage.js'
 import {compareFindingLocations, compareStrings} from './order.js'
 import {
   findingSuppression,
@@ -127,13 +128,15 @@ interface SourceChecks {
  * - Every other finding is suppressed when `findingSuppression`, the one rule for both sources, finds what suppresses
  *   it: an entry of shopify.app-security.json that matched it (`matchSuppressionEntries`), or the agent's own per-run
  *   `suppression` on an agent finding. Entries match each source's findings whatever the precedence, so an entry's
- *   status doesn't depend on whether an agent result supersedes the finding.
+ *   status doesn't depend on whether an agent result supersedes the finding. An entry for a file that its source's
+ *   run didn't scan is not evaluated, never stale (`pathOutsideRunLookup`).
  */
 export function combineFindings(input: CombineFindingsInput): CombinedFindings {
   const checksById = sourceChecksById(input)
   const matches = matchSuppressionEntries(
     input.suppressions,
     (source, checkId) => checksById.get(checkId)?.[source]?.check,
+    pathOutsideRunLookup(input),
   )
   const checks = [...checksById]
     .map(([id, sourceChecks]) => combineCheck(id, sourceChecks, matches))
