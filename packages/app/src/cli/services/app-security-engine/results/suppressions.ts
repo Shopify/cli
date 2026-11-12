@@ -131,8 +131,8 @@ interface ScoredCandidate {
  *    candidate without captured code (`hasCapturedCode`) matches when the text occurs in its message instead.
  * 4. When more than one candidate matches, those where the text also occurs in the message are kept. When more than
  *    one is still left, or none, the entry is ambiguous and matches nothing.
- * 5. An entry that matches nothing is stale when its source's result for the check is executed, and not evaluated
- *    otherwise. When a stale entry's file is gone and exactly one finding of its source and check at another path
+ * 5. An entry that matches nothing is stale when its source's result for the check is executed and the source's run
+ *    scanned the entry's file, and not evaluated otherwise. When a stale entry's file is gone and exactly one finding of its source and check at another path
  *    holds its text, that path is the entry's likely new path. When its file still exists, its likely finding is the
  *    one finding in its path that its code is similar to, unless either holds a redacted secret (`likelyFindingsOf`).
  *    The entry still matches nothing: there is no rematching.

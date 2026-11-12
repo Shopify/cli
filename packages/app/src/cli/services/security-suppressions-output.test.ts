@@ -416,6 +416,32 @@ describe('unappliedEntriesView', () => {
     })
   })
 
+  test("doesn't advise to remove an entry whose file this run didn't scan", () => {
+    const notScanned = {
+      index: 0,
+      entry,
+      status: 'not-evaluated' as const,
+      matched_finding_count: 0,
+      not_evaluated_reason: 'path-not-scanned' as const,
+    }
+    const withoutResult = {...notScanned, index: 1, not_evaluated_reason: 'no-executed-result' as const}
+
+    const view = unappliedEntriesView([notScanned, withoutResult], {review: 'shopify app security review'})
+
+    expect(view).toEqual({
+      headline: '2 entries in shopify.app-security.json not evaluated.',
+      needsChange: false,
+      sections: [
+        {
+          body: {
+            subdued:
+              "Not evaluated: 1 entry (no executed result for its check), 1 entry (this run didn't scan its file).",
+          },
+        },
+      ],
+    })
+  })
+
   test('is an info view with only the count when every entry that applies to nothing is not evaluated', () => {
     expect(unapplied([{...entry, source: 'agent', check: 'CSRF_MISSING_PROTECTION'}])).toEqual({
       headline: '1 entry in shopify.app-security.json not evaluated.',
