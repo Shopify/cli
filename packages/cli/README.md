@@ -6327,7 +6327,7 @@ DESCRIPTION
                 "type": "null"
               }
             ],
-            "description": "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null."
+            "description": "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38:a5e9444f], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null."
           }
         },
         "required": [
@@ -7307,9 +7307,9 @@ DESCRIPTION
   remove or update them. When an edit to the flagged code, such as a rename, makes an entry stale, the review names the
   entry's likely finding: the one finding of its source and check in its file that nothing suppresses and whose flagged
   line holds at least two thirds of the words of the entry's code. It names none when the entry's code or that line
-  holds a redacted secret, such as `shpa[REDACTED:38]`: redaction hides the only text that tells two credentials apart,
-  so suppress that finding again with `--kind` and `--reason`. Entries for checks without an executed result aren't
-  evaluated. An invalid file makes the command fail with every problem.
+  holds a redacted secret, such as `shpa[REDACTED:38:a5e9444f]`: redaction hides the only text that tells two
+  credentials apart, so suppress that finding again with `--kind` and `--reason`. Entries for checks without an executed
+  result aren't evaluated. An invalid file makes the command fail with every problem.
 
   Every finding has a number, shown before its source, and the summary shows a digest of the results. The numbers count
   every finding of every check, so `--check-id` and `--verbose` change which findings are shown, never their numbers,
@@ -7752,7 +7752,7 @@ DESCRIPTION
                 "type": "null"
               }
             ],
-            "description": "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null."
+            "description": "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38:a5e9444f], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null."
           }
         },
         "required": [
