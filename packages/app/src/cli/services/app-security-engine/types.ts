@@ -196,7 +196,7 @@ export interface ScanMetadata {
 export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const AGENT_CHECKS_SCHEMA_VERSION = 1 as const
 /** Schema version of the findings document an agent pipes to `app security record`. */
-export const RECORD_INPUT_SCHEMA_VERSION = 2 as const
+export const RECORD_INPUT_SCHEMA_VERSION = 1 as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
 export interface FindingEvidence {
@@ -257,8 +257,8 @@ export interface StoredFinding {
   confidence?: 'high' | 'medium' | 'low'
   /** Agent documents only. */
   reasoning?: string
-  /** Agent documents only. `kind` is absent in files written before `record` saved suppressions. */
-  suppression?: {justification: string; kind?: SuppressionKind}
+  /** Agent documents only. It applies to the results of one `record` run. */
+  suppression?: {justification: string}
 }
 
 export interface StoredCheck {
