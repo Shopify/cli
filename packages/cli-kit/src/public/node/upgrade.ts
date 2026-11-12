@@ -19,6 +19,7 @@ import {isCI} from './system.js'
 import {globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
+import {getCachedCurrentMajorCLIVersion} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {lt as semverLt} from 'semver'
 import type {UpgradeResult} from './upgrade/types.js'
@@ -118,10 +119,11 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
     if (!command) {
       throw new Error('Could not determine the command to run')
     }
-    // Prefer the version the caller asked for: re-reading the cache here can return a
-    // different value than the caller vetted, because the prerun hook refreshes it in the
-    // background. Otherwise fall back to the cached newer version (a synchronous read).
-    const newerVersion = options.version ?? checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
+    // Prefer the version the caller asked for: the cache can hold a different value than the
+    // caller vetted. A manual upgrade waits for the registry instead, because the post-install
+    // verification below needs an expected version even when no fresh cached one exists.
+    const newerVersion =
+      options.version ?? (await checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24}))
     const headline = newerVersion
       ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
       : '✨ New version of Shopify CLI available!'
@@ -166,7 +168,7 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
 }
 
 /**
- * Returns the version to auto-upgrade to, or undefined if auto-upgrade should be skipped.
+ * Reads a fresh cached stable release in the current major, or skips automatic upgrades.
  * Auto-upgrade is enabled by default and can be disabled via `setAutoUpgradeEnabled(false)`.
  * Also skips for CI, pre-release versions, or when no newer version is available.
  *
@@ -174,27 +176,22 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
  */
 export function versionToAutoUpgrade(): string | undefined {
   const currentVersion = CLI_KIT_VERSION
-  const newerVersion = checkForCachedNewVersion('@shopify/cli', currentVersion)
-  if (!newerVersion) {
-    outputDebug('Auto-upgrade: No newer version available.')
-    return undefined
-  }
-  if (process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1') {
-    outputDebug('Auto-upgrade: Forcing auto-upgrade because of SHOPIFY_CLI_FORCE_AUTO_UPGRADE.')
-    return newerVersion
-  }
-  if (!getAutoUpgradeEnabled()) {
+  const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
+  if (!forced && !getAutoUpgradeEnabled()) {
     outputDebug('Auto-upgrade: Skipping because auto-upgrade is not enabled.')
     return undefined
   }
-  if (isCI()) {
+  if (!forced && isCI()) {
     outputDebug('Auto-upgrade: Skipping auto-upgrade in CI.')
     return undefined
   }
-  if (isPreReleaseVersion(currentVersion)) {
+  if (!forced && isPreReleaseVersion(currentVersion)) {
     outputDebug('Auto-upgrade: Skipping auto-upgrade for pre-release version.')
     return undefined
   }
+  const currentMajor = getCachedCurrentMajorCLIVersion()
+  const newerVersion = currentMajor && semverLt(currentVersion, currentMajor) ? currentMajor : undefined
+  if (!newerVersion) outputDebug('Auto-upgrade: No newer version available in the current major.')
   return newerVersion
 }
 
