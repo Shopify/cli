@@ -17,6 +17,7 @@ const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-e
 const {program} = require('commander')
 const colors = {green: (s) => `\x1b[32m${s}\x1b[39m`, bold: (s) => `\x1b[1m${s}\x1b[22m`}
 import {withOctokit} from './github-utils.js'
+import {isNewestStableVersion} from './homebrew-utils.js'
 
 const packagingDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../packaging")
 
@@ -44,7 +45,11 @@ program
       const files = {}
       switch (templateVersion) {
         case "stable":
-          files["shopify-cli.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli.rb"))).toString()
+          // Only the newest release line updates the unversioned formula, so a patch to an
+          // older line can't move `brew install shopify-cli` back to that line.
+          if (isNewestStableVersion(version, await getPublishedVersions('@shopify/cli'))) {
+            files["shopify-cli.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli.rb"))).toString()
+          }
           // Always keep the versioned formula for the current major up to date.
           // When we bump to the next major, the previous major's formula naturally
           // freezes at its last release since we stop updating it.
@@ -124,6 +129,11 @@ async function renderVersionedFormula(majorVersion, variables) {
 async function getHomebrewVariables(cliVersion) {
   const [cliTarball, cliSha] = await getTarballAndShaForPackage('@shopify/cli', cliVersion)
   return {cliTarball, cliSha}
+}
+
+async function getPublishedVersions(pkg) {
+  const response = await fetch(`https://registry.npmjs.com/${pkg}`)
+  return Object.keys((await response.json()).versions)
 }
 
 async function getTarballAndShaForPackage(pkg, cliVersion) {
