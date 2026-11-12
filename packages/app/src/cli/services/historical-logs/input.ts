@@ -13,6 +13,11 @@ export interface LogInput {
   'operation-type'?: string
   'operation-name'?: string
   'request-id'?: string
+  'function-handle'?: string
+  target?: string
+  'event-handle'?: string
+  method?: string
+  'request-path'?: string
   since?: string
   until?: string
   limit?: number

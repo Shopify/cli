@@ -7,6 +7,11 @@ import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {
+  getCachedCLIVersion,
+  getPublicCLIVersionCacheKey,
+  resolveCLIRegistry,
+} from '../../private/node/cli-version-cache.js'
 import {parseJSON} from '../common/json.js'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -305,28 +310,35 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * @param currentVersion - The current version.
  * @param cacheExpiryInHours - If the last check was done more than this amount of hours ago, it will
  * refresh the cache. Defaults to always refreshing.
+ * @param versionRange - An optional semver range that limits the versions considered.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
 export async function checkForNewVersion(
   dependency: string,
   currentVersion: string,
-  {cacheExpiryInHours = 0} = {},
+  {cacheExpiryInHours = 0, versionRange}: {cacheExpiryInHours?: number | undefined; versionRange?: string} = {},
 ): Promise<string | undefined> {
-  const getLatestVersion = async () => {
-    outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
-    return getLatestNPMPackageVersion(dependency)
-  }
-
-  const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   let lastVersion
   try {
+    const registry = dependency === '@shopify/cli' ? await resolveCLIRegistry() : undefined
+    const getLatestVersion = async () => {
+      outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+      return getLatestNPMPackageVersion(dependency, versionRange, registry)
+    }
+    const cacheKey: PackageVersionKey = registry
+      ? getPublicCLIVersionCacheKey(registry, versionRange)
+      : `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
     lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return undefined
   }
 
-  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+  if (
+    lastVersion &&
+    (!versionRange || semverSatisfies(lastVersion, versionRange)) &&
+    new SemVer(currentVersion).compare(lastVersion) < 0
+  ) {
     return lastVersion
   } else {
     return undefined
@@ -335,13 +347,14 @@ export async function checkForNewVersion(
 
 /**
  * Given an NPM dependency, it checks if there's a cached more recent version, and if there is, it returns its value.
+ * For Shopify CLI, reads only fresh entries from the registry resolved by an earlier version lookup.
  * @param dependency - The dependency name (e.g. react)
  * @param currentVersion - The current version.
  * @returns A more recent version or undefined if there's no more recent version.
  */
 export function checkForCachedNewVersion(dependency: string, currentVersion: string): string | undefined {
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
-  const lastVersion = cacheRetrieve(cacheKey)?.value
+  const lastVersion = dependency === '@shopify/cli' ? getCachedCLIVersion() : cacheRetrieve(cacheKey)?.value
 
   if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
     return lastVersion
@@ -697,13 +710,20 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
 /**
  * Returns the latest available version of an NPM package.
  * @param name - The name of the NPM package.
+ * @param versionRange - An optional semver range that limits the versions considered.
+ * @param registry - The captured registry used for both the request and its cache key.
  * @returns A promise to get the latest available version of a package.
  */
-async function getLatestNPMPackageVersion(name: string) {
+async function getLatestNPMPackageVersion(name: string, versionRange?: string, registry?: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     const {default: latestVersion} = await import('latest-version')
-    return latestVersion(name)
+    // latest-version forwards registryUrl to package-json, but omits it from its options type.
+    const options = {
+      ...(versionRange ? {version: versionRange} : {}),
+      ...(registry ? {registryUrl: registry} : {}),
+    }
+    return versionRange || registry ? latestVersion(name, options) : latestVersion(name)
   })
 }
 

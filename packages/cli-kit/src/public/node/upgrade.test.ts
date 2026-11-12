@@ -1,5 +1,10 @@
 import {isDevelopment, isUnitTest} from './context/local.js'
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
+import {
+  currentProcessIsGlobal,
+  inferPackageManagerForGlobalCLI,
+  getProjectDir,
+  getHomebrewCLIFormula,
+} from './is-global.js'
 import {
   checkForCachedNewVersion,
   checkForNewVersion,
@@ -17,16 +22,19 @@ import {
   runCLIUpgrade,
   upgradeCLI,
   versionToAutoUpgrade,
+  warnIfUpgradeAvailable,
 } from './upgrade.js'
 import {Notification, fetchNotifications} from './notifications-system.js'
-import {globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {globalCLIVersion, isPreReleaseVersion, availableHomebrewCLIVersion} from './version.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
-import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
+import {LocalStorage} from './local-storage.js'
+import {getAutoUpgradeEnabled, runAtMinimumInterval, type ConfSchema} from '../../private/node/conf-store.js'
+import {checkForCLIVersions, getCachedCurrentMajorCLIVersion} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {SemVer} from 'semver'
-import {vi, describe, test, expect, beforeEach} from 'vitest'
+import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./notifications-system.js', async (importOriginal) => {
   const actual: any = await importOriginal()
@@ -48,14 +56,18 @@ vi.mock('./node-package-manager.js', async (importOriginal) => ({
 }))
 vi.mock('./system.js')
 vi.mock('../../private/node/conf-store.js')
+vi.mock('../../private/node/cli-version-check.js')
 vi.mock('./version.js', async (importOriginal) => {
   const actual: any = await importOriginal()
   return {
     ...actual,
     isPreReleaseVersion: vi.fn(() => false),
     globalCLIVersion: vi.fn(),
+    availableHomebrewCLIVersion: vi.fn(),
   }
 })
+
+beforeEach(() => vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli'))
 
 describe('cliInstallCommand', () => {
   beforeEach(() => {
@@ -134,6 +146,13 @@ describe('cliInstallCommand', () => {
     expect(got).toBe('pnpm add -g @shopify/cli@4.8.5')
   })
 
+  test('keeps the versioned Homebrew formula in the install command', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli@4')
+
+    expect(cliInstallCommand('4.10.1')).toBe('brew upgrade shopify-cli@4')
+  })
+
   test('returns undefined if the current process is locally installed', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
@@ -146,6 +165,17 @@ describe('cliInstallCommand', () => {
   })
 })
 describe('getOutputUpdateCLIReminder', () => {
+  test('offers a separate formula and command for a new Homebrew major', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli@4')
+
+    const message = getOutputUpdateCLIReminder('6.0.0', true)
+
+    expect(message).toContain('brew install shopify-cli@6')
+    expect(message).toContain('Use shopify6 to run this major.')
+    expect(message).not.toContain('brew upgrade shopify-cli@4')
+  })
+
   test('pins the upgrade command to the version shown in the reminder', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
 
@@ -238,6 +268,65 @@ describe('runCLIUpgrade', () => {
     expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {stdio: 'inherit'})
   })
 
+  test('keeps the checked Homebrew metadata during an automatic upgrade', async () => {
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(globalCLIVersion).mockResolvedValue(version)
+
+    await runCLIUpgrade({autoupgrade: true, version})
+
+    expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {
+      stdio: 'inherit',
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+  })
+
+  test('upgrades and verifies the selected Homebrew major', async () => {
+    const major = new SemVer(CLI_KIT_VERSION).major
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue(`shopify-cli@${major}`)
+    vi.mocked(globalCLIVersion).mockResolvedValue(version)
+
+    await runCLIUpgrade({autoupgrade: true, version})
+
+    expect(exec).toHaveBeenCalledWith('brew', ['upgrade', `shopify-cli@${major}`], {
+      stdio: 'inherit',
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+    expect(globalCLIVersion).toHaveBeenCalledWith(`shopify${major}`)
+  })
+
+  test('verifies a manual versioned Homebrew upgrade against its formula instead of latest', async () => {
+    const major = new SemVer(CLI_KIT_VERSION).major
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue(`shopify-cli@${major}`)
+    vi.mocked(checkForNewVersion).mockResolvedValue(new SemVer(CLI_KIT_VERSION).inc('major').version)
+    vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(version)
+    vi.mocked(globalCLIVersion).mockResolvedValue(version)
+
+    await expect(runCLIUpgrade()).resolves.toBeUndefined()
+    expect(globalCLIVersion).toHaveBeenCalledWith(`shopify${major}`)
+  })
+
+  test('does not announce a version change when the Homebrew formula is at the running version', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli')
+    vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await expect(runCLIUpgrade()).resolves.toBeUndefined()
+    expect(outputMock.info()).toContain('New version of Shopify CLI available!')
+    expect(outputMock.info()).not.toContain('→')
+  })
+
   test('installs exactly the requested version, not latest, when the auto-upgrade hook passes one', async () => {
     // Given: the cache already knows about a newer major, but the hook vetted a minor.
     // Derived from CLI_KIT_VERSION so the test keeps working after release bumps.
@@ -246,7 +335,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(nextMajorVersion)
+    vi.mocked(checkForNewVersion).mockResolvedValue(nextMajorVersion)
     vi.mocked(globalCLIVersion).mockResolvedValue(vettedVersion)
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -258,6 +347,7 @@ describe('runCLIUpgrade', () => {
     expect(exec).toHaveBeenCalledWith('pnpm', ['add', '-g', `@shopify/cli@${vettedVersion}`], {stdio: 'inherit'})
     expect(outputMock.info()).toContain(`(${CLI_KIT_VERSION} → ${vettedVersion})`)
     expect(outputMock.info()).not.toContain(nextMajorVersion)
+    expect(checkForNewVersion).not.toHaveBeenCalled()
     expect(outputMock.info()).toContain(`You're now on version ${vettedVersion}`)
   })
 
@@ -299,7 +389,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(checkForNewVersion).mockResolvedValue('4.7.1')
     vi.mocked(globalCLIVersion).mockResolvedValue('4.7.1')
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -316,7 +406,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(checkForNewVersion).mockResolvedValue('4.7.1')
     vi.mocked(globalCLIVersion).mockResolvedValue('3.94.3')
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -325,6 +415,7 @@ describe('runCLIUpgrade', () => {
     await expect(runCLIUpgrade()).rejects.toThrow(
       'Expected to be on version 4.7.1, but version 3.94.3 is now installed',
     )
+    expect(checkForNewVersion).toHaveBeenCalledWith('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24})
     expect(outputMock.info()).not.toContain('Shopify CLI upgraded')
   })
 
@@ -336,7 +427,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(expectedVersion)
+    vi.mocked(checkForNewVersion).mockResolvedValue(expectedVersion)
     vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
 
     // When/Then
@@ -358,60 +449,180 @@ describe('runCLIUpgrade', () => {
 })
 
 describe('versionToAutoUpgrade', () => {
-  test('returns the newer version for a minor bump when auto-upgrade is enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
+  beforeEach(() => {
+    vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', undefined)
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBe('3.91.0')
+    vi.mocked(isCI).mockReturnValue(false)
   })
 
-  test('returns the newer version for a patch bump when auto-upgrade is enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.90.1')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBe('3.90.1')
+  afterEach(() => vi.unstubAllEnvs())
+
+  test('reads a cached newer stable release in the current major', () => {
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(getCachedCurrentMajorCLIVersion).mockReturnValue(version)
+
+    expect(versionToAutoUpgrade()).toBe(version)
+
+    expect(getCachedCurrentMajorCLIVersion).toHaveBeenCalledWith()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
   })
 
-  test('returns undefined when no cached newer version exists', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
+  test('still selects a same-major update when latest points to a newer major', () => {
+    const sameMajorVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('major').version)
+    vi.mocked(getCachedCurrentMajorCLIVersion).mockReturnValue(sameMajorVersion)
+
+    expect(versionToAutoUpgrade()).toBe(sameMajorVersion)
+    expect(checkForCachedNewVersion).not.toHaveBeenCalled()
+  })
+
+  test('returns undefined when the current major has no newer release', () => {
+    vi.mocked(getCachedCurrentMajorCLIVersion).mockReturnValue(CLI_KIT_VERSION)
+
     expect(versionToAutoUpgrade()).toBeUndefined()
   })
 
-  test('returns undefined when running in CI', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
+  test('does not read updates in CI', () => {
     vi.mocked(isCI).mockReturnValue(true)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
+
     expect(versionToAutoUpgrade()).toBeUndefined()
+    expect(getCachedCurrentMajorCLIVersion).not.toHaveBeenCalled()
   })
 
-  test('returns undefined when auto-upgrade is not enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
+  test('does not read updates when auto-upgrade is disabled', () => {
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
+
     expect(versionToAutoUpgrade()).toBeUndefined()
+    expect(getCachedCurrentMajorCLIVersion).not.toHaveBeenCalled()
   })
 
-  test('returns the newer version when auto-upgrade preference has never been set (default enabled)', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toBe('3.91.0')
-  })
-
-  test('returns the newer version for a major version change when auto-upgrade is enabled', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.0.0')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    expect(versionToAutoUpgrade()).toEqual('4.0.0')
-  })
-
-  test('returns undefined for a pre-release (nightly/snapshot) version', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
-    vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
+  test('does not read updates for a pre-release CLI', () => {
     vi.mocked(isPreReleaseVersion).mockReturnValue(true)
+
     expect(versionToAutoUpgrade()).toBeUndefined()
-    vi.mocked(isPreReleaseVersion).mockReturnValue(false)
+    expect(getCachedCurrentMajorCLIVersion).not.toHaveBeenCalled()
+  })
+
+  test('a forced upgrade still reads the current-major cache', () => {
+    vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', '1')
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
+    vi.mocked(isCI).mockReturnValue(true)
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(getCachedCurrentMajorCLIVersion).mockReturnValue(version)
+
+    expect(versionToAutoUpgrade()).toBe(version)
+    expect(getCachedCurrentMajorCLIVersion).toHaveBeenCalledWith()
+  })
+
+  test('skips without starting a lookup when no fresh cached version is available', () => {
+    vi.mocked(getCachedCurrentMajorCLIVersion).mockReturnValue(undefined)
+
+    expect(versionToAutoUpgrade()).toBeUndefined()
+    expect(checkForCLIVersions).not.toHaveBeenCalled()
+  })
+})
+
+describe('warnIfUpgradeAvailable', () => {
+  beforeEach(() => {
+    mockAndCaptureOutput().clear()
+    vi.mocked(isUnitTest).mockReturnValue(true)
+    vi.mocked(isCI).mockReturnValue(false)
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(runAtMinimumInterval).mockImplementation(async (_key, _timeout, task) => {
+      await task()
+      return true
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    mockAndCaptureOutput().clear()
+  })
+
+  test.each([true, false])('shows a major notice with auto-upgrade enabled: %s', async (enabled) => {
+    const nextMajor = new SemVer(CLI_KIT_VERSION).inc('major').version
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(enabled)
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(nextMajor)
+
+    await warnIfUpgradeAvailable()
+
+    const warning = mockAndCaptureOutput().warn()
+    expect(warning).toContain(`Version ${nextMajor} available!`)
+    expect(warning).toContain(`npm install -g @shopify/cli@${nextMajor}`)
+    expect(warning).toContain('This is a major version')
+    expect(warning).toContain(`https://github.com/Shopify/cli/releases/tag/${nextMajor}`)
+    expect(checkForNewVersion).not.toHaveBeenCalled()
+  })
+
+  test.each([true, false])('shows a same-major notice only when auto-upgrade is disabled: %s', async (enabled) => {
+    const nextPatch = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(enabled)
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(nextPatch)
+
+    await warnIfUpgradeAvailable()
+
+    const warning = mockAndCaptureOutput().warn()
+    if (enabled) {
+      expect(warning).toBe('')
+      expect(runAtMinimumInterval).not.toHaveBeenCalled()
+    } else {
+      expect(warning).toContain(`npm install -g @shopify/cli@${nextPatch}`)
+      expect(warning).not.toContain('This is a major version')
+    }
+  })
+
+  test.each(['CI', 'prerelease'])('skips notices in %s', async (environment) => {
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('major').version)
+    vi.mocked(isCI).mockReturnValue(environment === 'CI')
+    vi.mocked(isPreReleaseVersion).mockReturnValue(environment === 'prerelease')
+
+    await warnIfUpgradeAvailable()
+
+    expect(mockAndCaptureOutput().warn()).toBe('')
+    expect(runAtMinimumInterval).not.toHaveBeenCalled()
+  })
+
+  test('does not consume the daily notice interval while the cache is empty', async () => {
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
+
+    await warnIfUpgradeAvailable()
+
+    expect(mockAndCaptureOutput().warn()).toBe('')
+    expect(runAtMinimumInterval).not.toHaveBeenCalled()
+
+    const nextMajor = new SemVer(CLI_KIT_VERSION).inc('major').version
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(nextMajor)
+    await warnIfUpgradeAvailable()
+    expect(mockAndCaptureOutput().warn()).toContain(nextMajor)
+  })
+
+  test('shows the major notice once per day independently of automatic upgrade attempts', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const storage = new LocalStorage<ConfSchema>({cwd: directory})
+      const {runAtMinimumInterval: actualRunAtMinimumInterval} = await vi.importActual<
+        typeof import('../../private/node/conf-store.js')
+      >('../../private/node/conf-store.js')
+      vi.mocked(runAtMinimumInterval).mockImplementation((key, timeout, task) =>
+        actualRunAtMinimumInterval(key, timeout, task, storage),
+      )
+      vi.useFakeTimers({toFake: ['Date']})
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+      const nextMajor = new SemVer(CLI_KIT_VERSION).inc('major').version
+      vi.mocked(checkForCachedNewVersion).mockReturnValue(nextMajor)
+      await actualRunAtMinimumInterval('auto-upgrade', {days: 1}, async () => {}, storage)
+
+      await warnIfUpgradeAvailable()
+      expect(mockAndCaptureOutput().warn()).toContain(nextMajor)
+      mockAndCaptureOutput().clear()
+
+      await warnIfUpgradeAvailable()
+      expect(mockAndCaptureOutput().warn()).toBe('')
+
+      vi.setSystemTime(Date.now() + 24 * 3600 * 1000)
+      await warnIfUpgradeAvailable()
+      expect(mockAndCaptureOutput().warn()).toContain(nextMajor)
+    })
   })
 })
 

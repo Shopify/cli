@@ -1,13 +1,15 @@
 import {hook} from './prerun.js'
+import {isPreReleaseVersion} from '../version.js'
 import {SHOPIFY_AI_TOOLKIT_PLUGIN_HINT} from '../../../private/node/plugin-hints.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../output.js', () => ({outputDebug: vi.fn()}))
 vi.mock('../../../private/node/analytics.js', () => ({startAnalytics: vi.fn().mockResolvedValue(undefined)}))
 vi.mock('../notifications-system.js', () => ({fetchNotificationsInBackground: vi.fn()}))
-vi.mock('../../../common/version.js', () => ({CLI_KIT_VERSION: '1.0.0'}))
-vi.mock('../version.js', () => ({isPreReleaseVersion: vi.fn().mockReturnValue(true)}))
-vi.mock('../node-package-manager.js', () => ({checkForNewVersion: vi.fn()}))
+vi.mock('../../common/version.js', () => ({CLI_KIT_VERSION: '1.0.0'}))
+vi.mock('../version.js', () => ({isPreReleaseVersion: vi.fn(() => true)}))
+vi.mock('../system.js', () => ({isCI: vi.fn(() => false)}))
+vi.mock('../../../private/node/conf-store.js', () => ({getAutoUpgradeEnabled: vi.fn()}))
 
 const options = {
   Command: {id: 'app:dev', aliases: [], plugin: {alias: '@shopify/cli'}},
@@ -24,6 +26,7 @@ describe('prerun hook plugin hint integration', () => {
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
 
     await expect((hook as any)(options)).resolves.toBeUndefined()
+    await vi.waitFor(() => expect(isPreReleaseVersion).toHaveBeenCalledWith('1.0.0'))
     expect(stderr).toHaveBeenCalledWith(`${SHOPIFY_AI_TOOLKIT_PLUGIN_HINT}\n`)
   })
 
@@ -33,6 +36,7 @@ describe('prerun hook plugin hint integration', () => {
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
 
     await expect((hook as any)(options)).resolves.toBeUndefined()
+    await vi.waitFor(() => expect(isPreReleaseVersion).toHaveBeenCalledWith('1.0.0'))
     expect(stderr).not.toHaveBeenCalledWith(`${SHOPIFY_AI_TOOLKIT_PLUGIN_HINT}\n`)
   })
 })
