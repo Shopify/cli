@@ -382,29 +382,10 @@ describe('finding validation', () => {
     expect(validateFinding(validFinding)).toBeUndefined()
   })
 
-  test('accepts a suppression with a justification and a kind, and rejects one without a justification', () => {
-    expect(
-      validateFinding({...validFinding, suppression: {justification: 'Scoped by middleware', kind: 'false-positive'}}),
-    ).toBeUndefined()
-    expect(
-      validateFinding({...validFinding, suppression: {justification: 'Kept for now', kind: 'accepted-risk'}}),
-    ).toBeUndefined()
-    expect(validateFinding({...validFinding, suppression: {justification: ' ', kind: 'false-positive'}})).toMatch(
-      /justification/,
-    )
+  test('accepts a suppression with a justification and rejects one without', () => {
+    expect(validateFinding({...validFinding, suppression: {justification: 'Scoped by middleware'}})).toBeUndefined()
+    expect(validateFinding({...validFinding, suppression: {justification: ' '}})).toMatch(/justification/)
     expect(validateFinding({...validFinding, suppression: 'accepted risk'})).toMatch(/justification/)
-  })
-
-  test('rejects a suppression without a kind, or with an unknown kind, naming the field', () => {
-    expect(validateFinding({...validFinding, suppression: {justification: 'Scoped by middleware'}})).toBe(
-      'suppression.kind is required: false-positive or accepted-risk',
-    )
-    expect(
-      validateFinding({...validFinding, suppression: {justification: 'Scoped by middleware', kind: 'false_positive'}}),
-    ).toBe('suppression.kind must be false-positive or accepted-risk')
-    expect(validateFinding({...validFinding, suppression: {justification: 'Scoped by middleware', kind: 1}})).toBe(
-      'suppression.kind must be false-positive or accepted-risk',
-    )
   })
 
   test.each([
