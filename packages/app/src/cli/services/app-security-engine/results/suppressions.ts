@@ -147,6 +147,18 @@ function normalizeSuppressionText(text: string): string {
   return text.replace(/[\s,;]/g, '').replace(/['"`]/g, '"')
 }
 
+/**
+ * The fewest characters that an entry's `code` needs, without the whitespace, commas and semicolons that the matching
+ * ignores. A shorter text, such as `)`, occurs on the lines of other findings, so its entry could suppress one of them
+ * after the code it was written for is gone.
+ */
+export const MIN_SUPPRESSION_CODE_LENGTH = 8
+
+/** Whether a `code` has the characters that an entry needs to name its finding (`MIN_SUPPRESSION_CODE_LENGTH`). */
+export function isSpecificSuppressionCode(code: string): boolean {
+  return normalizeSuppressionText(code).length >= MIN_SUPPRESSION_CODE_LENGTH
+}
+
 function findingKey(source: FindingsSource, checkId: string, index: number): string {
   return JSON.stringify([source, checkId, index])
 }
@@ -180,9 +192,10 @@ function matchOrMiss(matches: {index: number}[], check: StoredCheck): EntryMatch
 }
 
 /**
- * Whether normalized text occurs in a finding's captured code: in its excerpt, where the occurrence must cover the
- * flagged line, so a statement that a reformat split over the lines around it still matches but a neighboring line
- * alone doesn't; or in one of its evidence lines in the same file.
+ * Whether normalized text occurs in a finding's captured code: in its excerpt, where the occurrence must hold the whole
+ * flagged line or be a part of it, so a statement that a reformat split over the lines around it still matches, but a
+ * neighboring line doesn't, alone or with a few characters of the flagged line; or in one of its evidence lines in the
+ * same file.
  */
 function occursInCode(text: string, finding: StoredFinding, path: string): boolean {
   const {line} = finding.location
@@ -218,7 +231,13 @@ function occursAcrossLine(text: string, excerpt: CodeExcerptLine[], line: number
   const joined = pieces.map((piece) => piece.text).join('')
   const flaggedStart = pieces.slice(0, flaggedIndex).reduce((length, piece) => length + piece.text.length, 0)
   const flaggedEnd = flaggedStart + pieces[flaggedIndex]!.text.length
-  const coversFlaggedLine = (position: number) => position < flaggedEnd && position + text.length > flaggedStart
+  const coversFlaggedLine = (position: number) => {
+    const end = position + text.length
+    const overlapsLine = position < flaggedEnd && end > flaggedStart
+    const holdsLine = position <= flaggedStart && end >= flaggedEnd
+    const isInsideLine = position >= flaggedStart && end <= flaggedEnd
+    return overlapsLine && (holdsLine || isInsideLine)
+  }
   for (let position = joined.indexOf(text); position !== -1; position = joined.indexOf(text, position + 1)) {
     if (coversFlaggedLine(position)) return true
   }
