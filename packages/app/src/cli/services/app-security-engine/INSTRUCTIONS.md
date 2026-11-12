@@ -58,7 +58,7 @@ Write a single JSON document that covers every check you ran:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "scope": {{SCOPE_JSON}},
   "checks_executed": [
     {"check_id": "<id from agent-checks.json>", "check_version": 1, "status": "executed"},

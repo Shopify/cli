@@ -44,7 +44,11 @@ export type {
   CombinedFindings,
   SourceCheckResult,
 } from './results/combine.js'
-export {matchSuppressionEntries} from './results/suppressions.js'
+export {
+  isSpecificSuppressionCode,
+  matchSuppressionEntries,
+  MIN_SUPPRESSION_CODE_LENGTH,
+} from './results/suppressions.js'
 export type {
   FindingSuppression,
   SuppressionEntry,

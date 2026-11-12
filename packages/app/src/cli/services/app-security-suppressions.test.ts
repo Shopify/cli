@@ -23,6 +23,7 @@ import {
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import lockfile from 'proper-lockfile'
 import {describe, expect, test} from 'vitest'
 import {readdir, stat, symlink} from 'node:fs/promises'
 
@@ -336,10 +337,10 @@ describe('readAppSecuritySuppressions', () => {
         {code: 'x'.repeat(4_001)},
         'suppressions[0].code: must be at most 4000 characters',
       ],
-      ...[';', ' , ', ',;\n'].map((code): [string, Record<string, unknown>, string] => [
-        `the code ${JSON.stringify(code)}`,
+      ...[';', ' , ', ',;\n', ')', '});', 'f(a, b);'].map((code): [string, Record<string, unknown>, string] => [
+        `the code ${JSON.stringify(code)}, which is too short to name one finding`,
         {code},
-        'suppressions[0].code: must contain more than whitespace, commas, and semicolons',
+        'suppressions[0].code: must contain at least 8 characters that are not whitespace, commas, or semicolons',
       ]),
     ])('rejects %s', async (_name, changes, problem) => {
       await expect(entryProblems(changes)).resolves.toStrictEqual([problem])
@@ -715,6 +716,17 @@ describe('planSuppression', () => {
     })
   })
 
+  test('widens the code when the flagged line is too short to name one finding', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 10, routeLines, 'The access token reaches a log.'),
+    ])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toMatchObject({
+      status: 'change',
+      change: {type: 'add', entry: {code: 'session.accessToken, )'}},
+    })
+  })
+
   test('widens the code to more of the statement when the flagged line also names another finding', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, routeLines, 'The access token reaches a log.'),
@@ -1038,6 +1050,26 @@ describe('saveAppSecuritySuppressions', () => {
     })
   })
 
+  test('fails with an error that says to run the command again when another writer keeps the lock', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = appSecuritySuppressionsPath(directory)
+      const release = await lockfile.lock(directory, {lockfilePath: `${path}.lock`})
+
+      const error: unknown = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], []).catch(
+        (error: unknown) => error,
+      )
+      await release()
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect(error).toMatchObject({
+        code: 'suppressions-file-locked',
+        message: 'Another Shopify CLI command is saving shopify.app-security.json.',
+        tryMessage: 'Run the command again.',
+      })
+      await expect(readdir(directory)).resolves.toStrictEqual([])
+    })
+  })
+
   test('does not let a concurrent writer overwrite the prepared save', async () => {
     await inTemporaryDirectory(async (directory) => {
       let signalPrepared!: () => void
@@ -1054,14 +1086,13 @@ describe('saveAppSecuritySuppressions', () => {
       })
       // Observe failures while the other save is in progress.
       const firstResult = first.catch((error: unknown) => error)
-      try {
-        await prepared
-        await expect(
-          saveAppSecuritySuppressions(directory, [{type: 'add', entry: agentEntry}], []),
-        ).rejects.toMatchObject({code: 'ELOCKED'})
-      } finally {
-        resume()
-      }
+      await prepared
+      // The second writer waits for the lock, then finds the entries that the first one saved.
+      const second = saveAppSecuritySuppressions(directory, [{type: 'add', entry: agentEntry}], [])
+      const secondResult = second.catch((error: unknown) => error)
+      resume()
+
+      await expect(secondResult).resolves.toMatchObject({code: 'suppressions-file-changed'})
       await expect(firstResult).resolves.toMatchObject({saved: [{entry: newEntry}]})
       await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([newEntry])
       await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])

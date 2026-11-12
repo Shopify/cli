@@ -1,4 +1,5 @@
 import {runGit} from '../scanners/git.js'
+import {sha256} from '@shopify/cli-kit/node/crypto'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
 import type {ScanContext, SourceFile} from './types.js'
 import type {AppSecurityScope, Issue} from '../types.js'
@@ -108,10 +109,19 @@ export function redactMatch(line: string, pattern: SecretPattern): string {
   // Keep a short prefix for identification (e.g. "AKIA…") but never enough to use.
   const keep = Math.min(4, Math.floor(secret.length / 4))
   const hint = keep > 0 ? secret.slice(0, keep) : ''
-  const replaced = line.split(secret).join(`${hint}[REDACTED:${secret.length}]`)
+  const replaced = line.split(secret).join(`${hint}[REDACTED:${secret.length}:${secretFingerprint(secret)}]`)
 
   // Belt and braces: if the secret somehow survived, drop the line entirely.
   return replaced.includes(secret) ? '[REDACTED LINE]' : replaced
+}
+
+/**
+ * A short text that differs between two secrets of one type and length, which are the same text once redacted. A
+ * suppression entry for one secret then doesn't match another secret that replaces it on the line. Only a secret that a
+ * pattern knows gets one: such a secret is long and random, so 32 bits of its hash don't help to find it.
+ */
+function secretFingerprint(secret: string): string {
+  return sha256(secret).toString('hex').slice(0, 8)
 }
 
 /** Redact every known secret occurrence from arbitrary scanner or agent text. */
@@ -133,12 +143,22 @@ export function redactText(text: string): string {
   return redacted
 }
 
+/** Names that hold a secret. `auth` is left out, because it is also in names such as `authenticate` and `author`. */
+const SECRET_NAME = 'secret|passw(?:or)?d|pwd|token|api[_-]?key|private[_-]?key|credential'
+
 /**
  * A name that holds a secret, then the assignment, but not a comparison or an arrow function. Excerpts redact the value
  * that follows, which no pattern may know.
  */
-const SECRET_NAME_ASSIGNMENT_PATTERN =
-  /(?:secret|passw(?:or)?d|pwd|token|api[_-]?key|private[_-]?key|credential|auth)\w*["']?\s*(?::=|[:=](?![=>]))\s*/gi
+const SECRET_NAME_ASSIGNMENT_PATTERN = new RegExp(`(?:${SECRET_NAME}|auth)\\w*["']?\\s*(?::=|[:=](?![=>]))\\s*`, 'gi')
+
+const SECRET_NAME_PATTERN = new RegExp(SECRET_NAME, 'i')
+
+/** A name that holds a secret and its value in one string, as in the connection string `Server=db;Password=…;`. */
+const SECRET_NAME_INSIDE_STRING_PATTERN = new RegExp(`(?:${SECRET_NAME})\\w*\\s*[:=]`, 'i')
+
+/** Each string literal on a line. One without a closing quote continues to the end of the line. */
+const STRING_LITERAL_PATTERN = /(["'`])((?:\\[^\r\n]|(?!\1)[^\\\r\n])*)\1?/g
 
 /**
  * The text of a quoted value, up to its closing quote or, when it continues on the next line, the end of the line. A
@@ -187,7 +207,24 @@ function redactUnrecognizedSecrets(line: string, sourceCode: boolean): string {
     redacted += `${withoutUrlPasswords.slice(position, value.start)}${redactedValue(value.text)}`
     position = value.start + value.text.length
   }
-  return `${redacted}${withoutUrlPasswords.slice(position)}`
+  const withoutAssignedValues = `${redacted}${withoutUrlPasswords.slice(position)}`
+  return sourceCode ? redactStringsNearSecretNames(withoutAssignedValues) : withoutAssignedValues
+}
+
+/**
+ * Redact the strings of a source code line that come after a name that holds a secret, and the strings that hold such a
+ * name with its value. The value can be anywhere after the name: behind a type, a comparison, a fallback or a call, as
+ * in `const password: string = "…"`, `token === "…"`, `process.env.TOKEN || "…"` and `setPassword("…")`.
+ */
+function redactStringsNearSecretNames(line: string): string {
+  const secretName = SECRET_NAME_PATTERN.exec(line)
+  if (!secretName) return line
+  const secretNameEnd = secretName.index + secretName[0].length
+  return line.replace(STRING_LITERAL_PATTERN, (literal: string, quote: string, value: string, offset: number) => {
+    const holdsSecret = offset >= secretNameEnd || SECRET_NAME_INSIDE_STRING_PATTERN.test(value)
+    if (!holdsSecret || value === '' || value.includes('[REDACTED')) return literal
+    return `${quote}${redactedValue(value)}${literal.slice(1 + value.length)}`
+  })
 }
 
 /** The index of the last of the ascending `values` that is at most `offset`, or -1 when none is. */
@@ -206,8 +243,8 @@ function lastIndexAtOrBefore(values: ReadonlyArray<number>, offset: number): num
  * Redact a text line by line, for excerpts that quote only some of its lines. A secret can span lines, so a line that
  * holds part of a match that spans lines becomes `[REDACTED LINE]`, even when the excerpt leaves out the line where the
  * match starts. So does every line from a private key header without its footer to the end of the text. Each other
- * line is redacted with every pattern, and so are the values that look secret on it: quoted values only, in
- * `sourceCode`.
+ * line is redacted with every pattern, and so are the values that look secret on it: in `sourceCode`, only the strings
+ * that follow a name that holds a secret.
  */
 export function redactLines(text: string, {sourceCode = false}: {sourceCode?: boolean} = {}): string[] {
   const lines = text.split('\n')

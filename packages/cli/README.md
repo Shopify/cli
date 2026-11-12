@@ -6256,7 +6256,7 @@ DESCRIPTION
               "ambiguous",
               "not-evaluated"
             ],
-            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check."
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check, or because its source's run didn't scan the entry's file."
           },
           "matchedFindingCount": {
             "type": "integer",
@@ -6969,12 +6969,45 @@ DESCRIPTION
                 "message": {
                   "type": "string",
                   "description": "Why no entry could be saved for the suppression."
+                },
+                "advice": {
+                  "type": "string",
+                  "description": "What the user can do to keep the suppression, or that no entry can keep it. Tell the user this text."
+                },
+                "invalidFields": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The fields of the entry that shopify.app-security.json rejects. An entry written by hand with the same values makes the file invalid too. Null when the file accepts the entry."
+                },
+                "findingCountWithoutCode": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The number of agent findings of the check in the file that an entry without code suppresses, when no automatic code names the finding alone. Null when that isn't why the suppression wasn't saved."
                 }
               },
               "required": [
                 "checkId",
                 "location",
-                "message"
+                "message",
+                "advice",
+                "invalidFields",
+                "findingCountWithoutCode"
               ],
               "additionalProperties": false
             },
@@ -7546,7 +7579,7 @@ DESCRIPTION
               "ambiguous",
               "not-evaluated"
             ],
-            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check."
+            "description": "How the entry applied: matched, when it matched at least one finding; stale, when it matched nothing although its source's executed result for the check could hold the finding; ambiguous, when its code matched more than one finding, so it suppresses none; or not-evaluated, when the results can't hold the finding, because its source has no executed result for the check, or because its source's run didn't scan the entry's file."
           },
           "matchedFindingCount": {
             "type": "integer",
