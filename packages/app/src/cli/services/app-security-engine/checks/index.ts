@@ -523,11 +523,19 @@ export type RecordAgentFindingsResult = {ok: true; document: AgentFindingsDocume
  * is recorded as claimed. The per-check snapshot makes the document
  * self-describing, so it can be shown without the catalog that produced it.
  */
+/** Version 1 documents have no `suppression.kind`, so an agent that follows older instructions is told to get new ones. */
+function schemaVersionError(schemaVersion: unknown): string {
+  const required = `schema_version must be ${RECORD_INPUT_SCHEMA_VERSION}`
+  const isEarlierVersion = typeof schemaVersion === 'number' && schemaVersion < RECORD_INPUT_SCHEMA_VERSION
+  return isEarlierVersion
+    ? `${required}. Version ${schemaVersion} is from an earlier Shopify CLI: run check again and follow its instructions.`
+    : required
+}
+
 export function recordAgentFindings(document: unknown, options: RecordAgentFindingsOptions): RecordAgentFindingsResult {
   if (!isRecord(document)) return {ok: false, errors: ['The findings document must be a JSON object.']}
   const errors: string[] = []
-  if (document.schema_version !== RECORD_INPUT_SCHEMA_VERSION)
-    errors.push(`schema_version must be ${RECORD_INPUT_SCHEMA_VERSION}`)
+  if (document.schema_version !== RECORD_INPUT_SCHEMA_VERSION) errors.push(schemaVersionError(document.schema_version))
   const scope = readScope(document.scope)
   if ('error' in scope) errors.push(scope.error)
   const claims = optionalArray(document, 'checks_executed', errors)

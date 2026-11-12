@@ -31,7 +31,7 @@ vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
 const REJECTED_MESSAGE = 'The findings document was rejected. Nothing was recorded.'
 
 const validDocument = {
-  schema_version: 1,
+  schema_version: 2,
   scope: {include_dirs: [], excludes: [], no_git_ignore: false},
   checks_executed: [
     {check_id: 'MISSING_TENANT_ISOLATION', check_version: 1, status: 'executed'},
@@ -158,11 +158,14 @@ describe('app security record command boundary', () => {
   })
 
   test.each([
-    ['invalid JSON', '{"schema_version": 1,', [expect.stringMatching(/^The findings document is not valid JSON: /)]],
+    ['invalid JSON', '{"schema_version": 2,', [expect.stringMatching(/^The findings document is not valid JSON: /)]],
     [
       'a document that fails validation',
-      JSON.stringify({...validDocument, schema_version: 2, findings: [{...validDocument.findings[0], line: 0}]}),
-      ['schema_version must be 1', 'findings[0] (MISSING_TENANT_ISOLATION): invalid line number: 0'],
+      JSON.stringify({...validDocument, schema_version: 1, findings: [{...validDocument.findings[0], line: 0}]}),
+      [
+        'schema_version must be 2. Version 1 is from an earlier Shopify CLI: run check again and follow its instructions.',
+        'findings[0] (MISSING_TENANT_ISOLATION): invalid line number: 0',
+      ],
     ],
     [
       'a suppression without a kind',

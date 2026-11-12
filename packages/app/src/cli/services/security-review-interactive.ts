@@ -238,6 +238,8 @@ function interactiveActionPrompt({number}: NumberedFinding): RenderSelectPromptO
       {label: 'Continue', value: 'continue', key: 'c'},
       {label: 'Quit', value: 'quit', key: 'q'},
     ],
+    // Enter alone changes nothing: a suppression or a re-attachment needs its own key or a move of the cursor.
+    defaultValue: 'continue',
   }
 }
 

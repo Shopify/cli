@@ -319,7 +319,7 @@ function suppressionExample(text: string, pattern: RegExp): unknown {
 /** A findings document with one finding that carries `suppression`, as an agent pipes it to record. */
 function documentWithSuppression(suppression: unknown) {
   return {
-    schema_version: 1,
+    schema_version: 2,
     scope: {include_dirs: [], excludes: [], no_git_ignore: false},
     findings: [{...validFinding, suppression}],
   }

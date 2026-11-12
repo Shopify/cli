@@ -59,3 +59,38 @@ test(`cuts a line after ${MAX_EXCERPT_LINE_LENGTH} code points, without splittin
     {line: 2, text: `${padding}${lock}`},
   ])
 })
+
+const UNKNOWN_SECRET = 'hunter2xyz'
+
+test.each([
+  ['a typed TypeScript declaration', 'app/settings.ts', `const password: string = "${UNKNOWN_SECRET}"`],
+  ['a typed Python declaration', 'app/settings.py', `password: str = "${UNKNOWN_SECRET}"`],
+  ['a typed Go variable', 'app/settings.go', `var password string = "${UNKNOWN_SECRET}"`],
+  ['a PHP hash rocket', 'app/settings.php', `'password' => '${UNKNOWN_SECRET}',`],
+  ['a Ruby hash rocket', 'app/settings.rb', `"api_key" => "${UNKNOWN_SECRET}",`],
+  ['a comparison', 'app/auth.ts', `if (req.headers.token === "${UNKNOWN_SECRET}") {`],
+  ['a bracket assignment', 'app/settings.ts', `config["password"] = "${UNKNOWN_SECRET}"`],
+  ['a ||= assignment', 'app/settings.rb', `@password ||= "${UNKNOWN_SECRET}"`],
+  ['a ??= assignment', 'app/settings.ts', `options.token ??= "${UNKNOWN_SECRET}"`],
+  ['a fallback value', 'app/settings.ts', `const key = process.env.TOKEN || "${UNKNOWN_SECRET}"`],
+  ['a setter call', 'app/settings.ts', `client.setPassword("${UNKNOWN_SECRET}")`],
+  ['a quoted key with a hyphen', 'app/settings.ts', `const headers = {"secret-key": "${UNKNOWN_SECRET}"}`],
+  ['a connection string', 'app/db.ts', `const dsn = "Server=db;Password=${UNKNOWN_SECRET};"`],
+])('redacts the string that %s gives to a name that holds a secret', (_shape, file, line) => {
+  const excerpt = createCodeExcerpts(() => line).finding(file, 1, 'CREDENTIAL_LOG_LEAKAGE')
+
+  expect(excerpt).toHaveLength(1)
+  expect(excerpt![0]!.text).not.toContain(UNKNOWN_SECRET)
+  expect(excerpt![0]!.text).toContain('[REDACTED:')
+})
+
+test.each([
+  'import {authenticate} from "../shopify.server"',
+  'response.headers.set("X-Shopify-Access-Token", session.accessToken)',
+  'logger.info("issued", token)',
+  'const orders = await prisma.order.findMany({where: {status: "open"}})',
+])('keeps the strings of %s, which no name that holds a secret precedes', (line) => {
+  expect(createCodeExcerpts(() => line).finding('app/orders.ts', 1, 'CREDENTIAL_LOG_LEAKAGE')).toEqual([
+    {line: 1, text: line},
+  ])
+})
