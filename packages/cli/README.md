@@ -6848,17 +6848,6 @@ DESCRIPTION
         "type": "integer",
         "minimum": 0,
         "description": "The number of findings recorded, across every check."
-      },
-      "suppressions": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/AppSecurityRecordedSuppressions"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "description": "How the suppressions in the document were saved to shopify.app-security.json, or null when no finding has a suppression."
       }
     },
     "required": [
@@ -6867,8 +6856,7 @@ DESCRIPTION
       "resultsDirectory",
       "path",
       "checkCount",
-      "findingCount",
-      "suppressions"
+      "findingCount"
     ],
     "additionalProperties": false,
     "title": "AppSecurityRecordResult",
