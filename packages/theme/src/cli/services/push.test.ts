@@ -233,7 +233,7 @@ describe('push', () => {
 
       // When/Then
       await push({...defaultFlags, strict: true, json: true}, adminSession)
-      expect(runThemeCheck).toHaveBeenCalledWith(path, 'json')
+      expect(runThemeCheck).toHaveBeenCalledWith(path, 'json', undefined, undefined, {})
     })
   })
 

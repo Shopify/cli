@@ -14,6 +14,7 @@ import {
   loadConfig,
   ModernIdentifiers,
   type FixApplicator,
+  type LoadConfigOptions,
   type Offense,
   type Theme,
   path as pathUtils,
@@ -207,7 +208,12 @@ function countOffenseTypes(offenses: Offense[]) {
   }, {})
 }
 
-export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, theme: Theme): string[] {
+export function formatSummary(
+  offenses: Offense[],
+  offensesByFile: OffenseMap,
+  theme: Theme,
+  customChecksDisabled = false,
+): string[] {
   const summary = [`${theme.length} files inspected`]
 
   if (offenses.length === 0) {
@@ -226,6 +232,12 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
     if (counts[Severity.INFO]) {
       summary.push(`\n${counts[Severity.INFO]} info issues.`)
     }
+  }
+
+  if (customChecksDisabled) {
+    summary.push(
+      '\nCustom theme checks are disabled. Allow them by running theme check with the `--allow-custom-checks` flag.',
+    )
   }
 
   return summary
@@ -331,9 +343,14 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
   await autofix(sourceCodes, offenses, saveToDiskFixApplicator)
 }
 
-export async function outputActiveConfig(themeRoot: string, configPath?: string, environment?: string) {
+export async function outputActiveConfig(
+  themeRoot: string,
+  configPath?: string,
+  environment?: string,
+  options: LoadConfigOptions = {},
+) {
   const {ignore, settings, rootUri} = await withThemeCheckConfigErrorHandling(configPath, () =>
-    loadConfig(configPath, themeRoot),
+    loadConfig(configPath, themeRoot, options),
   )
 
   const config = {
@@ -353,9 +370,14 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string,
   outputResult(YAML.stringify(output))
 }
 
-export async function outputActiveChecks(root: string, configPath?: string, environment?: string) {
+export async function outputActiveChecks(
+  root: string,
+  configPath?: string,
+  environment?: string,
+  options: LoadConfigOptions = {},
+) {
   const {settings, ignore, checks} = await withThemeCheckConfigErrorHandling(configPath, () =>
-    loadConfig(configPath, root),
+    loadConfig(configPath, root, options),
   )
   // Depending on how the configs were merged during loadConfig, there may be
   // duplicate patterns to ignore. We can clean them before outputting.
@@ -420,14 +442,27 @@ export function isExtendedWriteStream(stream: NodeJS.WriteStream): stream is Ext
   )
 }
 
-export async function checkTheme(path: string, config?: string, environment?: string) {
+export async function checkTheme(path: string, config?: string, environment?: string, options: LoadConfigOptions = {}) {
+  let customChecksDisabled = false
   const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
-    withThemeCheckDiagnostics(() =>
-      themeCheckRun(path, config, (message) => {
-        if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
-      }),
+    withThemeCheckDiagnostics(
+      (onDiagnostic) =>
+        themeCheckRun(
+          path,
+          config,
+          (message) => {
+            if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
+          },
+          {...options, onDiagnostic},
+        ),
+      {
+        onDiagnostic: options.onDiagnostic,
+        onCustomChecksDisabled: () => {
+          customChecksDisabled = true
+        },
+      },
     ),
   )
   const result = formatOffensesJson(sortOffenses(offenses), environment)
-  return {result, offenses, theme}
+  return {result, offenses, theme, customChecksDisabled}
 }
