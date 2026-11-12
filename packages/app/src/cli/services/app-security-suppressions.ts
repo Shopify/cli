@@ -386,7 +386,7 @@ const CODE_WINDOWS: [number, number][] = [
  * 1. An entry that already suppresses the finding leaves the file as it is.
  * 2. Otherwise a new entry gets the shortest `code` that names the finding alone: its flagged line, then wider parts
  *    of the statement, then a word of the line that the finding's message names (the matching keeps the finding whose
- *    code and message both hold the text).
+ *    code and message both hold the text). A candidate that the file would reject as too short is skipped.
  */
 export function planSuppression(
   target: SuppressionTarget,
@@ -447,7 +447,7 @@ function codeCandidates(finding: StoredFinding): (string | undefined)[] {
     .filter((word) => finding.message.includes(word))
     .sort((left, right) => right.length - left.length)
   return [...new Set([...windows, ...wordsInMessage])].filter(
-    (code) => code !== '' && code.length <= MAX_SNIPPET_LENGTH,
+    (code) => isSpecificSuppressionCode(code) && code.length <= MAX_SNIPPET_LENGTH,
   )
 }
 

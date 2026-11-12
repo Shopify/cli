@@ -715,6 +715,17 @@ describe('planSuppression', () => {
     })
   })
 
+  test('widens the code when the flagged line is too short to name one finding', () => {
+    const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
+      agentFinding('app/routes/orders.tsx', 10, routeLines, 'The access token reaches a log.'),
+    ])
+
+    expect(planSuppression(targetOf(document, 0), decision, resultsOf(document), [])).toMatchObject({
+      status: 'change',
+      change: {type: 'add', entry: {code: 'session.accessToken, )'}},
+    })
+  })
+
   test('widens the code to more of the statement when the flagged line also names another finding', () => {
     const document = agentDocument('CREDENTIAL_LOG_LEAKAGE', [
       agentFinding('app/routes/orders.tsx', 3, routeLines, 'The access token reaches a log.'),
