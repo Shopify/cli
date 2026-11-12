@@ -95,19 +95,22 @@ function findAlias(aliases: string[]) {
 }
 
 /**
- * Triggers a background check for a newer CLI version (non-blocking).
- * The result is cached and consumed by the postrun hook for auto-upgrade.
+ * Starts a shared background lookup for release notices, manual-upgrade hints and automatic upgrades.
+ * The postrun hook reads fresh cached versions without waiting for an in-flight lookup.
  */
 export async function checkForNewVersionInBackground(): Promise<void> {
-  const [{CLI_KIT_VERSION}, {isPreReleaseVersion}, {checkForNewVersion}] = await Promise.all([
+  const [{CLI_KIT_VERSION}, {isPreReleaseVersion}, {isCI}, {getAutoUpgradeEnabled}] = await Promise.all([
     import('../../common/version.js'),
     import('../version.js'),
-    import('../node-package-manager.js'),
+    import('../system.js'),
+    import('../../../private/node/conf-store.js'),
   ])
   const currentVersion = CLI_KIT_VERSION
-  if (isPreReleaseVersion(currentVersion)) {
+  const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
+  if (!forced && (isCI() || isPreReleaseVersion(currentVersion))) {
     return
   }
+  const {checkForCLIVersions} = await import('../../../private/node/cli-version-check.js')
   // eslint-disable-next-line no-void
-  void checkForNewVersion('@shopify/cli', currentVersion, {cacheExpiryInHours: 24})
+  void checkForCLIVersions({includeCurrentMajor: forced || getAutoUpgradeEnabled()})
 }
