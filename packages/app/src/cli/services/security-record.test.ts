@@ -48,7 +48,7 @@ const NO_SCOPE = {include_dirs: [], excludes: [], no_git_ignore: false}
 
 function validDocument(): Record<string, unknown> {
   return {
-    schema_version: 1,
+    schema_version: 2,
     scope: NO_SCOPE,
     checks_executed: [
       {check_id: 'MISSING_TENANT_ISOLATION', check_version: 1, status: 'executed'},
@@ -200,7 +200,7 @@ describe('securityRecord', () => {
       const paths = artifactPaths(appRoot)
       await mkdir(paths.resultsDirectory)
       const staleScan = JSON.stringify({
-        schema_version: 1,
+        schema_version: 2,
         commit: 'zzz999-does-not-match',
         generated_at: '2000-01-01T00:00:00.000Z',
         findings: [],
@@ -223,7 +223,7 @@ describe('securityRecord', () => {
       await writeFile(paths.agentFindingsPath, previousFindings)
       const dependencies = testDependencies(
         JSON.stringify({
-          schema_version: 1,
+          schema_version: 2,
           scope: NO_SCOPE,
           checks_executed: [{check_id: 'OPEN_REDIRECT', check_version: 1, status: 'unresolved'}],
           findings: [finding(), finding({line: 0}), finding({evidence: []})],
@@ -252,7 +252,7 @@ describe('securityRecord', () => {
   test('rejects an unknown check', async () => {
     await expectRejected(
       JSON.stringify({
-        schema_version: 1,
+        schema_version: 2,
         scope: NO_SCOPE,
         checks_executed: [{check_id: 'NOT_A_CHECK', check_version: 1, status: 'executed'}],
       }),
@@ -261,7 +261,9 @@ describe('securityRecord', () => {
   })
 
   test('rejects an unsupported schema version', async () => {
-    await expectRejected(JSON.stringify({schema_version: 2, scope: NO_SCOPE}), ['schema_version must be 1'])
+    await expectRejected(JSON.stringify({schema_version: 1, scope: NO_SCOPE}), [
+      'schema_version must be 2. Version 1 is from an earlier Shopify CLI: run check again and follow its instructions.',
+    ])
   })
 
   test('rejects a document without a scope', async () => {
@@ -296,7 +298,7 @@ describe('securityRecord', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const document = {
-        schema_version: 1,
+        schema_version: 2,
         scope: NO_SCOPE,
         checks_executed: [{check_id: 'MISSING_TENANT_ISOLATION', check_version: 99, status: 'executed'}],
         findings: [finding({check_version: 99})],
@@ -323,7 +325,7 @@ describe('securityRecord', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const document = {
-        schema_version: 1,
+        schema_version: 2,
         scope: NO_SCOPE,
         findings: [
           finding({
@@ -344,7 +346,7 @@ describe('securityRecord', () => {
 
   describe('redacts secrets quoted in validation errors', () => {
     const documentWithSecrets = JSON.stringify({
-      schema_version: 1,
+      schema_version: 2,
       scope: NO_SCOPE,
       checks_executed: [{check_id: FAKE_SHOPIFY_TOKEN, check_version: 1}],
       findings: [
@@ -441,7 +443,7 @@ describe('securityRecord', () => {
     // so the reasoning length decides which side of the limit the stored file lands on.
     function nearLimitDocument(reasoningLength: number): string {
       return JSON.stringify({
-        schema_version: 1,
+        schema_version: 2,
         scope: NO_SCOPE,
         findings: Array.from({length: 1_000}, (_, index) =>
           finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(reasoningLength)}),
@@ -730,7 +732,7 @@ describe('securityRecord', () => {
         await writeFile(joinPath(appRoot, 'app/routes/orders.tsx'), `${'x'.repeat(400)}\n`.repeat(1_000))
         // About 4.9 MB stored without excerpts; each finding's five excerpt lines add about 2 KB.
         const document = JSON.stringify({
-          schema_version: 1,
+          schema_version: 2,
           scope: NO_SCOPE,
           findings: Array.from({length: 1_000}, (_, index) =>
             finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(500)}),
@@ -770,7 +772,7 @@ describe('securityRecord', () => {
     }
 
     function documentWith(findings: Record<string, unknown>[]): string {
-      return JSON.stringify({schema_version: 1, scope: NO_SCOPE, findings})
+      return JSON.stringify({schema_version: 2, scope: NO_SCOPE, findings})
     }
 
     const savedEntry = {
@@ -781,6 +783,49 @@ describe('securityRecord', () => {
       code: 'const orders = await prisma.order.findMany()',
       reason: 'Every order table holds one shop.',
     }
+
+    test.each([
+      [
+        'its own line',
+        2,
+        'const password',
+        ['export function connect() {', '  const password: string = "hunter2xyz"', '}'],
+      ],
+      [
+        'a neighbouring line',
+        3,
+        'return $db->orders->all()',
+        [
+          'function load() {',
+          "  $db = connect(['password' => 'hunter2xyz']);",
+          '  return $db->orders->all();',
+          '}',
+          'function list() {',
+          '  $db = connect_readonly();',
+          '  return $db->orders->all();',
+          '}',
+        ],
+      ],
+    ])('never saves a secret that the code of an entry takes from %s', async (_description, line, quote, lines) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        await mkdir(joinPath(appRoot, 'app'))
+        await writeFile(joinPath(appRoot, 'app/settings.php'), `${lines.join('\n')}\n`)
+        const document = documentWith([
+          finding({file: 'app/settings.php', line, evidence: [{file: 'app/settings.php', line, quote}], suppression}),
+          finding({
+            file: 'app/settings.php',
+            line: 7,
+            evidence: [{file: 'app/settings.php', line: 7, quote: 'return'}],
+          }),
+        ])
+
+        const result = await record(appRoot, testDependencies(document))
+
+        expect(result.suppressions?.saved).toHaveLength(1)
+        await expect(readFile(appSecuritySuppressionsPath(appRoot))).resolves.not.toContain('hunter2xyz')
+      })
+    })
 
     test('saves each suppression to shopify.app-security.json with its kind, and saves it once', async () => {
       await inTemporaryDirectory(async (directory) => {
@@ -956,6 +1001,6 @@ describe('securityRecord', () => {
   })
 
   test('rejects invalid JSON', async () => {
-    await expectRejected('{"schema_version": 1,', [expect.stringContaining('The findings document is not valid JSON')])
+    await expectRejected('{"schema_version": 2,', [expect.stringContaining('The findings document is not valid JSON')])
   })
 })
