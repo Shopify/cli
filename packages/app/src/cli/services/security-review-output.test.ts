@@ -1658,6 +1658,10 @@ describe('interactiveSecurityReview', () => {
     expect(choices[0]).toStrictEqual(['Suppress', 'Continue', 'Quit'])
     expect(choices[2]).toStrictEqual(['Re-attach suppressions[0]', 'Suppress', 'Continue', 'Quit'])
     expect(prompts.selectAction.mock.calls[2]![0].choices[0]).toMatchObject({value: 'reattach', key: 'r'})
+    // Enter alone never writes an entry, with or without an offer to re-attach.
+    expect(prompts.selectAction.mock.calls.map(([prompt]) => prompt.defaultValue)).toStrictEqual(
+      prompts.selectAction.mock.calls.map(() => 'continue'),
+    )
     const rendered = unstyled(output.info()).replace(/[│\s]+/g, ' ')
     const findingBox = unstyled(output.warn()).replace(/[│\s]+/g, ' ')
     expect(rendered).toContain('you can also choose Re-attach')
@@ -2039,7 +2043,7 @@ describe('interactiveSecurityReview in a terminal', () => {
     })
   })
 
-  test('fits each choice on one row of an 80-column terminal with a 500-character reason, so Down and Up draw the question once', async () => {
+  test('fits each choice on one row of an 80-column terminal with a 500-character reason, so Up draws the question once', async () => {
     mockAndCaptureOutput()
     const {prompts, type, frames} = terminal(80)
     const longEntry = {...credentialEntry, reason: 'The logger redacts tokens. '.repeat(19).slice(0, 500)}
@@ -2048,7 +2052,8 @@ describe('interactiveSecurityReview in a terminal', () => {
     })
 
     const review = interactiveSecurityReview(prompts)(session)
-    await type('> (r) Re-attach suppressions[0] (s) Suppress', '\u001B[B')
+    // The cursor starts on Continue, so Enter alone re-attaches nothing.
+    await type('(s) Suppress > (c) Continue', '\u001B[A')
     await type('(r) Re-attach suppressions[0] > (s) Suppress', '\u001B[A')
     await type('> (r) Re-attach suppressions[0] (s) Suppress', 'q')
     await review
@@ -2070,6 +2075,22 @@ describe('interactiveSecurityReview in a terminal', () => {
     ])
   })
 
+  test('continues to the next finding when the first question is answered with Enter, and saves nothing', async () => {
+    mockAndCaptureOutput()
+    const {prompts, type} = terminal()
+    const session = interactiveSession([savedResult([{index: 0, entry: credentialEntry, findingNumber: 2}])], {
+      reattachments: new Map([[2, {entryIndex: 0, entry: credentialEntry, code: 'console.log(session.accessToken)'}]]),
+    })
+
+    const review = interactiveSecurityReview(prompts)(session)
+    await type('What do you want to do with finding #2?', '\r')
+    await type('What do you want to do with finding #5?', 'q')
+
+    await expect(review).resolves.toMatchObject({saved: [], ending: 'quit'})
+    expect(session.reattach).not.toHaveBeenCalled()
+    expect(session.suppress).not.toHaveBeenCalled()
+  })
+
   test('re-attaches a stale entry with the r key, asks for no kind or reason, then quits', async () => {
     mockAndCaptureOutput()
     const {prompts, type} = terminal()
@@ -2079,7 +2100,7 @@ describe('interactiveSecurityReview in a terminal', () => {
     })
 
     const review = interactiveSecurityReview(prompts)(session)
-    await type('> (r) Re-attach suppressions[0] (s) Suppress', 'r')
+    await type('(r) Re-attach suppressions[0] (s) Suppress > (c) Continue', 'r')
     await type('What do you want to do with finding #5?', 'q')
 
     await expect(review).resolves.toMatchObject({saved: [{index: 0, findingNumber: 2}], ending: 'quit'})
