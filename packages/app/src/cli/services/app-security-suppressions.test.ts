@@ -23,6 +23,7 @@ import {
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import lockfile from 'proper-lockfile'
 import {describe, expect, test} from 'vitest'
 import {readdir, stat, symlink} from 'node:fs/promises'
 
@@ -1049,6 +1050,26 @@ describe('saveAppSecuritySuppressions', () => {
     })
   })
 
+  test('fails with an error that says to run the command again when another writer keeps the lock', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = appSecuritySuppressionsPath(directory)
+      const release = await lockfile.lock(directory, {lockfilePath: `${path}.lock`})
+
+      const error: unknown = await saveAppSecuritySuppressions(directory, [{type: 'add', entry: newEntry}], []).catch(
+        (error: unknown) => error,
+      )
+      await release()
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect(error).toMatchObject({
+        code: 'suppressions-file-locked',
+        message: 'Another Shopify CLI command is saving shopify.app-security.json.',
+        tryMessage: 'Run the command again.',
+      })
+      await expect(readdir(directory)).resolves.toStrictEqual([])
+    })
+  })
+
   test('does not let a concurrent writer overwrite the prepared save', async () => {
     await inTemporaryDirectory(async (directory) => {
       let signalPrepared!: () => void
@@ -1065,14 +1086,13 @@ describe('saveAppSecuritySuppressions', () => {
       })
       // Observe failures while the other save is in progress.
       const firstResult = first.catch((error: unknown) => error)
-      try {
-        await prepared
-        await expect(
-          saveAppSecuritySuppressions(directory, [{type: 'add', entry: agentEntry}], []),
-        ).rejects.toMatchObject({code: 'ELOCKED'})
-      } finally {
-        resume()
-      }
+      await prepared
+      // The second writer waits for the lock, then finds the entries that the first one saved.
+      const second = saveAppSecuritySuppressions(directory, [{type: 'add', entry: agentEntry}], [])
+      const secondResult = second.catch((error: unknown) => error)
+      resume()
+
+      await expect(secondResult).resolves.toMatchObject({code: 'suppressions-file-changed'})
       await expect(firstResult).resolves.toMatchObject({saved: [{entry: newEntry}]})
       await expect(readAppSecuritySuppressions(directory)).resolves.toStrictEqual([newEntry])
       await expect(readdir(directory)).resolves.toStrictEqual(['shopify.app-security.json'])
