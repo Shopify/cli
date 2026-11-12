@@ -113,16 +113,20 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
 async function performAutoUpgrade(newerVersion: string): Promise<void> {
   const [
     {CLI_KIT_VERSION},
-    {isMajorVersionChange},
-    {outputWarn, outputDebug},
+    {isMajorVersionChange, availableHomebrewCLIVersion},
+    {outputWarn, outputDebug, outputContent, outputToken},
     {getOutputUpdateCLIReminder, runCLIUpgrade, hasBlockingAutoUpgradeNotification},
     metadata,
+    {inferPackageManagerForGlobalCLI, getHomebrewCLIFormula},
+    {lt: semverLt, SemVer},
   ] = await Promise.all([
     import('../../common/version.js'),
     import('../version.js'),
     import('../output.js'),
     import('../upgrade.js'),
     import('../metadata.js'),
+    import('../is-global.js'),
+    import('semver'),
   ])
 
   if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
@@ -131,6 +135,36 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
       env_auto_upgrade_skipped_reason: 'major_version',
     }))
     return
+  }
+
+  let versionToInstall = newerVersion
+  if (inferPackageManagerForGlobalCLI() === 'homebrew') {
+    const availableVersion = await availableHomebrewCLIVersion()
+    if (!availableVersion) {
+      outputDebug('Auto-upgrade: Could not read the available Homebrew version.')
+      await metadata.addPublicMetadata(() => ({env_auto_upgrade_skipped_reason: 'homebrew_version_unavailable'}))
+      return
+    }
+    if (isMajorVersionChange(CLI_KIT_VERSION, availableVersion)) {
+      if (getHomebrewCLIFormula() === 'shopify-cli') {
+        const major = new SemVer(CLI_KIT_VERSION).major
+        outputWarn(
+          outputContent`To keep receiving Shopify CLI ${String(major)}.x updates with Homebrew, run ${outputToken.genericShellCommand(
+            `brew install shopify-cli@${major}`,
+          )} and use ${outputToken.genericShellCommand(`shopify${major}`)}.`,
+        )
+      } else {
+        outputWarn(getOutputUpdateCLIReminder(availableVersion, true))
+      }
+      await metadata.addPublicMetadata(() => ({env_auto_upgrade_skipped_reason: 'major_version'}))
+      return
+    }
+    if (!semverLt(CLI_KIT_VERSION, availableVersion)) {
+      outputDebug('Auto-upgrade: No newer Homebrew version available.')
+      await metadata.addPublicMetadata(() => ({env_auto_upgrade_skipped_reason: 'homebrew_already_up_to_date'}))
+      return
+    }
+    versionToInstall = availableVersion
   }
 
   // Notification kill switch: an `error`-type notification on the `autoupgrade` surface
@@ -147,19 +181,16 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
   try {
     // Install exactly the version that passed the gates above, not `latest`: the cached
     // version can lag the registry, so `latest` may already be a new major version.
-    await runCLIUpgrade({autoupgrade: true, version: newerVersion})
+    await runCLIUpgrade({autoupgrade: true, version: versionToInstall})
     await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)
-    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    outputWarn(getOutputUpdateCLIReminder(versionToInstall))
     await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: false}))
     // Report to Observe as a handled error without showing anything extra to the user
-    const [{sendErrorToBugsnag}, {inferPackageManagerForGlobalCLI}] = await Promise.all([
-      import('../error-handler.js'),
-      import('../is-global.js'),
-    ])
+    const {sendErrorToBugsnag} = await import('../error-handler.js')
     const enrichedError = Object.assign(new Error(errorMessage), {
       packageManager: inferPackageManagerForGlobalCLI(),
       platform: process.platform,

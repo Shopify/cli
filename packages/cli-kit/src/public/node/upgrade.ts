@@ -1,6 +1,11 @@
 import {fetchNotifications, filterNotifications} from './notifications-system.js'
 import {isDevelopment} from './context/local.js'
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
+import {
+  currentProcessIsGlobal,
+  inferPackageManagerForGlobalCLI,
+  getProjectDir,
+  getHomebrewCLIFormula,
+} from './is-global.js'
 import {
   checkForCachedNewVersion,
   findUpAndReadPackageJson,
@@ -16,12 +21,12 @@ import {presentUpgradeResult} from './upgrade/result.js'
 import {execUpgradeCommand, upgradeOutputStreams} from './upgrade/output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {isCI} from './system.js'
-import {globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {globalCLIVersion, isPreReleaseVersion, availableHomebrewCLIVersion} from './version.js'
 import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {getCachedCurrentMajorCLIVersion} from '../../private/node/cli-version-check.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {lt as semverLt} from 'semver'
+import {lt as semverLt, SemVer} from 'semver'
 import type {UpgradeResult} from './upgrade/types.js'
 
 export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
@@ -39,7 +44,7 @@ export function cliInstallCommand(version: string): string | undefined {
   if (!packageManager || packageManager === 'unknown') return undefined
 
   if (packageManager === 'homebrew') {
-    return 'brew upgrade shopify-cli'
+    return `brew upgrade ${getHomebrewCLIFormula()}`
   } else if (packageManager === 'yarn') {
     return `${packageManager} global add @shopify/cli@${version}`
   } else {
@@ -119,26 +124,38 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
     if (!command) {
       throw new Error('Could not determine the command to run')
     }
-    // Prefer the version the caller asked for: the cache can hold a different value than the
-    // caller vetted. A manual upgrade waits for the registry instead, because the post-install
-    // verification below needs an expected version even when no fresh cached one exists.
+    // Verify against the caller's target. Manual Homebrew upgrades follow the installed
+    // formula, which can differ from npm's latest release. Other manual upgrades wait for
+    // the registry, because the post-install verification below needs an expected version
+    // even when no fresh cached one exists.
     const newerVersion =
-      options.version ?? (await checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24}))
-    const headline = newerVersion
-      ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
-      : '✨ New version of Shopify CLI available!'
+      options.version ??
+      (packageManager === 'homebrew'
+        ? await availableHomebrewCLIVersion()
+        : await checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24}))
+    // A Homebrew formula can be at the running version, which is not an upgrade to announce.
+    const headline =
+      newerVersion && semverLt(CLI_KIT_VERSION, newerVersion)
+        ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
+        : '✨ New version of Shopify CLI available!'
     outputInfo(
       outputContent`${headline}
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
     )
-    await execUpgradeCommand(command, args)
+    // Use the same Homebrew formula metadata that the automatic upgrade hook checked.
+    const execOptions =
+      options.autoupgrade && packageManager === 'homebrew' ? {env: {HOMEBREW_NO_AUTO_UPDATE: '1'}} : {}
+    await execUpgradeCommand(command, args, execOptions)
 
     // A zero exit code doesn't guarantee the right version landed: the version check above
     // queries the public npm registry, while the install goes through whatever registry the
     // user has configured. A private registry with a stale `latest` tag (or one that serves
     // stale metadata on auth errors) can "successfully" install an outdated version. Verify
     // what's actually installed before claiming success.
-    const installedVersion = await globalCLIVersion()
+    // Versioned Homebrew formulas expose separate commands such as shopify4.
+    const cliBinary =
+      packageManager === 'homebrew' ? getHomebrewCLIFormula().replace(/^shopify-cli@?/, 'shopify') : 'shopify'
+    const installedVersion = await globalCLIVersion(cliBinary)
     if (!installedVersion) {
       throw new AbortError(
         "Couldn't verify the Shopify CLI version after upgrading.",
@@ -247,20 +264,30 @@ export async function warnIfUpgradeAvailable(): Promise<void> {
  * @returns The message to remind the user to update the CLI.
  */
 export function getOutputUpdateCLIReminder(version: string, isMajor = false): string {
-  const installCommand = cliInstallCommand(version)
+  let installCommand = cliInstallCommand(version)
+  let versionedCommand: string | undefined
+  if (inferPackageManagerForGlobalCLI() === 'homebrew') {
+    const formulaMajor = /^shopify-cli@(\d+)$/.exec(getHomebrewCLIFormula())?.[1]
+    const targetMajor = new SemVer(version).major
+    if (formulaMajor && Number(formulaMajor) !== targetMajor) {
+      installCommand = `brew install shopify-cli@${targetMajor}`
+      versionedCommand = `shopify${targetMajor}`
+    }
+  }
   const base = installCommand
     ? outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
     : outputContent`💡 Version ${version} available!`.value
+  const reminder = versionedCommand ? `${base}\nUse ${versionedCommand} to run this major.` : base
 
   if (isMajor) {
     const releaseUrl = `https://github.com/Shopify/cli/releases/tag/${version}`
     const majorNotice =
       outputContent`⚠️  This is a major version — review breaking changes before upgrading:\n   ${outputToken.link(releaseUrl, releaseUrl)}`
         .value
-    return `${base}\n\n${majorNotice}`
+    return `${reminder}\n\n${majorNotice}`
   }
 
-  return base
+  return reminder
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<UpgradeResult> {
