@@ -30,7 +30,7 @@ import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generat
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {errorHandler} from '../../../private/node/api/graphql.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
-import {AbortError} from '../error.js'
+import {AbortError, shouldReportErrorAsUnexpected} from '../error.js'
 import {adminFqdn} from '../context/fqdn.js'
 import {openURL} from '../system.js'
 import {isTTY, keypress} from '../ui.js'
@@ -294,6 +294,24 @@ describe('fetchThemes', () => {
     await expect(fetchThemes(session)).rejects.toThrow(
       'The authenticated account or access token is missing the required theme access scope.',
     )
+  })
+
+  test('rethrows a raw HTTP 520 ClientError without reporting it as unexpected', async () => {
+    // Given
+    const errorResponse = {
+      status: 520,
+      headers: {},
+      error: '<!DOCTYPE html><html><body>Something went wrong</body></html>',
+    }
+    const gatewayError = new ClientError(errorResponse as any, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(gatewayError)
+
+    // When
+    const request = fetchThemes(session)
+
+    // Then
+    await expect(request).rejects.toBe(gatewayError)
+    expect(shouldReportErrorAsUnexpected(gatewayError)).toBe(false)
   })
 })
 

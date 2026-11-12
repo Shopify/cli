@@ -459,6 +459,12 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      registry-auth-token:
+        specifier: 5.1.1
+        version: 5.1.1
+      registry-url:
+        specifier: 6.0.1
+        version: 6.0.1
       semver:
         specifier: 7.8.4
         version: 7.8.4

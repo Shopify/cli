@@ -75,7 +75,7 @@ kept = true
     })
     expect(parsed.webhooks).toMatchObject({api_version: '2025-01'})
     expect((parsed.webhooks as {subscriptions: unknown[]}).subscriptions).toHaveLength(2)
-    expect(parsed.app_proxy).toBeDefined()
+    expect(parsed.app_proxy).toMatchObject({prefix: 'apps', subpath: 'e2e-test'})
     expect((parsed.access_scopes as {scopes: string}).scopes.split(',')).toContain('write_app_proxy')
   })
 })

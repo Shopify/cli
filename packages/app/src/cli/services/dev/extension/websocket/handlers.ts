@@ -9,8 +9,43 @@ import {
 import {RawData, WebSocket, WebSocketServer} from 'ws'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
+
+const incomingMessageSchema = zod.discriminatedUnion('event', [
+  zod.object({
+    event: zod.literal(EventType.Update),
+    data: zod.object({
+      app: zod.object({apiKey: zod.string()}).passthrough().optional(),
+      extensions: zod
+        .array(
+          zod.object({
+            uuid: zod.string(),
+            extensionPoints: zod
+              .union([zod.array(zod.string()), zod.array(zod.object({target: zod.string()})), zod.null()])
+              .optional(),
+          }),
+        )
+        .optional(),
+    }),
+  }),
+  zod.object({
+    event: zod.literal(EventType.Dispatch),
+    data: zod.object({
+      type: zod.enum(['focus', 'unfocus']),
+      payload: zod.array(zod.object({uuid: zod.string()})).optional(),
+    }),
+  }),
+  zod.object({
+    event: zod.literal(EventType.Log),
+    data: zod.object({
+      type: zod.string(),
+      message: zod.string(),
+      extensionName: zod.string(),
+    }),
+  }),
+])
 
 export function websocketUpgradeHandler(
   wss: WebSocketServer,
@@ -36,6 +71,11 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
     outputDebug(outputContent`Sending connected payload: ${outputToken.json(connectedPayload)}`, options.stdout)
     ws.send(JSON.stringify(connectedPayload))
     ws.on('message', getOnMessageHandler(wss, options))
+    // Without an error listener, a client that breaks the protocol crashes the process.
+    // ws closes the failing connection by itself, so logging is enough.
+    ws.on('error', (error) => {
+      outputDebug(`Websocket connection error: ${error.message}`, options.stdout)
+    })
   }
 }
 
@@ -98,7 +138,21 @@ export function handleLogEvent(eventData: LogPayload, options: SetupWebSocketCon
 
 export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocketConnectionOptions) {
   return (data: RawData) => {
-    const jsonData = JSON.parse(data.toString())
+    let jsonData
+    try {
+      jsonData = JSON.parse(data.toString())
+    } catch (error) {
+      // An exception thrown here escapes the socket's message listener and stops `app dev`.
+      if (error instanceof SyntaxError) {
+        outputDebug(`Ignoring websocket message that is not valid JSON: ${error.message}`, options.stdout)
+        return
+      }
+      throw error
+    }
+    if (!incomingMessageSchema.safeParse(jsonData).success) {
+      outputDebug('Ignoring websocket message with an invalid shape', options.stdout)
+      return
+    }
     const {event: eventType, data: eventData} = jsonData
 
     outputDebug(
