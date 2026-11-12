@@ -1024,7 +1024,13 @@ describe('app security check --json command boundary', () => {
       expect(replaced).toMatchObject({scan: staleWithoutSuggestion, review: staleWithoutSuggestion})
       expect(withFlags.exitCode).toBe(0)
       expect(JSON.parse(withFlags.stdout).savedSuppressions.entries).toMatchObject([
-        {index: 1, change: 'added', code: 'access_token: "shpa[REDACTED:38]",', reason: 'Rotated.', previous: null},
+        {
+          index: 1,
+          change: 'added',
+          code: 'access_token: "shpa[REDACTED:38:29f54597]",',
+          reason: 'Rotated.',
+          previous: null,
+        },
       ])
       await expect(readFile(appSecuritySuppressionsPath(directory), 'utf8')).resolves.not.toContain(otherToken)
     })

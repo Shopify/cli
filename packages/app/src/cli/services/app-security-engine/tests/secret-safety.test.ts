@@ -175,10 +175,18 @@ describe('redaction never emits known secrets', () => {
 
     expect(redactedTexts.filter((text) => !hasRedactedSecret(text))).toEqual([])
     expect(redactedTexts).toEqual(expect.arrayContaining(['[REDACTED LINE]', '[REDACTED]', '[REDACTED TEXT]']))
-    expect(redactText(`const k = "${PROBES.shopifyToken}";`)).toMatch(/shpa\[REDACTED:38\]/)
+    expect(redactText(`const k = "${PROBES.shopifyToken}";`)).toMatch(/shpa\[REDACTED:38:a5e9444f\]/)
     for (const text of ['const k = process.env.KEY', 'REDACTED', '[REDACTED:]', 'shpa REDACTED 38']) {
       expect(hasRedactedSecret(text), text).toBe(false)
     }
+  })
+
+  test('redacts two secrets of one type and length to different texts, and one secret to the same text', () => {
+    const otherToken = compose('shp', `at_${'fedcba9876543210'.repeat(2)}`)
+
+    expect(redactText(`const k = "${otherToken}";`)).not.toBe(redactText(`const k = "${PROBES.shopifyToken}";`))
+    expect(redactText(`const k = "${otherToken}";`)).toBe('const k = "shpa[REDACTED:38:29f54597]";')
+    expect(redactText(`${otherToken} ${otherToken}`)).toBe('shpa[REDACTED:38:29f54597] shpa[REDACTED:38:29f54597]')
   })
 
   test('does not leak a detected secret into the stored deterministic findings', async () => {

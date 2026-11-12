@@ -142,7 +142,7 @@ export const appSecuritySuppressionEntrySchema = zod
       .strict()
       .nullable()
       .describe(
-        "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null.",
+        "For a stale entry with code whose file still exists: the one finding of the same source and check in that file that nothing suppresses and whose flagged line holds at least two thirds of the words of the entry's code, when no other stale entry's code is that similar to it, and neither the entry's code nor that line holds a redacted secret such as shpa[REDACTED:38:a5e9444f], whose hidden text is the only text that tells two credentials apart. The code was probably edited there, for example by a rename. The entry still suppresses nothing: review --suppress with the finding's number re-attaches it, and keeps its kind and reason. Otherwise null.",
       ),
   })
   .strict()

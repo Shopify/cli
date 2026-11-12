@@ -124,9 +124,10 @@ function secretFingerprint(secret: string): string {
   return sha256(secret).toString('hex').slice(0, 8)
 }
 
-// Every marker that redaction writes in place of a secret: `[REDACTED]`, `[REDACTED:<length>]` after the short prefix
-// that `redactMatch` keeps, `[REDACTED LINE]` and `[REDACTED TEXT]`.
-const REDACTION_MARKER = /\[REDACTED(?::\d+| LINE| TEXT)?\]/
+// Every marker that redaction writes in place of a secret: `[REDACTED]`, `[REDACTED:<length>]`,
+// `[REDACTED:<length>:<fingerprint>]` after the short prefix that `redactMatch` keeps, `[REDACTED LINE]` and
+// `[REDACTED TEXT]`.
+const REDACTION_MARKER = /\[REDACTED(?::\d+(?::[0-9a-f]{8})?| LINE| TEXT)?\]/
 
 /** Whether a text holds a secret that `redactMatch`, `redactText` or `redactLines` redacted. */
 export function hasRedactedSecret(text: string): boolean {
