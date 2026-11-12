@@ -280,6 +280,311 @@ test.each(['Admin', 'Storefront', 'CustomerAccount'])(
   },
 )
 
+test('requests Function runs with exact filters and preserves native JSON', async () => {
+  const functionRecord = {
+    timestamp: record.timestamp,
+    type: 'FUNCTION_RUN',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    resultStatus: 'FAILURE',
+    functionHandle: 'discount',
+    target: 'cart.lines.discounts.generate.run',
+    functionId: 'gid://shopify/ShopifyFunction/123',
+    invocationId: 'invocation-123',
+    errorType: 'InstructionCountLimitExceeded',
+    futureField: {nested: [null, false, 'unchanged']},
+  }
+  authorize()
+  logResponse([functionRecord])
+
+  const result = await retrieveLogs({
+    ...scope,
+    type: ['function'],
+    store: 'example',
+    status: 'failure',
+    'function-handle': 'discount',
+    target: 'cart.lines.discounts.generate.run',
+  })
+
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
+    types: ['FUNCTION_RUN'],
+    limit: 20,
+    filters: [
+      {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+      {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+      {field: 'FUNCTION_HANDLE', operator: 'EQUALS', value: 'discount'},
+      {field: 'TARGET', operator: 'EQUALS', value: 'cart.lines.discounts.generate.run'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  expect(result.logs).toEqual([functionRecord])
+  await withCapturedStandardStreams(async ({stdout}) => {
+    renderHistoricalLogs(result, true, 20)
+    expect(JSON.parse(stdout()).logs).toEqual([functionRecord])
+  })
+})
+
+test('requests app events with exact filters and preserves native JSON without a result status', async () => {
+  const appEventRecord = {
+    timestamp: record.timestamp,
+    type: 'APP_EVENT',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    eventHandle: 'onboarding_completed',
+    attributes: {step: 3, completed: true, nested: [null, 'unchanged']},
+    idempotencyKey: 'event-123',
+  }
+  authorize()
+  logResponse([appEventRecord])
+
+  const result = await retrieveLogs({
+    ...scope,
+    type: ['app-event'],
+    store: 'example',
+    'event-handle': 'onboarding_completed',
+  })
+
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+    clientId,
+    types: ['APP_EVENT'],
+    timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+    limit: 20,
+    filters: [
+      {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+      {field: 'EVENT_HANDLE', operator: 'EQUALS', value: 'onboarding_completed'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  expect(result.logs).toEqual([appEventRecord])
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    renderHistoricalLogs(result, true, 20)
+    expect(JSON.parse(stdout())).toEqual({
+      logs: [appEventRecord],
+      ordering: 'subset-timestamp-asc',
+      limitations: [],
+    })
+    expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('resultStatus')
+    expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+    expect(stderr()).toBe('')
+  })
+})
+
+test.each(['0.1234567890123456789', 'invalid-value'])(
+  'requests app billing events with shared filters and preserves native billing value %s',
+  async (value) => {
+    const appBillingEventRecord = {
+      timestamp: record.timestamp,
+      type: 'APP_BILLING_EVENT',
+      shopMyshopifyDomain: 'example.myshopify.com',
+      eventHandle: 'sms_sent',
+      resultStatus: 'FAILURE',
+      value,
+      billingResultCode: 'INVALID_VALUE',
+      errorMessage: 'Billing value was rejected.',
+      idempotencyKey: 'billing-event-123',
+    }
+    authorize()
+    logResponse([appBillingEventRecord])
+
+    const result = await retrieveLogs({
+      ...scope,
+      type: ['app-billing-event'],
+      store: 'example',
+      status: 'failure',
+      'event-handle': 'sms_sent',
+    })
+
+    expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+      clientId,
+      types: ['APP_BILLING_EVENT'],
+      timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+      limit: 20,
+      filters: [
+        {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+        {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+        {field: 'EVENT_HANDLE', operator: 'EQUALS', value: 'sms_sent'},
+      ],
+    })
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
+    expect(result.logs).toEqual([appBillingEventRecord])
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderHistoricalLogs(result, true, 20)
+      expect(JSON.parse(stdout())).toEqual({
+        logs: [appBillingEventRecord],
+        ordering: 'subset-timestamp-asc',
+        limitations: [],
+      })
+      expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+      expect(stderr()).toBe('')
+    })
+  },
+)
+
+test('requests REST logs with exact shared filters and preserves native JSON', async () => {
+  const restRecord = {
+    timestamp: record.timestamp,
+    type: 'REST_REQUEST',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    resultStatus: 'FAILURE',
+    method: 'POST',
+    requestPath: '/admin/api/products.json?ids=1,2',
+    requestId: 'request-123',
+    statusCode: 200,
+    requestBody: '{"product":{"title":"Example"}}',
+    responseBody: '{"errors":["Invalid product"]}',
+    errorMessage: 'Invalid product',
+    requestBodyTruncated: false,
+    responseBodyTruncated: true,
+  }
+  authorize()
+  logResponse([restRecord])
+
+  const result = await retrieveLogs({
+    ...scope,
+    type: ['rest'],
+    store: 'example',
+    status: 'failure',
+    'status-code': '200',
+    'request-id': 'request-123',
+    method: 'POST',
+    'request-path': '/admin/api/products.json?ids=1,2',
+  })
+
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+    clientId,
+    types: ['REST_REQUEST'],
+    timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+    limit: 20,
+    filters: [
+      {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+      {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+      {field: 'STATUS_CODE', operator: 'EQUALS', value: '200'},
+      {field: 'REQUEST_ID', operator: 'EQUALS', value: 'request-123'},
+      {field: 'METHOD', operator: 'EQUALS', value: 'POST'},
+      {field: 'REQUEST_PATH', operator: 'EQUALS', value: '/admin/api/products.json?ids=1,2'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  expect(result.logs).toEqual([restRecord])
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    renderHistoricalLogs(result, true, 20)
+    expect(JSON.parse(stdout())).toEqual({
+      logs: [restRecord],
+      ordering: 'subset-timestamp-asc',
+      limitations: [],
+    })
+    expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+    expect(stderr()).toBe('')
+  })
+})
+
+test('requests Sidekick events with exact shared filters and preserves native JSON', async () => {
+  const sidekickRecord = {
+    timestamp: record.timestamp,
+    type: 'SIDEKICK_EVENT',
+    shopMyshopifyDomain: 'example.myshopify.com',
+    resultStatus: 'FAILURE',
+    target: 'extensions/security_scan',
+    errorName: 'ScanError',
+    errorType: 'ValidationError',
+    errorMessage: `Scan failed\n${'a'.repeat(150)}`,
+  }
+  authorize()
+  logResponse([sidekickRecord])
+
+  const result = await retrieveLogs({
+    ...scope,
+    type: ['sidekick'],
+    store: 'example',
+    status: 'failure',
+    target: 'extensions/security_scan',
+  })
+
+  expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+    clientId,
+    types: ['SIDEKICK_EVENT'],
+    timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+    limit: 20,
+    filters: [
+      {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+      {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+      {field: 'TARGET', operator: 'EQUALS', value: 'extensions/security_scan'},
+    ],
+  })
+  expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  expect(result.logs).toEqual([sidekickRecord])
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    renderHistoricalLogs(result, true, 20)
+    expect(JSON.parse(stdout())).toEqual({
+      logs: [sidekickRecord],
+      ordering: 'subset-timestamp-asc',
+      limitations: [],
+    })
+    expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+    expect(stderr()).toBe('')
+  })
+})
+
+test.each([
+  {status: 'SUCCESS', mountFailure: false},
+  {status: 'FAILURE', mountFailure: false},
+  {status: 'FAILURE', mountFailure: true},
+  {status: null, mountFailure: false},
+  {status: undefined, mountFailure: false},
+])(
+  'requests UI extension logs and preserves native JSON with status $status and mountFailure $mountFailure',
+  async ({status, mountFailure}) => {
+    const uiExtensionRecord = {
+      timestamp: record.timestamp,
+      type: 'UI_EXTENSION',
+      shopMyshopifyDomain: 'example.myshopify.com',
+      ...(status === undefined ? {} : {resultStatus: status}),
+      mountFailure,
+      target: 'purchase.checkout.block.render',
+      extensionRegistrationId: 'extension-registration-123',
+      extensionVersionId: 'extension-version-123',
+      extensionPlacementReference: 'checkout-block',
+      errorCode: 'EXTENSION_ERROR',
+      errorName: 'ExtensionError',
+      errorType: 'RuntimeError',
+      errorMessage: `Extension failed\n${'a'.repeat(150)}`,
+      userAgent: 'example-agent',
+    }
+    authorize()
+    logResponse([uiExtensionRecord])
+
+    const result = await retrieveLogs({
+      ...scope,
+      type: ['ui-extension'],
+      store: 'example',
+      status: 'failure',
+      target: 'purchase.checkout.block.render',
+    })
+
+    expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toEqual({
+      clientId,
+      types: ['UI_EXTENSION'],
+      timestamp: {gte: '2026-10-06T13:00:00Z', lt: '2026-10-06T14:00:00Z'},
+      limit: 20,
+      filters: [
+        {field: 'SHOP_MYSHOPIFY_DOMAIN', operator: 'EQUALS', value: 'example.myshopify.com'},
+        {field: 'RESULT_STATUS', operator: 'EQUALS', value: 'FAILURE'},
+        {field: 'TARGET', operator: 'EQUALS', value: 'purchase.checkout.block.render'},
+      ],
+    })
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
+    expect(result.logs).toEqual([uiExtensionRecord])
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderHistoricalLogs(result, true, 20)
+      expect(JSON.parse(stdout())).toEqual({
+        logs: [uiExtensionRecord],
+        ordering: 'subset-timestamp-asc',
+        limitations: [],
+      })
+      expect(JSON.parse(stdout()).logs[0]).not.toHaveProperty('details')
+      expect(stderr()).toBe('')
+    })
+  },
+)
+
 test('an empty successful search has no result-limit warning', async () => {
   authorize()
   logResponse([])
@@ -307,12 +612,33 @@ test.each([
 test('default mixed-type search shares one query and limit, preserving every predicate', async () => {
   authorize()
   const graphqlRecord = {...record, type: 'GRAPHQL_REQUEST', api: 'storefront', timestamp: '2026-10-06T13:29:00Z'}
-  logResponse([record, graphqlRecord])
-  const result = await retrieveLogs({'client-id': clientId, limit: 2})
-  expect(result.logs).toEqual([graphqlRecord, record])
+  const appEventRecord = {
+    timestamp: '2026-10-06T13:31:00Z',
+    type: 'APP_EVENT',
+    shopMyshopifyDomain: null,
+    eventHandle: 'onboarding_completed',
+  }
+  const uiExtensionRecord = {
+    timestamp: '2026-10-06T13:32:00Z',
+    type: 'UI_EXTENSION',
+    shopMyshopifyDomain: null,
+    mountFailure: true,
+  }
+  logResponse([record, appEventRecord, graphqlRecord, uiExtensionRecord])
+  const result = await retrieveLogs({'client-id': clientId, limit: 4})
+  expect(result.logs).toEqual([graphqlRecord, record, appEventRecord, uiExtensionRecord])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST'],
-    limit: 2,
+    types: [
+      'WEBHOOK',
+      'GRAPHQL_REQUEST',
+      'FUNCTION_RUN',
+      'APP_EVENT',
+      'APP_BILLING_EVENT',
+      'REST_REQUEST',
+      'SIDEKICK_EVENT',
+      'UI_EXTENSION',
+    ],
+    limit: 4,
     filters: [],
   })
   expect(shopifyFetch).toHaveBeenCalledTimes(1)
@@ -324,7 +650,16 @@ test('cross-type filters are sent together and an empty intersection is not an e
   const result = await retrieveLogs({'client-id': clientId, topic: 'orders/create', 'operation-name': 'MyQuery'})
   expect(result.logs).toEqual([])
   expect(JSON.parse(String(vi.mocked(shopifyFetch).mock.calls[0]?.[1]?.body)).variables).toMatchObject({
-    types: ['WEBHOOK', 'GRAPHQL_REQUEST'],
+    types: [
+      'WEBHOOK',
+      'GRAPHQL_REQUEST',
+      'FUNCTION_RUN',
+      'APP_EVENT',
+      'APP_BILLING_EVENT',
+      'REST_REQUEST',
+      'SIDEKICK_EVENT',
+      'UI_EXTENSION',
+    ],
     filters: [
       {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
       {field: 'OPERATION_NAME', operator: 'EQUALS', value: 'MyQuery'},

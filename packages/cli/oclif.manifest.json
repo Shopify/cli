@@ -2171,8 +2171,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `FunctionRunResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\"\n    },\n    \"size\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Module size in kilobytes, as reported by Function runner.\"\n    },\n    \"memory_usage\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Linear memory usage in kilobytes, as reported by Function runner.\"\n    },\n    \"instructions\": {\n      \"type\": \"integer\",\n      \"minimum\": 0\n    },\n    \"logs\": {\n      \"type\": \"string\"\n    },\n    \"input\": {\n      \"description\": \"Native Function input; query keys and values are preserved.\"\n    },\n    \"output\": {\n      \"description\": \"Native Function output, including the runner-specific invalid-output representation.\"\n    },\n    \"success\": {\n      \"type\": \"boolean\",\n      \"description\": \"False for a completed Function execution that failed; the command exits nonzero.\"\n    }\n  },\n  \"required\": [\n    \"name\",\n    \"size\",\n    \"memory_usage\",\n    \"instructions\",\n    \"logs\",\n    \"input\",\n    \"output\",\n    \"success\"\n  ],\n  \"additionalProperties\": true,\n  \"description\": \"The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.\",\n  \"title\": \"FunctionRunResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
+      "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).\n\nWatches for changes by default. Use --no-watch to run once.\n\nUse --json for JSONL output while watching, or --no-watch --json for a single JSON result.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `FunctionReplayOutput` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/FunctionRunResult\"\n    },\n    {\n      \"$ref\": \"#/definitions/FunctionReplayRecord\"\n    }\n  ],\n  \"title\": \"FunctionReplayOutput\",\n  \"definitions\": {\n    \"FunctionRunResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"size\": {\n          \"type\": \"integer\",\n          \"minimum\": 0,\n          \"description\": \"Module size in kilobytes, as reported by Function runner.\"\n        },\n        \"memory_usage\": {\n          \"type\": \"integer\",\n          \"minimum\": 0,\n          \"description\": \"Linear memory usage in kilobytes, as reported by Function runner.\"\n        },\n        \"instructions\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"logs\": {\n          \"type\": \"string\"\n        },\n        \"input\": {\n          \"description\": \"Native Function input; query keys and values are preserved.\"\n        },\n        \"output\": {\n          \"description\": \"Native Function output, including the runner-specific invalid-output representation.\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\": \"False for a completed Function execution that failed.\"\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"size\",\n        \"memory_usage\",\n        \"instructions\",\n        \"logs\",\n        \"input\",\n        \"output\",\n        \"success\"\n      ],\n      \"additionalProperties\": true,\n      \"description\": \"The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.\"\n    },\n    \"FunctionReplayRecord\": {\n      \"anyOf\": [\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"type\": {\n              \"type\": \"string\",\n              \"const\": \"status\"\n            },\n            \"timestamp\": {\n              \"type\": \"string\",\n              \"format\": \"date-time\",\n              \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n              \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n            },\n            \"status\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"watching\",\n                \"cancelled\"\n              ]\n            }\n          },\n          \"required\": [\n            \"type\",\n            \"timestamp\",\n            \"status\"\n          ],\n          \"additionalProperties\": false\n        },\n        {\n          \"anyOf\": [\n            {\n              \"type\": \"object\",\n              \"properties\": {\n                \"type\": {\n                  \"type\": \"string\",\n                  \"const\": \"build\"\n                },\n                \"timestamp\": {\n                  \"$ref\": \"#/definitions/FunctionReplayRecord/anyOf/0/properties/timestamp\"\n                },\n                \"status\": {\n                  \"type\": \"string\",\n                  \"const\": \"success\"\n                }\n              },\n              \"required\": [\n                \"type\",\n                \"timestamp\",\n                \"status\"\n              ],\n              \"additionalProperties\": false\n            },\n            {\n              \"type\": \"object\",\n              \"properties\": {\n                \"type\": {\n                  \"type\": \"string\",\n                  \"const\": \"build\"\n                },\n                \"timestamp\": {\n                  \"$ref\": \"#/definitions/FunctionReplayRecord/anyOf/0/properties/timestamp\"\n                },\n                \"status\": {\n                  \"type\": \"string\",\n                  \"const\": \"failed\"\n                },\n                \"error\": {\n                  \"type\": \"string\",\n                  \"description\": \"The rebuild failure message.\"\n                }\n              },\n              \"required\": [\n                \"type\",\n                \"timestamp\",\n                \"status\",\n                \"error\"\n              ],\n              \"additionalProperties\": false\n            }\n          ]\n        },\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"type\": {\n              \"type\": \"string\",\n              \"const\": \"execution\"\n            },\n            \"timestamp\": {\n              \"$ref\": \"#/definitions/FunctionReplayRecord/anyOf/0/properties/timestamp\"\n            },\n            \"result\": {\n              \"$ref\": \"#/definitions/FunctionRunResult\"\n            },\n            \"exitCode\": {\n              \"type\": \"integer\",\n              \"minimum\": 0,\n              \"description\": \"The exit code of this Function run, not the replay process.\"\n            }\n          },\n          \"required\": [\n            \"type\",\n            \"timestamp\",\n            \"result\",\n            \"exitCode\"\n          ],\n          \"additionalProperties\": false\n        }\n      ]\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).\n\nWatches for changes by default. Use --no-watch to run once.\n\nUse --json for JSONL output while watching, or --no-watch --json for a single JSON result.",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -2299,7 +2299,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `FunctionRunResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\"\n    },\n    \"size\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Module size in kilobytes, as reported by Function runner.\"\n    },\n    \"memory_usage\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Linear memory usage in kilobytes, as reported by Function runner.\"\n    },\n    \"instructions\": {\n      \"type\": \"integer\",\n      \"minimum\": 0\n    },\n    \"logs\": {\n      \"type\": \"string\"\n    },\n    \"input\": {\n      \"description\": \"Native Function input; query keys and values are preserved.\"\n    },\n    \"output\": {\n      \"description\": \"Native Function output, including the runner-specific invalid-output representation.\"\n    },\n    \"success\": {\n      \"type\": \"boolean\",\n      \"description\": \"False for a completed Function execution that failed; the command exits nonzero.\"\n    }\n  },\n  \"required\": [\n    \"name\",\n    \"size\",\n    \"memory_usage\",\n    \"instructions\",\n    \"logs\",\n    \"input\",\n    \"output\",\n    \"success\"\n  ],\n  \"additionalProperties\": true,\n  \"description\": \"The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.\",\n  \"title\": \"FunctionRunResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `FunctionRunResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\"\n    },\n    \"size\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Module size in kilobytes, as reported by Function runner.\"\n    },\n    \"memory_usage\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Linear memory usage in kilobytes, as reported by Function runner.\"\n    },\n    \"instructions\": {\n      \"type\": \"integer\",\n      \"minimum\": 0\n    },\n    \"logs\": {\n      \"type\": \"string\"\n    },\n    \"input\": {\n      \"description\": \"Native Function input; query keys and values are preserved.\"\n    },\n    \"output\": {\n      \"description\": \"Native Function output, including the runner-specific invalid-output representation.\"\n    },\n    \"success\": {\n      \"type\": \"boolean\",\n      \"description\": \"False for a completed Function execution that failed.\"\n    }\n  },\n  \"required\": [\n    \"name\",\n    \"size\",\n    \"memory_usage\",\n    \"instructions\",\n    \"logs\",\n    \"input\",\n    \"output\",\n    \"success\"\n  ],\n  \"additionalProperties\": true,\n  \"description\": \"The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.\",\n  \"title\": \"FunctionRunResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
         "auth-alias": {
@@ -3920,6 +3920,22 @@
           "name": "config",
           "type": "option"
         },
+        "event-handle": {
+          "description": "Exact app event or app billing event handle; excludes other record types.",
+          "env": "SHOPIFY_FLAG_EVENT_HANDLE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "event-handle",
+          "type": "option"
+        },
+        "function-handle": {
+          "description": "Exact Function extension handle; excludes non-Function records.",
+          "env": "SHOPIFY_FLAG_FUNCTION_HANDLE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "function-handle",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -3943,6 +3959,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "limit",
+          "type": "option"
+        },
+        "method": {
+          "description": "Exact REST HTTP method; excludes non-REST records.",
+          "env": "SHOPIFY_FLAG_METHOD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "method",
           "type": "option"
         },
         "no-color": {
@@ -4001,11 +4025,19 @@
           "type": "option"
         },
         "request-id": {
-          "description": "Exact GraphQL request ID; excludes non-GraphQL records.",
+          "description": "Exact GraphQL or REST request ID; excludes other record types.",
           "env": "SHOPIFY_FLAG_REQUEST_ID",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "request-id",
+          "type": "option"
+        },
+        "request-path": {
+          "description": "Exact REST request path; excludes non-REST records.",
+          "env": "SHOPIFY_FLAG_REQUEST_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "request-path",
           "type": "option"
         },
         "since": {
@@ -4041,7 +4073,7 @@
           "type": "option"
         },
         "status-code": {
-          "description": "Exact webhook HTTP status code (100–599); no status classes.",
+          "description": "Exact webhook or REST HTTP status code (100–599); no status classes.",
           "env": "SHOPIFY_FLAG_STATUS_CODE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4055,6 +4087,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "target": {
+          "description": "Exact Function execution, Sidekick event, or UI extension target; excludes other record types.",
+          "env": "SHOPIFY_FLAG_TARGET",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "target",
           "type": "option"
         },
         "topic": {
@@ -4073,7 +4113,13 @@
           "name": "type",
           "options": [
             "webhook",
-            "graphql"
+            "graphql",
+            "function",
+            "app-event",
+            "app-billing-event",
+            "rest",
+            "sidekick",
+            "ui-extension"
           ],
           "type": "option"
         },

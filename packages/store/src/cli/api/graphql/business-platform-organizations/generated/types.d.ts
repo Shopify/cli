@@ -72,12 +72,8 @@ export type Scalars = {
   PersonID: { input: any; output: any; }
   /** The ID for a Principal. */
   PrincipalID: { input: any; output: any; }
-  /** The ID for a Property. */
-  PropertyID: { input: any; output: any; }
   PropertyId: { input: string; output: string; }
   PropertyPublicID: { input: string; output: string; }
-  /** The ID for a PropertyTransferRequest. */
-  PropertyTransferRequestID: { input: any; output: any; }
   /** The ID for a Role. */
   RoleID: { input: any; output: any; }
   /** The ID for a Shop. */
