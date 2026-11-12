@@ -49,7 +49,7 @@ function recordRejected(document: unknown): string[] {
 describe('recordAgentFindings', () => {
   test('accepts a valid document and groups findings under their check', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [
         {check_id: tenant.id, check_version: tenant.version, status: 'executed'},
         {
@@ -66,7 +66,7 @@ describe('recordAgentFindings', () => {
           snippet: 'db.order.delete()',
           confidence: 'high',
           reasoning: 'No session check',
-          suppression: {justification: 'Admin-only route', kind: 'false-positive'},
+          suppression: {justification: 'Admin-only route'},
         }),
       ],
     })
@@ -90,14 +90,14 @@ describe('recordAgentFindings', () => {
       snippet: 'db.order.delete()',
       confidence: 'high',
       reasoning: 'No session check',
-      suppression: {justification: 'Admin-only route', kind: 'false-positive'},
+      suppression: {justification: 'Admin-only route'},
     })
     expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
 
   test('writes the exact document for a check with no findings', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [
         {
           check_id: 'OPEN_REDIRECT',
@@ -138,14 +138,14 @@ describe('recordAgentFindings', () => {
   })
 
   test('defaults generated_at to the current time', () => {
-    const result = recordAgentFindings({schema_version: 2, scope}, {...options, generatedAt: undefined})
+    const result = recordAgentFindings({schema_version: 1, scope}, {...options, generatedAt: undefined})
 
     expect(result.ok && Date.parse(result.document.generated_at)).toBeGreaterThan(0)
   })
 
   test('rejects the whole document and reports every error', () => {
     const errors = recordRejected({
-      schema_version: 1,
+      schema_version: 2,
       checks_executed: [
         {check_id: tenant.id, check_version: 0},
         {check_id: 'OPEN_REDIRECT', check_version: 1, status: 'unresolved'},
@@ -154,7 +154,7 @@ describe('recordAgentFindings', () => {
     })
 
     expect(errors).toEqual([
-      'schema_version must be 2. Version 1 is from an earlier Shopify CLI: run check again and follow its instructions.',
+      'schema_version must be 1',
       `checks_executed[0] (${tenant.id}): missing or invalid check_version`,
       'checks_executed[1] (OPEN_REDIRECT): unresolved requires a reason',
       `findings[1] (${tenant.id}): invalid line number: 0`,
@@ -162,46 +162,10 @@ describe('recordAgentFindings', () => {
     ])
   })
 
-  test('rejects a suppression without a valid kind, naming the finding and the field', () => {
-    const errors = recordRejected({
-      schema_version: 2,
-      findings: [
-        finding({suppression: {justification: 'Admin-only route'}}),
-        finding({line: 30, suppression: {justification: 'Admin-only route', kind: 'wont_fix'}}),
-        finding({line: 40, suppression: {justification: 'Admin-only route', kind: 'accepted-risk'}}),
-      ],
-    })
-
-    expect(errors).toEqual([
-      `findings[0] (${tenant.id}): suppression.kind is required: false-positive or accepted-risk`,
-      `findings[1] (${tenant.id}): suppression.kind must be false-positive or accepted-risk`,
-    ])
-  })
-
-  test.each([
-    [
-      1,
-      'schema_version must be 2. Version 1 is from an earlier Shopify CLI: run check again and follow its instructions.',
-    ],
-    [3, 'schema_version must be 2'],
-    ['2', 'schema_version must be 2'],
-  ])(
-    'rejects schema_version %j, and tells an agent with a version 1 document to get new instructions',
-    (version, error) => {
-      expect(recordAgentFindings({schema_version: version, scope}, options)).toEqual({ok: false, errors: [error]})
-    },
-  )
-
   test('requires a scope, reports it with the other errors, and records nothing', () => {
-    const result = recordAgentFindings({schema_version: 1}, options)
+    const result = recordAgentFindings({schema_version: 2}, options)
 
-    expect(result).toEqual({
-      ok: false,
-      errors: [
-        'schema_version must be 2. Version 1 is from an earlier Shopify CLI: run check again and follow its instructions.',
-        'scope is required and must be an object',
-      ],
-    })
+    expect(result).toEqual({ok: false, errors: ['schema_version must be 1', 'scope is required and must be an object']})
   })
 
   test.each([
@@ -210,21 +174,21 @@ describe('recordAgentFindings', () => {
     [{include_dirs: [], excludes: [3], no_git_ignore: false}, 'scope.excludes must be an array of strings'],
     [{include_dirs: [], excludes: [], no_git_ignore: 0}, 'scope.no_git_ignore must be a boolean'],
   ])('rejects the malformed scope %j', (malformedScope, expectedError) => {
-    expect(recordAgentFindings({schema_version: 2, scope: malformedScope}, options)).toEqual({
+    expect(recordAgentFindings({schema_version: 1, scope: malformedScope}, options)).toEqual({
       ok: false,
       errors: [expectedError],
     })
   })
 
   test('keeps only the known scope keys, with the values exactly as reported', () => {
-    const document = recordAccepted({schema_version: 2, scope: {...scope, extra: true}})
+    const document = recordAccepted({schema_version: 1, scope: {...scope, extra: true}})
 
     expect(document.scope).toEqual(scope)
   })
 
   test('redacts secrets in the scope', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       scope: {include_dirs: [`../${FAKE_SHOPIFY_TOKEN}`], excludes: [FAKE_SHOPIFY_TOKEN], no_git_ignore: false},
     })
 
@@ -234,7 +198,7 @@ describe('recordAgentFindings', () => {
 
   test('rejects a document that is not an object or has malformed arrays', () => {
     expect(recordRejected([])).toEqual(['The findings document must be a JSON object.'])
-    expect(recordRejected({schema_version: 2, checks_executed: {}, findings: 'none'})).toEqual([
+    expect(recordRejected({schema_version: 1, checks_executed: {}, findings: 'none'})).toEqual([
       'checks_executed must be an array',
       'findings must be an array',
     ])
@@ -242,7 +206,7 @@ describe('recordAgentFindings', () => {
 
   test('rejects an unknown check_id in checks_executed and findings', () => {
     const errors = recordRejected({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [{check_id: 'NOT_A_CHECK', check_version: 1, status: 'executed'}],
       findings: [finding({check_id: 'ALSO_NOT_A_CHECK'})],
     })
@@ -256,7 +220,7 @@ describe('recordAgentFindings', () => {
   test('keeps the claimed check_version even when it differs from the current version', () => {
     const claimedVersion = tenant.version + 4
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [{check_id: tenant.id, check_version: claimedVersion, status: 'executed'}],
       findings: [finding({check_version: claimedVersion})],
     })
@@ -267,7 +231,7 @@ describe('recordAgentFindings', () => {
 
   test('snapshots title, description, guide, and docs URL from the catalog, and severity and version from the check', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [{check_id: 'SCOPE_OVER_REQUEST', check_version: 1, status: 'executed'}],
     })
     const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === 'SCOPE_OVER_REQUEST')!
@@ -286,7 +250,7 @@ describe('recordAgentFindings', () => {
 
   test('always writes the precedence into the snapshot so the file is self-describing', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [
         {check_id: 'CREDENTIAL_LOG_LEAKAGE', check_version: 1, status: 'executed'},
         {check_id: 'COMMITTED_SECRET', check_version: 2, status: 'executed'},
@@ -303,7 +267,7 @@ describe('recordAgentFindings', () => {
 
   test('redacts secrets in every piece of agent text', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [
         {
           check_id: 'OPEN_REDIRECT',
@@ -318,7 +282,7 @@ describe('recordAgentFindings', () => {
           message: `Leaks ${FAKE_SHOPIFY_TOKEN}`,
           snippet: `const token = "${FAKE_SHOPIFY_TOKEN}"`,
           reasoning: `Found ${FAKE_SHOPIFY_TOKEN}`,
-          suppression: {justification: `Rotated ${FAKE_SHOPIFY_TOKEN}`, kind: 'accepted-risk'},
+          suppression: {justification: `Rotated ${FAKE_SHOPIFY_TOKEN}`},
           evidence: [{file: `config/${FAKE_SHOPIFY_TOKEN}.ts`, line: 1, quote: FAKE_SHOPIFY_TOKEN}],
         }),
       ],
@@ -332,7 +296,7 @@ describe('recordAgentFindings', () => {
 
   test('rejects a not_applicable check that has findings', () => {
     const errors = recordRejected({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [
         {check_id: tenant.id, check_version: 1, status: 'not_applicable', reason: {code: 'n/a', message: 'No data'}},
       ],
@@ -344,7 +308,7 @@ describe('recordAgentFindings', () => {
 
   test('rejects an unresolved check without a reason', () => {
     const errors = recordRejected({
-      schema_version: 2,
+      schema_version: 1,
       checks_executed: [{check_id: tenant.id, check_version: 1, status: 'unresolved'}],
     })
 
@@ -353,14 +317,14 @@ describe('recordAgentFindings', () => {
 
   test('rejects a duplicate check_id in checks_executed', () => {
     const entry = {check_id: tenant.id, check_version: 1, status: 'executed'}
-    const errors = recordRejected({schema_version: 2, checks_executed: [entry, entry]})
+    const errors = recordRejected({schema_version: 1, checks_executed: [entry, entry]})
 
     expect(errors).toEqual([`checks_executed[1] (${tenant.id}): duplicate check_id in checks_executed`])
   })
 
   test('creates an executed entry, using the claimed version, for a finding without a checks_executed entry', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       findings: [finding({check_version: 5}), finding({line: 2, check_version: 5})],
     })
 
@@ -372,11 +336,11 @@ describe('recordAgentFindings', () => {
 
   test('rejects findings that disagree on check_version', () => {
     expect(
-      recordRejected({schema_version: 2, findings: [finding({check_version: 1}), finding({check_version: 2})]}),
+      recordRejected({schema_version: 1, findings: [finding({check_version: 1}), finding({check_version: 2})]}),
     ).toEqual([`${tenant.id}: findings claim different check_version values (1, 2)`])
     expect(
       recordRejected({
-        schema_version: 2,
+        schema_version: 1,
         checks_executed: [{check_id: tenant.id, check_version: 3, status: 'executed'}],
         findings: [finding({check_version: 1})],
       }),
@@ -385,7 +349,7 @@ describe('recordAgentFindings', () => {
 
   test('rejects unsafe paths', () => {
     const errors = recordRejected({
-      schema_version: 2,
+      schema_version: 1,
       findings: [
         finding({file: '/etc/passwd'}),
         finding({file: 'src/a\0.ts'}),
@@ -402,7 +366,7 @@ describe('recordAgentFindings', () => {
 
   test('accepts findings in a scan directory outside the app directory, with ../ paths', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       findings: [finding({file: '../backend/src/server.ts', evidence: [{file: '../library/src/auth.ts', line: 3}]})],
     })
 
@@ -413,7 +377,7 @@ describe('recordAgentFindings', () => {
   })
 
   test('rejects more findings than the cap without validating each one', () => {
-    const errors = recordRejected({schema_version: 2, findings: Array.from({length: 1_001}, () => ({}))})
+    const errors = recordRejected({schema_version: 1, findings: Array.from({length: 1_001}, () => ({}))})
 
     expect(errors).toEqual(['findings contains 1001 findings, exceeding the limit of 1000'])
   })
@@ -421,7 +385,7 @@ describe('recordAgentFindings', () => {
   test('rejects more checks_executed entries than known checks without validating each one', () => {
     const checkCount = loadChecks().size
     const result = recordAgentFindings(
-      {schema_version: 2, scope, checks_executed: Array.from({length: checkCount + 1}, () => ({}))},
+      {schema_version: 1, scope, checks_executed: Array.from({length: checkCount + 1}, () => ({}))},
       options,
     )
 
@@ -433,7 +397,7 @@ describe('recordAgentFindings', () => {
 
   test('ignores unknown keys and does not require source_scan_id, prompt_hash, or inspected_files', () => {
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       source_scan_id: 'sha256:whatever',
       extra: {nested: true},
       checks_executed: [
@@ -461,7 +425,7 @@ describe('recordAgentFindings code excerpts', () => {
 
   function recordWithFiles(findings: Record<string, unknown>[], files: Record<string, string>) {
     const readCitedFile = vi.fn((file: string) => files[file])
-    const result = recordAgentFindings(withScope({schema_version: 2, findings}), {...options, readCitedFile})
+    const result = recordAgentFindings(withScope({schema_version: 1, findings}), {...options, readCitedFile})
     if (!result.ok) throw new Error(`Expected the document to be accepted: ${result.errors.join('; ')}`)
     return {document: result.document, findings: result.document.checks[0]!.findings, readCitedFile}
   }
@@ -522,7 +486,7 @@ describe('recordAgentFindings code excerpts', () => {
   test('never takes an excerpt from the agent', () => {
     const forged = [{line: 12, text: 'not what the file says'}]
     const document = recordAccepted({
-      schema_version: 2,
+      schema_version: 1,
       findings: [
         finding({code_excerpt: forged, evidence: [{file: 'app/routes/orders.tsx', line: 12, code_excerpt: forged}]}),
       ],
