@@ -12,6 +12,7 @@ import {
 import {renderThemeCheckResult, encodeThemeCheckResult} from '../../services/check/result.js'
 import {themeCheckJsonOutputSchema} from '../../services/check/types.js'
 import {themeFlags} from '../../flags.js'
+import {customCheckOptions} from '../../utilities/custom-checks.js'
 import {runWithCommandEvents, renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -22,6 +23,7 @@ import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import type {LoadConfigOptions} from '@shopify/theme-check-node'
 import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
@@ -39,6 +41,7 @@ export default class Check extends ThemeCommand {
     ...jsonFlag,
     json: Flags.boolean({...jsonFlag.json, env: 'SHOPIFY_FLAG_JSON', exclusive: ['init', 'version', 'print', 'list']}),
     path: themeFlags.path,
+    'allow-custom-checks': themeFlags['allow-custom-checks'],
     'auto-correct': Flags.boolean({
       char: 'a',
       required: false,
@@ -96,6 +99,8 @@ export default class Check extends ThemeCommand {
 
   static multiEnvironmentsFlags: RequiredFlags = ['path']
 
+  private readonly inputArgv = [...this.argv]
+
   async command(flags: CheckFlags, _session: AdminSession, multiEnvironment: boolean) {
     // Its not clear to typescript that path will always be defined
     const path = flags.path
@@ -129,21 +134,23 @@ export default class Check extends ThemeCommand {
       return
     }
 
+    const options = await customCheckOptions(this.inputArgv)
+
     if (flags.print) {
-      await outputActiveConfig(path, config, environment)
+      await outputActiveConfig(path, config, environment, options)
 
       // --print should not trigger full theme check operation
       return
     }
 
     if (flags.list) {
-      await outputActiveChecks(path, config, environment)
+      await outputActiveChecks(path, config, environment, options)
 
       // --list should not trigger full theme check operation
       return
     }
 
-    const output = await checkTheme(path, config, environment)
+    const output = await checkTheme(path, config, environment, options)
     const {offenses, theme} = output
     const json = flags.json || flags.output === 'json'
     const valid = !themeCheckHasBlockingIssues(offenses, flags['fail-level'] as FailLevel)
@@ -219,8 +226,14 @@ function legacyOutputFormat(argv: string[]): string | undefined {
 }
 
 // Compatibility adapter for theme push, which still presents check results as text.
-export async function runThemeCheck(path: string, outputFormat: string, config?: string, environment?: string) {
-  const result = await checkTheme(path, config, environment)
+export async function runThemeCheck(
+  path: string,
+  outputFormat: string,
+  config?: string,
+  environment?: string,
+  options: LoadConfigOptions = {},
+) {
+  const result = await checkTheme(path, config, environment, options)
   renderThemeCheckResult(result, outputFormat, path, environment)
   return {offenses: result.offenses, theme: result.theme}
 }
