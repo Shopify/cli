@@ -700,6 +700,7 @@ function findingNotFound(findingNumber: number, findingCount: number): Suppressi
 
 /** Refuses a suppressed finding, or a suppressed one whose companions are all suppressed. */
 function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal {
+  const byFile = finding.suppressed_by?.origin === 'file'
   const by =
     finding.suppressed_by?.origin === 'file'
       ? `suppressions[${finding.suppressed_by.entry_index}] in ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}`
@@ -707,7 +708,9 @@ function notSuppressible({number, finding}: NumberedFinding): SuppressionRefusal
   return {
     code: 'finding-not-suppressible',
     message: `Finding ${number} is already suppressed by ${by}. Nothing was saved.`,
-    tryMessage: `To change the suppression, edit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+    tryMessage: byFile
+      ? `To change the suppression, edit ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`
+      : `The agent's suppression applies to these results only. To save one in ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}, record the agent findings again without it, then suppress the finding.`,
     details: {findingNumber: number, disposition: finding.disposition},
   }
 }

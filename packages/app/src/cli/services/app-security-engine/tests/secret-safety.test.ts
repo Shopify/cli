@@ -287,7 +287,7 @@ describe('code excerpts never hold a secret', () => {
 
     const result = recordAgentFindings(
       {
-        schema_version: 2,
+        schema_version: 1,
         scope: {include_dirs: [], excludes: [], no_git_ignore: false},
         findings: [
           {
@@ -445,7 +445,7 @@ describe('code excerpts never hold a secret', () => {
 
     const result = recordAgentFindings(
       {
-        schema_version: 2,
+        schema_version: 1,
         scope: {include_dirs: [], excludes: [], no_git_ignore: false},
         findings: Object.keys(files).map(cite),
       },

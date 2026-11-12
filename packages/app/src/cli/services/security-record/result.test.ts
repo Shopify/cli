@@ -9,8 +9,6 @@ import {describe, expect, test} from 'vitest'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
 import {resolve} from 'node:path'
 import type {AppSecuritySelection} from '../app-security-selection.js'
-import type {AppSecuritySuppression} from '../app-security-suppressions.js'
-import type {RecordedSuppressions} from '../security-record.js'
 
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
@@ -35,7 +33,7 @@ describe('renderSecurityRecordResult', () => {
       output.clear()
 
       renderSecurityRecordResult(
-        {path, checks: 1, findings: 2, suppressions: null},
+        {path, checks: 1, findings: 2},
         {selection: selectionFor(appRoot), path: appRoot},
         'text',
       )
@@ -56,7 +54,7 @@ describe('renderSecurityRecordResult', () => {
 
       await withCapturedStandardStreams(({stderr}) => {
         renderSecurityRecordResult(
-          {path, checks: 1, findings: 2, suppressions: null, codeExcerptsOmitted: true},
+          {path, checks: 1, findings: 2, codeExcerptsOmitted: true},
           {selection: selectionFor(appRoot), path: appRoot},
           'text',
         )
@@ -80,7 +78,7 @@ describe('renderSecurityRecordResult', () => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await runWithCommandEventsForCommand(['--json'], async () =>
           renderSecurityRecordResult(
-            {path, checks: 1, findings: 2, suppressions: null, codeExcerptsOmitted: true},
+            {path, checks: 1, findings: 2, codeExcerptsOmitted: true},
             {selection: selectionFor(appRoot), path: appRoot},
             'json',
           ),
@@ -105,11 +103,7 @@ describe('renderSecurityRecordResult', () => {
       const path = artifactPaths(appRoot).agentFindingsPath
 
       await withCapturedStandardStreams(({stdout, stderr}) => {
-        renderSecurityRecordResult(
-          {path, checks: 1, findings: 2, suppressions: null},
-          {selection, path: appRoot},
-          'json',
-        )
+        renderSecurityRecordResult({path, checks: 1, findings: 2}, {selection, path: appRoot}, 'json')
 
         expect(JSON.parse(stdout())).toStrictEqual({
           status: 'success',
@@ -122,7 +116,6 @@ describe('renderSecurityRecordResult', () => {
           path: resolve(appRoot, '.shopify', 'app-security', 'shopify.app', 'agent-findings.json'),
           checkCount: 1,
           findingCount: 2,
-          suppressions: null,
         })
         expect(stderr()).toBe('')
       })
@@ -141,11 +134,7 @@ describe('renderSecurityRecordResult', () => {
       const path = appSecurityArtifactPaths(appRoot, 'flag-client-id').agentFindingsPath
 
       await withCapturedStandardStreams(({stdout}) => {
-        renderSecurityRecordResult(
-          {path, checks: 0, findings: 0, suppressions: null},
-          {selection, path: appRoot},
-          'json',
-        )
+        renderSecurityRecordResult({path, checks: 0, findings: 0}, {selection, path: appRoot}, 'json')
 
         expect(JSON.parse(stdout())).toStrictEqual({
           status: 'success',
@@ -154,261 +143,6 @@ describe('renderSecurityRecordResult', () => {
           path: resolve(appRoot, '.shopify', 'app-security', 'flag-client-id', 'agent-findings.json'),
           checkCount: 0,
           findingCount: 0,
-          suppressions: null,
-        })
-      })
-    })
-  })
-
-  describe("the agent's suppressions", () => {
-    const entry: AppSecuritySuppression = {
-      source: 'agent',
-      check: 'MISSING_TENANT_ISOLATION',
-      kind: 'false-positive',
-      path: 'app/routes/orders.tsx',
-      code: 'const orders = await prisma.order.findMany()',
-      reason: 'Every order table holds one shop.',
-    }
-
-    function suppressions(appRoot: string): RecordedSuppressions {
-      return {
-        path: joinPath(appRoot, 'shopify.app-security.json'),
-        saved: [{index: 2, change: 'added', entry}],
-        alreadySaved: 1,
-        notSaved: [
-          {
-            checkId: 'SCOPE_OVER_REQUEST',
-            location: {file: 'shopify.app.toml', line: 4},
-            problem:
-              'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
-          },
-          {
-            checkId: 'MISSING_TENANT_ISOLATION',
-            location: {file: 'app/routes/orders.tsx', line: 3},
-            problem:
-              'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
-            withoutCode: {findingCount: 2},
-          },
-        ],
-      }
-    }
-
-    test('say how many were saved and already saved, to review and commit the file, and which were not saved and why', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        const path = artifactPaths(appRoot).agentFindingsPath
-        const output = mockAndCaptureOutput()
-        output.clear()
-
-        renderSecurityRecordResult(
-          {path, checks: 2, findings: 3, suppressions: suppressions(appRoot)},
-          {selection: selectionFor(appRoot), path: appRoot},
-          'text',
-        )
-
-        const success = unstyled(output.info())
-        expect(success).toContain('Saved 1 suppression to shopify.app-security.json.')
-        expect(success).toContain('1 suppression was already in shopify.app-security.json.')
-        expect(success).toContain('Review and commit shopify.app-security.json.')
-        const warning = unstyled(output.warn())
-        expect(warning).toContain("2 suppressions couldn't be saved to shopify.app-security.json.")
-        expect(warning).toContain('shopify.app.toml:4 · SCOPE_OVER_REQUEST')
-        expect(warning).toContain('app/routes/orders.tsx:3 · MISSING_TENANT_ISOLATION')
-        const text = warning.replace(/[│\s]+/g, ' ')
-        expect(text).toContain(
-          "They're recorded in agent-findings.json, so they apply to these findings only, until the next record. To keep them, add entries to shopify.app-security.json by hand.",
-        )
-        expect(text).toContain(
-          "It can't be saved because every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml. Give its entry a code that names it alone.",
-        )
-        // The broader option must state that it also suppresses the other finding.
-        expect(text).toContain(
-          "It can't be saved because every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx. The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. Omit code only if you intend to suppress all of these findings.",
-        )
-        expect(text.match(/a code that names it alone/g)).toHaveLength(2)
-        output.clear()
-      })
-    })
-
-    /** The text of the "not saved" warning for these suppressions, on one line. */
-    async function notSavedWarning(notSaved: RecordedSuppressions['notSaved']): Promise<string> {
-      let text = ''
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        const output = mockAndCaptureOutput()
-        output.clear()
-
-        renderSecurityRecordResult(
-          {
-            path: artifactPaths(appRoot).agentFindingsPath,
-            checks: 1,
-            findings: 3,
-            suppressions: {path: joinPath(appRoot, 'shopify.app-security.json'), saved: [], alreadySaved: 0, notSaved},
-          },
-          {selection: selectionFor(appRoot), path: appRoot},
-          'text',
-        )
-
-        text = unstyled(output.warn()).replace(/[│\s]+/g, ' ')
-        output.clear()
-      })
-      return text
-    }
-
-    const wildcardPath = {
-      checkId: 'MISSING_TENANT_ISOLATION',
-      location: {file: 'app/routes/*.tsx', line: 3},
-      problem: "its entry would be invalid: path: can't contain wildcards: name one file",
-      invalidFields: ['path'],
-    }
-
-    test('say that no entry can keep a suppression whose path the file cannot name, and advise no entry by hand', async () => {
-      const text = await notSavedWarning([wildcardPath])
-
-      expect(text).toContain(
-        "They're recorded in agent-findings.json, so they apply to these findings only, until the next record. • app/routes/*.tsx:3",
-      )
-      expect(text).toContain(
-        "It can't be saved because its entry would be invalid: path: can't contain wildcards: name one file. shopify.app-security.json can't name this path, so no entry can keep it. An entry for it by hand would make the file invalid too.",
-      )
-      expect(text).not.toContain('add entries')
-      expect(text).not.toContain('a code that names it alone')
-    })
-
-    test('advise entries by hand only for the suppressions that the file can name', async () => {
-      const text = await notSavedWarning([
-        wildcardPath,
-        {
-          checkId: 'SCOPE_OVER_REQUEST',
-          location: {file: 'shopify.app.toml', line: 4},
-          problem: 'every code from its lines also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
-        },
-      ])
-
-      expect(text).toContain(
-        'until the next record. To keep the ones that shopify.app-security.json can name, add entries to it by hand.',
-      )
-      expect(text).toContain('so no entry can keep it.')
-      expect(text).toContain('Give its entry a code that names it alone.')
-    })
-
-    test('advise no entry by hand when another field would make the entry invalid', async () => {
-      const text = await notSavedWarning([
-        {
-          checkId: 'CREDENTIAL_LOGGING',
-          location: {file: 'app/routes/orders.tsx', line: 3},
-          problem: 'its entry would be invalid: check: not a known check ID',
-          invalidFields: ['check'],
-        },
-      ])
-
-      expect(text).toContain(
-        "It can't be saved because its entry would be invalid: check: not a known check ID. An entry for it by hand with the same values would make shopify.app-security.json invalid too.",
-      )
-      expect(text).not.toContain('add entries')
-    })
-
-    test('give the advice and the invalid fields of a suppression whose entry would be invalid, in the JSON result', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        const suppressions = {path: joinPath(appRoot, 'shopify.app-security.json'), saved: [], alreadySaved: 0}
-
-        await withCapturedStandardStreams(({stdout}) => {
-          renderSecurityRecordResult(
-            {
-              path: artifactPaths(appRoot).agentFindingsPath,
-              checks: 1,
-              findings: 1,
-              suppressions: {...suppressions, notSaved: [wildcardPath]},
-            },
-            {selection: selectionFor(appRoot), path: appRoot},
-            'json',
-          )
-
-          expect(JSON.parse(stdout()).suppressions.notSaved).toStrictEqual([
-            {
-              checkId: 'MISSING_TENANT_ISOLATION',
-              location: {filePath: resolve(appRoot, 'app', 'routes', '*.tsx'), line: 3},
-              message: "its entry would be invalid: path: can't contain wildcards: name one file",
-              advice:
-                "shopify.app-security.json can't name this path, so no entry can keep it. An entry for it by hand would make the file invalid too.",
-              invalidFields: ['path'],
-              findingCountWithoutCode: null,
-            },
-          ])
-        })
-      })
-    })
-
-    test('say nothing about the file when the document has no suppression', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        const output = mockAndCaptureOutput()
-        output.clear()
-
-        renderSecurityRecordResult(
-          {path: artifactPaths(appRoot).agentFindingsPath, checks: 1, findings: 2, suppressions: null},
-          {selection: selectionFor(appRoot), path: appRoot},
-          'text',
-        )
-
-        expect(output.info()).not.toContain('shopify.app-security.json')
-        expect(output.warn()).toBe('')
-        output.clear()
-      })
-    })
-
-    test('are in the JSON result with absolute native paths and the kind as the file spells it', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        const path = artifactPaths(appRoot).agentFindingsPath
-
-        await withCapturedStandardStreams(({stdout}) => {
-          renderSecurityRecordResult(
-            {path, checks: 2, findings: 3, suppressions: suppressions(appRoot)},
-            {selection: selectionFor(appRoot), path: appRoot},
-            'json',
-          )
-
-          expect(JSON.parse(stdout()).suppressions).toStrictEqual({
-            filePath: resolve(appRoot, 'shopify.app-security.json'),
-            entries: [
-              {
-                index: 2,
-                change: 'added',
-                source: 'agent',
-                check: 'MISSING_TENANT_ISOLATION',
-                kind: 'false-positive',
-                path: resolve(appRoot, 'app', 'routes', 'orders.tsx'),
-                code: 'const orders = await prisma.order.findMany()',
-                reason: 'Every order table holds one shop.',
-                previous: null,
-              },
-            ],
-            alreadySavedCount: 1,
-            // The advice is in the text output only, so the JSON keeps its fields.
-            notSaved: [
-              {
-                checkId: 'SCOPE_OVER_REQUEST',
-                location: {filePath: resolve(appRoot, 'shopify.app.toml'), line: 4},
-                message:
-                  'every automatic code candidate also names another finding of SCOPE_OVER_REQUEST in shopify.app.toml',
-                advice: 'Give its entry a code that names it alone.',
-                invalidFields: null,
-                findingCountWithoutCode: null,
-              },
-              {
-                checkId: 'MISSING_TENANT_ISOLATION',
-                location: {filePath: resolve(appRoot, 'app', 'routes', 'orders.tsx'), line: 3},
-                message:
-                  'every automatic code candidate also names another finding of MISSING_TENANT_ISOLATION in app/routes/orders.tsx',
-                advice:
-                  'The automatic code selectors did not select this finding alone. You can try a manual entry with a code that names it alone. An agent entry without code suppresses all 2 agent findings of MISSING_TENANT_ISOLATION in that file. Omit code only if you intend to suppress all of these findings.',
-                invalidFields: null,
-                findingCountWithoutCode: 2,
-              },
-            ],
-          })
         })
       })
     })

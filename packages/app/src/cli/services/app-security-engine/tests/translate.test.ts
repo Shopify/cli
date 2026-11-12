@@ -86,31 +86,6 @@ describe('translateFindingsDocument', () => {
     ])
   })
 
-  test('accepts an agent suppression with or without a kind, and rejects an unknown kind', () => {
-    const checkIndex = agentFindingsDocument.checks.findIndex((check) =>
-      check.findings.some((finding) => finding.suppression),
-    )
-    const findingIndex = agentFindingsDocument.checks[checkIndex]!.findings.findIndex((finding) => finding.suppression)
-    const withKind = (kind: unknown) => {
-      const agent = asJson(agentFindingsDocument) as Record<string, any>
-      agent.checks[checkIndex].findings[findingIndex].suppression.kind = kind
-      return agent
-    }
-    expect(agentFindingsDocument.checks[checkIndex]!.findings[findingIndex]!.suppression).not.toHaveProperty('kind')
-
-    expect(translateFindingsDocument(asJson(agentFindingsDocument))).toEqual({
-      ok: true,
-      document: agentFindingsDocument,
-    })
-    expect(translateFindingsDocument(withKind('accepted-risk'))).toEqual({
-      ok: true,
-      document: withKind('accepted-risk'),
-    })
-    expect(translateInvalid(withKind('wont_fix'))).toEqual([
-      expect.stringContaining(`checks[${checkIndex}].findings[${findingIndex}].suppression.kind: `),
-    ])
-  })
-
   test('rejects an unknown confidence, precedence or source', () => {
     const agent = asJson(agentFindingsDocument) as Record<string, any>
     agent.checks[0].findings[0].confidence = 'certain'
