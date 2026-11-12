@@ -175,6 +175,28 @@ test('excludes a deprecated higher stable release after latest is moved back', a
   )
 })
 
+test('does not select a higher stable release in the current major than the latest dist-tag', async () => {
+  const rolledBackVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+  await withRegistry(
+    http.get('https://registry.npmjs.org/*', () =>
+      HttpResponse.json({
+        'dist-tags': {latest: currentMajorVersion},
+        versions: {
+          [currentMajorVersion]: {version: currentMajorVersion},
+          [rolledBackVersion]: {version: rolledBackVersion},
+        },
+      }),
+    ),
+    async () => {
+      await expect(checkForCLIVersions()).resolves.toEqual({
+        latest: currentMajorVersion,
+        currentMajor: currentMajorVersion,
+      })
+      expect(versionToAutoUpgrade()).toBe(currentMajorVersion)
+    },
+  )
+})
+
 test('public ranged checks cannot seed or overwrite the vetted auto-upgrade target with a deprecated release', async () => {
   const deprecatedVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
   let requests = 0

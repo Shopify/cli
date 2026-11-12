@@ -119,10 +119,11 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
     if (!command) {
       throw new Error('Could not determine the command to run')
     }
-    // Prefer the version the caller asked for: re-reading the cache here can return a
-    // different value than the caller vetted, because the prerun hook refreshes it in the
-    // background. Otherwise fall back to the cached newer version (a synchronous read).
-    const newerVersion = options.version ?? checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
+    // Prefer the version the caller asked for: the cache can hold a different value than the
+    // caller vetted. A manual upgrade waits for the registry instead, because the post-install
+    // verification below needs an expected version even when no fresh cached one exists.
+    const newerVersion =
+      options.version ?? (await checkForNewVersion('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24}))
     const headline = newerVersion
       ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
       : '✨ New version of Shopify CLI available!'

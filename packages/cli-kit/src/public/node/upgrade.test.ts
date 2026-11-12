@@ -248,7 +248,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(nextMajorVersion)
+    vi.mocked(checkForNewVersion).mockResolvedValue(nextMajorVersion)
     vi.mocked(globalCLIVersion).mockResolvedValue(vettedVersion)
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -260,6 +260,7 @@ describe('runCLIUpgrade', () => {
     expect(exec).toHaveBeenCalledWith('pnpm', ['add', '-g', `@shopify/cli@${vettedVersion}`], {stdio: 'inherit'})
     expect(outputMock.info()).toContain(`(${CLI_KIT_VERSION} → ${vettedVersion})`)
     expect(outputMock.info()).not.toContain(nextMajorVersion)
+    expect(checkForNewVersion).not.toHaveBeenCalled()
     expect(outputMock.info()).toContain(`You're now on version ${vettedVersion}`)
   })
 
@@ -301,7 +302,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(checkForNewVersion).mockResolvedValue('4.7.1')
     vi.mocked(globalCLIVersion).mockResolvedValue('4.7.1')
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -318,7 +319,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(checkForNewVersion).mockResolvedValue('4.7.1')
     vi.mocked(globalCLIVersion).mockResolvedValue('3.94.3')
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -327,6 +328,7 @@ describe('runCLIUpgrade', () => {
     await expect(runCLIUpgrade()).rejects.toThrow(
       'Expected to be on version 4.7.1, but version 3.94.3 is now installed',
     )
+    expect(checkForNewVersion).toHaveBeenCalledWith('@shopify/cli', CLI_KIT_VERSION, {cacheExpiryInHours: 24})
     expect(outputMock.info()).not.toContain('Shopify CLI upgraded')
   })
 
@@ -338,7 +340,7 @@ describe('runCLIUpgrade', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(expectedVersion)
+    vi.mocked(checkForNewVersion).mockResolvedValue(expectedVersion)
     vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
 
     // When/Then

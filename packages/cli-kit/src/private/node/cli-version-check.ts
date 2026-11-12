@@ -2,7 +2,7 @@ import {cacheRetrieve, cacheStore} from './conf-store.js'
 import {getCachedCLIVersion, getCLIVersionCacheKey, resolveCLIRegistry} from './cli-version-cache.js'
 import {CLI_KIT_VERSION} from '../../public/common/version.js'
 import {outputDebug} from '../../public/node/output.js'
-import {maxSatisfying, SemVer, valid} from 'semver'
+import {maxSatisfying, satisfies, SemVer, valid} from 'semver'
 
 const failureBackoffMs = 5 * 60 * 1000
 const requestTimeoutMs = 3000
@@ -82,10 +82,15 @@ async function fetchAndCacheVersions(registry: string): Promise<CLIVersions> {
     if (!response.ok) throw new Error('The npm registry request failed.')
     const metadata = (await response.json()) as PackageMetadata
     const latest = metadata['dist-tags'].latest
+    if (!latest || !valid(latest) || !metadata.versions[latest]) {
+      throw new Error('The npm registry did not return a stable latest CLI version.')
+    }
     const eligibleVersions = Object.keys(metadata.versions).filter((version) => !metadata.versions[version]?.deprecated)
-    const currentMajor = maxSatisfying(eligibleVersions, currentMajorRange)
-    if (!latest || !valid(latest) || !metadata.versions[latest] || !currentMajor) {
-      throw new Error('The npm registry did not return stable CLI versions.')
+    // The latest dist-tag gates rollout in its own major, so a rolled-back release is never selected.
+    const eligibleRange = satisfies(latest, currentMajorRange) ? `${currentMajorRange} <=${latest}` : currentMajorRange
+    const currentMajor = maxSatisfying(eligibleVersions, eligibleRange)
+    if (!currentMajor) {
+      throw new Error('The npm registry did not return a stable CLI version in the current major.')
     }
     cacheStore(latestCacheKey, latest)
     cacheStore(currentMajorCacheKey, currentMajor)
