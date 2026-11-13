@@ -494,6 +494,19 @@ describe('dev proxy', () => {
       expect(canProxyRequest(productsJsonEvent)).toBeTruthy()
     })
 
+    test.each(['/fr/cart/change?id=1&quantity=0', '/en-us/cart/add?id=1'])(
+      'should proxy Cart requests under a locale or market subfolder (%s)',
+      (path) => {
+        const event = createH3Event('GET', path)
+        expect(canProxyRequest(event)).toBeTruthy()
+      },
+    )
+
+    test('should not proxy the Cart page under a locale or market subfolder', () => {
+      const event = createH3Event('GET', '/en-us/cart', {accept: 'text/html'})
+      expect(canProxyRequest(event)).toBeFalsy()
+    })
+
     test('should proxy Checkout requests as they are not supported by the SFR client', () => {
       const event = createH3Event('GET', '/checkouts/xyz')
       expect(canProxyRequest(event)).toBeTruthy()
@@ -562,6 +575,11 @@ describe('dev proxy', () => {
 
     test('should proxy /account/logout requests', () => {
       const event = createH3Event('GET', '/account/logout')
+      expect(canProxyRequest(event)).toBeTruthy()
+    })
+
+    test('should proxy /account requests under a locale or market subfolder', () => {
+      const event = createH3Event('GET', '/fr/account')
       expect(canProxyRequest(event)).toBeTruthy()
     })
   })
@@ -714,6 +732,39 @@ describe('dev proxy', () => {
 
     test('sends Bearer token for non-CDN paths that are not cart/checkout/account', async () => {
       const event = createH3Event('GET', '/products/some-product')
+      await proxyStorefrontRequest(event, tokenCtx)
+      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const headers = init.headers as Record<string, string>
+      expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
+    })
+
+    test.each(['/localization', '/localization.json', '/fr/localization', '/en-us/localization'])(
+      'does NOT send Bearer token for the localization form (%s)',
+      async (path) => {
+        const event = createH3Event('POST', path)
+        await proxyStorefrontRequest(event, tokenCtx)
+        const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+        const headers = init.headers as Record<string, string>
+        expect(headers.Authorization).toBeUndefined()
+      },
+    )
+
+    test.each([
+      ['POST', '/en-us/cart/add.js'],
+      ['POST', '/zh-hans-cn/cart/add.js'],
+      ['GET', '/fr/cart.js'],
+      ['POST', '/en-us/cart'],
+      ['GET', '/fr/account/logout'],
+    ])('does NOT send Bearer token for %s %s under a locale or market subfolder', async (method, path) => {
+      const event = createH3Event(method, path)
+      await proxyStorefrontRequest(event, tokenCtx)
+      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const headers = init.headers as Record<string, string>
+      expect(headers.Authorization).toBeUndefined()
+    })
+
+    test.each(['/fr/products/some-product', '/pages/localization'])('sends Bearer token for %s', async (path) => {
+      const event = createH3Event('GET', path)
       await proxyStorefrontRequest(event, tokenCtx)
       const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
       const headers = init.headers as Record<string, string>

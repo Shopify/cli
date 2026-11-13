@@ -1,4 +1,4 @@
-import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {cleanHeader, defaultHeaders, LOCALE_PREFIX_PATTERN} from './storefront-utils.js'
 import {buildCookies} from './storefront-renderer.js'
 import {injectStandardEventsInspector, rewriteStandardEventsRuntimeReferences} from './standard-events.js'
 import {logRequestLine} from '../log-request-line.js'
@@ -16,12 +16,13 @@ export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
 const API_COLLECT_PATH = '/api/collect'
-const CART_PATTERN = /^\/cart\//
+const CART_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/cart/`)
 // Broader than CART_PATTERN (routing) -- covers /cart, /cart.js, /cart.json for auth exclusion.
 // CART_PATTERN only matches /cart/... subpaths to avoid proxying GET /cart (the cart HTML page).
-const CART_SESSION_PATTERN = /^\/cart(\/|\.js|\.json|$)/
+const CART_SESSION_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/cart(/|\.js|\.json|$)`)
 const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
-const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
+const ACCOUNT_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/account(/login/multipass(/[^/]+)?|/logout)?/?$`)
+const LOCALIZATION_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/localization(\.json)?/?$`)
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
 const STOREFRONT_API_PATTERN = /^\/api\/(unstable|\d{4}-\d{2})\/graphql\.json/
@@ -119,7 +120,8 @@ export function canProxyRequest(event: H3Event) {
   return Boolean(extension) || acceptsType !== '*/*'
 }
 
-// Cart, checkout, and account endpoints use session-cookie auth, not Bearer tokens.
+// Cart, checkout, account, and localization endpoints use session-cookie auth
+// and respond with 401 when they receive the Bearer token.
 // CHECKOUT_PATTERN and ACCOUNT_PATTERN are reused from routing because their
 // routing and auth scopes currently align; changes to those patterns should
 // consider the auth implications here.
@@ -128,6 +130,7 @@ function needsBearerToken(path: string): boolean {
   if (CART_SESSION_PATTERN.test(pathname)) return false
   if (CHECKOUT_PATTERN.test(pathname)) return false
   if (ACCOUNT_PATTERN.test(pathname)) return false
+  if (LOCALIZATION_PATTERN.test(pathname)) return false
   return true
 }
 
@@ -390,8 +393,6 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
       ...(host === ctx.session.storeFqdn ? ctx.session.crawlerSignatureHeaders : {}),
       referer: url.origin,
       Cookie: buildCookies(ctx.session, {headers}),
-      // Cart, checkout, and account endpoints use cookie-based auth.
-      // Sending a Bearer token causes SFR to select token auth, which lacks cart scopes.
       ...(ctx.type === 'theme' && needsBearerToken(event.path)
         ? {Authorization: `Bearer ${ctx.session.storefrontToken}`}
         : {}),

@@ -1,5 +1,10 @@
 import {DevServerSession, DevServerRenderContext} from './types.js'
-import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
+import {
+  cleanHeader,
+  defaultHeaders,
+  LOCALE_PREFIX_PATTERN,
+  storefrontReplaceTemplatesParams,
+} from './storefront-utils.js'
 import {parseCookies, serializeCookies} from './cookies.js'
 import {createFetchError} from '../errors.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -15,7 +20,7 @@ export const STOREFRONT_RENDERER_QUERY_PARAMS = {_fd: '0', pb: '0'}
  * The storefront page that confirms a shopper wants to leave the store
  * (`/url` or `/:locale/url`). Storefront links to other sites go through it.
  */
-const EXIT_PAGE_PATH_REGEX = /^(?:\/[a-z]{2,3}(?:-[a-zA-Z0-9]{2,})?)?\/url\/?$/
+const EXIT_PAGE_PATH_REGEX = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/url/?$`)
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
