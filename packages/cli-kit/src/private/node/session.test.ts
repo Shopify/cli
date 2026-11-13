@@ -216,7 +216,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('throws an error and logs out if there is no session and prompting is disabled,', async () => {
+  test('throws an error without clearing the stored sessions if there is no session and prompting is disabled,', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
@@ -228,7 +228,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
 The CLI is currently unable to prompt for reauthentication.`,
     )
-    expect(secureRemove).toHaveBeenCalled()
+    expect(secureRemove).not.toHaveBeenCalled()
 
     // Then
     await expect(getLastSeenAuthMethod()).resolves.toEqual('none')
@@ -462,6 +462,22 @@ describe('when existing session is expired', () => {
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
+  })
+
+  test('does not clear the stored sessions when a refresh fails with an invalid grant error and prompting is disabled', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(new InvalidGrantError())
+
+    // When
+    await expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow(
+      'The currently available CLI credentials are invalid.',
+    )
+
+    // Then
+    expect(secureRemove).not.toHaveBeenCalled()
+    expect(storeSessions).not.toHaveBeenCalled()
   })
 
   test('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {
