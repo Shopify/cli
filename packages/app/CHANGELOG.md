@@ -1,5 +1,42 @@
 # @shopify/app
 
+## 5.1.0
+
+### Patch Changes
+
+- 3b3dfa5: Report configuration lines for callback URL, ScriptTag scope, and API version findings in `app security check`, with distinct keys for insecure URLs.
+- 47c2d3a: Fix four `shopify app security check` agent prompts that could skip real issues: `MISSING_EMBEDDED_CSP` now detects embedded apps from `embedded = true`, `SSRF_REQUEST_FORGERY` and `SCRIPT_TAG_URL_INJECTION` no longer treat an https-only URL as safe, and `THEME_EXTENSION_XSS` no longer exempts `escape` in executable contexts or `textContent` on `<script>` elements
+- a0c8536: Report the correct source lines for API version and offline token findings after line comments in `app security check`.
+- 6273fd0: Show a clear error instead of ENOENT when `app deploy --no-build` finds no built web pixel bundle.
+- e5a0588: Show `Extension initialized` instead of `Configuration accepted` when config-only extensions start in a new `app dev` session.
+- 73b255a: Explain the managed-install requirement before deploying Events subscriptions with legacy install flow enabled.
+- 3db1bc8: `app dev` no longer crashes when a client of the `/extensions` WebSocket sends a malformed frame.
+- 6f423f4: Stop `app dev` from exiting when an `/extensions` WebSocket client sends invalid JSON or an invalid message shape
+- b28c759: Accept `--flavor preact` when generating app extensions.
+- c92ed3f: Prevent intermittent app deploy failures when UI extensions in the same folder build concurrently.
+- 2f272e7: Remove `[extensions.capabilities.network_access] allowed_sources` from theme app extensions; declare network origins with `[network_access] allowed_sources` in `shopify.app.toml` instead.
+- 06db440: Accept all CLI-supported extension flavors and validate compatibility with the selected template.
+- af985eb: Fix links to other sites in `theme dev` and theme app extension previews, which always showed the storefront's "leaving this store" page and could redirect back to the local server.
+- 3bff358: Update function-runner to v9.2.3.
+- 2b786c5: Keep app-specific webhook subscriptions with relative URIs when an extension hot reloads during `app dev`.
+- Updated dependencies [8cb7b7e]
+- Updated dependencies [2ab47c6]
+- Updated dependencies [e210609]
+- Updated dependencies [d1d59da]
+- Updated dependencies [572bb90]
+- Updated dependencies [11b07ee]
+- Updated dependencies [d332546]
+- Updated dependencies [a96bb29]
+- Updated dependencies [f63ce4b]
+- Updated dependencies [c09ed76]
+- Updated dependencies [d418238]
+- Updated dependencies [329f213]
+- Updated dependencies [af985eb]
+  - @shopify/cli-kit@5.1.0
+  - @shopify/theme@5.1.0
+  - @shopify/organizations@5.1.0
+  - @shopify/plugin-cloudflare@5.1.0
+
 ## 5.0.0
 
 ### Major Changes

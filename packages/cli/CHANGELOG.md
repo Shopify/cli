@@ -1,5 +1,30 @@
 # @shopify/cli
 
+## 5.1.0
+
+### Minor Changes
+
+- 09eef05: Require explicit operator permission for custom Theme Checks on `theme check`, `theme language-server`, and `theme push --strict`; ignore consent settings in theme TOML.
+- da0935b: Stream structured execution and rebuild records from app function replay --json in watch mode.
+- bf8287e: Add JSON lifecycle streaming to app and store GraphiQL commands.
+- f63ce4b: Support `theme language-server --json` and `--json-schema` while preserving native LSP output and stderr diagnostics.
+- ece75cb: Add finite Liquid console execution with repeated scripts, script files, and JSON output.
+
+### Patch Changes
+
+- 3b3dfa5: Report configuration lines for callback URL, ScriptTag scope, and API version findings in `app security check`, with distinct keys for insecure URLs.
+- 47c2d3a: Fix four `shopify app security check` agent prompts that could skip real issues: `MISSING_EMBEDDED_CSP` now detects embedded apps from `embedded = true`, `SSRF_REQUEST_FORGERY` and `SCRIPT_TAG_URL_INJECTION` no longer treat an https-only URL as safe, and `THEME_EXTENSION_XSS` no longer exempts `escape` in executable contexts or `textContent` on `<script>` elements
+- 2ab47c6: Keep npm-based auto-upgrades on the newest non-deprecated stable release in the installed major, including maintenance fixes after a newer major is released.
+- e210609: Show a daily new-major upgrade notice while automatic updates continue within the current major.
+- d1d59da: Say which access a service account token lacks, or that it was revoked or expired, instead of "Ensure the token is correct and not expired" for both.
+- 572bb90: Auto-upgrade installs the exact version it checked instead of `@shopify/cli@latest`, so a stale version cache can no longer upgrade you to a new major version.
+- 11b07ee: Retry temporary Windows file locks when updating dev session metadata.
+- e2003df: `store create dev` no longer fails with "Unable to determine store creation status." when its first status check comes back empty. It keeps checking until the store is ready or the 5-minute timeout passes.
+- d332546: Treat HTTP 520 to 524 edge responses as gateway errors, like 502, 503 and 504
+- a96bb29: Keep Homebrew auto-upgrades on the installed formula and refresh its metadata to find same-major fixes.
+- e5bcffe: Let `store delete` and `store info` find a store in the account's only organization, so a service account no longer needs `--organization-id` for stores it didn't create.
+- d418238: Keep tables on one line per row when the output isn't a terminal, and word the store-not-found advice for service account tokens.
+
 ## 5.0.0
 
 ### Major Changes
