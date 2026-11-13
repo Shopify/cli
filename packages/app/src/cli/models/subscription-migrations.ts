@@ -8,7 +8,11 @@ export const MIGRATABLE_SUBSCRIPTION_STATUSES = ['UNSCHEDULED', 'SCHEDULED', 'MI
 export type MigratableSubscriptionStatus = (typeof MIGRATABLE_SUBSCRIPTION_STATUSES)[number]
 
 export type ManualSubscriptionInterval = 'EVERY_30_DAYS' | 'ANNUAL'
-export type MigrationFailureReason = 'SUPERSEDED' | 'SCHEDULING_FAILED'
+export type MigrationFailureReason =
+  | 'SUPERSEDED'
+  | 'SCHEDULING_FAILED'
+  | 'PLAN_REQUIREMENTS_NOT_MET'
+  | 'SHOP_FEATURES_UNVERIFIED'
 export type MigratableSubscriptionNotificationKind = 'NONE' | 'OPT_OUT' | 'WHEN_REQUIRED'
 export type MigratableSubscriptionPriceBehavior = 'HONOR_BILLING_PRICE' | 'PLAN_PRICE'
 
