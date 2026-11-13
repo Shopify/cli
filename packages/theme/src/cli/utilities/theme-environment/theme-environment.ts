@@ -4,6 +4,7 @@ import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {createHostValidationHandler} from './host-validation.js'
+import {MAX_HEADER_SIZE} from './storefront-fetch.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
@@ -140,6 +141,7 @@ function handleThemeEditorSync(
 
 interface DevelopmentServerInstance {
   close: () => Promise<void>
+  port: number
 }
 
 function createDevelopmentServer(
@@ -186,7 +188,7 @@ function createDevelopmentServer(
   app.use(getProxyHandler(theme, ctx))
   app.use(getHtmlHandler(theme, ctx, rejectBackgroundJob))
 
-  const server = createServer(toNodeListener(app))
+  const server = createServer({maxHeaderSize: MAX_HEADER_SIZE}, toNodeListener(app))
 
   const close = async () => {
     server.closeAllConnections()
@@ -201,7 +203,13 @@ function createDevelopmentServer(
         server.once('error', reject)
         server.listen({port: ctx.options.port, host: ctx.options.host, signal: ctx.signal}, () => {
           server.off('error', reject)
-          resolve({close})
+          const address = server.address()
+          if (!address || typeof address === 'string') {
+            reject(new Error('Theme dev server did not bind to a TCP port'))
+            return
+          }
+
+          resolve({port: address.port, close})
         })
       })
     },
