@@ -439,7 +439,7 @@ describe('pollAppLogs', () => {
     })
 
     // Then
-    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.', stdout)
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs. HTTP 500: errorMessage', stdout)
     expect(vi.getTimerCount()).toEqual(1)
   })
 
