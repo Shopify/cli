@@ -43,6 +43,9 @@ on:
         description: 'Only log actions, do not perform any delete operations.'
         required: false
 
+permissions:
+  actions: write
+
 jobs:
   del_runs:
     runs-on: ubuntu-latest

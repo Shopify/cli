@@ -6,6 +6,13 @@ on:
   issue_comment:
     types: [ created ]
 
+# The CLA action comments on and labels the pull request, and re-runs its own check once the
+# author signs.
+permissions:
+  actions: write
+  issues: write
+  pull-requests: read
+
 jobs:
   cla:
     name: "[PR] CLA"
