@@ -1,5 +1,5 @@
 import {formatOperationInfo, resolveApiVersion} from '../graphql/common.js'
-import {OrganizationApp, Organization} from '../../models/organization.js'
+import {OrganizationApp, Organization, appClientSecret} from '../../models/organization.js'
 import {
   BULK_OPERATIONS_MIN_API_VERSION,
   fetchBulkOperationById,
@@ -12,7 +12,6 @@ import {renderInfo, renderSuccess, renderError, renderTable} from '@shopify/cli-
 import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
-import {BugError} from '@shopify/cli-kit/node/error'
 import colors from '@shopify/cli-kit/node/colors'
 
 interface GetBulkOperationStatusOptions {
@@ -42,9 +41,7 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
     ],
   })
 
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
+  const appSecret = await appClientSecret(remoteApp)
   const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
 
   const operation = await fetchBulkOperationById({
@@ -80,9 +77,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
     ],
   })
 
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
+  const appSecret = await appClientSecret(remoteApp)
   const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
 
   const nodes = await fetchRecentBulkOperations({

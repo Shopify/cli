@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import {FieldObject, Metafield, MetafieldOwners, MetaObject, ValidationRule} from './dcdd.js'
-import {OrganizationApp, OrganizationStore} from '../../../models/organization.js'
+import {OrganizationApp, OrganizationStore, appClientSecret} from '../../../models/organization.js'
 import {
   MetafieldDefinitions,
   MetafieldForImportFragment,
@@ -19,7 +19,6 @@ import {
   MetaobjectStorefrontAccess,
 } from '../../../api/graphql/admin/generated/types.js'
 import {CurrentAppConfiguration} from '../../../models/app/app.js'
-import {BugError} from '@shopify/cli-kit/node/error'
 import {AdminSession, ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -388,12 +387,7 @@ function appConfigurationContains(appConfiguration: any, path: string[]): boolea
 async function createAdminApiSessionForShop(options: ImportDeclarativeDefinitionsOptions) {
   const {remoteApp, store} = options
 
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-
-  if (!appSecret) {
-    throw new BugError('No API secret keys found for app')
-  }
-
+  const appSecret = await appClientSecret(remoteApp)
   const adminSession = await ensureAuthenticatedAdminAsApp(store.shopDomain, remoteApp.apiKey, appSecret)
   return adminSession
 }

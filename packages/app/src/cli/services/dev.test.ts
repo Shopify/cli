@@ -2,6 +2,8 @@ import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
+import * as devUrls from './dev/urls.js'
+import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -11,6 +13,9 @@ import {
   testProject,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
+import {Web, WebType} from '../models/app/app.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
@@ -83,6 +88,71 @@ describe('dev', () => {
 
     addPublicMetadata.mockRestore()
     addSensitiveMetadata.mockRestore()
+  })
+})
+
+describe('dev client secret', () => {
+  const webs: Web[] = [{directory: 'web', configuration: {roles: [WebType.Backend], commands: {dev: 'npm run dev'}}}]
+
+  function runDevForWebApp(appClientSecrets: DeveloperPlatformClient['appClientSecrets']) {
+    const app = testAppLinked({webs})
+    const developerPlatformClient = testDeveloperPlatformClient({appClientSecrets})
+    vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({name: 'Remote app', application_url: '', embedded: true})
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+    vi.mocked(setupDevProcesses).mockResolvedValue({
+      processes: [],
+      previewUrl: 'https://dev-store.myshopify.com/admin/apps/api-key',
+      graphiqlUrl: undefined,
+      devSessionStatusManager: new DevSessionStatusManager({isReady: true}),
+    })
+    vi.mocked(renderDev).mockResolvedValue(undefined)
+    const shouldOrPromptUpdateURLs = vi.spyOn(devUrls, 'shouldOrPromptUpdateURLs').mockResolvedValue(true)
+
+    const running = dev({
+      app,
+      project: testProject({usesWorkspaces: true}),
+      remoteApp: testOrganizationApp({apiKey: 'api-key', apiSecretKeys: [], developerPlatformClient}),
+      organization: testOrganization(),
+      specifications: [],
+      developerPlatformClient,
+      store: testOrganizationStore({}),
+      directory: app.directory,
+      update: true,
+      commandConfig: {} as any,
+      skipDependenciesInstallation: true,
+      tunnel: {mode: 'custom', url: 'https://localhost:3456'},
+    })
+    return {running, shouldOrPromptUpdateURLs}
+  }
+
+  test('passes the client secret fetched on demand to the web processes', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+    const appClientSecrets = vi.fn().mockResolvedValue([{secret: 'fetched-secret'}])
+
+    // When
+    const {running} = runDevForWebApp(appClientSecrets)
+    await running
+
+    // Then
+    expect(appClientSecrets).toHaveBeenCalledWith(expect.objectContaining({apiKey: 'api-key'}))
+    expect(setupDevProcesses).toHaveBeenCalledWith(expect.objectContaining({apiSecret: 'fetched-secret'}))
+    vi.unstubAllEnvs()
+  })
+
+  test("stops before updating the app URLs when a web app can't get its client secret", async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+
+    // When
+    const {running, shouldOrPromptUpdateURLs} = runDevForWebApp(vi.fn().mockResolvedValue([]))
+
+    // Then
+    await expect(running).rejects.toThrow(AbortError)
+    expect(shouldOrPromptUpdateURLs).not.toHaveBeenCalled()
+    expect(setupDevProcesses).not.toHaveBeenCalled()
+    vi.unstubAllEnvs()
   })
 })
 

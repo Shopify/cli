@@ -20,7 +20,7 @@ import {
   testOrganizationStore,
   testProject,
 } from '../../../models/app/app.test-data.js'
-import {WebType} from '../../../models/app/app.js'
+import {Web, WebType} from '../../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
@@ -76,6 +76,69 @@ const appContextResult = {
 }
 
 describe('setup-dev-processes', () => {
+  function setupDevProcessesForApp({webs, apiSecret}: {webs: Web[]; apiSecret: string | undefined}) {
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const localApp = testAppWithConfig({config: {}, app: {webs}})
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
+    return setupDevProcesses({
+      localApp,
+      commandOptions: {
+        ...appContextResult,
+        directory: '',
+        update: false,
+        commandConfig: new Config({root: ''}),
+        skipDependenciesInstallation: false,
+        tunnel: {mode: 'auto'},
+      },
+      network: {
+        proxyUrl: 'https://example.com/proxy',
+        proxyPort: 444,
+        backendPort: 111,
+        frontendPort: 222,
+        currentUrls: {applicationUrl: 'https://example.com/application', redirectUrlWhitelist: []},
+      },
+      remoteApp: testOrganizationApp({apiSecretKeys: [], developerPlatformClient}),
+      remoteAppUpdated: true,
+      storeFqdn: 'store.myshopify.io',
+      storeId: '123456789',
+      developerPlatformClient,
+      partnerUrlsUpdated: false,
+      graphiqlPort: 1234,
+      apiSecret,
+    })
+  }
+
+  test('runs an extension-only app without web processes or GraphiQL when there is no client secret', async () => {
+    // When
+    const {processes, graphiqlUrl} = await setupDevProcessesForApp({webs: [], apiSecret: undefined})
+
+    // Then
+    const types = processes.map((process) => process.type)
+    expect(types).toContain('dev-session')
+    expect(types).not.toContain('web')
+    expect(types).not.toContain('graphiql')
+    expect(types).not.toContain('send-webhook')
+    expect(graphiqlUrl).toBeUndefined()
+  })
+
+  test('gives web processes and GraphiQL the client secret fetched on demand', async () => {
+    // Given
+    const webs: Web[] = [{directory: 'web', configuration: {roles: [WebType.Backend], commands: {dev: 'npm run dev'}}}]
+
+    // When
+    const {processes, graphiqlUrl} = await setupDevProcessesForApp({webs, apiSecret: 'fetched-secret'})
+
+    // Then
+    expect(processes.find((process) => process.type === 'web')).toMatchObject({
+      options: {apiSecret: 'fetched-secret'},
+    })
+    expect(processes.find((process) => process.type === 'graphiql')).toMatchObject({
+      options: {apiSecret: 'fetched-secret'},
+    })
+    expect(graphiqlUrl).toBeDefined()
+  })
+
   test('can create a process list', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
@@ -150,6 +213,7 @@ describe('setup-dev-processes', () => {
       commandOptions,
       network,
       remoteApp,
+      apiSecret: 'api-secret',
       remoteAppUpdated,
       storeFqdn,
       storeId,
@@ -330,6 +394,7 @@ describe('setup-dev-processes', () => {
       commandOptions,
       network,
       remoteApp,
+      apiSecret: 'api-secret',
       remoteAppUpdated,
       storeFqdn,
       storeId,
@@ -393,6 +458,7 @@ describe('setup-dev-processes', () => {
       commandOptions,
       network,
       remoteApp,
+      apiSecret: 'api-secret',
       remoteAppUpdated,
       storeFqdn,
       storeId,
@@ -491,6 +557,7 @@ describe('setup-dev-processes', () => {
       commandOptions,
       network,
       remoteApp,
+      apiSecret: 'api-secret',
       remoteAppUpdated,
       storeFqdn,
       storeId,
@@ -589,6 +656,7 @@ describe('setup-dev-processes', () => {
       commandOptions,
       network,
       remoteApp,
+      apiSecret: 'api-secret',
       remoteAppUpdated,
       storeFqdn,
       storeId,
