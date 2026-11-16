@@ -209,6 +209,11 @@ export interface DeveloperPlatformClient {
   unsafeRefreshToken: () => Promise<string>
   accountInfo: () => Promise<Session['accountInfo']>
   appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
+  /**
+   * Fetches the app's client secrets. App lookups leave them out, so only commands that authenticate as the app ask.
+   * Returns an empty list when the current credentials can't read them.
+   */
+  appClientSecrets: (app: Pick<MinimalAppIdentifiers, 'apiKey'>) => Promise<OrganizationApp['apiSecretKeys']>
   organizations: () => Promise<OrganizationWithDetails[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>

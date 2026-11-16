@@ -1,6 +1,10 @@
 import EnvShow from './show.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {
+  testAppLinked,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+} from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
 import {appEnvShowJsonOutputSchema} from '../../../services/app/env/show/types.js'
 import {Config} from '@oclif/core'
@@ -15,7 +19,7 @@ vi.mock('../../../services/context.js')
 function mockLinkedAppContext({secret, scopes}: {secret: string | undefined; scopes: string}) {
   const app = testAppLinked()
   app.configuration.access_scopes = {scopes}
-  const remoteApp = testOrganizationApp({apiSecretKeys: secret === undefined ? [] : [{secret}]})
+  const remoteApp = secret ? testOrganizationApp({apiSecretKeys: [{secret}]}) : testOrganizationAppWithoutClientSecret()
   vi.mocked(linkedAppContext).mockImplementation(async () => {
     outputInfo('Loaded app')
     return {
@@ -41,7 +45,9 @@ test.each([
         {
           variables: [
             {name: 'SHOPIFY_API_KEY', value: remoteApp.apiKey, isSecret: false},
-            ...(secret === undefined ? [] : [{name: 'SHOPIFY_API_SECRET', value: secret, isSecret: true}]),
+            secret
+              ? {name: 'SHOPIFY_API_SECRET', value: secret, isSecret: true}
+              : {name: 'SHOPIFY_API_SECRET', isSecret: true},
             {name: 'SCOPES', value: scopes, isSecret: false},
           ],
         },
@@ -49,7 +55,18 @@ test.each([
         2,
       )}\n`,
     )
-    expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Loaded app'})
+    const diagnostics = stderr()
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+    expect(diagnostics[0]).toMatchObject({type: 'diagnostic', message: 'Loaded app'})
+    if (!secret) {
+      expect(diagnostics[1]).toMatchObject({
+        type: 'diagnostic',
+        level: 'warning',
+        message: expect.stringContaining("SHOPIFY_API_SECRET isn't included"),
+      })
+    }
     expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
       clientId: undefined,
@@ -68,6 +85,7 @@ test('keeps the environment text on stdout, with an empty missing secret', async
       '\n    SHOPIFY_API_KEY=api-key\n    SHOPIFY_API_SECRET=\n    SCOPES=read_products\n  \n',
     )
     expect(stderr()).toContain('Loaded app')
+    expect(stderr()).toContain("SHOPIFY_API_SECRET isn't included")
   })
 })
 

@@ -22,7 +22,9 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
   const {variables} = await getAppEnv(app, remoteApp, organization)
   const path = resolvePath(envFile)
   const previousContent = (await fileExists(path)) ? await readFile(path) : null
-  const content = patchEnvFile(previousContent, Object.fromEntries(variables.map(({name, value}) => [name, value])))
+  // A variable without a value keeps the file's current value, so pulling never blanks a local secret.
+  const knownValues = variables.flatMap(({name, value}) => (value === undefined ? [] : [[name, value] as const]))
+  const content = patchEnvFile(previousContent, Object.fromEntries(knownValues))
   const changed = content !== previousContent
   if (changed) await writeFile(path, content)
   return {result: {path, status: 'success', changed, variables, content}, previousContent}

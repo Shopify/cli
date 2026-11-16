@@ -89,6 +89,7 @@ import {
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
 import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
+import {AppClientCredentials} from '../../api/graphql/app-management/generated/app-client-credentials.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {
   CreateAppVersion,
@@ -386,12 +387,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (!app) return undefined
     const {name, appModules} = app.activeRelease.version
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
-    const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       id: app.id,
       title: name,
       apiKey: app.key,
-      apiSecretKeys,
+      // Fetched on demand by the commands that need it, with appClientSecrets.
+      apiSecretKeys: [],
       organizationId: String(numberFromGid(app.organizationId)),
       grantedScopes: app.activeRoot.grantedShopifyApprovalScopes,
       applicationUrl: appHomeModule?.config?.app_url as string | undefined,
@@ -399,6 +400,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       flags: [],
       developerPlatformClient: this,
     }
+  }
+
+  async appClientSecrets({apiKey}: Pick<MinimalAppIdentifiers, 'apiKey'>): Promise<OrganizationApp['apiSecretKeys']> {
+    const {app} = await this.appManagementRequest({query: AppClientCredentials, variables: {apiKey}})
+    // The Developer Dashboard decides who can read the secret: it can return no secrets, or no credentials at all.
+    const clientCredentials: {secrets: {key: string}[]} | null | undefined = app?.activeRoot.clientCredentials
+    return clientCredentials?.secrets.map((secret) => ({secret: secret.key})) ?? []
   }
 
   async organizations(): Promise<OrganizationWithDetails[]> {
@@ -564,12 +572,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // Need to figure this out still
     const flags = filterDisabledFlags([])
     const createdApp = result.appCreate.app
-    const apiSecretKeys = createdApp.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       ...createdApp,
       title: options.name,
       apiKey: createdApp.key,
-      apiSecretKeys,
+      // Fetched on demand by the commands that need it, with appClientSecrets.
+      apiSecretKeys: [],
       grantedScopes: options?.scopesArray ?? [],
       organizationId: org.id,
       newApp: true,
