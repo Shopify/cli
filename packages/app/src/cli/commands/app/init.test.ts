@@ -373,6 +373,54 @@ describe('Init command', () => {
   })
 })
 
+describe('legacy template deprecation', () => {
+  beforeEach(async () => {
+    const validation = await vi.importActual<typeof import('../../services/init/validate.js')>(
+      '../../services/init/validate.js',
+    )
+    vi.mocked(validateTemplateValue).mockImplementation(validation.validateTemplateValue)
+    vi.mocked(inferPackageManager).mockReturnValue('npm')
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient())
+    vi.mocked(appFromIdentifiers).mockResolvedValue(testOrganizationApp())
+    vi.mocked(initService).mockResolvedValue(initResult(testAppLinked()))
+  })
+
+  test.each(['node', 'remix'] as const)('warns for %s and continues initialization', async (template) => {
+    vi.mocked(initPrompt).mockResolvedValue({
+      template: `https://github.com/Shopify/shopify-app-template-${template}`,
+      templateType: template,
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+
+    await withCapturedStandardStreams(async ({stderr}) => {
+      await runInitCommand(['--template', template, '--client-id', 'api-key'])
+      // Joins wrapped banner lines so assertions don't depend on terminal width.
+      const warning = unstyled(stderr()).replace(/[\s│╭╮╰╯─]+/g, ' ')
+      expect(warning).toContain(`The ${template} app template is deprecated.`)
+      expect(warning).toContain('--template reactRouter')
+    })
+    expect(initService).toHaveBeenCalledOnce()
+  })
+
+  test.each([
+    'reactRouter',
+    'https://github.com/Shopify/shopify-app-template-node',
+    'https://github.com/Shopify/shopify-app-template-remix',
+  ])('does not warn for %s', async (template) => {
+    vi.mocked(initPrompt).mockResolvedValue({
+      template,
+      templateType: 'custom',
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+
+    await withCapturedStandardStreams(async ({stderr}) => {
+      await runInitCommand(['--template', template, '--client-id', 'api-key'])
+      expect(unstyled(stderr())).not.toContain('deprecated')
+    })
+    expect(initService).toHaveBeenCalledOnce()
+  })
+})
+
 describe('Init JSON output', () => {
   beforeEach(() => {
     vi.mocked(inferPackageManager).mockReturnValue('npm')

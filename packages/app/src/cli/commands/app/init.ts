@@ -1,4 +1,9 @@
-import initPrompt, {templateRequiresFlavor, visibleTemplates} from '../../prompts/init/init.js'
+import initPrompt, {
+  isPredefinedTemplate,
+  templates,
+  templateRequiresFlavor,
+  visibleTemplates,
+} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {appInitJsonOutputSchema} from '../../services/init/types.js'
 import {renderInitResult} from '../../services/init/result.js'
@@ -20,6 +25,7 @@ import {installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends AppLinkedCommand {
@@ -116,6 +122,17 @@ export default class Init extends AppLinkedCommand {
     // Validate that --name is not empty/whitespace if provided
     if (flags.name !== undefined && flags.name.trim() === '') {
       throw new AbortError("The --name flag can't be empty", 'Provide a valid app name, for example: --name my-app')
+    }
+
+    if (flags.template && isPredefinedTemplate(flags.template)) {
+      const deprecation = templates[flags.template].deprecated
+      if (deprecation) {
+        renderWarning({
+          headline: ['The', {userInput: flags.template}, 'app template is deprecated.'],
+          body: 'It will be removed in a future major release.',
+          nextSteps: [['Use', {command: `--template ${deprecation.replacement}`}, 'or a GitHub template URL instead.']],
+        })
+      }
     }
 
     const inferredPackageManager = inferPackageManager(flags['package-manager'])

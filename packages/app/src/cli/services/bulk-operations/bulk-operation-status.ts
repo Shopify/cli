@@ -1,12 +1,11 @@
 import {resolveApiVersion} from '../graphql/common.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, appClientSecret} from '../../models/organization.js'
 import {
   BULK_OPERATIONS_MIN_API_VERSION,
   fetchBulkOperationById,
   fetchRecentBulkOperations,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {BugError} from '@shopify/cli-kit/node/error'
 import type {BulkOperationStatusResult} from './types.js'
 
 interface ListBulkOperationsOptions {
@@ -37,9 +36,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
 }
 
 async function prepareStatusContext(storeFqdn: string, remoteApp: OrganizationApp) {
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
+  const appSecret = await appClientSecret(remoteApp)
   const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
   const version = await resolveApiVersion({adminSession, minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION})
   return {adminSession, version}

@@ -1,6 +1,6 @@
 import {execa} from 'execa'
 import * as path from 'pathe'
-import git from 'simple-git'
+import {simpleGit as git} from 'simple-git'
 import {logMessage, logSection} from './log.js'
 
 /**
@@ -20,6 +20,9 @@ import {logMessage, logSection} from './log.js'
  * source files only). Skipping install+build saves ~5–10 minutes of CI per
  * PR for those callers.
  *
+ * Set `CLI_BASELINE_REPOSITORY` to clone another repository, such as a local
+ * one, when the CI checkout is not a clone of this repository's GitHub home.
+ *
  * @param {string} tmpDir
  * @param {{install?: boolean, build?: boolean, ref?: string}} [options]
  * @returns {Promise<string>} path to the cloned repository
@@ -31,7 +34,8 @@ export async function cloneCLIRepository(tmpDir, {install = true, build = true, 
   // Full clone (no `--depth`) so any historical SHA passed as `ref` is
   // reachable. Shopify/cli's history is small enough that this is fast
   // and the clone is throwaway.
-  await git().clone('https://github.com/Shopify/cli.git', directory)
+  const repository = process.env.CLI_BASELINE_REPOSITORY ?? 'https://github.com/Shopify/cli.git'
+  await git().clone(repository, directory)
   if (ref !== 'main') {
     logMessage(`Checking out ${ref}`)
     await git(directory).checkout(ref)

@@ -34,7 +34,7 @@ describe('buildFunctionExtension', () => {
   }
 
   const setup = async (tmpDir: string, config: any = defaultConfig, entryPath?: string) => {
-    const releaseLock = vi.fn()
+    const releaseLock = vi.fn().mockResolvedValue(undefined)
     const stdout = {write: vi.fn()} as unknown as Writable
     const stderr = {write: vi.fn()} as unknown as Writable
     const signal = vi.fn() as any
@@ -248,6 +248,36 @@ describe('buildFunctionExtension', () => {
         }),
       ).rejects.toThrow(AbortError)
       expect(releaseLock).not.toHaveBeenCalled()
+    })
+  })
+
+  test('keeps building when the build lock is compromised during the build', async () => {
+    await fs.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const {extension, stdout, stderr, signal, app} = await setup(tmpDir)
+      // proper-lockfile calls onCompromised from its heartbeat timer, and then rejects a release of that lock.
+      const releaseLock = vi
+        .fn()
+        .mockRejectedValue(Object.assign(new Error('Lock is already released'), {code: 'ERELEASED'}))
+      vi.mocked(lockfile.lock).mockResolvedValue(releaseLock)
+      vi.mocked(exec).mockImplementation(async () => {
+        const lockOptions = vi.mocked(lockfile.lock).mock.calls[0]![1]!
+        lockOptions.onCompromised!(new Error('Unable to update lock within the stale threshold'))
+      })
+
+      // When
+      const result = buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      })
+
+      // Then
+      await expect(result).resolves.toMatchObject({status: 'success'})
+      expect(exec).toHaveBeenCalled()
+      expect(releaseLock).toHaveBeenCalled()
     })
   })
 

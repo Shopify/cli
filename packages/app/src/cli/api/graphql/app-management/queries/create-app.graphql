@@ -3,13 +3,6 @@ mutation CreateApp($initialVersion: AppVersionInput!, $organizationId: ID!) {
     app {
       id
       key
-      activeRoot {
-        clientCredentials {
-          secrets {
-            key
-          }
-        }
-      }
     }
     userErrors {
       category

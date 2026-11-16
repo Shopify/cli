@@ -3,7 +3,12 @@ import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {WebhookTriggerInput} from './trigger.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
-import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {
+  testAppLinked,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, afterEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -22,6 +27,7 @@ const organizationId = ORGANIZATION_APP.organizationId
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
+  vi.unstubAllEnvs()
 })
 
 describe('collectApiVersion', () => {
@@ -170,17 +176,67 @@ describe('collectCredentials', () => {
     expect(credentials).toEqual({apiKey: API_KEY, clientSecret: SECRET})
   })
 
-  test('retrieves the secret from config or remotely when the flag is missing', async () => {
+  test('fetches the secret from the Developer Dashboard when the flag is missing', async () => {
     // Given
-    const inputWithoutSecret = {...input, clientSecret: undefined}
+    const remoteApp = testOrganizationApp()
+    const inputWithoutSecret = {...input, clientSecret: undefined, remoteApp}
 
     // When
     const credentials = await collectCredentials(inputWithoutSecret, DELIVERY_METHOD)
 
     // Then
-    expect(credentials).toEqual({
-      apiKey: ORGANIZATION_APP.apiKey,
-      clientSecret: ORGANIZATION_APP.apiSecretKeys[0]!.secret,
+    expect(credentials).toEqual({apiKey: remoteApp.apiKey, clientSecret: 'api-secret'})
+  })
+
+  test('uses the secret flag with the app API key for EventBridge without a client ID', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+    const appClientSecrets = vi.fn()
+    const remoteApp = testOrganizationApp({
+      apiSecretKeys: [],
+      developerPlatformClient: testDeveloperPlatformClient({appClientSecrets}),
+    })
+    const eventBridgeInput = {...input, clientId: undefined, remoteApp}
+
+    // When
+    const credentials = await collectCredentials(eventBridgeInput, 'event-bridge')
+
+    // Then
+    expect(credentials).toEqual({apiKey: remoteApp.apiKey, clientSecret: SECRET})
+    expect(appClientSecrets).not.toHaveBeenCalled()
+  })
+
+  test('fetches the secret when the secret flag is empty', async () => {
+    // Given
+    const appClientSecrets = vi.fn().mockResolvedValue([{secret: 'fetched-secret'}])
+    const remoteApp = testOrganizationApp({
+      apiSecretKeys: [],
+      developerPlatformClient: testDeveloperPlatformClient({appClientSecrets}),
+    })
+
+    // When
+    const credentials = await collectCredentials(
+      {...input, clientSecret: '', clientId: undefined, remoteApp},
+      'event-bridge',
+    )
+
+    // Then
+    expect(credentials).toEqual({apiKey: remoteApp.apiKey, clientSecret: 'fetched-secret'})
+    expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
+  })
+
+  test('asks for the secret flag when the Developer Dashboard returns no secret', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+    const inputWithoutSecret = {...input, clientSecret: undefined, remoteApp: testOrganizationAppWithoutClientSecret()}
+
+    // When
+    const credentials = collectCredentials(inputWithoutSecret, DELIVERY_METHOD)
+
+    // Then
+    await expect(credentials).rejects.toThrow(AbortError)
+    await expect(collectCredentials(inputWithoutSecret, DELIVERY_METHOD)).rejects.toMatchObject({
+      tryMessage: expect.stringContaining('--client-secret'),
     })
   })
 
@@ -190,7 +246,7 @@ describe('collectCredentials', () => {
     const app = testAppLinked()
 
     // When
-    await collectCredentials({app, remoteApp: ORGANIZATION_APP}, DELIVERY_METHOD)
+    await collectCredentials({app, remoteApp: testOrganizationApp()}, DELIVERY_METHOD)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`

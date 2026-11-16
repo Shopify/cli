@@ -163,7 +163,13 @@ export async function buildFunctionExtension(
   const lockfilePath = joinPath(extension.directory, '.build-lock')
   let releaseLock
   try {
-    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
+    releaseLock = await lockfile.lock(extension.directory, {
+      retries: 20,
+      lockfilePath,
+      // The default handler throws from a timer and crashes the CLI. A lock can be reported as compromised while
+      // this build still holds it, for example on filesystems that don't keep a directory's mtime.
+      onCompromised: (error: Error) => outputDebug(`The function build lock was compromised: ${error.message}`),
+    })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
@@ -241,7 +247,10 @@ export async function buildFunctionExtension(
     newError.errors = error.errors
     throw newError
   } finally {
-    await releaseLock()
+    // A compromised lock is already released, so releasing it again rejects.
+    await releaseLock().catch((error: Error) =>
+      outputDebug(`Failed to release the function build lock: ${error.message}`),
+    )
   }
 }
 
