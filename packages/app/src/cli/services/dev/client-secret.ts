@@ -29,7 +29,7 @@ export async function devClientSecret({
   const secret = await fetchAppClientSecret(remoteApp)
   if (!secret) {
     outputWarn(
-      `GraphiQL isn't available because the Developer Dashboard didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()}`,
+      `GraphiQL isn't available because the App Management API didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()}`,
     )
   }
   return secret

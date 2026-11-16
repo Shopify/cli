@@ -14,7 +14,7 @@ function appWithRemoteSecrets(secrets: {secret: string}[]) {
 }
 
 describe('fetchAppClientSecret', () => {
-  test('returns an already loaded secret without asking the Developer Dashboard', async () => {
+  test('returns an already loaded secret without asking the App Management API', async () => {
     // Given
     const appClientSecrets = vi.fn()
     const remoteApp = testOrganizationApp({
@@ -30,7 +30,7 @@ describe('fetchAppClientSecret', () => {
     expect(appClientSecrets).not.toHaveBeenCalled()
   })
 
-  test('asks the Developer Dashboard for the secret when it is not loaded', async () => {
+  test('asks the App Management API for the secret when it is not loaded', async () => {
     // Given
     const {remoteApp, appClientSecrets} = appWithRemoteSecrets([{secret: 'secret-1'}, {secret: 'secret-2'}])
 
@@ -42,7 +42,7 @@ describe('fetchAppClientSecret', () => {
     expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
   })
 
-  test('returns undefined when the Developer Dashboard returns no secrets', async () => {
+  test('returns undefined when the App Management API returns no secrets', async () => {
     // Given
     const {remoteApp} = appWithRemoteSecrets([])
 
@@ -56,7 +56,7 @@ describe('appClientSecret', () => {
     vi.unstubAllEnvs()
   })
 
-  test('returns the secret the Developer Dashboard returns to an automation token', async () => {
+  test('returns the secret the App Management API returns to an automation token', async () => {
     // Given
     vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
     const {remoteApp} = appWithRemoteSecrets([{secret: 'secret-1'}])
@@ -98,6 +98,7 @@ describe('appClientSecret', () => {
       const message = missingClientSecretTryMessage()
 
       // Then
+      expect(message).toContain(`The token in ${variable} might not have access to the app's client secret.`)
       expect(message).toContain(`unset ${variable}, log in with \`shopify auth login\`, and run the command again`)
       expect(message).not.toContain('automation-token-value')
     },
