@@ -6,6 +6,8 @@ description: Write CLI release description and generate RELEASE_NOTES given a ch
 
 You need to create release documentation for Shopify CLI based on the changeset PR at: $ARGUMENTS
 
+For `main`, the version bump is a World pull request in the CLI zone (`areas/platforms/shopify-cli`), made with `pnpm changeset-manifests`; the mirror carries it to GitHub. Never merge "Version Packages - main" on GitHub: the mirror would refuse every later publish. `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests on GitHub.
+
 ## Step 1: Generate Release Markdown
 
 First, review the changeset PR to understand what's being released. Look for:
@@ -43,7 +45,7 @@ Once the format and wording have been approved, please copy the text to the syst
 
 ## Step 2: Create Partner Release Notes
 
-Based on the release markdown from Step 1, create a file at `RELEASE_NOTES/{VERSION}.md` (extract version from the PR).
+Based on the release markdown from Step 1, create a file at `RELEASE_NOTES/{VERSION}.md` (extract version from the PR). For a `main` release, create it in World's CLI zone, which the mirror publishes, not on GitHub `main`.
 
 The main change you're making here is to remove the PR links from step one. The rest of the content can remain.
 
