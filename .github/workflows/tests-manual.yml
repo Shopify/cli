@@ -32,6 +32,9 @@ on:
         required: true
         default: true
 
+permissions:
+  contents: read
+
 env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
