@@ -68,7 +68,7 @@ describe('openAppGraphiQL', () => {
     )
   })
 
-  test("doesn't start GraphiQL when the Developer Dashboard returns no client secret", async () => {
+  test("doesn't start GraphiQL when the App Management API returns no client secret", async () => {
     vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
     const remoteApp = testOrganizationAppWithoutClientSecret()
 

@@ -883,7 +883,7 @@ describe('app client credentials', () => {
   )
 
   test.each([undefined, 'SHOPIFY_SERVICE_ACCOUNT_TOKEN'])(
-    'fetches the client secrets the Developer Dashboard returns (automation token: %s)',
+    'fetches the client secrets the App Management API returns (automation token: %s)',
     async (variable) => {
       // Given
       if (variable) vi.stubEnv(variable, 'automation-token')
@@ -908,7 +908,7 @@ describe('app client credentials', () => {
   test.each([
     ['no secrets', {secrets: []}],
     ['null credentials', null],
-  ])('returns no client secrets when the Developer Dashboard returns %s', async (_, clientCredentials) => {
+  ])('returns no client secrets when the App Management API returns %s', async (_, clientCredentials) => {
     // Given
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
       app: {id: 'gid://shopify/App/1', activeRoot: {clientCredentials}},

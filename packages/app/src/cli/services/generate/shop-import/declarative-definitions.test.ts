@@ -1144,7 +1144,7 @@ describe('importDeclarativeDefinitions', () => {
     outputMock.clear()
   })
 
-  test('throws an AbortError when the Developer Dashboard returns no client secret', async () => {
+  test('throws an AbortError when the App Management API returns no client secret', async () => {
     const importPromised = importDeclarativeDefinitions({
       remoteApp: testOrganizationAppWithoutClientSecret(),
       store: {

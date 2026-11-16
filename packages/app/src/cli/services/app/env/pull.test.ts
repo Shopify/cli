@@ -104,7 +104,7 @@ describe('env pull', () => {
     })
   })
 
-  test('keeps custom variables, comments, and the local secret when the Developer Dashboard returns no secret', async () => {
+  test('keeps custom variables, comments, and the local secret when the App Management API returns no secret', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const output = mockAndCaptureOutput()

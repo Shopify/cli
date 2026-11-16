@@ -32,7 +32,7 @@ describe('devClientSecret', () => {
     expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
   })
 
-  test('fails for an app with webs when the Developer Dashboard returns no secret', async () => {
+  test('fails for an app with webs when the App Management API returns no secret', async () => {
     // Given
     vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
     const {remoteApp} = appWithRemoteSecrets([])

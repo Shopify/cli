@@ -71,7 +71,7 @@ describe('env show', () => {
     expect(unstyled(stringifyMessage(result))).toContain('SHOPIFY_API_SECRET=fetched-secret')
   })
 
-  test('shows an empty SHOPIFY_API_SECRET and warns when the Developer Dashboard returns no secret', async () => {
+  test('shows an empty SHOPIFY_API_SECRET and warns when the App Management API returns no secret', async () => {
     // Given
     const output = mockAndCaptureOutput()
 

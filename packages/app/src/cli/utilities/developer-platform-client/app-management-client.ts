@@ -386,7 +386,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appClientSecrets({apiKey}: Pick<MinimalAppIdentifiers, 'apiKey'>): Promise<OrganizationApp['apiSecretKeys']> {
     const {app} = await this.appManagementRequest({query: AppClientCredentials, variables: {apiKey}})
-    // The Developer Dashboard decides who can read the secret: it can return no secrets, or no credentials at all.
+    // The App Management API decides who can read the secret: it can return no secrets, or no credentials at all.
     const clientCredentials: {secrets: {key: string}[]} | null | undefined = app?.activeRoot.clientCredentials
     return clientCredentials?.secrets.map((secret) => ({secret: secret.key})) ?? []
   }
