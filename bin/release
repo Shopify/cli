@@ -7,8 +7,9 @@ if [ -z "$tag" ]; then
   tag="nightly"
 fi
 
-if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimental" ] && [ "$tag" != "snapshot" ]; then
-  echo "Error: tag must be one of: latest, nightly, experimental, snapshot"
+# stable-<major>.<minor> publishes a patch for an older line without moving `latest` backwards.
+if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimental" ] && [ "$tag" != "snapshot" ] && [[ ! "$tag" =~ ^stable-[0-9]+\.[0-9]+$ ]]; then
+  echo "Error: tag must be one of: latest, stable-<major>.<minor>, nightly, experimental, snapshot"
   exit 1
 fi
 
@@ -24,6 +25,24 @@ pnpm bundle-for-release
 
 # Create a duplicate package for the CLI (to be deployed as just `shopify`)
 node bin/create-cli-duplicate-package.js
+
+# Packages outside the fixed version group keep their real version in a prerelease. Publishing it
+# under the prerelease tag would put a real version on npm that `latest` never points to, so they
+# are marked private for this run, and `changeset publish` skips them.
+if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ] || [ "$tag" = "snapshot" ]; then
+  node -e '
+    const fs = require("fs")
+    for (const directory of fs.readdirSync("packages")) {
+      const manifestPath = `packages/${directory}/package.json`
+      if (!fs.existsSync(manifestPath)) continue
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"))
+      if (manifest.private || manifest.version.includes("-")) continue
+      manifest.private = true
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n")
+      console.log(`Not publishing ${manifest.name}@${manifest.version} in a prerelease`)
+    }
+  '
+fi
 
 # Publish the packages
 pnpm changeset publish --tag $tag --no-git-tag
