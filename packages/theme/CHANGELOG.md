@@ -1,5 +1,24 @@
 # @shopify/theme
 
+## 5.1.0
+
+### Patch Changes
+
+- 329f213: Fix `shopify theme check --json` failing when Theme Check reports an offense without a known position
+- af985eb: Fix links to other sites in `theme dev` and theme app extension previews, which always showed the storefront's "leaving this store" page and could redirect back to the local server.
+- Updated dependencies [8cb7b7e]
+- Updated dependencies [2ab47c6]
+- Updated dependencies [e210609]
+- Updated dependencies [d1d59da]
+- Updated dependencies [572bb90]
+- Updated dependencies [11b07ee]
+- Updated dependencies [d332546]
+- Updated dependencies [a96bb29]
+- Updated dependencies [f63ce4b]
+- Updated dependencies [c09ed76]
+- Updated dependencies [d418238]
+  - @shopify/cli-kit@5.1.0
+
 ## 5.0.0
 
 ### Major Changes
