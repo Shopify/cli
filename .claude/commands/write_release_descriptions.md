@@ -6,7 +6,7 @@ description: Write CLI release description and generate RELEASE_NOTES given a ch
 
 You need to create release documentation for Shopify CLI based on the changeset PR at: $ARGUMENTS
 
-For `main`, the version bump is a World pull request in the CLI zone (`areas/platforms/shopify-cli`), made with `pnpm changeset-manifests`; the mirror carries it to GitHub (until the automated mirror is live, a Dev Experience member runs the mirror publish by hand; see the CLI Releasing runbook in Vault). Never merge "Version Packages - main" on GitHub: the mirror would refuse every later publish. `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests on GitHub.
+For `main`, the version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`, and the mirror carries it here (until the mirror is automated, a Dev Experience member publishes it by hand). Never merge "Version Packages - main" here: the mirror would refuse every later publish. `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests here.
 
 ## Step 1: Generate Release Markdown
 
@@ -45,7 +45,7 @@ Once the format and wording have been approved, please copy the text to the syst
 
 ## Step 2: Create Partner Release Notes
 
-Based on the release markdown from Step 1, create a file at `RELEASE_NOTES/{VERSION}.md` (extract version from the PR). For a `main` release, create it in World's CLI zone, which the mirror publishes, not on GitHub `main`.
+Based on the release markdown from Step 1, create a file at `RELEASE_NOTES/{VERSION}.md` (extract version from the PR). For a `main` release, create it upstream, in Shopify's internal monorepo, which the mirror publishes here; don't commit it to this repository's `main`.
 
 The main change you're making here is to remove the PR links from step one. The rest of the content can remain.
 

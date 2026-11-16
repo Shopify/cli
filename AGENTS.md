@@ -35,6 +35,7 @@ Adhere to the following guidelines in your code:
 
 ### PR creation
 
+- This repository is published from Shopify's internal monorepo, and its `main` branch changes only through the mirror's pull requests. Shopify staff make code changes upstream, not in pull requests here. Pull requests into this repository are for the files the mirror doesn't manage (`.github`, `.spin`, `dev.yml`, `TORRENT_WORKFLOW.md`, `AGENTS.md`, `.agents`, `.claude` and `.cursor`) and for `stable/*` patch branches. Outside contributors still open pull requests here.
 - Use GitHub stacks for multiple dependant PRs.
 - Follow the template from .github/PULL_REQUEST_TEMPLATE.md.
 - Write a concise description, explaining the problem and the high-level approach. Include implementation details only when they help reviewers understand a decision or tradeoff. Avoid repeating what is clear from the diff. Example for the WHAT section: "Refresh expired credentials before retrying the requests, so users can continue without signing in again".
@@ -56,9 +57,9 @@ If the change is not ready to be public, do not add a changeset.
 
 ## Releases
 
-- `main`'s version bump is a World pull request: in the CLI zone (`areas/platforms/shopify-cli`), run `pnpm changeset-manifests` and open a pull request with the result. The mirror carries it to GitHub (until the automated mirror is live, a Dev Experience member runs the mirror publish by hand; see the CLI Releasing runbook in Vault), and GitHub's `release.yml` publishes as before.
-- Never merge "Version Packages - main" on GitHub. It would put commits on GitHub `main` that the mirror didn't make, and the mirror would refuse every later publish.
-- `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests on GitHub, as before.
+- `main`'s version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`. The mirror carries it here (until the mirror is automated, a Dev Experience member publishes it by hand), and `release.yml` publishes as before.
+- Never merge "Version Packages - main" here. It would put commits on `main` that the mirror didn't make, and the mirror would refuse every later publish.
+- `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests here, as before.
 - Each `X.Y.0` release gets a `stable/X.Y` branch for its patch releases. Only Dev Experience members can create one: after the release job, a Dev Experience member creates it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`.
 - Changes to `stable/*` branches, such as patch-release cherry-picks, need a pull request with code-owner review. Do not push to them directly.
 
