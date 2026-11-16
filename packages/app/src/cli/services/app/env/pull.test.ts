@@ -1,7 +1,11 @@
 import {pullEnv} from './pull.js'
 import {formatAppEnvPullResult} from './pull/result.js'
 import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {
+  testApp,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+} from '../../../models/app/app.test-data.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
@@ -127,12 +131,13 @@ test('returns file facts while preserving custom variables, comments, and a miss
   await file.inTemporaryDirectory(async (directory) => {
     const path = resolvePath(directory, '.env')
     await file.writeFile(path, '# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
-    const remoteApp = testOrganizationApp({apiSecretKeys: []})
+    const remoteApp = testOrganizationAppWithoutClientSecret()
     const output = await pullEnv({app: mockApp() as AppLinkedInterface, remoteApp, organization: ORG1, envFile: path})
     expect(output.result.status).toBe('success')
     expect(output.result.changed).toBe(true)
     expect(output.result.variables).toEqual([
       {name: 'SHOPIFY_API_KEY', value: 'api-key', isSecret: false},
+      {name: 'SHOPIFY_API_SECRET', isSecret: true},
       {name: 'SCOPES', value: 'my-scope', isSecret: false},
     ])
     expect(output.result.content).toContain('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
@@ -140,7 +145,7 @@ test('returns file facts while preserving custom variables, comments, and a miss
     expect(output.previousContent).toBe('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
     const encoded = JSON.parse(stringifyMessage(formatAppEnvPullResult(output, 'json')))
     expect(encoded.path).toBe(resolve(path))
-    expect(encoded.variables.map(({name}: {name: string}) => name)).not.toContain('SHOPIFY_API_SECRET')
+    expect(encoded.variables).toContainEqual({name: 'SHOPIFY_API_SECRET', isSecret: true})
     expect(encoded).not.toHaveProperty('previousContent')
   })
 })

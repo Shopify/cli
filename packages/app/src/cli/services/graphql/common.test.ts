@@ -7,10 +7,16 @@ import {
   isMutation,
 } from './common.js'
 import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+} from '../../models/app/app.test-data.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from '@shopify/cli-kit/node/api/bulk-operations'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
-import {describe, test, expect, vi, beforeEach} from 'vitest'
+import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/session', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/session')
@@ -42,6 +48,10 @@ describe('createAdminSessionAsApp', () => {
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
   })
 
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test('creates admin session with app credentials', async () => {
     const session = await createAdminSessionAsApp(mockRemoteApp, storeFqdn)
 
@@ -53,14 +63,27 @@ describe('createAdminSessionAsApp', () => {
     expect(session).toEqual(mockAdminSession)
   })
 
-  test('throws BugError when app has no API secret keys', async () => {
-    const appWithoutSecret = {
-      ...mockRemoteApp,
+  test('authenticates with the secret the Developer Dashboard returns to an automation token', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+    const appClientSecrets = vi.fn().mockResolvedValue([{secret: 'fetched-secret'}])
+    const remoteApp = testOrganizationApp({
+      apiKey: 'test-api-key',
       apiSecretKeys: [],
-    } as OrganizationApp
+      developerPlatformClient: testDeveloperPlatformClient({appClientSecrets}),
+    })
 
-    await expect(createAdminSessionAsApp(appWithoutSecret, storeFqdn)).rejects.toThrow(
-      'No API secret keys found for app',
+    const session = await createAdminSessionAsApp(remoteApp, storeFqdn)
+
+    expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
+    expect(ensureAuthenticatedAdminAsApp).toHaveBeenCalledWith(storeFqdn, 'test-api-key', 'fetched-secret')
+    expect(session).toEqual(mockAdminSession)
+  })
+
+  test('throws an AbortError when the Developer Dashboard returns no secret', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+
+    await expect(createAdminSessionAsApp(testOrganizationAppWithoutClientSecret(), storeFqdn)).rejects.toThrow(
+      AbortError,
     )
 
     expect(ensureAuthenticatedAdminAsApp).not.toHaveBeenCalled()

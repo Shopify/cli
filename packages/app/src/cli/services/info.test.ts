@@ -4,6 +4,7 @@ import {logMetadataForLoadedContext} from './context.js'
 import {
   testAppLinked,
   testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
   testProject,
   testUIExtension,
   testAppConfigExtensions,
@@ -79,7 +80,9 @@ test('preserves empty collections, false, and omitted dotenv and dev URLs', asyn
 })
 
 test.each([true, false])('preserves web environment JSON with secret present: %s', async (hasSecret) => {
-  const remoteApp = testOrganizationApp({apiSecretKeys: hasSecret ? [{secret: 'secret'}] : []})
+  const remoteApp = hasSecret
+    ? testOrganizationApp({apiSecretKeys: [{secret: 'secret'}]})
+    : testOrganizationAppWithoutClientSecret()
   const result = await info(testAppLinked(), remoteApp, organization, testProject(), {webEnv: true})
   expect(appInfoJsonOutputSchema.encode(result)).toBe(
     hasSecret
