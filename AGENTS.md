@@ -54,6 +54,12 @@ Do not add changesets for tests, refactors, linting, CI, internal tooling, or ge
 
 If the change is not ready to be public, do not add a changeset.
 
+## Stable branches
+
+Each `X.Y.0` release gets a `stable/X.Y` branch for its patch releases. Only Dev Experience members can create one: after the release job, a Dev Experience member creates it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`.
+
+Changes to `stable/*` branches, such as patch-release cherry-picks, need a pull request with code-owner review. Do not push to them directly.
+
 ## Further reading
 
 Read the guides that apply to your task.

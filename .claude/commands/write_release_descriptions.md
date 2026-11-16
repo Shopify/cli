@@ -66,6 +66,10 @@ After creating the file:
 1. Stage it with `git add RELEASE_NOTES/{VERSION}.md`
 2. Commit with message: `Release notes for {VERSION}`
 
+## Step 4: Check the Stable Branch (X.Y.0 releases only)
+
+After the release job for an `X.Y.0` release finishes, check that `stable/X.Y` exists with `git ls-remote --heads origin stable/X.Y`. If it doesn't, the job summary says so: ask a Dev Experience member to create it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`. Only Dev Experience members can create stable branches, and changes to `stable/*` need a pull request with code-owner review.
+
 ## Example Output
 
 For a 3.86.0 release, you would create `RELEASE_NOTES/3.86.md`:

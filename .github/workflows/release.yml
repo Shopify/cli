@@ -302,7 +302,11 @@ jobs:
           echo "Created tag $TAG"
 
       - name: Create stable branch
+        id: stable-branch
         if: steps.changesets.outputs.hasChangesets == 'false' && github.ref_name == 'main' && endsWith(steps.version.outputs.version, '.0')
+        # Only Dev Experience members can create stable/* branches, so this push can be refused.
+        # The release goes on, and the next step asks Dev Experience to create the branch.
+        continue-on-error: true
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -315,6 +319,24 @@ jobs:
           fi
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "Created branch $BRANCH"
+
+      - name: Ask Dev Experience to create the stable branch
+        if: steps.stable-branch.outcome == 'failure'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          MINOR=${VERSION%.0}
+          MESSAGE="Create stable/$MINOR from tag $VERSION; only Dev Experience can."
+          echo "::warning title=stable/$MINOR was not created::$MESSAGE"
+          {
+            echo "### stable/$MINOR was not created"
+            echo
+            echo "$MESSAGE"
+            echo
+            echo '```sh'
+            echo "git push origin refs/tags/$VERSION:refs/heads/stable/$MINOR"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create GitHub release
         if: steps.changesets.outputs.hasChangesets == 'false' && !endsWith(steps.version.outputs.version, '.0.0')
