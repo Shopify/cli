@@ -6,6 +6,8 @@ description: Write CLI release description and generate RELEASE_NOTES given a ch
 
 You need to create release documentation for Shopify CLI based on the changeset PR at: $ARGUMENTS
 
+For `main`, the version bump is a World pull request in the CLI zone (`areas/platforms/shopify-cli`), made with `pnpm changeset-manifests`; the mirror carries it to GitHub (until the automated mirror is live, a Dev Experience member runs the mirror publish by hand; see the CLI Releasing runbook in Vault). Never merge "Version Packages - main" on GitHub: the mirror would refuse every later publish. `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests on GitHub.
+
 ## Step 1: Generate Release Markdown
 
 First, review the changeset PR to understand what's being released. Look for:
@@ -43,7 +45,7 @@ Once the format and wording have been approved, please copy the text to the syst
 
 ## Step 2: Create Partner Release Notes
 
-Based on the release markdown from Step 1, create a file at `RELEASE_NOTES/{VERSION}.md` (extract version from the PR).
+Based on the release markdown from Step 1, create a file at `RELEASE_NOTES/{VERSION}.md` (extract version from the PR). For a `main` release, create it in World's CLI zone, which the mirror publishes, not on GitHub `main`.
 
 The main change you're making here is to remove the PR links from step one. The rest of the content can remain.
 
@@ -65,6 +67,10 @@ Use this format:
 After creating the file:
 1. Stage it with `git add RELEASE_NOTES/{VERSION}.md`
 2. Commit with message: `Release notes for {VERSION}`
+
+## Step 4: Check the Stable Branch (X.Y.0 releases only)
+
+After the release job for an `X.Y.0` release finishes, check that `stable/X.Y` exists with `git ls-remote --heads origin stable/X.Y`. If it doesn't, the job summary says so: ask a Dev Experience member to create it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`. Only Dev Experience members can create stable branches, and changes to `stable/*` need a pull request with code-owner review.
 
 ## Example Output
 
