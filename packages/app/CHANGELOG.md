@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 5.0.2
+
+### Patch Changes
+
+- de90873: Improve error messages and guidance for app commands.
+  - @shopify/organizations@5.0.2
+  - @shopify/cli-kit@5.0.2
+  - @shopify/theme@5.0.2
+  - @shopify/plugin-cloudflare@5.0.2
+
 ## 5.0.1
 
 ### Patch Changes
