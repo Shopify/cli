@@ -10,6 +10,9 @@ on:
       - 'docs/**'
       - 'RELEASE_NOTES/**'
 
+permissions:
+  contents: read
+
 concurrency:
   group: shopify-cli-main-${{ github.run_id }}
   cancel-in-progress: true
