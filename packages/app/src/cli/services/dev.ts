@@ -10,6 +10,7 @@ import {
 import {showReusedDevValues} from './context.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
+import {devClientSecret} from './dev/client-secret.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {renderDev} from './dev/ui.js'
 import {DevProcessFunction} from './dev/processes/types.js'
@@ -26,7 +27,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {ports} from '../constants.js'
+import {environmentVariableNames, ports} from '../constants.js'
 import {generateCertificate} from '../utilities/mkcert.js'
 import {throwUidMappingError} from '../prompts/uid-mapping-error.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
@@ -34,11 +35,12 @@ import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
-import {getBackendPort} from '@shopify/cli-kit/node/environment'
+import {getBackendPort, getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -91,6 +93,13 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteApp.flags,
   )
   remoteApp.configuration = remoteConfiguration
+
+  // Before anything changes remotely, so dev without a usable secret stops before it updates the app URLs.
+  const apiSecret = await devClientSecret({
+    remoteApp,
+    hasWebs: app.webs.length > 0,
+    graphiqlEnabled: !isTruthy(getEnvironmentVariables()[environmentVariableNames.disableGraphiQLExplorer]),
+  })
 
   showReusedDevValues({
     app,
@@ -174,6 +183,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey: commandOptions.graphiqlKey,
+    apiSecret,
   }
 }
 

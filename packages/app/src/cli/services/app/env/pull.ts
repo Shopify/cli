@@ -2,7 +2,12 @@ import {AppLinkedInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {logMetadataForLoadedContext} from '../../context.js'
 
-import {Organization, OrganizationApp} from '../../../models/organization.js'
+import {
+  Organization,
+  OrganizationApp,
+  fetchAppClientSecret,
+  warnClientSecretOmitted,
+} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -17,10 +22,13 @@ interface PullEnvOptions {
 
 export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOptions): Promise<OutputMessage> {
   await logMetadataForLoadedContext(remoteApp, organization.source)
+  const apiSecret = await fetchAppClientSecret(remoteApp)
+  if (!apiSecret) warnClientSecretOmitted()
 
   const updatedValues = {
     SHOPIFY_API_KEY: remoteApp.apiKey,
-    SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0]?.secret,
+    // Without a secret, the file keeps its current value, so pulling never blanks a local secret.
+    ...(apiSecret ? {SHOPIFY_API_SECRET: apiSecret} : {}),
     SCOPES: getAppScopes(app.configuration),
   }
 

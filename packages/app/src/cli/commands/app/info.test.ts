@@ -2,6 +2,7 @@ import AppInfo from './info.js'
 import {
   testAppLinked,
   testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
   testProject,
   testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
@@ -95,7 +96,9 @@ test('keeps app information on stderr in text mode', async () => {
 test.each([{secret: 'api-secret'}, {secret: undefined}])(
   'preserves web environment JSON: $secret',
   async ({secret}) => {
-    const remoteApp = testOrganizationApp({apiSecretKeys: secret === undefined ? [] : [{secret}]})
+    const remoteApp = secret
+      ? testOrganizationApp({apiSecretKeys: [{secret}]})
+      : testOrganizationAppWithoutClientSecret()
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(['--web-env', '--json'], testAppLinked(), remoteApp)
       expect(stdout()).toBe(
@@ -103,18 +106,22 @@ test.each([{secret: 'api-secret'}, {secret: undefined}])(
           ? '{\n  "SHOPIFY_API_KEY": "api-key",\n  "SCOPES": "read_products"\n}\n'
           : '{\n  "SHOPIFY_API_KEY": "api-key",\n  "SHOPIFY_API_SECRET": "api-secret",\n  "SCOPES": "read_products"\n}\n',
       )
-      expect(stderr()).toBe('')
+      if (secret === undefined) {
+        expect(stderr()).toContain("SHOPIFY_API_SECRET isn't included")
+      } else {
+        expect(stderr()).toBe('')
+      }
     })
   },
 )
 
 test('keeps web environment text on stdout, with an empty missing secret', async () => {
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runCommand(['--web-env'], testAppLinked(), testOrganizationApp({apiSecretKeys: []}))
+    await runCommand(['--web-env'], testAppLinked(), testOrganizationAppWithoutClientSecret())
     expect(unstyled(stdout())).toBe(
       '\n    SHOPIFY_API_KEY=api-key\n    SHOPIFY_API_SECRET=\n    SCOPES=read_products\n  \n',
     )
-    expect(stderr()).toBe('')
+    expect(stderr()).toContain("SHOPIFY_API_SECRET isn't included")
   })
 })
 

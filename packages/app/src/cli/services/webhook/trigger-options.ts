@@ -10,6 +10,7 @@ import {
 import {WebhookTriggerInput} from './trigger.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {appClientSecret} from '../../models/organization.js'
 import {renderCurrentlyUsedConfigInfo} from '../context.js'
 import {basename} from '@shopify/cli-kit/node/path'
 
@@ -46,9 +47,11 @@ export async function collectCredentials(
     configFile: basename(app.configPath),
   })
 
-  const clientSecret = remoteApp.apiSecretKeys.find((elm) => elm.secret)!.secret
+  // An empty --client-secret counts as absent, as in the check above.
+  if (secret) return {clientSecret: secret, apiKey: remoteApp.apiKey}
+
   return {
-    clientSecret,
+    clientSecret: await appClientSecret(remoteApp, 'Pass the secret with the --client-secret flag.'),
     apiKey: remoteApp.apiKey,
   }
 }

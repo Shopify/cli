@@ -1,11 +1,16 @@
 import {pullEnv} from './pull.js'
 import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {
+  testApp,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+} from '../../../models/app/app.test-data.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 const ORG1: Organization = {
   id: '1',
@@ -96,6 +101,25 @@ describe('env pull', () => {
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "No changes to ${filePath}"
       `)
+    })
+  })
+
+  test('keeps custom variables, comments, and the local secret when the App Management API returns no secret', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const output = mockAndCaptureOutput()
+      const filePath = resolvePath(tmpDir, '.env')
+      file.writeFileSync(filePath, '# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
+
+      // When
+      await pullEnv({app, remoteApp: testOrganizationAppWithoutClientSecret(), organization: ORG1, envFile: filePath})
+
+      // Then
+      await expect(file.readFile(filePath)).resolves.toBe(
+        '# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret\nSHOPIFY_API_KEY=api-key\nSCOPES=my-scope',
+      )
+      expect(output.warn()).toContain("SHOPIFY_API_SECRET isn't included")
+      output.clear()
     })
   })
 })

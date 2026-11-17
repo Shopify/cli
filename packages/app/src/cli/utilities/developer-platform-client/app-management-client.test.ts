@@ -36,6 +36,9 @@ import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/availab
 import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {CreateApp} from '../../api/graphql/app-management/generated/create-app.js'
+import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
+import {AppClientCredentials} from '../../api/graphql/app-management/generated/app-client-credentials.js'
+import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
@@ -45,7 +48,7 @@ import {MinimalAppIdentifiers, OrganizationSource} from '../../models/organizati
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {fetchOrganizationById, fetchOrganizations} from '@shopify/organizations'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {
@@ -703,7 +706,7 @@ describe('createApp', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedApiVersionResult)
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
       appCreate: {
-        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        app: {id: '1', key: 'key'},
         userErrors: [],
       },
     })
@@ -755,7 +758,7 @@ describe('createApp', () => {
       id: '1',
       key: 'api-key',
       apiKey: 'api-key',
-      apiSecretKeys: [{secret: 'secret'}],
+      apiSecretKeys: [],
       flags: [],
       grantedScopes: [],
       organizationId: '1',
@@ -772,11 +775,6 @@ describe('createApp', () => {
         app: {
           id: expectedApp.id,
           key: expectedApp.key,
-          activeRoot: {
-            clientCredentials: {
-              secrets: [{key: 'secret'}],
-            },
-          },
         },
         userErrors: [],
       },
@@ -799,7 +797,7 @@ describe('createApp', () => {
     })
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
       appCreate: {
-        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        app: {id: '1', key: 'key'},
         userErrors: [],
       },
     })
@@ -837,6 +835,140 @@ describe('createApp', () => {
   })
 })
 
+describe('app client credentials', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  const activeAppReleaseResponse = {
+    app: {
+      id: 'gid://shopify/App/1',
+      key: 'api-key',
+      organizationId: 'gid://shopify/Organization/1',
+      activeRoot: {grantedShopifyApprovalScopes: ['read_products']},
+      activeRelease: {id: 'gid://shopify/Release/1', version: {name: 'my-app', appModules: []}},
+    },
+  }
+
+  function clientWithToken() {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    return client
+  }
+
+  test.each([ActiveAppReleaseFromApiKey, CreateApp])(
+    "app lookups and creation don't select client credentials",
+    (query) => {
+      expect(JSON.stringify(query)).not.toContain('clientCredentials')
+    },
+  )
+
+  test.each([undefined, 'SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
+    'looks up an app without its client secret (automation token: %s)',
+    async (variable) => {
+      // Given
+      if (variable) vi.stubEnv(variable, 'automation-token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(activeAppReleaseResponse)
+
+      // When
+      const app = await clientWithToken().appFromIdentifiers('api-key')
+
+      // Then
+      expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+        expect.objectContaining({query: ActiveAppReleaseFromApiKey, variables: {apiKey: 'api-key'}}),
+      )
+      expect(app).toMatchObject({id: 'gid://shopify/App/1', apiKey: 'api-key', title: 'my-app', apiSecretKeys: []})
+    },
+  )
+
+  test.each([undefined, 'SHOPIFY_SERVICE_ACCOUNT_TOKEN'])(
+    'fetches the client secrets the App Management API returns (automation token: %s)',
+    async (variable) => {
+      // Given
+      if (variable) vi.stubEnv(variable, 'automation-token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        app: {
+          id: 'gid://shopify/App/1',
+          activeRoot: {clientCredentials: {secrets: [{key: 'secret-1'}, {key: 'secret-2'}]}},
+        },
+      })
+
+      // When
+      const secrets = await clientWithToken().appClientSecrets({apiKey: 'api-key'})
+
+      // Then
+      expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+        expect.objectContaining({query: AppClientCredentials, variables: {apiKey: 'api-key'}}),
+      )
+      expect(secrets).toEqual([{secret: 'secret-1'}, {secret: 'secret-2'}])
+    },
+  )
+
+  test.each([
+    ['no secrets', {secrets: []}],
+    ['null credentials', null],
+  ])('returns no client secrets when the App Management API returns %s', async (_, clientCredentials) => {
+    // Given
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      app: {id: 'gid://shopify/App/1', activeRoot: {clientCredentials}},
+    })
+
+    // When
+    const secrets = await clientWithToken().appClientSecrets({apiKey: 'api-key'})
+
+    // Then
+    expect(secrets).toEqual([])
+  })
+
+  test('reads the active app version without the client secret', async () => {
+    // Given
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(activeAppReleaseResponse)
+
+    // When
+    const version = await clientWithToken().activeAppVersion(testOrganizationApp({apiKey: 'api-key'}))
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      expect.objectContaining({query: ActiveAppReleaseFromApiKey, variables: {apiKey: 'api-key'}}),
+    )
+    expect(version).toMatchObject({id: 'gid://shopify/Release/1', appModuleVersions: []})
+  })
+
+  test('diffs app versions without the client secret', async () => {
+    // Given
+    vi.mocked(appManagementRequestDoc).mockImplementation(async ({query}) => {
+      if (query === AppVersionById) return {version: {appModules: []}}
+      return activeAppReleaseResponse
+    })
+
+    // When
+    const diff = await clientWithToken().appVersionsDiff(testOrganizationApp({apiKey: 'api-key'}), {
+      appVersionId: 1,
+      versionId: 'gid://shopify/Version/1',
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).not.toHaveBeenCalledWith(
+      expect.objectContaining({query: AppClientCredentials}),
+    )
+    expect(diff).toEqual({app: {versionsDiff: {added: [], updated: [], removed: []}}})
+  })
+
+  test('creates an app without its client secret', async () => {
+    // Given
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({publicApiVersions: [{handle: '2025-01'}]})
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {app: {id: '1', key: 'api-key'}, userErrors: []},
+    })
+
+    // When
+    const app = await clientWithToken().createApp(testOrganization(), {name: 'app-name'})
+
+    // Then
+    expect(app).toMatchObject({apiKey: 'api-key', apiSecretKeys: []})
+  })
+})
 describe('apiVersions', () => {
   test('fetches available public API versions', async () => {
     // Given
@@ -1536,7 +1668,6 @@ describe('AppManagementClient', () => {
           organizationId: 'gid://shopify/Organization/2',
           activeRoot: {
             grantedShopifyApprovalScopes: ['read_products'],
-            clientCredentials: {secrets: [{key: 'secret-1'}]},
           },
           activeRelease: {
             id: 'gid://shopify/Release/1',
@@ -1557,7 +1688,7 @@ describe('AppManagementClient', () => {
         id: 'gid://shopify/App/1',
         title: 'My App',
         apiKey,
-        apiSecretKeys: [{secret: 'secret-1'}],
+        apiSecretKeys: [],
         organizationId: '2',
         grantedScopes: ['read_products'],
         applicationUrl: undefined,

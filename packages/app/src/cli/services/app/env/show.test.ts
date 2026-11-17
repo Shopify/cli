@@ -1,16 +1,24 @@
 import {showEnv} from './show.js'
 import {fetchOrganizations} from '../../dev/fetch.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
-import {OrganizationSource} from '../../../models/organization.js'
+import {
+  testApp,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+  testDeveloperPlatformClient,
+} from '../../../models/app/app.test-data.js'
+import {Organization, OrganizationSource} from '../../../models/organization.js'
 import {selectOrganizationPrompt} from '@shopify/organizations'
 import {describe, expect, vi, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../dev/fetch.js')
 vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
+
+const ORGANIZATION: Organization = {id: '123', businessName: 'test', source: OrganizationSource.BusinessPlatform}
 
 describe('env show', () => {
   test('outputs the new environment', async () => {
@@ -45,6 +53,41 @@ describe('env show', () => {
         SCOPES=my-scope
       "
     `)
+  })
+
+  test('fetches the client secret when the app lookup did not include it', async () => {
+    // Given
+    const appClientSecrets = vi.fn().mockResolvedValue([{secret: 'fetched-secret'}])
+    const remoteApp = testOrganizationApp({
+      apiSecretKeys: [],
+      developerPlatformClient: testDeveloperPlatformClient({appClientSecrets}),
+    })
+
+    // When
+    const result = await showEnv(mockApp(), remoteApp, ORGANIZATION)
+
+    // Then
+    expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
+    expect(unstyled(stringifyMessage(result))).toContain('SHOPIFY_API_SECRET=fetched-secret')
+  })
+
+  test('shows an empty SHOPIFY_API_SECRET and warns when the App Management API returns no secret', async () => {
+    // Given
+    const output = mockAndCaptureOutput()
+
+    // When
+    const result = await showEnv(mockApp(), testOrganizationAppWithoutClientSecret(), ORGANIZATION)
+
+    // Then
+    expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
+    "
+        SHOPIFY_API_KEY=api-key
+        SHOPIFY_API_SECRET=
+        SCOPES=my-scope
+      "
+    `)
+    expect(output.warn()).toContain("SHOPIFY_API_SECRET isn't included")
+    output.clear()
   })
 })
 
