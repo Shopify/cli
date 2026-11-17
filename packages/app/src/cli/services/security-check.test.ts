@@ -12,7 +12,7 @@ import {
 } from './security-check.test-data.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {
@@ -560,7 +560,8 @@ describe('securityCheck --list-files', () => {
             'app',
             'security',
             'check',
-            {flag: '--path', value: relativePath(cwd(), appDirectory)},
+            // The app is outside the working directory, so the generated command keeps its absolute path.
+            {flag: '--path', value: appDirectory},
             {flag: '--exclude', value: 'generated'},
             '--no-git-ignore',
           ],

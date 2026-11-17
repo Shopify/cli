@@ -6,6 +6,8 @@ const TIMEOUTS = {
   normal: 5000,
   windows: 13000,
   macos: 13000,
+  // CI machines can run the suite several times slower than a developer machine.
+  ci: 20000,
   debug: 180000,
 }
 
@@ -25,6 +27,8 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
     testTimeout = TIMEOUTS.windows
   } else if (process.env.RUNNER_OS === 'macOS') {
     testTimeout = TIMEOUTS.macos
+  } else if (process.env.CI) {
+    testTimeout = TIMEOUTS.ci
   }
 
   return defineConfig({

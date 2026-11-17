@@ -68,7 +68,7 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
-  /** The app's client secret, or undefined when dev doesn't need it or the Developer Dashboard didn't return it. */
+  /** The app's client secret, or undefined when dev doesn't need it or the App Management API didn't return it. */
   apiSecret: string | undefined
 }
 

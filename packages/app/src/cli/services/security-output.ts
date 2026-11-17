@@ -130,7 +130,11 @@ function securityBody(input: SecurityReportInput): TokenItem {
 
 function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[] {
   return [
-    ['Have your coding agent run the agent checks'],
+    [
+      'Have your coding agent run the agent checks, following',
+      {command: formatAppSecurityCommand(input.commands.instructions)},
+      {char: '.'},
+    ],
     ['Record the agent results with', {command: formatAppSecurityCommand(input.commands.record)}],
     ['Review the results with', {command: formatAppSecurityCommand(input.commands.review)}],
   ]

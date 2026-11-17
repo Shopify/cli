@@ -212,7 +212,11 @@ describe('buildSecurityAlert', () => {
       body: {
         list: {
           items: [
-            ['Have your coding agent run the agent checks'],
+            [
+              'Have your coding agent run the agent checks, following',
+              {command: formatAppSecurityCommand(commands.instructions)},
+              {char: '.'},
+            ],
             ['Record the agent results with', {command: formatAppSecurityCommand(commands.record)}],
             ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
           ],
@@ -317,7 +321,11 @@ describe('buildSecurityAlert', () => {
     expect(section(reportInput({commands}), 'Next steps')?.body).toEqual({
       list: {
         items: [
-          ['Have your coding agent run the agent checks'],
+          [
+            'Have your coding agent run the agent checks, following',
+            {command: formatAppSecurityCommand(commands.instructions)},
+            {char: '.'},
+          ],
           ['Record the agent results with', {command: recordCommand}],
           ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
         ],

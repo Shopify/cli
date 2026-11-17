@@ -33,6 +33,7 @@ function commandsWithPath(pathValue: string, excludePatterns: string[] = []): Ap
       command: 'shopify',
       args: [...args('check'), ...excludePatterns.map((value) => ({flag: '--exclude', value}))],
     },
+    instructions: {command: 'shopify', args: args('instructions')},
     record: {command: 'shopify', args: args('record'), stdinPlaceholder: '<findings.json>'},
     review: {command: 'shopify', args: args('review')},
     clean: {command: 'shopify', args: args('clean')},
@@ -184,6 +185,7 @@ describe('resolveAppSecurityCommands', () => {
 
     for (const [subcommand, command] of Object.entries({
       check: commands.scan,
+      instructions: commands.instructions,
       record: commands.record,
       review: commands.review,
       clean: commands.clean,
@@ -192,13 +194,25 @@ describe('resolveAppSecurityCommands', () => {
     }
   })
 
-  test('renders --path relative to the working directory when it is somewhere else', () => {
+  test('renders --path relative to the working directory when the app is inside it', () => {
     const nested = resolveAppSecurityCommands(configSelection(), joinPath(cwd(), 'apps', 'web'))
-    const parent = resolveAppSecurityCommands(configSelection(), dirname(cwd()))
 
     expect(nested.scan.args).toEqual(['app', 'security', 'check', {flag: '--path', value: joinPath('apps', 'web')}])
+    expect(nested.instructions.args).toEqual([
+      'app',
+      'security',
+      'instructions',
+      {flag: '--path', value: joinPath('apps', 'web')},
+    ])
     expect(nested.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: joinPath('apps', 'web')}])
-    expect(parent.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '..'}])
+  })
+
+  test('renders an absolute --path when the app is outside the working directory', () => {
+    const outside = joinPath(dirname(cwd()), 'secapp')
+    const commands = resolveAppSecurityCommands(configSelection(), outside)
+
+    expect(commands.scan.args).toEqual(['app', 'security', 'check', {flag: '--path', value: outside}])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: outside}])
   })
 
   test.skipIf(process.platform === 'win32')(
@@ -243,7 +257,7 @@ describe('resolveAppSecurityCommands', () => {
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', ...flags])
   })
 
-  test('repeats the scope on check only: --include-dir and --exclude as typed and in order, then --no-git-ignore', () => {
+  test('repeats the scope on check and its instructions only: --include-dir and --exclude as typed and in order, then --no-git-ignore', () => {
     const scope: AppSecurityScope = {
       include_dirs: ['../backend', './lib/', '../backend'],
       excludes: ['generated', '../shared/**'],
@@ -263,6 +277,8 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--exclude', value: '../shared/**'},
       '--no-git-ignore',
     ])
+    // Standalone `instructions` take no scope and would start the agent with an unscoped scan.
+    expect(commands.instructions.args).toEqual([...commands.scan.args, '--print-instructions'])
     const configFlag = {flag: '--config', value: 'staging'}
     expect(commands.record.args).toEqual(['app', 'security', 'record', configFlag])
     expect(commands.review.args).toEqual(['app', 'security', 'review', configFlag])
@@ -298,11 +314,10 @@ describe('resolveAppSecurityCommands', () => {
   })
 
   test('omits the scope flags when the scope is empty', () => {
-    expect(resolveAppSecurityCommands(configSelection(), cwd(), noScope).scan.args).toEqual([
-      'app',
-      'security',
-      'check',
-    ])
+    const commands = resolveAppSecurityCommands(configSelection(), cwd(), noScope)
+
+    expect(commands.scan.args).toEqual(['app', 'security', 'check'])
+    expect(commands.instructions.args).toEqual(['app', 'security', 'instructions'])
   })
 
   test('shows record reading a findings file from stdin in each shell', () => {

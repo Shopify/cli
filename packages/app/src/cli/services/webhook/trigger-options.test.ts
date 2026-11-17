@@ -176,7 +176,7 @@ describe('collectCredentials', () => {
     expect(credentials).toEqual({apiKey: API_KEY, clientSecret: SECRET})
   })
 
-  test('fetches the secret from the Developer Dashboard when the flag is missing', async () => {
+  test('fetches the secret from the App Management API when the flag is missing', async () => {
     // Given
     const remoteApp = testOrganizationApp()
     const inputWithoutSecret = {...input, clientSecret: undefined, remoteApp}
@@ -225,7 +225,7 @@ describe('collectCredentials', () => {
     expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
   })
 
-  test('asks for the secret flag when the Developer Dashboard returns no secret', async () => {
+  test('asks for the secret flag when the App Management API returns no secret', async () => {
     // Given
     vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
     const inputWithoutSecret = {...input, clientSecret: undefined, remoteApp: testOrganizationAppWithoutClientSecret()}

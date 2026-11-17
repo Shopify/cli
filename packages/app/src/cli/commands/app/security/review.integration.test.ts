@@ -356,6 +356,8 @@ describe('app security review command boundary', () => {
           eolApiVersionJson(appDirectory),
         ],
         blocking: {level: 'none', blockedCheckCount: 0},
+        failOnUnresolved: false,
+        missingCheckIds: expect.any(Array),
       })
       expect(result.stderr).toBe('')
     })
@@ -487,6 +489,8 @@ describe('app security review command boundary', () => {
           eolApiVersionJson(appDirectory),
         ],
         blocking: {level: 'none', blockedCheckCount: 0},
+        failOnUnresolved: false,
+        missingCheckIds: expect.any(Array),
       })
       expect(result.stderr).toBe('')
     })
@@ -510,6 +514,8 @@ describe('app security review command boundary', () => {
         scopeDiffers: false,
         checks: [],
         blocking: {level: 'high', blockedCheckCount: 0},
+        failOnUnresolved: false,
+        missingCheckIds: expect.any(Array),
       })
       expect(result.stderr).toBe('')
     })
@@ -544,6 +550,91 @@ describe('app security review command boundary', () => {
     })
   })
 
+  test('--sarif writes only the SARIF log to stdout, and the --blocking reason to stderr', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+
+      const result = await runCommand(['--path', directory, '--blocking', 'low', '--sarif'])
+
+      expect(result.exitCode).toBe(1)
+      const sarif = JSON.parse(result.stdout)
+      expect(sarif.version).toBe('2.1.0')
+      // One rule per check. CREDENTIAL_LOG_LEAKAGE prefers the agent, so its deterministic finding is superseded and
+      // left out; MISSING_TENANT_ISOLATION's only finding is suppressed, so it's left out too and the rule has no results.
+      expect(sarif.runs[0].tool.driver.rules.map((rule: {id: string}) => rule.id)).toStrictEqual([
+        'CREDENTIAL_LOG_LEAKAGE',
+        'MISSING_TENANT_ISOLATION',
+        'EOL_API_VERSION',
+      ])
+      expect(
+        sarif.runs[0].results.map((sarifResult: {ruleId: string; level: string}) => [
+          sarifResult.ruleId,
+          sarifResult.level,
+        ]),
+      ).toStrictEqual([
+        ['CREDENTIAL_LOG_LEAKAGE', 'error'],
+        ['EOL_API_VERSION', 'note'],
+      ])
+      expect(boxText(result.stderr)).toContain('Blocking 2 checks at or above low (--blocking low).')
+    })
+  })
+
+  test('--sarif writes nothing to stderr when every reviewed check ran and nothing blocks', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+
+      const result = await runCommand([
+        '--path',
+        directory,
+        '--sarif',
+        '--check-id',
+        'CREDENTIAL_LOG_LEAKAGE',
+        '--check-id',
+        'EOL_API_VERSION',
+        '--check-id',
+        'MISSING_TENANT_ISOLATION',
+      ])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout).runs[0].invocations[0]).toStrictEqual({
+        executionSuccessful: true,
+        toolExecutionNotifications: [],
+      })
+      expect(result.stderr).toBe('')
+    })
+  })
+
+  test('--sarif lists the checks without results and warns about them on stderr', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+
+      const result = await runCommand(['--path', directory, '--sarif'])
+
+      expect(result.exitCode).toBe(0)
+      const [invocation] = JSON.parse(result.stdout).runs[0].invocations
+      expect(invocation.executionSuccessful).toBe(false)
+      expect(invocation.toolExecutionNotifications).toContainEqual({
+        level: 'warning',
+        message: {text: 'SQL_INJECTION has no result: neither results file has this check.'},
+        descriptor: {id: 'no-result'},
+      })
+      expect(boxText(result.stderr)).toMatch(
+        /The SARIF log has \d+ checks without results, so code scanning could close their open alerts as fixed\./,
+      )
+    })
+  })
+
+  test('refuses --sarif with --json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings})
+
+      const result = await runJsonCommand(['--path', directory, '--sarif'])
+
+      expect(result.exitCode).toBe(2)
+      expect(JSON.parse(result.stdout).error.message).toContain('cannot also be provided when using --sarif')
+    })
+  })
+
   test('--json with --blocking none is valid and exits 0 whatever the active findings', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
@@ -552,6 +643,31 @@ describe('app security review command boundary', () => {
 
       expect(result.exitCode).toBe(0)
       expect(JSON.parse(result.stdout)).toMatchObject({valid: true, blocking: {level: 'none', blockedCheckCount: 0}})
+    })
+  })
+
+  test('--json with --fail-on-unresolved exits 1 when the agent never recorded its checks', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings})
+
+      const result = await runJsonCommand(['--path', directory, '--fail-on-unresolved'])
+
+      expect(result.exitCode).toBe(1)
+      const document = JSON.parse(result.stdout)
+      expect(document).toMatchObject({valid: false, failOnUnresolved: true, blocking: {blockedCheckCount: 0}})
+      expect(document.missingCheckIds).toContain('SQL_INJECTION')
+    })
+  })
+
+  test('--json with --fail-on-unresolved accepts --check-id for a check without results and fails on it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: deterministicFindings})
+
+      const result = await runJsonCommand(['--path', directory, '--check-id', 'SQL_INJECTION', '--fail-on-unresolved'])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({valid: false, checks: [], missingCheckIds: ['SQL_INJECTION']})
+      expect(result.stderr).toBe('')
     })
   })
 
@@ -685,7 +801,7 @@ describe('app security review command boundary', () => {
           type: 'abort',
           message: 'Unknown check IDs: NOT_A_CHECK, ALSO_NOT_A_CHECK.',
           code: 'unknown-check-id',
-          tryMessage: 'Pass --check-id with one of the checks in the results files.',
+          tryMessage: 'Pass --check-id with one of the available check IDs.',
           customSections: [{title: 'Available check IDs', body: expect.any(String)}],
           details: {checkIds: ['NOT_A_CHECK', 'ALSO_NOT_A_CHECK']},
         },

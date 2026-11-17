@@ -63,7 +63,7 @@ describe('createAdminSessionAsApp', () => {
     expect(session).toEqual(mockAdminSession)
   })
 
-  test('authenticates with the secret the Developer Dashboard returns to an automation token', async () => {
+  test('authenticates with the secret the App Management API returns to an automation token', async () => {
     vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
     const appClientSecrets = vi.fn().mockResolvedValue([{secret: 'fetched-secret'}])
     const remoteApp = testOrganizationApp({
@@ -79,7 +79,7 @@ describe('createAdminSessionAsApp', () => {
     expect(session).toEqual(mockAdminSession)
   })
 
-  test('throws an AbortError when the Developer Dashboard returns no secret', async () => {
+  test('throws an AbortError when the App Management API returns no secret', async () => {
     vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
 
     await expect(createAdminSessionAsApp(testOrganizationAppWithoutClientSecret(), storeFqdn)).rejects.toThrow(

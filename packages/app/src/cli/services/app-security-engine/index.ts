@@ -11,6 +11,8 @@
  */
 export {getAgentInstructions, getEngineVersion, scanApp} from './run.js'
 export {listGatheredPaths} from './scanners/index.js'
+export {getAgentCheckCatalog} from './registry/index.js'
+export type {AgentCheckCatalogEntry} from './registry/index.js'
 export type {AppSecurityEngineMetadata, AppSecurityScan} from './run.js'
 export {translateFindingsDocument} from './results/translate.js'
 export type {TranslateFindingsDocumentResult} from './results/translate.js'
@@ -46,6 +48,7 @@ export {
 } from './types.js'
 export {groupIssues, skippedFileCounts} from './output/group-issues.js'
 export {checkDocsUrl} from './rules/catalog.js'
+export {listSettleableCheckIds} from './registry/index.js'
 export type {IssueGroup} from './output/group-issues.js'
 export type {
   AgentFindingsDocument,

@@ -1,6 +1,6 @@
 import {deepStrict, errorsToString} from './schema.js'
 import {describe, expect, test} from 'vitest'
-import {z} from 'zod'
+import {z} from 'zod/v3'
 
 describe('deepStrict', () => {
   test('validates as wrong content an optional sub element as strict', async () => {

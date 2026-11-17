@@ -246,7 +246,7 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
       valid: zod
         .boolean()
         .describe(
-          'Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes.',
+          'Whether the review passed: no check in checks has an active finding at or above the blocking level and, with failOnUnresolved, no check is unresolved and missingCheckIds is empty.',
         ),
       app: appSecurityAppSchema,
       resultsDirectory: createAbsolutePathSchema().describe('The absolute path of the results directory.'),
@@ -272,6 +272,10 @@ export const appSecurityReviewJsonOutputSchema = defineJsonOutputSchema({
         .array(appSecurityCheckSchema)
         .describe('The checks after --check-id, most severe first, then by ID. Empty when no results file exists.'),
       blocking: appSecurityBlockingSchema,
+      failOnUnresolved: zod.boolean().describe('Whether --fail-on-unresolved was passed.'),
+      missingCheckIds: zod
+        .array(zod.string())
+        .describe('The IDs of the checks after --check-id that have no result in either results file, sorted.'),
     })
     .strict()
     .describe('The combined results of the app security check.'),

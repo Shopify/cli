@@ -63,6 +63,7 @@ describe('app security review command', () => {
       withoutAppConfig: false,
       checkIds: [],
       blocking: 'none',
+      failOnUnresolved: false,
     })
   })
 
@@ -72,6 +73,7 @@ describe('app security review command', () => {
     ['as JSON with --json', ['--json'], false, 'json'],
     ['as JSON with -j', ['-j'], false, 'json'],
     ['as JSON with --json and --verbose', ['--json', '--verbose'], true, 'json'],
+    ['as SARIF with --sarif', ['--sarif'], false, 'sarif'],
   ])('presents the reviewed results %s', async (_description, argv, verbose, format) => {
     const review = {} as Awaited<ReturnType<typeof securityReview>>
     vi.mocked(securityReview).mockResolvedValue(review)
@@ -79,6 +81,11 @@ describe('app security review command', () => {
     await SecurityReview.run(argv, import.meta.url)
 
     expect(renderSecurityReviewResult).toHaveBeenCalledWith(review, {verbose}, format)
+  })
+
+  test('reads --sarif from SHOPIFY_FLAG_APP_SECURITY_SARIF and keeps it exclusive with --json', () => {
+    expect(SecurityReview.flags.sarif.env).toBe('SHOPIFY_FLAG_APP_SECURITY_SARIF')
+    expect(SecurityReview.flags.sarif.exclusive).toEqual(['json'])
   })
 
   test('forwards --path, --config, --client-id and --without-app-config', async () => {
@@ -123,6 +130,7 @@ describe('app security review command', () => {
       withoutAppConfig: false,
       checkIds: ['OPEN_REDIRECT', 'EOL_API_VERSION'],
       blocking: 'medium',
+      failOnUnresolved: false,
     })
   })
 })

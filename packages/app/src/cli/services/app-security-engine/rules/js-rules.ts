@@ -452,6 +452,303 @@ function removeSafeCredentialUses(expression: string): string {
     .replace(new RegExp(`\\b${credentialName}\\s*:`, 'gi'), '')
 }
 
+const MYSHOPIFY_DOMAIN_IN_REGEX = /myshopify/i
+const MYSHOPIFY_DOMAIN = /myshopify\.com/i
+/**
+ * `myshopify.com` with the dot before it. A suffix that contains it, such as `.myshopify.com` or `example.myshopify.com`,
+ * can't match a lookalike host such as `evil-myshopify.com`.
+ */
+const DOTTED_MYSHOPIFY_DOMAIN = /\.myshopify\.com/i
+/** A value that names a shop host, so a `myshopify.com` check on it guards a shop trust boundary. */
+const SHOP_VALUE = /(?:\b|_)(?:my)?shop/i
+/** The value a method is called on, such as `shop`, `req.query.shop`, or `url.searchParams.get('shop')`. */
+const RECEIVER = /[A-Za-z_$][\w$]*(?:\s*\??\.\s*[A-Za-z_$][\w$]*|\[[^\]\n]*\]|\([^()\n]*\))*/.source
+/** A `value.match(` or `value.search(` call that ends where its regex argument starts. */
+const MATCH_CALL_BEFORE_ARGUMENT = new RegExp(`(${RECEIVER})\\s*\\.\\s*(?:match|search)\\s*\\(\\s*$`)
+
+/**
+ * Flag shop-domain validation that accepts attacker-controlled hosts, applied to a shop value: a `myshopify.com` regex
+ * that doesn't require the dot before `myshopify.com` or doesn't anchor the end of the hostname, an `includes` check,
+ * and an `endsWith` check without the dot before `myshopify.com`. End-anchored checks that require the dot, such as
+ * `/^[a-z0-9-]+\.myshopify\.com$/`, `shop.endsWith('.myshopify.com')` or `shop.endsWith('example.myshopify.com')`,
+ * stay clean.
+ */
+export function scanWeakShopValidation(files: SourceFile[]): Issue[] {
+  const issues: Issue[] = []
+  for (const file of files) {
+    if (!isJavaScript(file)) continue
+    // Regex literals stay intact only in the strings-masked copy, and the checked expression and string contents stay
+    // intact only in the comments-masked one. Both preserve offsets, so positions transfer between them.
+    const code = maskCommentsAndStrings(file.content!, {preserveTemplateExpressions: true})
+    const text = maskComments(file.content!)
+    const findings = new Map<number, WeakShopValidationKind>()
+    for (const check of substringChecks(code, text)) findings.set(check.index, check.kind)
+    for (const validator of weakShopDomainValidators(code, text)) {
+      const index = validator.name
+        ? namedValidatorUse(code, text, validator.name)
+        : inlineValidatorUse(code, text, validator)
+      if (index !== undefined) findings.set(index, validator.kind)
+    }
+    for (const index of [...findings.keys()].sort((left, right) => left - right))
+      issues.push(weakShopValidationIssue(file, index, findings.get(index)!))
+  }
+  return issues
+}
+
+type WeakShopValidationKind = 'no_end_anchor' | 'regex_without_dot' | 'substring_check' | 'suffix_without_dot'
+
+interface WeakShopDomainValidator {
+  /** Start of the validator expression: a regex literal's opening `/` or the start of a `RegExp(...)` call. */
+  start: number
+  /** End of the validator expression: after a regex literal's flags or a `RegExp(...)` call's closing parenthesis. */
+  end: number
+  /** The identifier the validator is assigned to, when it is used through a variable. */
+  name?: string
+  /** Why the validator accepts an attacker-controlled host. */
+  kind: WeakShopValidationKind
+}
+
+/** `myshopify.com` regexes that accept a hostname no Shopify shop owns. */
+function weakShopDomainValidators(code: string, text: string): WeakShopDomainValidator[] {
+  const validators: WeakShopDomainValidator[] = []
+  const record = (source: string, start: number, end: number): void => {
+    if (!MYSHOPIFY_DOMAIN_IN_REGEX.test(source)) return
+    const kind = weakShopDomainRegex(source)
+    if (kind === undefined) return
+    const name = declaredValidatorName(code, start)
+    validators.push({start, end, kind, ...(name === undefined ? {} : {name})})
+  }
+
+  for (let index = 0; index < code.length; index++) {
+    if (code[index] !== '/' || !isRegexLiteralStart(code, index)) continue
+    const end = skipRegexLiteral(code, index)
+    // A `/` that doesn't close on its line starts something else, such as a JSX closing tag.
+    if (end === undefined) continue
+    record(code.slice(index + 1, code.lastIndexOf('/', end - 1)), index, end)
+    index = end - 1
+  }
+
+  const constructorPattern = /\b(?:new\s+)?RegExp\s*\(/g
+  let constructor = constructorPattern.exec(code)
+  while (constructor) {
+    const argument = firstCallArgument(text, constructorPattern.lastIndex)
+    const call = callContents(text, constructorPattern.lastIndex)
+    const source = argument ? stringLiteralSource(argument.text) : undefined
+    if (source !== undefined && call) record(stringLiteralValue(source), constructor.index, call.end)
+    constructorPattern.lastIndex = call?.end ?? argument?.end ?? constructorPattern.lastIndex
+    constructor = constructorPattern.exec(code)
+  }
+  return validators
+}
+
+/** Why a `myshopify.com` regex accepts an attacker-controlled host, or undefined when it accepts only a shop host. */
+function weakShopDomainRegex(source: string): WeakShopValidationKind | undefined {
+  const alternatives = topLevelAlternatives(source).filter((alternative) => MYSHOPIFY_DOMAIN_IN_REGEX.test(alternative))
+  if (!alternatives.every((alternative) => requiresDotBeforeMyshopify(alternative))) return 'regex_without_dot'
+  return alternatives.every((alternative) => endsWithEndAnchor(alternative)) ? undefined : 'no_end_anchor'
+}
+
+/**
+ * Whether only a dot or the start of the value can come before each `myshopify` in a top-level alternative, so a
+ * lookalike host such as `evil-myshopify.com` can't match. Grouped forms such as `\.(?:myshopify|shopify)\.com` and
+ * `^([a-z0-9-]+\.)?myshopify\.com` require it too.
+ */
+function requiresDotBeforeMyshopify(alternative: string): boolean {
+  return [...alternative.matchAll(/myshopify/gi)].every((occurrence) =>
+    endsAtDotOrStart(withoutOpeningGroups(alternative.slice(0, occurrence.index ?? 0))),
+  )
+}
+
+/** A pattern prefix without the groups that open at its end, or the alternatives before its end in those groups. */
+function withoutOpeningGroups(prefix: string): string {
+  const groupOpening = /\((?:\?:|\?<[A-Za-z_$][\w$]*>)?$/.exec(prefix)
+  if (groupOpening && !isEscaped(prefix, groupOpening.index))
+    return withoutOpeningGroups(prefix.slice(0, groupOpening.index))
+  if (!prefix.endsWith('|') || isEscaped(prefix, prefix.length - 1)) return prefix
+  const groupStart = enclosingGroupStart(prefix)
+  return groupStart === undefined ? prefix : withoutOpeningGroups(prefix.slice(0, groupStart))
+}
+
+/** Whether a pattern prefix can only end with a literal dot or at the start of the value. */
+function endsAtDotOrStart(prefix: string): boolean {
+  const last = prefix.length - 1
+  if (prefix[last] === '^') return !isEscaped(prefix, last)
+  if (prefix[last] === '.') return isEscaped(prefix, last)
+  if (/\[\\?\.\]$/.test(prefix)) return true
+  const groupEnd = /\)([*+?]?)$/.exec(prefix)
+  if (!groupEnd || isEscaped(prefix, groupEnd.index)) return false
+  const groupStart = enclosingGroupStart(prefix.slice(0, groupEnd.index))
+  if (groupStart === undefined) return false
+  const content = prefix.slice(groupStart + 1, groupEnd.index).replace(/^\?(?::|<[A-Za-z_$][\w$]*>)/, '')
+  const groupEndsAtDotOrStart = topLevelAlternatives(content).every((alternative) => endsAtDotOrStart(alternative))
+  // A group that can be absent, such as `([a-z0-9-]+\.)?`, leaves what comes before it at the end.
+  const optional = groupEnd[1] === '?' || groupEnd[1] === '*'
+  return groupEndsAtDotOrStart && (!optional || endsAtDotOrStart(prefix.slice(0, groupStart)))
+}
+
+/** Whether the pattern requires the end of the hostname, allowing trailing groups such as `/^(\.myshopify\.com$)/`. */
+function endsWithEndAnchor(source: string): boolean {
+  let end = source.length
+  while (end > 0 && /[)\s]/.test(source[end - 1]!)) end--
+  return end > 0 && source[end - 1] === '$' && !isEscaped(source, end - 1)
+}
+
+/** The alternatives of a pattern's top-level `|`, such as `a` and `b(c|d)` in `a|b(c|d)`. */
+function topLevelAlternatives(source: string): string[] {
+  const alternatives: string[] = []
+  let depth = 0
+  let inClass = false
+  let start = 0
+  for (let index = 0; index < source.length; index++) {
+    const character = source[index]
+    if (character === '\\') index++
+    else if (inClass) inClass = character !== ']'
+    else if (character === '[') inClass = true
+    else if (character === '(') depth++
+    else if (character === ')') depth--
+    else if (character === '|' && depth === 0) {
+      alternatives.push(source.slice(start, index))
+      start = index + 1
+    }
+  }
+  return [...alternatives, source.slice(start)]
+}
+
+/** The index of the `(` that opens the group a pattern prefix ends inside, or undefined at the top level. */
+function enclosingGroupStart(prefix: string): number | undefined {
+  const openGroups: number[] = []
+  let inClass = false
+  for (let index = 0; index < prefix.length; index++) {
+    const character = prefix[index]
+    if (character === '\\') index++
+    else if (inClass) inClass = character !== ']'
+    else if (character === '[') inClass = true
+    else if (character === '(') openGroups.push(index)
+    else if (character === ')') openGroups.pop()
+  }
+  return openGroups[openGroups.length - 1]
+}
+
+function isEscaped(source: string, index: number): boolean {
+  let backslashes = 0
+  for (let cursor = index - 1; cursor >= 0 && source[cursor] === '\\'; cursor--) backslashes++
+  return backslashes % 2 === 1
+}
+
+/** The content of an expression that is only a quoted string literal, such as a `RegExp("…")` argument. */
+function stringLiteralSource(expression: string): string | undefined {
+  const match = /^\s*(["'`])((?:\\.|(?!\1)[^\\\n])*)\1\s*$/.exec(expression)
+  return match?.[2]
+}
+
+/**
+ * The value of a string literal's content, as far as a regex source needs it: an escaped character stands for itself,
+ * so `'\\.myshopify'` requires a dot and `'\.myshopify'` doesn't.
+ */
+function stringLiteralValue(source: string): string {
+  return source.replace(/\\([\s\S])/g, '$1')
+}
+
+function declaredValidatorName(code: string, start: number): string | undefined {
+  const prefix = code.slice(Math.max(0, start - 200), start)
+  return /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*$/.exec(prefix)?.[1]
+}
+
+/** Where a variable-bound validator is used on a shop value, if it is. */
+function namedValidatorUse(code: string, text: string, name: string): number | undefined {
+  const testCall = new RegExp(`\\b${escapeRegExp(name)}\\s*\\.\\s*(?:test|exec)\\s*\\(`, 'g')
+  let use = testCall.exec(code)
+  while (use) {
+    if (validatesShopValue(code, text, use.index + use[0].length)) return use.index
+    use = testCall.exec(code)
+  }
+  const matchCall = new RegExp(`(${RECEIVER})\\s*\\.\\s*(?:match|search)\\s*\\(\\s*${escapeRegExp(name)}\\s*[,)]`, 'g')
+  let match = matchCall.exec(code)
+  while (match) {
+    if (SHOP_VALUE.test(receiverText(text, match))) return match.index
+    match = matchCall.exec(code)
+  }
+  return undefined
+}
+
+/** Where an inline validator is used on a shop value, as `regex.test(shop)` or `shop.match(regex)`, if it is. */
+function inlineValidatorUse(code: string, text: string, validator: WeakShopDomainValidator): number | undefined {
+  const call = /^\s*\.\s*(?:test|exec)\s*\(/.exec(code.slice(validator.end))
+  if (call) return validatesShopValue(code, text, validator.end + call[0].length) ? validator.end : undefined
+  const windowStart = Math.max(0, validator.start - 300)
+  const matchCall = MATCH_CALL_BEFORE_ARGUMENT.exec(code.slice(windowStart, validator.start))
+  return matchCall && SHOP_VALUE.test(receiverText(text, matchCall, windowStart)) ? validator.start : undefined
+}
+
+/**
+ * The original text of a receiver that a call pattern matched in the strings-masked code, so a string key such as
+ * `query['shop']` still names the shop value.
+ */
+function receiverText(text: string, match: RegExpExecArray, offset = 0): string {
+  const start = offset + match.index
+  return text.slice(start, start + match[1]!.length)
+}
+
+/** Whether the first argument of a call names a shop value rather than a literal or unrelated expression. */
+function validatesShopValue(code: string, text: string, openParen: number): boolean {
+  const argument = firstCallArgument(code, openParen)
+  if (!argument) return false
+  const expression = text.slice(openParen, argument.end - 1)
+  return SHOP_VALUE.test(expression) && stringLiteralSource(expression) === undefined
+}
+
+/**
+ * `includes(...)` checks of `myshopify.com` on a shop value, which never anchor the end of the hostname, and
+ * `endsWith(...)` checks without the dot before `myshopify.com`, which accept a lookalike host.
+ */
+function substringChecks(code: string, text: string): {index: number; kind: WeakShopValidationKind}[] {
+  const pattern = new RegExp(`(${RECEIVER})\\s*\\.\\s*(includes|endsWith)\\s*\\(`, 'g')
+  const checks: {index: number; kind: WeakShopValidationKind}[] = []
+  let match = pattern.exec(code)
+  while (match) {
+    const argument = firstCallArgument(text, pattern.lastIndex)
+    const value = argument ? stringLiteralSource(argument.text) : undefined
+    if (value !== undefined && MYSHOPIFY_DOMAIN.test(value) && SHOP_VALUE.test(receiverText(text, match))) {
+      if (match[2] === 'includes') checks.push({index: match.index, kind: 'substring_check'})
+      else if (!DOTTED_MYSHOPIFY_DOMAIN.test(value)) checks.push({index: match.index, kind: 'suffix_without_dot'})
+    }
+    match = pattern.exec(code)
+  }
+  return checks
+}
+
+const WEAK_SHOP_VALIDATION_FINDINGS: Record<WeakShopValidationKind, {title: string; message: string; fix: string}> = {
+  no_end_anchor: {
+    title: 'Shop domain validation regex is not anchored',
+    message:
+      'The myshopify.com regex does not anchor the end of the hostname, so a value such as <shop>.myshopify.com.attacker.com passes shop validation.',
+    fix: 'Anchor the regex with $ so it accepts only an exact <shop>.myshopify.com hostname.',
+  },
+  regex_without_dot: {
+    title: 'Shop domain validation accepts a lookalike host',
+    message:
+      'The myshopify.com regex does not require the dot before myshopify.com, so a lookalike host such as evil-myshopify.com passes shop validation.',
+    fix: 'Require the leading dot in the regex so it accepts only <shop>.myshopify.com hostnames.',
+  },
+  substring_check: {
+    title: 'Shop domain validation is not anchored',
+    message:
+      'The includes check accepts myshopify.com anywhere in the value, so a value such as <shop>.myshopify.com.attacker.com passes shop validation.',
+    fix: "Check the end of the hostname with endsWith('.myshopify.com'), or with an anchored regex such as /^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$/.",
+  },
+  suffix_without_dot: {
+    title: 'Shop domain validation accepts a lookalike host',
+    message:
+      'The myshopify.com suffix check does not include the leading dot, so a lookalike host such as evil-myshopify.com passes shop validation.',
+    fix: "Include the leading dot, such as endsWith('.myshopify.com'), so only <shop>.myshopify.com hostnames pass.",
+  },
+}
+
+function weakShopValidationIssue(file: SourceFile, index: number, kind: WeakShopValidationKind): Issue {
+  const {title, message, fix} = WEAK_SHOP_VALIDATION_FINDINGS[kind]
+  return issue('WEAK_SHOP_VALIDATION', file, index, title, message, fix, -15)
+}
+
 /** Explicit regex-mode scan for high-signal executable HTML and JavaScript sinks. */
 export function scanUnsafeInnerHTML(files: SourceFile[]): Issue[] {
   const issues: Issue[] = []
@@ -548,7 +845,8 @@ function firstCallArgument(source: string, start: number): {text: string; end: n
 
 /** Preserve offsets and string contents while blanking comments. */
 function maskComments(source: string): string {
-  const characters = [...source]
+  // UTF-16 code units, not code points: blanking a surrogate pair as one space would shift every later offset.
+  const characters = source.split('')
   let quote: string | undefined
   for (let index = 0; index < characters.length; index++) {
     const character = characters[index]!
@@ -595,7 +893,7 @@ function maskStringsExceptShopKeys(source: string): string {
 function maskCommentsAndStrings(source: string, options: {preserveTemplateExpressions?: boolean} = {}): string {
   return maskComments(source).replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal) => {
     if (!options.preserveTemplateExpressions || !literal.startsWith('`')) return literal.replace(/[^\n]/g, ' ')
-    const original = [...literal]
+    const original = literal.split('')
     const masked: string[] = original.map((character) => (character === '\n' ? '\n' : ' '))
     let depth = 0
     for (let index = 0; index < original.length; index++) {
@@ -618,6 +916,47 @@ function maskCommentsAndStrings(source: string, options: {preserveTemplateExpres
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Whether the `/` at `index` starts a regex literal rather than a division. */
+function isRegexLiteralStart(source: string, index: number): boolean {
+  const previous = previousSignificantCharacter(source, index)
+  if (previous === undefined) return true
+  if ('([{:;,=!?&|+-*%^~<>'.includes(previous)) return true
+  const prefix = source.slice(0, index).trimEnd()
+  return /\b(?:return|throw|case|delete|void|typeof|instanceof|in|of|yield|await)$/.test(prefix)
+}
+
+/** The index after a regex literal's closing `/` and flags, or undefined when it never closes. */
+function skipRegexLiteral(source: string, start: number): number | undefined {
+  let inClass = false
+  for (let index = start + 1; index < source.length; index++) {
+    // A regex literal can't contain a line break, so one proves this `/` began something else, such as a JSX
+    // closing tag.
+    if (source[index] === '\n' || source[index] === '\r') return undefined
+    if (source[index] === '\\') {
+      index++
+      continue
+    }
+    if (source[index] === '[') {
+      inClass = true
+      continue
+    }
+    if (source[index] === ']' && inClass) {
+      inClass = false
+      continue
+    }
+    if (source[index] !== '/' || inClass) continue
+    index++
+    while (/[a-z]/i.test(source[index] ?? '')) index++
+    return index
+  }
+  return undefined
+}
+
+function previousSignificantCharacter(source: string, index: number): string | undefined {
+  for (let cursor = index - 1; cursor >= 0; cursor--) if (!/\s/.test(source[cursor]!)) return source[cursor]
+  return undefined
 }
 
 function issue(

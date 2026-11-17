@@ -558,7 +558,8 @@ describe('layout catalogue: check --list-files', () => {
         'extensions/checkout-ui/src/Checkout.tsx',
         'shopify.app.toml',
       ])
-      expect(resolution.commands.scan.args).toEqual(checkArgs('--path', '../app', '--include-dir', '.'))
+      // The app directory is outside the working directory (the backend), so the command keeps its absolute path.
+      expect(resolution.commands.scan.args).toEqual(checkArgs('--path', joinPath(root, 'app'), '--include-dir', '.'))
     })
   })
 
@@ -622,7 +623,8 @@ describe('layout catalogue: check --list-files', () => {
         'cmd/server/main.go',
         'shopify.app.toml',
       ])
-      expect(resolution.commands.scan.args).toEqual(checkArgs('--path', '../tale', '--include-dir', '.'))
+      // The app directory is outside the working directory (the library), so the command keeps its absolute path.
+      expect(resolution.commands.scan.args).toEqual(checkArgs('--path', joinPath(root, 'tale'), '--include-dir', '.'))
     })
   })
 

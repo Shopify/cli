@@ -4,6 +4,7 @@ import {
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
   scanUnsafeInnerHTML,
+  scanWeakShopValidation,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
@@ -746,5 +747,181 @@ describe('JavaScript credential and executable sinks', () => {
         ),
       ]),
     ).toHaveLength(1)
+  })
+})
+
+describe('shop domain validation anchoring', () => {
+  test('flags checks that accept a lookalike host or leave the end of the hostname open', () => {
+    const findings = scanWeakShopValidation([
+      source(
+        `export const loader = ({request}) => {
+  const shop = request.query.shop;
+  if (!/myshopify\\.com/.test(shop)) throw new Response('invalid', {status: 400});
+  if (!/[a-z0-9-]+\\.myshopify\\.com/.test(shopDomain)) return null;
+  if (!/myshopify\\.com$/.test(shop)) return null;
+  if (!shop.endsWith('myshopify.com')) return null;
+  if (!shop.includes('myshopify.com')) return null;
+  const validator = new RegExp('myshopify\\\\.com');
+  if (!validator.test(shop)) return null;
+  if (!shop.includes('.myshopify.com')) return null;
+  return shop;
+}`,
+        'server/auth.js',
+      ),
+    ])
+
+    expect(findings.map((finding) => finding.location.line)).toEqual([3, 4, 5, 6, 7, 9, 10])
+    expect(findings.map((finding) => finding.title)).toEqual([
+      'Shop domain validation accepts a lookalike host',
+      'Shop domain validation regex is not anchored',
+      'Shop domain validation accepts a lookalike host',
+      'Shop domain validation accepts a lookalike host',
+      'Shop domain validation is not anchored',
+      'Shop domain validation accepts a lookalike host',
+      'Shop domain validation is not anchored',
+    ])
+    expect(findings.every((finding) => finding.id === 'WEAK_SHOP_VALIDATION')).toBe(true)
+    expect(findings.every((finding) => finding.severity === 'high' && finding.points === -15)).toBe(true)
+    expect(findings[0]?.message).toContain('does not require the dot before myshopify.com')
+    expect(findings[1]?.message).toContain('does not anchor the end of the hostname')
+    expect(findings[3]?.message).toContain('suffix check does not include the leading dot')
+    expect(findings[6]?.message).toContain('includes check accepts myshopify.com anywhere in the value')
+  })
+
+  test('flags weak regexes applied through match, search, alternation, and RegExp strings', () => {
+    const findings = scanWeakShopValidation([
+      source(
+        `export function validShop(shop) {
+  if (!shop.match(/myshopify\\.com/)) return false;
+  if (shop.search(/\\.myshopify\\.com/) === -1) return false;
+  const SHOP_PATTERN = /[a-z0-9-]+myshopify\\.com$/;
+  if (!shop.match(SHOP_PATTERN)) return false;
+  if (!/^[a-z0-9-]+\\.myshopify\\.com$|myshopify\\.io/.test(shop)) return false;
+  if (!/^[a-z0-9-]+\\.shopify\\.com$|^[a-z0-9-]+\\.myshopify\\.com/.test(shop)) return false;
+  if (!/^[a-z0-9-]+(?:-|\\.)myshopify\\.com$/.test(shop)) return false;
+  if (!new RegExp('^[a-z0-9-]+\\.myshopify\\.com$').test(shop)) return false;
+  if (!new RegExp('myshopify\\\\.com', 'i').test(shop)) return false;
+  return true;
+}`,
+        'server/shop.js',
+      ),
+    ])
+
+    expect(findings.map((finding) => [finding.location.line, finding.title])).toEqual([
+      [2, 'Shop domain validation accepts a lookalike host'],
+      [3, 'Shop domain validation regex is not anchored'],
+      [5, 'Shop domain validation accepts a lookalike host'],
+      [6, 'Shop domain validation accepts a lookalike host'],
+      [7, 'Shop domain validation regex is not anchored'],
+      [8, 'Shop domain validation accepts a lookalike host'],
+      [9, 'Shop domain validation accepts a lookalike host'],
+      [10, 'Shop domain validation accepts a lookalike host'],
+    ])
+  })
+
+  test('accepts checks that require the dot and the end of the host, including grouped, alternative and variable-bound forms', () => {
+    expect(
+      scanWeakShopValidation([
+        source(
+          `export const loader = ({request}) => {
+  const shop = request.query.shop;
+  if (!/^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$/.test(shop)) return null;
+  if (!/\\.myshopify\\.com$/.test(shop)) return null;
+  if (!/^([a-z0-9-]+\\.myshopify\\.com$)/.test(shop)) return null;
+  if (!/^(?:[a-z0-9-]+\\.myshopify\\.com$)/.test(shop)) return null;
+  if (!shop.endsWith('.myshopify.com')) return null;
+  const anchored = new RegExp('^[a-z0-9-]+\\\\.myshopify\\\\.com$');
+  if (!anchored.test(shop)) return null;
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9-]*\\.(myshopify\\.com|myshopify\\.io)[\\/]*$/.test(shop)) return null;
+  if (!/^[a-z0-9-]+\\.(?:shopify\\.com|myshopify\\.com)$/.test(shop)) return null;
+  if (!/^([a-z0-9-]+\\.)?myshopify\\.com$/.test(shop)) return null;
+  if (!shop.match(/^[a-z0-9-]+\\.myshopify\\.com$/)) return null;
+  if (!new RegExp('^[a-z0-9-]+\\\\.myshopify\\\\.com$', 'i').test(shop)) return null;
+  if (!shop.endsWith('example.myshopify.com')) return null;
+  return shop;
+}`,
+          'server/auth.js',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  test('finds a weak check after a JSX closing tag', () => {
+    const findings = scanWeakShopValidation([
+      source(
+        `export const Shop = ({shop}) => <div>{shop}</div>
+
+export const isValidShop = (shop) => /myshopify\\.com/.test(shop)
+`,
+        'app/routes/shop.tsx',
+      ),
+    ])
+
+    expect(findings).toHaveLength(1)
+    expect(findings[0]?.location.line).toBe(3)
+  })
+
+  test('ignores checks on values that are not shop values and checks without a myshopify.com test', () => {
+    expect(
+      scanWeakShopValidation([
+        source(
+          `export const handler = (request) => {
+  if (!/myshopify\\.com/.test(request.url)) return null;
+  if (!/myshopify\\.com/.test('https://example.myshopify.com')) return null;
+  if (!request.url.includes('myshopify.com')) return null;
+  // /myshopify\\.com/.test(request.query.shop)
+  const example = '/myshopify\\.com/';
+  if (!/^https:\\/\\//.test(shopDomain)) return null;
+  return example;
+}`,
+          'server/routes.js',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  test('ignores checks written inside string and template literal text, but not inside template expressions', () => {
+    const findings = scanWeakShopValidation([
+      source(
+        `export const help = "shop.includes('myshopify.com')";
+export const doc = \`shop.endsWith('myshopify.com')\`;
+test("rejects shop.includes('.myshopify.com')", () => {});
+const SHOP_PATTERN = /myshopify\\.com/;
+export const hint = 'shop.match(SHOP_PATTERN)';
+export const label = \`\${shop.includes('myshopify.com')}\`;
+if (!req.query['shop'].includes('myshopify.com')) return null;
+if (!url.searchParams.get('shop').endsWith('myshopify.com')) return null;`,
+        'server/help.js',
+      ),
+    ])
+
+    expect(findings.map((finding) => [finding.location.line, finding.title])).toEqual([
+      [6, 'Shop domain validation is not anchored'],
+      [7, 'Shop domain validation is not anchored'],
+      [8, 'Shop domain validation accepts a lookalike host'],
+    ])
+  })
+
+  test('keeps offsets after non-BMP characters in template literals and comments', () => {
+    const findings = scanWeakShopValidation([
+      source(
+        `// 🚀🚀🚀 launch 🚀🚀🚀
+shop.includes('myshopify.com');
+console.log(\`🚀 listening on \${port}\`);
+if (!shop.includes('myshopify.com')) return null;
+if (!shop.endsWith('myshopify.com')) return null;`,
+        'server/index.js',
+      ),
+    ])
+
+    expect(findings.map((finding) => [finding.location.line, finding.title])).toEqual([
+      [2, 'Shop domain validation is not anchored'],
+      [4, 'Shop domain validation is not anchored'],
+      [5, 'Shop domain validation accepts a lookalike host'],
+    ])
+  })
+
+  test('ignores non-JavaScript source', () => {
+    expect(scanWeakShopValidation([source('/myshopify\\.com/.test(shop)', 'lib/auth.rb')])).toEqual([])
   })
 })
