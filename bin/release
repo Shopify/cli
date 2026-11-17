@@ -7,8 +7,9 @@ if [ -z "$tag" ]; then
   tag="nightly"
 fi
 
-if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimental" ] && [ "$tag" != "snapshot" ]; then
-  echo "Error: tag must be one of: latest, nightly, experimental, snapshot"
+# stable-<major>.<minor> publishes a patch for an older line without moving `latest` backwards.
+if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimental" ] && [ "$tag" != "snapshot" ] && [[ ! "$tag" =~ ^stable-[0-9]+\.[0-9]+$ ]]; then
+  echo "Error: tag must be one of: latest, stable-<major>.<minor>, nightly, experimental, snapshot"
   exit 1
 fi
 
@@ -24,6 +25,27 @@ pnpm bundle-for-release
 
 # Create a duplicate package for the CLI (to be deployed as just `shopify`)
 node bin/create-cli-duplicate-package.js
+
+# Packages outside the fixed version group publish from main, under `latest`. A prerelease run
+# would put their real version under the prerelease tag, and a stable line's run under
+# stable-X.Y; npm then has that version, a later `latest` run skips it, and `latest` never points
+# to it. They are marked private for this run, and `changeset publish` skips them. `shopify` is
+# the copy of @shopify/cli that bin/create-cli-duplicate-package.js makes in packages/cli-copy.
+if [ "$tag" != "latest" ]; then
+  node -e '
+    const fs = require("fs")
+    const fixed = new Set(JSON.parse(fs.readFileSync(".changeset/config.json", "utf8")).fixed.flat())
+    for (const directory of fs.readdirSync("packages")) {
+      const manifestPath = `packages/${directory}/package.json`
+      if (!fs.existsSync(manifestPath)) continue
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"))
+      if (manifest.private || fixed.has(manifest.name) || directory === "cli-copy") continue
+      manifest.private = true
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n")
+      console.log(`Not publishing ${manifest.name}@${manifest.version} under ${process.argv[1]}`)
+    }
+  ' "$tag"
+fi
 
 # Publish the packages
 pnpm changeset publish --tag $tag --no-git-tag
