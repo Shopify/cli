@@ -196,7 +196,8 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     id: '1',
     title: 'app1',
     apiKey: 'api-key',
-    apiSecretKeys: [{secret: 'api-secret'}],
+    // As in production: app lookups leave the secret out, and commands fetch it with appClientSecrets.
+    apiSecretKeys: [],
     organizationId: '1',
     grantedScopes: [],
     disabledFlags: ['5b25141b'],
@@ -204,6 +205,17 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     developerPlatformClient: testDeveloperPlatformClient(),
   }
   return {...defaultApp, ...app}
+}
+
+/**
+ * An app whose client secret the App Management API doesn't return, as for credentials that can't read it.
+ */
+export function testOrganizationAppWithoutClientSecret(app: Partial<OrganizationApp> = {}): OrganizationApp {
+  return testOrganizationApp({
+    apiSecretKeys: [],
+    developerPlatformClient: testDeveloperPlatformClient({appClientSecrets: () => Promise.resolve([])}),
+    ...app,
+  })
 }
 
 export const placeholderAppConfiguration: AppConfiguration = {
@@ -1340,6 +1352,7 @@ export function testDeveloperPlatformClient(
     unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromIdentifiers: (_apiKey: string) => Promise.resolve(testOrganizationApp()),
+    appClientSecrets: (_app: Pick<MinimalAppIdentifiers, 'apiKey'>) => Promise.resolve([{secret: 'api-secret'}]),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),

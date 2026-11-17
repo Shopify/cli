@@ -1,8 +1,14 @@
 import {getAppEnv} from './show.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {
+  testApp,
+  testOrganizationApp,
+  testOrganizationAppWithoutClientSecret,
+  testDeveloperPlatformClient,
+} from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {expect, test, vi} from 'vitest'
 
 vi.mock('../../context.js')
@@ -25,19 +31,34 @@ test('returns the environment facts and records analytics metadata', async () =>
   expect(logMetadataForLoadedContext).toHaveBeenCalledWith(remoteApp, organization.source)
 })
 
-test('omits SHOPIFY_API_SECRET when the app has no secret', async () => {
-  const app = mockApp()
-  const remoteApp = testOrganizationApp({apiSecretKeys: []})
+test('fetches the client secret when the app lookup did not include it', async () => {
+  const appClientSecrets = vi.fn().mockResolvedValue([{secret: 'fetched-secret'}])
+  const remoteApp = testOrganizationApp({
+    apiSecretKeys: [],
+    developerPlatformClient: testDeveloperPlatformClient({appClientSecrets}),
+  })
 
-  const result = await getAppEnv(app, remoteApp, organization)
+  const result = await getAppEnv(mockApp(), remoteApp, organization)
+
+  expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
+  expect(result.variables).toContainEqual({name: 'SHOPIFY_API_SECRET', value: 'fetched-secret', isSecret: true})
+})
+
+test('marks SHOPIFY_API_SECRET as unavailable and warns when the App Management API returns no secret', async () => {
+  const output = mockAndCaptureOutput()
+  const remoteApp = testOrganizationAppWithoutClientSecret()
+
+  const result = await getAppEnv(mockApp(), remoteApp, organization)
 
   expect(result).toEqual({
     variables: [
       {name: 'SHOPIFY_API_KEY', value: remoteApp.apiKey, isSecret: false},
+      {name: 'SHOPIFY_API_SECRET', isSecret: true},
       {name: 'SCOPES', value: 'my-scope', isSecret: false},
     ],
   })
-  expect(result.variables.map(({name}) => name)).not.toContain('SHOPIFY_API_SECRET')
+  expect(output.warn()).toContain("SHOPIFY_API_SECRET isn't included")
+  output.clear()
 })
 
 function mockApp(): AppInterface {
