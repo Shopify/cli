@@ -150,6 +150,7 @@
     "supports-hyperlinks": "3.2.0",
     "@graphql-tools/utils": "12.0.2",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
+    "@fastify/busboy": "3.2.2",
     "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare",
     "nanoid": "3.3.18",
     "graphql": "16.14.2",
@@ -161,7 +162,8 @@
     "brace-expansion@^5": "5.0.12",
     "undici@>=7.0.0 <7.30.2": "7.30.2",
     "immutable@<4": "3.8.4",
-    "follow-redirects": "1.16.2"
+    "follow-redirects": "1.16.2",
+    "fast-uri": "3.1.9"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
