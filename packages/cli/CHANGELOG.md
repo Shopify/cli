@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 5.0.2
+
+### Patch Changes
+
+- de90873: Improve error messages and guidance for app commands.
+
 ## 5.0.1
 
 ### Patch Changes
