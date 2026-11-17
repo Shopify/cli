@@ -10,7 +10,7 @@ import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} f
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {basename, cwd, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {basename, cwd, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import {readFileSync} from 'node:fs'
@@ -37,9 +37,9 @@ function commandsFor(appRoot: string, configFileName = 'shopify.app.toml') {
   return resolveAppSecurityCommands(selectionFor(appRoot, configFileName), appRoot)
 }
 
-/** The `--path` value the generated commands render for an app directory: relative to the working directory. */
+/** The `--path` value the generated commands render. These apps sit outside the working directory, so it's absolute. */
 function renderedPath(appRoot: string): string {
-  return relativePath(cwd(), appRoot)
+  return appRoot
 }
 
 const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}

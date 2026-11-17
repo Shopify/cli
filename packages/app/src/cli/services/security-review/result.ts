@@ -1,4 +1,6 @@
 import {appSecurityReviewJsonOutputSchema, type AppSecurityReviewResult} from './types.js'
+import {appSecurityReviewSarif} from './sarif.js'
+import {getAgentCheckCatalog} from '../app-security-engine/index.js'
 import {
   projectAppSecurityApp,
   projectAppSecurityBlocking,
@@ -7,7 +9,8 @@ import {
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
 } from '../app-security/result.js'
-import {renderSecurityReview} from '../security-review-output.js'
+import {renderSecurityReview, renderSecurityReviewSarifWarning} from '../security-review-output.js'
+import {reviewFailed, type ReviewedAppSecurityResults, type SecurityReviewResult} from '../security-review.js'
 import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import type {
@@ -19,7 +22,6 @@ import type {
   StoredEvidence,
   StoredFinding,
 } from '../app-security-engine/index.js'
-import type {ReviewedAppSecurityResults, SecurityReviewResult} from '../security-review.js'
 
 type AppSecurityCheck = AppSecurityReviewResult['checks'][number]
 type AppSecurityFinding = AppSecurityCheck['findings'][number]
@@ -71,21 +73,34 @@ const GAP_CODES: Record<StoredCoverage['gaps'][number]['code'], AppSecurityCover
 }
 
 /**
- * Presents reviewed results as JSON, or in the terminal. Either way, sets exit code 1 after the output when they
- * breach `--blocking`.
+ * Presents reviewed results as JSON, as a SARIF log, or in the terminal. JSON and SARIF go to stdout alone, so a
+ * SARIF warning goes to stderr. Either way, sets exit code 1 after the output when they fail `--blocking` or
+ * `--fail-on-unresolved`.
  */
 export function renderSecurityReviewResult(
   review: ReviewedAppSecurityResults,
   options: {verbose: boolean},
-  format: 'json' | 'text',
+  format: 'json' | 'sarif' | 'text',
 ): void {
   if (format === 'json') {
     outputResult(appSecurityReviewJsonOutputSchema.encode(appSecurityReviewResult(review)))
+  } else if (format === 'sarif') {
+    const sarif = appSecurityReviewSarif(appSecurityReviewResult(review), {
+      checkIds: review.result.filter?.checkIds ?? [],
+    })
+    outputResult(JSON.stringify(sarif, null, 2))
+    renderSecurityReviewSarifWarning(review.result)
   } else {
-    renderSecurityReview({result: review.result, verbose: options.verbose, now: new Date(), commands: review.commands})
+    renderSecurityReview({
+      result: review.result,
+      verbose: options.verbose,
+      now: new Date(),
+      commands: review.commands,
+      agentChecks: getAgentCheckCatalog(),
+    })
   }
 
-  if (review.result.blocking.blockedChecks > 0) process.exitCode = 1
+  if (reviewFailed(review.result)) process.exitCode = 1
 }
 
 function appSecurityReviewResult({selection, result}: ReviewedAppSecurityResults): AppSecurityReviewResult {
@@ -93,7 +108,7 @@ function appSecurityReviewResult({selection, result}: ReviewedAppSecurityResults
   const deterministic = result.sources.deterministic?.document
   return {
     status: 'success',
-    valid: result.blocking.blockedChecks === 0,
+    valid: !reviewFailed(result),
     app: projectAppSecurityApp(selection),
     resultsDirectory: projectAppSecurityPath(result.resultsDirectory),
     resultsFiles: projectResultsFiles(result.sources),
@@ -102,6 +117,8 @@ function appSecurityReviewResult({selection, result}: ReviewedAppSecurityResults
     scopeDiffers: result.scopeDiffers,
     checks: result.checks.map((check) => projectCheck(check, appDirectory)),
     blocking: projectAppSecurityBlocking(result.blocking),
+    failOnUnresolved: result.failOnUnresolved,
+    missingCheckIds: result.missingCheckIds,
   }
 }
 

@@ -89,6 +89,8 @@ const result = {
   scopeDiffers: false,
   checks: [check],
   blocking: {level: 'high', blockedCheckCount: 1},
+  failOnUnresolved: true,
+  missingCheckIds: ['OPEN_REDIRECT', 'SQL_INJECTION'],
 }
 
 describe('appSecurityReviewJsonOutputSchema', () => {
@@ -104,6 +106,8 @@ describe('appSecurityReviewJsonOutputSchema', () => {
         coverage: null,
         checks: [],
         blocking: {level: 'none', blockedCheckCount: 0},
+        failOnUnresolved: false,
+        missingCheckIds: [],
       },
     ],
     [

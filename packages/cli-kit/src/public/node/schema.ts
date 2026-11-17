@@ -1,6 +1,6 @@
-import {ZodObject, ZodOptional, ZodTypeAny, z} from 'zod'
+import {ZodObject, ZodOptional, ZodTypeAny, z} from 'zod/v3'
 
-export {z as zod} from 'zod'
+export {z as zod} from 'zod/v3'
 
 /**
  * Type alias for a zod object schema that produces a given shape once parsed.

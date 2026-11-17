@@ -2,8 +2,8 @@ import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-k
 import {isAbsolutePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-// Keep native keys and order, including "__proto__" omitted by Zod record parsing,
-// while the record schema validates that each payload is an object.
+// The record schema validates that each payload is an object. Zod parsing drops "__proto__" keys,
+// so result.ts encodes the native payload after validation to keep every key and its order.
 const nativeGraphQLObjectSchema = zod.unknown().and(zod.record(zod.unknown()))
 
 const graphQLResultSchema = zod

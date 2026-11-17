@@ -7,7 +7,9 @@ import {
   isSuppressed,
   skippedFileCounts,
   summarizeCombinedChecks,
+  type AgentCheckCatalogEntry,
   type AppSecurityScope,
+  type CheckPrecedence,
   type CombinedCheck,
   type CombinedChecksSummary,
   type CombinedFinding,
@@ -18,10 +20,10 @@ import {
   type SourceCheckResult,
   type StoredCheckStatus,
 } from './app-security-engine/index.js'
+import {reviewFailed, type SecurityReviewResult} from './security-review.js'
 import {timeAgo} from '@shopify/cli-kit/common/string'
 import {renderError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
-import type {SecurityReviewResult} from './security-review.js'
 
 /**
  * The terminal view of `app security review` (§9.4). The view-model functions return data; only
@@ -33,6 +35,8 @@ export interface SecurityReviewPresenterInput {
   verbose: boolean
   now: Date
   commands: AppSecurityCommands
+  /** The checks the coding agent can run: which checks only it can settle, and how its results combine. */
+  agentChecks: AgentCheckCatalogEntry[]
 }
 
 type SecurityReviewAlertType = 'info' | 'success' | 'warning' | 'error'
@@ -54,7 +58,7 @@ type ResultsFileRow =
   | {name: string; updated: 'not found'; engine?: never}
   | {name: string; updated: string; engine: string}
 
-/** The summary closes with the next steps, or with the Blocking line when `--blocking` is breached. */
+/** The summary closes with the next steps, or with the Blocking line when the review fails. */
 type SecurityReviewSummaryClosing =
   | {nextSteps: TokenItem<InlineToken>[]; blocking?: never}
   | {nextSteps?: never; blocking: string}
@@ -66,6 +70,8 @@ type SecurityReviewSummary = {
   filterLine?: string
   checksWithFindings: ChecksWithFindingsRow[]
   otherChecks: string[]
+  /** How many checks have no authoritative result until the coding agent runs them, and why. */
+  agentResultsPending?: string
   /** Present when a filtered check shows both sources because its agent result is stale. */
   staleAgentResults?: string
   coverage?: string
@@ -76,12 +82,21 @@ type SecurityReviewSummary = {
 } & SecurityReviewSummaryClosing
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
-/** A combined check's status: an executed check with no active findings has passed. */
+/**
+ * The status words of the checks without findings. An executed check has passed unless it is a prefer-agent check
+ * with only a deterministic result.
+ */
 const CHECK_STATUS_LABEL: Record<StoredCheckStatus, string> = {
   executed: 'passed',
   not_applicable: 'not applicable',
   unresolved: 'unresolved',
 }
+/**
+ * A prefer-agent check that only a deterministic result backs: the rule found nothing, but the agent result that is
+ * meant to decide the check is missing. Calling that a pass would read as a clean result for a question the rule
+ * can't answer. A `union` check's deterministic pass stands on its own, so it keeps the pass.
+ */
+const NO_DETERMINISTIC_FINDINGS_LABEL = 'no deterministic findings'
 /** One source's own status: it executed, whatever the combined check's findings say. */
 const SOURCE_STATUS_LABEL: Record<StoredCheckStatus, string> = {
   executed: 'executed',
@@ -112,18 +127,26 @@ export function renderSecurityReview(input: SecurityReviewPresenterInput): void 
   }
 }
 
-/** Every box in order: unresolved checks, passed checks, one per check with findings, then the summary. */
+/**
+ * Every box in order: unresolved checks, checks without results, passed checks, one per check with findings, then the
+ * summary.
+ */
 export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): SecurityReviewAlert[] {
   const {checks} = input.result
+  const awaitingAgentIds = checksAwaitingAgentResult(input).ids
   const unresolved = checks.filter((check) => check.status === 'unresolved' && activeFindings(check).length === 0)
   const passedOrNotApplicable = checks.filter(
     (check) => check.status !== 'unresolved' && activeFindings(check).length === 0,
   )
   const withFindings = checks.filter((check) => activeFindings(check).length > 0)
+  const missing = missingCheckIdsToShow(input.result)
 
   return [
     ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose)] : []),
-    ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose)] : []),
+    ...(missing.length > 0 ? [missingChecksAlert(missing)] : []),
+    ...(passedOrNotApplicable.length > 0
+      ? [passedChecksAlert(passedOrNotApplicable, awaitingAgentIds, input.verbose)]
+      : []),
     ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now)),
     summaryAlert(buildSecurityReviewSummary(input)),
   ]
@@ -134,17 +157,20 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
   const anyFilePresent = result.sources.deterministic !== null || result.sources.agent !== null
   const summary = summarizeCombinedChecks(result.checks)
   const deterministic = result.sources.deterministic?.document
-  const breached = result.blocking.blockedChecks > 0
   const staleChecks = result.checks.filter(isAgentResultStale).length
+  const awaitingAgent = checksAwaitingAgentResult(input)
+
+  const failed = reviewFailed(result)
 
   return {
-    type: summaryAlertType(result.checks, summary, anyFilePresent),
+    type: summaryAlertType(result.checks, summary, anyFilePresent, awaitingAgent.total, failed),
     headline: summaryHeadline(result.checks, summary, anyFilePresent),
     ...(result.filter && anyFilePresent
       ? {filterLine: `Showing ${result.checks.length} of ${result.allChecks.length} checks (--check-id).`}
       : {}),
     checksWithFindings: result.checks.filter((check) => activeFindings(check).length > 0).map(checksWithFindingsRow),
-    otherChecks: otherChecksLines(summary),
+    otherChecks: otherChecksLines(result.checks, awaitingAgent.ids, summary),
+    ...(anyFilePresent && awaitingAgent.total > 0 ? {agentResultsPending: agentResultsPendingLine(awaitingAgent)} : {}),
     ...(staleChecks > 0 ? {staleAgentResults: staleAgentResultsLine(staleChecks)} : {}),
     ...(deterministic ? {coverage: coverageLine(deterministic)} : {}),
     scopeLines: scopeLines(result.sources),
@@ -153,14 +179,79 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
       directory: result.resultsDirectory,
       rows: SOURCE_ORDER.map((source) => resultsFileRow(source, result.sources[source]?.document, input.now)),
     },
-    ...(breached
-      ? {
-          blocking: `${countLabel(result.blocking.blockedChecks, 'check')} at or above ${result.blocking.level} (--blocking ${
-            result.blocking.level
-          }).`,
-        }
-      : {nextSteps: nextSteps(result, summary, anyFilePresent, staleChecks, input.commands)}),
+    ...(failed
+      ? {blocking: failedGatesLine(result)}
+      : {
+          nextSteps: nextSteps(result, summary, anyFilePresent, staleChecks, awaitingAgent.total, input.commands),
+        }),
   }
+}
+
+function blockingLine({blockedChecks, level}: SecurityReviewResult['blocking']): string {
+  return `${countLabel(blockedChecks, 'check')} at or above ${level} (--blocking ${level}).`
+}
+
+/**
+ * The warning that `review --sarif` renders after the log, which goes to stdout alone. Code scanning closes the alerts
+ * missing from an upload as fixed, and a check without results reads as passing, so a log without results, or with
+ * unresolved checks or checks without results, closes alerts that may still be open. A failed `--blocking` or `--fail-on-unresolved` is named
+ * too, since the log doesn't explain the exit code. Undefined when neither applies.
+ */
+function securityReviewSarifWarning(result: SecurityReviewResult): RenderAlertOptions | undefined {
+  const headline = sarifUploadNote(result)
+  const blocking = reviewFailed(result) ? failedGatesLine(result) : undefined
+  if (headline === undefined && blocking === undefined) return undefined
+  return {
+    ...(headline === undefined ? {} : {headline}),
+    ...(blocking === undefined ? {} : {customSections: [{title: 'Blocking', body: blocking}]}),
+  }
+}
+
+export function renderSecurityReviewSarifWarning(result: SecurityReviewResult): void {
+  const warning = securityReviewSarifWarning(result)
+  if (warning) renderWarning(warning)
+}
+
+/**
+ * Why the log could close open alerts, and, without `--fail-on-unresolved`, how to fail the review on it. With the flag,
+ * either reason fails the review, so the Blocking section names the flag instead.
+ */
+function sarifUploadNote(result: SecurityReviewResult): string | undefined {
+  const risk = sarifUploadRisk(result)
+  if (risk === undefined || result.failOnUnresolved) return risk
+  return `${risk} Pass --fail-on-unresolved to exit with code 1 while a check is unresolved or has no result.`
+}
+
+function sarifUploadRisk(result: SecurityReviewResult): string | undefined {
+  if (result.sources.deterministic === null && result.sources.agent === null) {
+    return 'The SARIF log has no results, so code scanning would close every open alert as fixed.'
+  }
+  // With findings or not, as the log's invocation counts them.
+  const unresolved = result.checks.filter((check) => check.status === 'unresolved').length
+  const missing = result.missingCheckIds.length
+  if (unresolved + missing === 0) return undefined
+  const counts = [
+    unresolved > 0 ? countLabel(unresolved, 'unresolved check') : '',
+    missing > 0 ? `${countLabel(missing, 'check')} without results` : '',
+  ]
+    .filter(Boolean)
+    .join(' and ')
+  const them = unresolved + missing === 1 ? 'its' : 'their'
+  return `The SARIF log has ${counts}, so code scanning could close ${them} open alerts as fixed. Have your coding agent record its findings before you upload it.`
+}
+
+/** One sentence per failed gate, `--blocking` then `--fail-on-unresolved`. */
+function failedGatesLine(result: SecurityReviewResult): string {
+  const unsettled = [
+    result.unresolvedChecks > 0 ? `${countLabel(result.unresolvedChecks, 'check')} unresolved` : '',
+    result.missingCheckIds.length > 0 ? `${countLabel(result.missingCheckIds.length, 'check')} without results` : '',
+  ].filter(Boolean)
+  return [
+    result.blocking.blockedChecks > 0 ? blockingLine(result.blocking) : '',
+    result.failOnUnresolved && unsettled.length > 0 ? `${unsettled.join(' and ')} (--fail-on-unresolved).` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 function staleAgentResultsLine(staleChecks: number): string {
@@ -168,15 +259,88 @@ function staleAgentResultsLine(staleChecks: number): string {
   return `${countLabel(staleChecks, 'check')} ${verb} both sources because the agent results are older than the deterministic results.`
 }
 
-/** Mirrors `securityAlertType` in security-output.ts, with `info` for the no-results state. */
+/** The checks that still need the agent, split by why, so the summary can say what the agent adds. */
+interface ChecksAwaitingAgentResult {
+  /** The checks themselves, so the boxes label the same checks the summary counts. */
+  ids: Set<string>
+  /** Checks that neither results file has, such as one that only the agent implements. */
+  withoutResults: number
+  /** Checks whose deterministic result is unresolved: the deterministic rule couldn't decide them. */
+  unresolved: number
+  /** Prefer-agent checks with only a deterministic result, which an agent result replaces. */
+  deterministicResultOnly: number
+  total: number
+}
+
+/**
+ * Finds the filtered agent checks that aren't settled until the coding agent runs them. An agent result settles a
+ * check, and so does a deterministic `not_applicable` result, which reports that the capability the check needs is
+ * absent. A deterministic `executed` result settles a `union` check, where a pass from either source counts, but not
+ * a `prefer-agent` check, where the agent result is meant to decide. The stored results decide, not the catalog's
+ * implementations, so a check that an older scan didn't run, or a check whose rule doesn't support the app's
+ * framework, still counts.
+ */
+function checksAwaitingAgentResult({result, agentChecks}: SecurityReviewPresenterInput): ChecksAwaitingAgentResult {
+  const checksById = new Map(result.allChecks.map((check) => [check.id, check]))
+  const selected = result.filter ? new Set(result.filter.checkIds) : null
+  const awaiting = {ids: new Set<string>(), withoutResults: 0, unresolved: 0, deterministicResultOnly: 0}
+  for (const {id, precedence} of agentChecks) {
+    if (selected && !selected.has(id)) continue
+    const reason = awaitingReason(checksById.get(id), precedence)
+    if (reason === undefined) continue
+    awaiting[reason] += 1
+    awaiting.ids.add(id)
+  }
+  return {...awaiting, total: awaiting.ids.size}
+}
+
+function awaitingReason(
+  check: CombinedCheck | undefined,
+  precedence: CheckPrecedence,
+): 'withoutResults' | 'unresolved' | 'deterministicResultOnly' | undefined {
+  if (check === undefined) return 'withoutResults'
+  const {deterministic, agent} = check.by_source
+  if (agent !== null || deterministic === null) return undefined
+  if (deterministic.status === 'unresolved') return 'unresolved'
+  if (deterministic.status === 'executed' && precedence === 'prefer-agent') return 'deterministicResultOnly'
+  return undefined
+}
+
+function agentResultsPendingLine({
+  withoutResults,
+  unresolved,
+  deterministicResultOnly,
+  total,
+}: ChecksAwaitingAgentResult): string {
+  const reasons = [
+    withoutResults > 0 ? `${withoutResults} without results` : undefined,
+    unresolved > 0 ? `${unresolved} unresolved` : undefined,
+    deterministicResultOnly > 0
+      ? `${deterministicResultOnly} where an agent result takes precedence over the deterministic one`
+      : undefined,
+  ].filter((reason) => reason !== undefined)
+  const reasonList = reasons
+    .map((reason, index) => (index > 0 && index === reasons.length - 1 ? `and ${reason}` : reason))
+    .join(', ')
+  return `${countLabel(total, 'check')} ${total === 1 ? 'needs' : 'need'} your coding agent: ${reasonList}.`
+}
+
+/**
+ * Mirrors `securityAlertType` in security-output.ts, with `info` for the no-results state. Checks that still need
+ * the agent keep the neutral style too: a green box would read as a clean result. A failed review is at least a
+ * warning, so the box never looks like a pass when the exit code is 1.
+ */
 function summaryAlertType(
   checks: CombinedCheck[],
   summary: CombinedChecksSummary,
   anyFilePresent: boolean,
+  awaitingAgent: number,
+  failed: boolean,
 ): SecurityReviewAlertType {
-  if (!anyFilePresent) return 'info'
   if (checks.some((check) => check.severity === 'high' && activeFindings(check).length > 0)) return 'error'
-  if (summary.withFindings > 0 || summary.unresolved > 0) return 'warning'
+  if (failed || summary.withFindings > 0 || summary.unresolved > 0) return 'warning'
+  if (!anyFilePresent) return 'info'
+  if (awaitingAgent > 0) return 'info'
   return 'success'
 }
 
@@ -199,8 +363,17 @@ function activeCountsBySource(check: CombinedCheck): string {
     .join(', ')
 }
 
-function otherChecksLines(summary: CombinedChecksSummary): string[] {
-  return [joinParts(checkStatusLabels(summary)), dispositionCounts(summary)].filter((line) => line !== '')
+function otherChecksLines(
+  checks: CombinedCheck[],
+  awaitingAgentIds: Set<string>,
+  summary: CombinedChecksSummary,
+): string[] {
+  const withoutDeterministicFindings = checks.filter(
+    (check) => isCheckPassed(check) && awaitingAgentIds.has(check.id),
+  ).length
+  return [joinParts(checkStatusLabels(summary, withoutDeterministicFindings)), dispositionCounts(summary)].filter(
+    (line) => line !== '',
+  )
 }
 
 function dispositionCounts(counts: {suppressed: number; superseded: number}): string {
@@ -281,6 +454,7 @@ function nextSteps(
   summary: CombinedChecksSummary,
   anyFilePresent: boolean,
   staleChecks: number,
+  awaitingAgentChecks: number,
   commands: AppSecurityCommands,
 ): TokenItem<InlineToken>[] {
   const checkCommand = {command: formatAppSecurityCommand(commands.scan)}
@@ -290,24 +464,26 @@ function nextSteps(
   // `check` rewrites deterministic-findings.json but never touches agent-findings.json; only the agent does.
   if (summary.withFindings > 0) {
     const fixStep: InlineToken[] = ['Fix the issues, then run', checkCommand, 'again.']
-    if (result.sources.agent === null) {
-      steps.push(fixStep, 'For a deeper review, have your agent run the same command and record its findings.')
-    } else if (staleChecks > 0) {
+    if (result.sources.agent === null || staleChecks > 0) {
       // The stale step below says how to refresh the agent findings.
       steps.push(fixStep)
     } else {
       steps.push([...fixStep, 'To refresh agent findings, have your agent run the command and record its findings.'])
     }
   }
-  // A stale check needs agent-findings.json, so this step never meets the deeper-review one.
+  // The stale step has the agent run its checks again, so it stands in for the step for checks without an agent result.
   if (staleChecks > 0) {
     steps.push([
       'Agent results are older than the deterministic results. Have your coding agent run',
       checkCommand,
       'and record its findings again to refresh them.',
     ])
-  } else if (summary.withFindings === 0 && result.sources.agent === null) {
-    steps.push(['For a deeper review, have your coding agent run', checkCommand, {char: '.'}])
+  } else if (awaitingAgentChecks > 0) {
+    steps.push([
+      `To run ${countLabel(awaitingAgentChecks, 'check')} with no agent result yet, have your coding agent follow`,
+      {command: formatAppSecurityCommand(commands.instructions)},
+      {char: '.'},
+    ])
   }
   return steps
 }
@@ -325,6 +501,7 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
     })
   }
   if (summary.otherChecks.length > 0) sections.push({title: 'Other checks', body: summary.otherChecks.join('\n')})
+  if (summary.agentResultsPending) sections.push({body: summary.agentResultsPending})
   if (summary.staleAgentResults) sections.push({body: summary.staleAgentResults})
   if (summary.coverage) sections.push({body: {subdued: summary.coverage}})
   if (summary.scopeLines.length > 0) sections.push({body: {subdued: summary.scopeLines.join('\n')}})
@@ -354,6 +531,26 @@ function resultsFileCells(row: ResultsFileRow): InlineToken[] {
 }
 
 /**
+ * With `--fail-on-unresolved`, the checks without results that fail the review, so the output names what is left to
+ * record. None without any results file: there every check is missing, and the summary says that no results exist.
+ */
+function missingCheckIdsToShow(result: SecurityReviewResult): string[] {
+  const anyFilePresent = result.sources.deterministic !== null || result.sources.agent !== null
+  return result.failOnUnresolved && anyFilePresent ? result.missingCheckIds : []
+}
+
+function missingChecksAlert(checkIds: string[]): SecurityReviewAlert {
+  return {
+    type: 'warning',
+    options: {
+      headline: `${countLabel(checkIds.length, 'check')} without results.`,
+      body: 'Neither results file has these checks.',
+      customSections: [{body: {list: {items: checkIds}}}],
+    },
+  }
+}
+
+/**
  * Unresolved checks with no active findings. With `--verbose`, each check's suppressed and superseded findings
  * follow it in full, prefixed by the check ID, as in the passed checks box.
  */
@@ -377,11 +574,20 @@ function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): Secur
  * Passed and not applicable checks in one table. These checks have no active findings, so with
  * `--verbose` their suppressed and superseded findings are listed here in full, prefixed by the check ID.
  */
-function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityReviewAlert {
-  const passed = checks.filter(isCheckPassed).length
-  const notApplicable = checks.length - passed
+function passedChecksAlert(
+  checks: CombinedCheck[],
+  awaitingAgentIds: Set<string>,
+  verbose: boolean,
+): SecurityReviewAlert {
+  const executed = checks.filter(isCheckPassed)
+  const withoutDeterministicFindings = executed.filter((check) => awaitingAgentIds.has(check.id)).length
+  const passed = executed.length - withoutDeterministicFindings
+  const notApplicable = checks.length - executed.length
   const headline = [
     passed > 0 ? `${countLabel(passed, 'check')} passed.` : undefined,
+    withoutDeterministicFindings > 0
+      ? `${countLabel(withoutDeterministicFindings, 'check')} with no deterministic findings.`
+      : undefined,
     notApplicable > 0 ? `${countLabel(notApplicable, 'check')} not applicable.` : undefined,
   ]
     .filter((part) => part !== undefined)
@@ -395,7 +601,7 @@ function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityR
         {
           // Two columns: with the longest check IDs, a third column for the counts would overflow the box.
           body: {
-            tabularData: checks.map(passedCheckRow),
+            tabularData: checks.map((check) => passedCheckRow(check, awaitingAgentIds)),
           },
         },
         ...(verbose
@@ -408,17 +614,26 @@ function passedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityR
   }
 }
 
-/** The check ID, then its status with the suppressed and superseded counts and the stale marker when they apply. */
-function passedCheckRow(check: CombinedCheck): InlineToken[] {
+/** The check ID, then its outcome with the suppressed and superseded counts and the stale marker when they apply. */
+function passedCheckRow(check: CombinedCheck, awaitingAgentIds: Set<string>): InlineToken[] {
   const counts = checkDispositionCounts(check)
   return [
     check.id,
     joinParts([
-      CHECK_STATUS_LABEL[check.status],
+      checkOutcomeLabel(check, awaitingAgentIds),
       counts === '' ? undefined : counts,
       isAgentResultStale(check) ? STALE_AGENT_RESULT_MARKER : undefined,
     ]),
   ]
+}
+
+/**
+ * Only an agent result, or a deterministic result that stands on its own, makes an executed check a pass: a check
+ * that still needs the agent is labelled with the deterministic findings alone.
+ */
+function checkOutcomeLabel(check: CombinedCheck, awaitingAgentIds: Set<string>): string {
+  if (check.status !== 'executed') return CHECK_STATUS_LABEL[check.status]
+  return awaitingAgentIds.has(check.id) ? NO_DETERMINISTIC_FINDINGS_LABEL : CHECK_STATUS_LABEL.executed
 }
 
 /**

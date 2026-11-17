@@ -17,7 +17,11 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
-import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {
+  AgentCheckCatalogEntry,
+  AgentFindingsDocument,
+  DeterministicFindingsDocument,
+} from './app-security-engine/index.js'
 
 const appRoot = '/tmp/review-app'
 const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
@@ -26,6 +30,25 @@ const commands = resolveAppSecurityCommands(
   cwd(),
 )
 const checkCommand = formatAppSecurityCommand(commands.scan)
+const instructionsCommand = formatAppSecurityCommand(commands.instructions)
+/**
+ * The fixture checks' agent prompts with the precedence the current engine gives them, which the results files only
+ * record with an agent result. A smaller catalog than the engine's keeps the counts in these tests readable.
+ */
+const agentChecks: AgentCheckCatalogEntry[] = [
+  {id: 'CREDENTIAL_LOG_LEAKAGE', precedence: 'prefer-agent'},
+  {id: 'EOL_API_VERSION', precedence: 'prefer-agent'},
+  {id: 'MISSING_TENANT_ISOLATION', precedence: 'union'},
+  {id: 'OPEN_REDIRECT', precedence: 'union'},
+  {id: 'UNAUTHENTICATED_ENDPOINT', precedence: 'union'},
+  {id: 'UNSAFE_INNERHTML', precedence: 'union'},
+]
+/** The same catalog plus the two checks `notApplicableChecks` settles: a prefer-agent one and a union one. */
+const notApplicableAgentChecks: AgentCheckCatalogEntry[] = [
+  ...agentChecks,
+  {id: 'APP_PROXY_LIQUID_INJECTION', precedence: 'prefer-agent'},
+  {id: 'THEME_EXTENSION_XSS', precedence: 'union'},
+]
 // One hour after the agent file, two and a half after the deterministic one.
 const now = new Date('2026-09-01T12:30:00.000Z')
 
@@ -33,14 +56,27 @@ type Sources = AppSecurityResultsSources
 
 function presenterInput(
   sources: Sources,
-  options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel; verbose?: boolean} = {},
+  options: {
+    checkIds?: string[]
+    blocking?: AppSecurityBlockingLevel
+    failOnUnresolved?: boolean
+    verbose?: boolean
+    agentChecks?: AgentCheckCatalogEntry[]
+  } = {},
 ): SecurityReviewPresenterInput {
   const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, 'shopify.app', sources), {
     resultsDirectory: paths.resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
+    failOnUnresolved: options.failOnUnresolved,
   })
-  return {result, verbose: options.verbose ?? false, now, commands}
+  return {
+    result,
+    verbose: options.verbose ?? false,
+    now,
+    commands,
+    agentChecks: options.agentChecks ?? agentChecks,
+  }
 }
 
 const both: Sources = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
@@ -67,6 +103,34 @@ const bothWithoutFindings: Sources = {
     ...agentFindingsDocument,
     checks: agentFindingsDocument.checks.map((check) => ({...check, findings: []})),
   },
+}
+
+/** The deterministic fixture alone, with every finding removed: EOL_API_VERSION is a prefer-agent check that found nothing. */
+const deterministicWithoutFindings: Sources = {deterministic: bothWithoutFindings.deterministic, agent: null}
+
+/** A stored deterministic result for an absent capability, as `check` writes one. */
+function notApplicableCheck(id: string, message: string): DeterministicFindingsDocument['checks'][number] {
+  return {
+    id,
+    version: 1,
+    status: 'not_applicable',
+    reason: {code: 'capability_absent', message},
+    snapshot: {title: `${id} title`, severity: 'high', description: `${id} description.`, current_version: 1},
+    findings: [],
+  }
+}
+
+/** A deterministic scan that settled two checks as not applicable: a prefer-agent one and a union one. */
+const notApplicableChecks: Sources = {
+  deterministic: {
+    ...deterministicFindingsDocument,
+    checks: [
+      ...deterministicFindingsDocument.checks,
+      notApplicableCheck('APP_PROXY_LIQUID_INJECTION', 'App proxies are not used.'),
+      notApplicableCheck('THEME_EXTENSION_XSS', 'The app has no theme app extension.'),
+    ],
+  },
+  agent: null,
 }
 
 describe('buildSecurityReviewSummary', () => {
@@ -103,11 +167,31 @@ describe('buildSecurityReviewSummary', () => {
       expect(summary.headline).toBe('No findings in 2 checks.')
     })
 
+    test('is an info box, not a success, while a check still needs the coding agent', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput(deterministicWithoutFindings, {checkIds: ['EOL_API_VERSION']}),
+      )
+
+      // Nothing found so far, but the agent result that decides this prefer-agent check is missing: a green box would
+      // read as a clean result.
+      expect(summary.headline).toBe('No findings in 1 check.')
+      expect(summary.type).toBe('info')
+    })
+
     test('is an info box when neither file is present', () => {
       const summary = buildSecurityReviewSummary(presenterInput(none))
 
       expect(summary.type).toBe('info')
       expect(summary.headline).toBe('No app security check results to review.')
+    })
+
+    test('is a warning, not a success or info box, when only --fail-on-unresolved fails', () => {
+      // OPEN_REDIRECT passed and SQL_INJECTION has no result in either file.
+      const passing = presenterInput(both, {checkIds: ['OPEN_REDIRECT', 'SQL_INJECTION'], failOnUnresolved: true})
+
+      expect(buildSecurityReviewSummary(passing).type).toBe('warning')
+      expect(buildSecurityReviewSummary(passing).headline).toBe('No findings in 1 check.')
+      expect(buildSecurityReviewSummary(presenterInput(none, {failOnUnresolved: true})).type).toBe('warning')
     })
   })
 
@@ -203,6 +287,110 @@ describe('buildSecurityReviewSummary', () => {
       expect(
         buildSecurityReviewSummary(presenterInput(both, {checkIds: ['CREDENTIAL_LOG_LEAKAGE']})).otherChecks,
       ).toEqual(['2 findings superseded'])
+    })
+
+    test('counts a prefer-agent check that only the deterministic scan passed as no deterministic findings', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput(deterministicWithoutFindings, {checkIds: ['EOL_API_VERSION']}),
+      )
+
+      expect(summary.otherChecks).toEqual(['1 with no deterministic findings'])
+    })
+
+    test('keeps passed for a check the agent ran and for one the agent has no prompt for', () => {
+      const agentRan = presenterInput(both, {checkIds: ['OPEN_REDIRECT']})
+      const noAgentPrompt = presenterInput(deterministicWithoutFindings, {
+        checkIds: ['EOL_API_VERSION'],
+        agentChecks: [],
+      })
+
+      expect(buildSecurityReviewSummary(agentRan).otherChecks).toEqual(['1 passed'])
+      expect(buildSecurityReviewSummary(noAgentPrompt).otherChecks).toEqual(['1 passed'])
+    })
+
+    test('keeps passed for a union check whose deterministic result stands on its own', () => {
+      const sources: Sources = {
+        deterministic: {
+          ...deterministicFindingsDocument,
+          checks: deterministicFindingsDocument.checks.map((check) =>
+            check.id === 'UNSAFE_INNERHTML' ? {...check, status: 'executed' as const, reason: undefined} : check,
+          ),
+        },
+        agent: null,
+      }
+      const summary = buildSecurityReviewSummary(presenterInput(sources, {checkIds: ['UNSAFE_INNERHTML']}))
+
+      // A pass from either source counts for a union check, so the deterministic pass is a pass.
+      expect(summary.otherChecks).toEqual(['1 passed'])
+      expect(summary.agentResultsPending).toBeUndefined()
+    })
+  })
+
+  describe('checks awaiting the coding agent', () => {
+    test('counts the checks without results, the unresolved checks and the prefer-agent checks', () => {
+      // UNAUTHENTICATED_ENDPOINT is in neither file, the deterministic rule left MISSING_TENANT_ISOLATION unresolved,
+      // and the agent result decides the prefer-agent CREDENTIAL_LOG_LEAKAGE and EOL_API_VERSION. OPEN_REDIRECT is a
+      // union check whose deterministic pass stands on its own.
+      expect(buildSecurityReviewSummary(presenterInput(deterministicOnly)).agentResultsPending).toBe(
+        '4 checks need your coding agent: 1 without results, 1 unresolved, and 2 where an agent result takes precedence over the deterministic one.',
+      )
+    })
+
+    test('leaves out the checks the agent reported and the union checks with a deterministic result', () => {
+      // UNSAFE_INNERHTML is a union check the deterministic scan covered, so it waits for nothing.
+      expect(buildSecurityReviewSummary(presenterInput(both)).agentResultsPending).toBe(
+        '1 check needs your coding agent: 1 where an agent result takes precedence over the deterministic one.',
+      )
+    })
+
+    test('counts a check that neither results file has, whatever implements it', () => {
+      // Without deterministic-findings.json, EOL_API_VERSION and UNSAFE_INNERHTML have no result, although a
+      // deterministic rule implements both.
+      expect(buildSecurityReviewSummary(presenterInput(agentOnly)).agentResultsPending).toBe(
+        '2 checks need your coding agent: 2 without results.',
+      )
+    })
+
+    test('counts a union check whose deterministic result is unresolved', () => {
+      // A deterministic rule that can't decide, for example for an unsupported framework, leaves the check to the agent.
+      const summary = buildSecurityReviewSummary(
+        presenterInput(deterministicOnly, {checkIds: ['MISSING_TENANT_ISOLATION']}),
+      )
+
+      expect(summary.agentResultsPending).toBe('1 check needs your coding agent: 1 unresolved.')
+      expect(summary.nextSteps).toEqual([
+        [
+          'To run 1 check with no agent result yet, have your coding agent follow',
+          {command: instructionsCommand},
+          {char: '.'},
+        ],
+      ])
+    })
+
+    test('has no line without a results file to review', () => {
+      expect(buildSecurityReviewSummary(presenterInput(none)).agentResultsPending).toBeUndefined()
+    })
+
+    test('settles a prefer-agent check whose deterministic result is not applicable', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput(notApplicableChecks, {
+          checkIds: ['APP_PROXY_LIQUID_INJECTION'],
+          agentChecks: notApplicableAgentChecks,
+        }),
+      )
+
+      // The app proxy the check needs is absent, so there is nothing for the agent to investigate.
+      expect(summary.agentResultsPending).toBeUndefined()
+      expect(summary.otherChecks).toEqual(['1 not applicable'])
+    })
+
+    test('settles an agent-only check whose deterministic result is not applicable', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput(notApplicableChecks, {checkIds: ['THEME_EXTENSION_XSS'], agentChecks: notApplicableAgentChecks}),
+      )
+
+      expect(summary.agentResultsPending).toBeUndefined()
+      expect(summary.otherChecks).toEqual(['1 not applicable'])
     })
   })
 
@@ -390,22 +578,34 @@ describe('buildSecurityReviewSummary', () => {
           'again.',
           'To refresh agent findings, have your agent run the command and record its findings.',
         ],
+        [
+          'To run 1 check with no agent result yet, have your coding agent follow',
+          {command: instructionsCommand},
+          {char: '.'},
+        ],
       ])
     })
 
-    test('offers a deeper review when only the deterministic file is present and nothing is found', () => {
+    test('says how to run the checks the agent has not reported yet', () => {
       const summary = buildSecurityReviewSummary(
-        presenterInput(deterministicOnly, {checkIds: ['OPEN_REDIRECT', 'UNSAFE_INNERHTML']}),
+        presenterInput(deterministicWithoutFindings, {checkIds: ['EOL_API_VERSION', 'OPEN_REDIRECT']}),
       )
 
+      // Only the prefer-agent EOL_API_VERSION waits for the agent: OPEN_REDIRECT's deterministic pass stands on its own.
       expect(summary.nextSteps).toEqual([
-        ['For a deeper review, have your coding agent run', {command: checkCommand}, {char: '.'}],
+        [
+          'To run 1 check with no agent result yet, have your coding agent follow',
+          {command: instructionsCommand},
+          {char: '.'},
+        ],
       ])
     })
 
     test('offers refreshing the agent results after fixing when a filtered check is stale', () => {
       const summary = buildSecurityReviewSummary(presenterInput(staleAgent))
 
+      // EOL_API_VERSION still needs the agent too, but the refresh step already has the agent run its checks again.
+      expect(summary.agentResultsPending).toBeDefined()
       expect(summary.nextSteps).toEqual([
         ['Fix the issues, then run', {command: checkCommand}, 'again.'],
         [
@@ -419,20 +619,37 @@ describe('buildSecurityReviewSummary', () => {
     test('omits the refresh step when no filtered check is stale', () => {
       const summary = buildSecurityReviewSummary(presenterInput(staleAgent, {checkIds: ['EOL_API_VERSION']}))
 
-      expect(summary.nextSteps).toEqual([expect.arrayContaining(['Fix the issues, then run'])])
+      // The fix step still says how to refresh the agent findings; only the dedicated refresh step is left out.
+      expect(summary.nextSteps).toEqual([
+        [
+          'Fix the issues, then run',
+          {command: checkCommand},
+          'again.',
+          'To refresh agent findings, have your agent run the command and record its findings.',
+        ],
+        [
+          'To run 1 check with no agent result yet, have your coding agent follow',
+          {command: instructionsCommand},
+          {char: '.'},
+        ],
+      ])
     })
 
-    test('offers fixing and a deeper review when the deterministic file alone has findings', () => {
+    test('offers fixing and the agent instructions when the deterministic file alone has findings', () => {
       const summary = buildSecurityReviewSummary(presenterInput(deterministicOnly))
 
       expect(summary.nextSteps).toEqual([
         ['Fix the issues, then run', {command: checkCommand}, 'again.'],
-        'For a deeper review, have your agent run the same command and record its findings.',
+        [
+          'To run 4 checks with no agent result yet, have your coding agent follow',
+          {command: instructionsCommand},
+          {char: '.'},
+        ],
       ])
     })
 
-    test('offers no next steps when both files are present and nothing is found', () => {
-      const summary = buildSecurityReviewSummary(presenterInput(bothWithoutFindings))
+    test('offers no next steps when every filtered check has both sources and nothing is found', () => {
+      const summary = buildSecurityReviewSummary(presenterInput(both, {checkIds: ['OPEN_REDIRECT']}))
 
       expect(summary.nextSteps).toEqual([])
     })
@@ -448,6 +665,23 @@ describe('buildSecurityReviewSummary', () => {
 
       expect(summary.nextSteps).toBeUndefined()
       expect(summary.blocking).toBe('2 checks at or above high (--blocking high).')
+    })
+
+    test('adds the unresolved and missing checks to the Blocking line with --fail-on-unresolved', () => {
+      const summary = buildSecurityReviewSummary(presenterInput(both, {blocking: 'high', failOnUnresolved: true}))
+
+      expect(summary.blocking).toMatch(
+        /^2 checks at or above high \(--blocking high\)\. 1 check unresolved and \d+ checks without results \(--fail-on-unresolved\)\.$/,
+      )
+    })
+
+    test('names only the --fail-on-unresolved counts that fail', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput(both, {checkIds: ['OPEN_REDIRECT', 'SQL_INJECTION'], failOnUnresolved: true}),
+      )
+
+      expect(summary.nextSteps).toBeUndefined()
+      expect(summary.blocking).toBe('1 check without results (--fail-on-unresolved).')
     })
 
     test('replaces the refresh step with the Blocking line too, keeping the stale summary line', () => {
@@ -466,7 +700,7 @@ describe('buildSecurityReviewSummary', () => {
       )
 
       expect(summary.blocking).toBeUndefined()
-      expect(summary.nextSteps).toHaveLength(1)
+      expect(summary.nextSteps).toHaveLength(2)
     })
   })
 })
@@ -489,6 +723,37 @@ describe('buildSecurityReviewAlerts', () => {
     const alerts = buildSecurityReviewAlerts(presenterInput(none))
 
     expect(alerts.map((alert) => alert.type)).toEqual(['info'])
+  })
+
+  test('lists the checks without results after the unresolved box with --fail-on-unresolved', () => {
+    const alerts = buildSecurityReviewAlerts(
+      presenterInput(both, {
+        checkIds: ['UNAUTHENTICATED_ENDPOINT', 'SQL_INJECTION', 'OPEN_REDIRECT', 'CSRF_MISSING_PROTECTION'],
+        failOnUnresolved: true,
+      }),
+    )
+
+    expect(alerts.map((alert) => [alert.type, alert.options.headline])).toEqual([
+      ['warning', '1 check unresolved.'],
+      ['warning', '2 checks without results.'],
+      ['info', '1 check passed.'],
+      ['warning', 'No findings in 2 checks.'],
+    ])
+    expect(alerts[1]!.options).toEqual({
+      headline: '2 checks without results.',
+      body: 'Neither results file has these checks.',
+      customSections: [{body: {list: {items: ['CSRF_MISSING_PROTECTION', 'SQL_INJECTION']}}}],
+    })
+  })
+
+  test('shows no box for the checks without results without --fail-on-unresolved or without a results file', () => {
+    const headlines = (input: SecurityReviewPresenterInput) =>
+      buildSecurityReviewAlerts(input).map((alert) => alert.options.headline)
+
+    expect(headlines(presenterInput(deterministicOnly))).not.toContainEqual(expect.stringMatching(/without results/))
+    expect(headlines(presenterInput(none, {failOnUnresolved: true}))).toEqual([
+      'No app security check results to review.',
+    ])
   })
 
   test('shows every active finding with its source, location, message and source-specific details', () => {
@@ -847,14 +1112,15 @@ describe('buildSecurityReviewAlerts', () => {
       'Checks with findings',
       undefined,
       undefined,
+      undefined,
       `Results files in ${paths.resultsDirectory}`,
       'Blocking',
     ])
     expect(summary.options.customSections![0]!.body).toEqual({subdued: 'Showing 1 of 6 checks (--check-id).'})
-    expect(summary.options.customSections![5]!.body).toBe('1 check at or above low (--blocking low).')
+    expect(summary.options.customSections![6]!.body).toBe('1 check at or above low (--blocking low).')
   })
 
-  test('puts the stale line after Other checks and before Deterministic coverage', () => {
+  test('puts the pending and stale lines after Other checks and before Deterministic coverage', () => {
     const summary = buildSecurityReviewAlerts(presenterInput(staleAgent)).at(-1)!
 
     const sections = summary.options.customSections!
@@ -864,14 +1130,18 @@ describe('buildSecurityReviewAlerts', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
       `Results files in ${paths.resultsDirectory}`,
       'Next steps',
     ])
     expect(sections[2]!.body).toBe(
+      '1 check needs your coding agent: 1 where an agent result takes precedence over the deterministic one.',
+    )
+    expect(sections[3]!.body).toBe(
       '1 check shows both sources because the agent results are older than the deterministic results.',
     )
-    expect(sections[3]!.body).toEqual({subdued: expect.stringContaining('Deterministic coverage')})
-    expect(sections[4]!.body).toEqual({subdued: expect.stringContaining('Scan directories: .')})
+    expect(sections[4]!.body).toEqual({subdued: expect.stringContaining('Deterministic coverage')})
+    expect(sections[5]!.body).toEqual({subdued: expect.stringContaining('Scan directories: .')})
   })
 })
 
@@ -921,7 +1191,7 @@ describe('renderSecurityReview', () => {
     const output = mockAndCaptureOutput()
     output.clear()
 
-    renderSecurityReview(presenterInput(bothWithoutFindings))
+    renderSecurityReview(presenterInput(both, {checkIds: ['OPEN_REDIRECT']}))
 
     expect(unstyled(output.output())).not.toContain('Next steps')
   })
@@ -936,5 +1206,18 @@ describe('renderSecurityReview', () => {
     expect(rendered).toContain('Blocking')
     expect(rendered).toContain('2 checks at or above high (--blocking high).')
     expect(rendered).not.toContain('Next steps')
+  })
+
+  test('renders the checks without results as a list in a warning box', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+
+    renderSecurityReview(presenterInput(both, {checkIds: ['OPEN_REDIRECT', 'SQL_INJECTION'], failOnUnresolved: true}))
+
+    const rendered = unstyled(output.warn())
+    expect(rendered).toContain('1 check without results.')
+    expect(rendered).toContain('Neither results file has these checks.')
+    expect(rendered).toContain('• SQL_INJECTION')
+    expect(rendered).toContain('1 check without results (--fail-on-unresolved).')
   })
 })

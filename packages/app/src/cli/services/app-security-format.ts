@@ -15,10 +15,15 @@ export function checksWithFindingsLabel(summary: CombinedChecksSummary): string 
   return `${countLabel(summary.withFindings, 'check')} with findings`
 }
 
-/** The non-zero status counts of the checks without findings, in display order: "5 passed", "1 not applicable", "2 unresolved". */
-export function checkStatusLabels(summary: CombinedChecksSummary): string[] {
+/**
+ * The non-zero outcomes of the checks without findings, in display order: "5 passed",
+ * "2 with no deterministic findings", "1 not applicable", "2 unresolved".
+ */
+export function checkStatusLabels(summary: CombinedChecksSummary, withoutDeterministicFindings: number): string[] {
+  const passed = summary.passed - withoutDeterministicFindings
   return [
-    summary.passed > 0 ? `${summary.passed} passed` : undefined,
+    passed > 0 ? `${passed} passed` : undefined,
+    withoutDeterministicFindings > 0 ? `${withoutDeterministicFindings} with no deterministic findings` : undefined,
     summary.notApplicable > 0 ? `${summary.notApplicable} not applicable` : undefined,
     summary.unresolved > 0 ? `${summary.unresolved} unresolved` : undefined,
   ].filter((label) => label !== undefined)

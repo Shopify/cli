@@ -3810,6 +3810,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--fail-on-unresolved",
+          "value": "''",
+          "description": "Exit with code 1 when a reviewed check is unresolved or has no result, whatever --blocking is.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_FAIL_ON_UNRESOLVED"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--json-schema",
           "value": "''",
           "description": "Print the command's JSON schemas.",
@@ -3842,6 +3851,15 @@
           "description": "The path to your app directory.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--sarif",
+          "value": "''",
+          "description": "Print the reviewed checks as SARIF 2.1.0 instead of the review, for code scanning tools. Redirect the output to save it to a file.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_SARIF"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
@@ -3880,7 +3898,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appsecurityreview {\n  /**\n   * The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to none, which never fails on findings.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_BLOCKING\n   */\n  '--blocking <value>'?: string\n\n  /**\n   * Show only this check. Repeat the flag to show several checks.\n   * @environment SHOPIFY_FLAG_CHECK_ID\n   */\n  '--check-id <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.\n   * @environment SHOPIFY_FLAG_WITHOUT_APP_CONFIG\n   */\n  '--without-app-config'?: ''\n}"
+      "value": "export interface appsecurityreview {\n  /**\n   * The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to none, which never fails on findings.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_BLOCKING\n   */\n  '--blocking <value>'?: string\n\n  /**\n   * Show only this check. Repeat the flag to show several checks.\n   * @environment SHOPIFY_FLAG_CHECK_ID\n   */\n  '--check-id <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Exit with code 1 when a reviewed check is unresolved or has no result, whatever --blocking is.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_FAIL_ON_UNRESOLVED\n   */\n  '--fail-on-unresolved'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Print the reviewed checks as SARIF 2.1.0 instead of the review, for code scanning tools. Redirect the output to save it to a file.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_SARIF\n   */\n  '--sarif'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.\n   * @environment SHOPIFY_FLAG_WITHOUT_APP_CONFIG\n   */\n  '--without-app-config'?: ''\n}"
     }
   },
   "appsubscriptionmigrationscancel": {

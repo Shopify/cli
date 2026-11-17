@@ -26,6 +26,7 @@ import {
   scanRequestControlledAdminContext,
   scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
+  scanWeakShopValidation,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
@@ -72,6 +73,11 @@ export interface DeterministicCheckDefinition {
   analysisMode: AnalysisMode
   target: CheckTarget
   requires?: keyof ScanContext['capabilities']
+  /**
+   * The check's app-source analysis needs React Router's structure, so it doesn't run without it. Checks that read
+   * any supported JavaScript/TypeScript source set no framework at all.
+   */
+  requiresReactRouter?: true
   extensions?: string[]
   runner?: Runner
 }
@@ -120,16 +126,19 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'config_and_source',
+    requiresReactRouter: true,
     extensions: JAVASCRIPT_EXTENSIONS,
     runner: (context) => scanEolApiVersions(context),
   },
   {
     ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 3),
+    requiresReactRouter: true,
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
   },
   {
     ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 3),
     requires: 'has_backend',
+    requiresReactRouter: true,
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
@@ -157,7 +166,15 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
   },
   jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles), 'source', 3),
-  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles), 'source', 3),
+  {
+    ...jsCheck(
+      'CREDENTIAL_BROWSER_LEAKAGE',
+      (context) => scanCredentialBrowserLeakage(context.sourceFiles),
+      'source',
+      3,
+    ),
+    requiresReactRouter: true,
+  },
   {
     id: 'LIQUID_UNSAFE_RENDER',
     version: 2,
@@ -186,43 +203,26 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles), 'app_source', 2),
     requires: 'embedded_app',
   },
+  jsCheck('WEAK_SHOP_VALIDATION', (context) => scanWeakShopValidation(context.sourceFiles), 'source', 2),
 ]
 
 function unsafeInnerHtmlRunner(context: ScanContext): RunnerResult {
   const issues: Issue[] = []
   const implementations: RunnerImplementationResult[] = []
-  if (context.detection.framework === 'react_router') {
-    const files = reactRouterFiles(context).filter(
-      (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
-    )
-    const findings = scanUnsafeInnerHTML(files)
-    issues.push(...findings)
-    implementations.push({
-      id: 'react-router-js-regex',
-      analysisMode: 'regex',
-      status: 'executed',
-      inspectedFiles: files.map((file) => file.path),
-      findings: findings.length,
-    })
-  }
+  const sourceFiles = reactRouterFiles(context).filter(
+    (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
+  )
+  const sourceFindings = scanUnsafeInnerHTML(sourceFiles)
+  issues.push(...sourceFindings)
+  implementations.push({
+    id: 'app-source-js-regex',
+    analysisMode: 'regex',
+    status: 'executed',
+    inspectedFiles: sourceFiles.map((file) => file.path),
+    findings: sourceFindings.length,
+  })
   if (context.capabilities.theme_app_extension) {
     const themeSources = themeFiles(context)
-    const themePaths = new Set(themeSources.map((file) => file.path))
-    if (
-      context.detection.framework !== 'react_router' &&
-      context.sourceCandidates.some((candidate) => !themePaths.has(candidate.path))
-    )
-      implementations.push({
-        id: 'app-source-unsupported',
-        analysisMode: 'regex',
-        status: 'unsupported_framework',
-        inspectedFiles: [],
-        findings: 0,
-        reason: {
-          code: 'unsupported_framework',
-          message: 'The non-theme app source framework is not supported by deterministic analysis.',
-        },
-      })
     const javascriptFiles = themeSources.filter(
       (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
     )
@@ -385,6 +385,8 @@ function executionDisposition(
   const nonThemeCandidates = context.sourceCandidates.filter((candidate) => !themePaths.has(candidate.path))
   const reactRouterSupported = context.detection.framework === 'react_router'
   const hasTheme = context.capabilities.theme_app_extension
+  /** The check needs React Router's app structure, which this project doesn't have. */
+  const sourceFrameworkUnsupported = !reactRouterSupported && definition.requiresReactRouter === true
 
   if (definition.target === 'dependency_automation' && !context.manifests.some(manifestHasDependencies))
     return {
@@ -393,7 +395,7 @@ function executionDisposition(
       applicable: false,
       reason: {code: 'no_relevant_files', message: 'No supported package manifest declares dependencies.'},
     }
-  if (definition.target === 'source' && !reactRouterSupported) {
+  if (definition.target === 'source' && sourceFrameworkUnsupported) {
     if (nonThemeCandidates.length > 0)
       return {
         status: 'unsupported_framework',
@@ -411,7 +413,7 @@ function executionDisposition(
       reason: {code: 'no_relevant_files', message: 'No React Router app source applies to this check.'},
     }
   }
-  if (definition.target === 'source_and_theme' && !reactRouterSupported && !hasTheme) {
+  if (definition.target === 'source_and_theme' && sourceFrameworkUnsupported && !hasTheme) {
     if (nonThemeCandidates.length > 0)
       return {
         status: 'unsupported_framework',
@@ -429,7 +431,7 @@ function executionDisposition(
       reason: {code: 'no_relevant_files', message: 'No supported app or theme source applies to this check.'},
     }
   }
-  if (definition.target === 'source_and_theme' && !reactRouterSupported && nonThemeCandidates.length > 0)
+  if (definition.target === 'source_and_theme' && sourceFrameworkUnsupported && nonThemeCandidates.length > 0)
     return files.length > 0
       ? {
           status: 'unresolved',
@@ -458,7 +460,7 @@ function executionDisposition(
     }
   if (
     definition.target === 'config_and_source' &&
-    !reactRouterSupported &&
+    sourceFrameworkUnsupported &&
     nonThemeCandidates.length > 0 &&
     context.appTomls.length > 0
   )
@@ -485,6 +487,17 @@ function executionDisposition(
       applicable: true,
       reason: {code: 'parser_unavailable', message: 'No readable Shopify app configuration was available.'},
     }
+  const unreadableLanguages = unreadableAppSourceLanguages(definition, context, nonThemeCandidates)
+  if (unreadableLanguages.length > 0)
+    return {
+      status: 'unresolved',
+      required: true,
+      applicable: true,
+      reason: {
+        code: 'unsupported_language',
+        message: `${definition.id} could not inspect the app source because its languages are not supported by deterministic analysis: ${unreadableLanguages.join(', ')}.`,
+      },
+    }
   if (
     ['source', 'app_source', 'theme', 'secrets', 'source_and_theme'].includes(definition.target) &&
     files.length === 0
@@ -499,6 +512,30 @@ function executionDisposition(
       },
     }
   return {status: 'executed', required: true, applicable: true}
+}
+
+/** Whether the check analyses app source, as opposed to configuration, theme extensions, secrets, or manifests. */
+function appSourceAnalysis(definition: DeterministicCheckDefinition): boolean {
+  return ['source', 'source_and_theme', 'config_and_source'].includes(definition.target)
+}
+
+/**
+ * The unsupported languages of the app source when a check that reads any JavaScript/TypeScript app source has none to
+ * read. Supported files that the check doesn't read, such as a Rails app's `public/404.html`, don't make it
+ * inapplicable.
+ */
+function unreadableAppSourceLanguages(
+  definition: DeterministicCheckDefinition,
+  context: ScanContext,
+  nonThemeCandidates: ScanContext['sourceCandidates'],
+): string[] {
+  if (definition.requiresReactRouter === true || !appSourceAnalysis(definition)) return []
+  const hasJavaScriptAppSource = reactRouterFiles(context).some(
+    (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
+  )
+  if (hasJavaScriptAppSource) return []
+  const unsupported = nonThemeCandidates.filter((candidate) => !candidate.supported)
+  return [...new Set(unsupported.map((candidate) => candidate.language))].sort()
 }
 
 function manifestHasDependencies(manifest: ScanContext['manifests'][number]): boolean {

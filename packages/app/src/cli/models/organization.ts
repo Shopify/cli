@@ -76,11 +76,11 @@ const automationTokenVariables = [
 /**
  * Fetches the app's client secret for commands that authenticate as the app.
  *
- * App lookups don't include the secret, so this asks the Developer Dashboard for it, which decides whether the current
+ * App lookups don't include the secret, so this asks the App Management API for it, which decides whether the current
  * credentials may read it.
  *
  * @param remoteApp - The app whose secret to fetch.
- * @returns The first client secret, or undefined when the Developer Dashboard returns none.
+ * @returns The first client secret, or undefined when the App Management API returns none.
  */
 export async function fetchAppClientSecret(remoteApp: AppWithClientSecrets): Promise<string | undefined> {
   const loadedSecret = firstClientSecret(remoteApp.apiSecretKeys)
@@ -90,7 +90,7 @@ export async function fetchAppClientSecret(remoteApp: AppWithClientSecrets): Pro
 }
 
 /**
- * Fetches the app's client secret, and fails with an actionable error when the Developer Dashboard returns none.
+ * Fetches the app's client secret, and fails with an actionable error when the App Management API returns none.
  *
  * @param remoteApp - The app whose secret to fetch.
  * @param tryMessage - What the user can do instead, when there's a way to provide the secret directly.
@@ -101,7 +101,7 @@ export async function appClientSecret(remoteApp: AppWithClientSecrets, tryMessag
   if (secret) return secret
 
   throw new AbortError(
-    "This command needs the app's client secret, and the Developer Dashboard didn't return one for your credentials.",
+    "This command needs the app's client secret, and the App Management API didn't return one for your credentials.",
     tryMessage ?? missingClientSecretTryMessage(),
   )
 }
@@ -118,7 +118,7 @@ export function missingClientSecretTryMessage(): string {
   const environment = getEnvironmentVariables()
   const setTokenVariables = automationTokenVariables.filter((name) => environment[name] !== undefined)
   if (setTokenVariables.length > 0) {
-    return `Automation tokens might not have access to app client secrets. To use your own account, unset ${setTokenVariables.join(' and ')}, log in with \`shopify auth login\`, and run the command again.`
+    return `The token in ${setTokenVariables[0]} might not have access to the app's client secret. To use your own account, unset ${setTokenVariables.join(' and ')}, log in with \`shopify auth login\`, and run the command again.`
   }
 
   return `Check that your account can view the app's client credentials in the Developer Dashboard: ${developerDashboardUrl}`
@@ -129,7 +129,7 @@ export function missingClientSecretTryMessage(): string {
  */
 export function warnClientSecretOmitted(): void {
   outputWarn(
-    `SHOPIFY_API_SECRET isn't included because the Developer Dashboard didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()}`,
+    `SHOPIFY_API_SECRET isn't included because the App Management API didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()}`,
   )
 }
 

@@ -1,4 +1,8 @@
-import securityReview, {reviewAppSecurityResults, type SecurityReviewDependencies} from './security-review.js'
+import securityReview, {
+  reviewAppSecurityResults,
+  reviewFailed,
+  type SecurityReviewDependencies,
+} from './security-review.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {resolveAppSecuritySelection, type AppSecuritySelectionOptions} from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
@@ -8,9 +12,10 @@ import {
   agentFindingsDocument,
   deterministicFindingsDocument,
 } from './app-security-engine/tests/fixtures/findings-documents.js'
+import {listSettleableCheckIds} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
@@ -46,7 +51,10 @@ function testDependencies() {
   return dependencies
 }
 
-function review(files: Files, options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel} = {}) {
+function review(
+  files: Files,
+  options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel; failOnUnresolved?: boolean} = {},
+) {
   const results = appSecurityResultsFor('/tmp/review-app', RESULTS_KEY, {
     deterministic: files.deterministic ?? null,
     agent: files.agent ?? null,
@@ -55,6 +63,7 @@ function review(files: Files, options: {checkIds?: string[]; blocking?: AppSecur
     resultsDirectory: appSecurityArtifactPaths('/tmp/review-app', RESULTS_KEY).resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
+    failOnUnresolved: options.failOnUnresolved,
   })
 }
 
@@ -223,6 +232,60 @@ describe('reviewAppSecurityResults', () => {
       ).toBe(0)
     })
   })
+
+  describe('--fail-on-unresolved', () => {
+    test('fails on an unresolved check whatever --blocking is, and only with the flag', () => {
+      // UNAUTHENTICATED_ENDPOINT is high and unresolved, which never fails --blocking high on its own.
+      const options = {checkIds: ['UNAUTHENTICATED_ENDPOINT'], blocking: 'high' as const}
+
+      expect(review(both, options)).toMatchObject({unresolvedChecks: 1, missingCheckIds: []})
+      expect(reviewFailed(review(both, options))).toBe(false)
+      expect(reviewFailed(review(both, {...options, failOnUnresolved: true}))).toBe(true)
+    })
+
+    test('fails on the checks that the agent never recorded, and names them in order', () => {
+      const result = review({deterministic: deterministicFindingsDocument}, {failOnUnresolved: true})
+      const recordedIds = deterministicFindingsDocument.checks.map((check) => check.id)
+
+      expect(result.missingCheckIds).toEqual(listSettleableCheckIds().filter((id) => !recordedIds.includes(id)))
+      expect(result.missingCheckIds).toContain('SQL_INJECTION')
+      expect(result.missingCheckIds).toEqual([...result.missingCheckIds].sort())
+      expect(reviewFailed(result)).toBe(true)
+    })
+
+    test('fails without results files, where every check is missing', () => {
+      expect(review({}).missingCheckIds).toEqual(listSettleableCheckIds())
+      expect(reviewFailed(review({}))).toBe(false)
+      expect(reviewFailed(review({}, {failOnUnresolved: true}))).toBe(true)
+    })
+
+    test('counts only the checks that --check-id keeps', () => {
+      // OPEN_REDIRECT is settled, and SQL_INJECTION is a settleable check that neither file has.
+      expect(reviewFailed(review(both, {checkIds: ['OPEN_REDIRECT'], failOnUnresolved: true}))).toBe(false)
+      expect(review({}, {checkIds: ['SQL_INJECTION'], failOnUnresolved: true}).missingCheckIds).toEqual([
+        'SQL_INJECTION',
+      ])
+    })
+
+    test('accepts --check-id for a check that neither file has, and fails on it as missing', () => {
+      const result = review(both, {checkIds: ['SQL_INJECTION'], failOnUnresolved: true})
+
+      expect(result.checks).toEqual([])
+      expect(result.missingCheckIds).toEqual(['SQL_INJECTION'])
+      expect(reviewFailed(result)).toBe(true)
+      // Without the flag, only the checks in the results files are known.
+      expect(() => review(both, {checkIds: ['SQL_INJECTION']})).toThrow(AbortError)
+    })
+
+    test('rejects an unknown --check-id without results files too, so a typo never passes the review', async () => {
+      const abort = await captureError(() => review({}, {checkIds: ['NOT_A_CHECK'], failOnUnresolved: true}))
+
+      expect(abort.message).toBe('Unknown check ID: NOT_A_CHECK.')
+      expect(abort.customSections).toEqual([
+        {title: 'Available check IDs', body: {list: {items: listSettleableCheckIds()}}},
+      ])
+    })
+  })
 })
 
 describe('securityReview', () => {
@@ -264,7 +327,8 @@ describe('securityReview', () => {
         appDirectory: appRoot,
         appConfigFilePath: joinPath(appRoot, 'shopify.app.toml'),
       })
-      expect(review.commands.scan.args).toContainEqual({flag: '--path', value: relativePath(cwd(), appRoot)})
+      // The app is outside the working directory, so the command keeps its absolute path.
+      expect(review.commands.scan.args).toContainEqual({flag: '--path', value: appRoot})
       expect(review.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
       expect(review.result.sources.deterministic?.path).toBe(
         appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
@@ -274,7 +338,7 @@ describe('securityReview', () => {
     })
   })
 
-  test('repeats the latest scan scope in the check command', async () => {
+  test('repeats the latest scan scope in the check command and the instructions command', async () => {
     await inTemporaryDirectory(async (directory) => {
       const scope = {include_dirs: ['../backend'], excludes: ['vendor/**'], no_git_ignore: true}
       const deterministic = {
@@ -290,6 +354,7 @@ describe('securityReview', () => {
         {flag: '--exclude', value: 'vendor/**'},
         '--no-git-ignore',
       ])
+      expect(review.commands.instructions.args).toEqual([...review.commands.scan.args, '--print-instructions'])
     })
   })
 

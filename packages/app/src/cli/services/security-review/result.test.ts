@@ -1,4 +1,5 @@
 import {renderSecurityReviewResult} from './result.js'
+import {appSecurityReviewSarif, type SarifLog} from './sarif.js'
 import {reviewAppSecurityResults, type ReviewedAppSecurityResults} from '../security-review.js'
 import {appSecurityArtifactPaths} from '../app-security-artifacts.js'
 import {resolveAppSecurityCommands} from '../app-security-commands.js'
@@ -7,12 +8,14 @@ import {
   agentFindingsDocument,
   deterministicFindingsDocument,
 } from '../app-security-engine/tests/fixtures/findings-documents.js'
+import {listSettleableCheckIds} from '../app-security-engine/index.js'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from '../app-security-api.js'
 import type {AppSecuritySelection} from '../app-security-selection.js'
+import type {AppSecurityReviewResult} from './types.js'
 import type {
   AgentFindingsDocument,
   DeterministicFindingsDocument,
@@ -46,6 +49,7 @@ const selection: AppSecuritySelection = {
 interface ReviewOptions {
   checkIds?: string[]
   blocking?: AppSecurityBlockingLevel
+  failOnUnresolved?: boolean
 }
 
 function reviewed(sources: AppSecurityResultsSources, options: ReviewOptions = {}): ReviewedAppSecurityResults {
@@ -55,6 +59,7 @@ function reviewed(sources: AppSecurityResultsSources, options: ReviewOptions = {
       resultsDirectory: appSecurityArtifactPaths(appDirectory, 'shopify.app').resultsDirectory,
       checkIds: options.checkIds ?? [],
       blocking: options.blocking ?? 'none',
+      failOnUnresolved: options.failOnUnresolved ?? false,
     }),
     commands: resolveAppSecurityCommands(selection, cwd()),
   }
@@ -69,6 +74,17 @@ async function jsonResult(
     renderSecurityReviewResult(reviewed(sources, options), {verbose: options.verbose ?? false}, 'json')
     expect(stderr()).toBe('')
     return JSON.parse(stdout())
+  })
+}
+
+/** Presents the review as SARIF and returns the parsed stdout with the stderr text, boxes flattened to one line. */
+async function sarifOutput(
+  sources: AppSecurityResultsSources,
+  options: ReviewOptions = {},
+): Promise<{sarif: SarifLog; stderr: string}> {
+  return withCapturedStandardStreams(({stdout, stderr}) => {
+    renderSecurityReviewResult(reviewed(sources, options), {verbose: false}, 'sarif')
+    return {sarif: JSON.parse(stdout()) as SarifLog, stderr: unstyled(stderr()).replace(/[│╭╮╰╯─\s]+/g, ' ')}
   })
 }
 
@@ -398,6 +414,8 @@ describe('renderSecurityReviewResult as JSON', () => {
         },
       ],
       blocking: {level: 'none', blockedCheckCount: 0},
+      failOnUnresolved: false,
+      missingCheckIds: expect.arrayContaining(['SQL_INJECTION']),
     })
   })
 
@@ -413,6 +431,8 @@ describe('renderSecurityReviewResult as JSON', () => {
       scopeDiffers: false,
       checks: [],
       blocking: {level: 'none', blockedCheckCount: 0},
+      failOnUnresolved: false,
+      missingCheckIds: listSettleableCheckIds(),
     })
   })
 
@@ -792,5 +812,89 @@ describe('renderSecurityReviewResult as JSON', () => {
     const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
 
     await expect(jsonResult(both, {verbose: true})).resolves.toStrictEqual(await jsonResult(both, {verbose: false}))
+  })
+})
+
+describe('renderSecurityReviewResult as SARIF', () => {
+  const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
+
+  test('writes the log of the JSON result to stdout alone, and warns on stderr about the unsettled checks', async () => {
+    process.exitCode = undefined
+    const json = (await jsonResult(both)) as AppSecurityReviewResult
+
+    const {sarif, stderr} = await sarifOutput(both)
+
+    expect(sarif).toStrictEqual(appSecurityReviewSarif(json, {checkIds: []}))
+    expect(sarif.runs[0]!.results.length).toBeGreaterThan(0)
+    expect(json.missingCheckIds.length).toBeGreaterThan(1)
+    expect(stderr).toContain(
+      `The SARIF log has 1 unresolved check and ${json.missingCheckIds.length} checks without results, so code scanning could close their open alerts as fixed. Have your coding agent record its findings before you upload it. Pass --fail-on-unresolved to exit with code 1 while a check is unresolved or has no result.`,
+    )
+    expect(stderr).not.toContain('Blocking')
+    expect(process.exitCode).toBeUndefined()
+  })
+
+  test('lists the checks without results in the log, the same log with and without --fail-on-unresolved', async () => {
+    const {missingCheckIds} = (await jsonResult(both)) as AppSecurityReviewResult
+
+    const {sarif} = await sarifOutput(both)
+    const failing = await sarifOutput(both, {failOnUnresolved: true})
+    process.exitCode = undefined
+
+    const notifications = sarif.runs[0]!.invocations[0]!.toolExecutionNotifications
+    expect(
+      notifications
+        .filter((notification) => notification.descriptor.id === 'no-result')
+        .map((notification) => notification.message.text),
+    ).toStrictEqual(missingCheckIds.map((id) => `${id} has no result: neither results file has this check.`))
+    expect(sarif.runs[0]!.invocations[0]!.executionSuccessful).toBe(false)
+    expect(failing.sarif).toStrictEqual(sarif)
+  })
+
+  test('names the --blocking breach on stderr and sets exit code 1 after the log', async () => {
+    process.exitCode = undefined
+
+    const {sarif, stderr} = await sarifOutput(both, {blocking: 'high'})
+
+    expect(sarif.version).toBe('2.1.0')
+    expect(stderr).toContain('Blocking 2 checks at or above high (--blocking high).')
+    expect(process.exitCode).toBe(1)
+  })
+
+  test('names the --fail-on-unresolved failure on stderr and sets exit code 1 after the log', async () => {
+    const {missingCheckIds} = (await jsonResult(both, {failOnUnresolved: true})) as AppSecurityReviewResult
+    process.exitCode = undefined
+
+    const {sarif, stderr} = await sarifOutput(both, {failOnUnresolved: true})
+
+    expect(sarif.version).toBe('2.1.0')
+    expect(missingCheckIds.length).toBeGreaterThan(1)
+    expect(stderr).toContain(
+      `Blocking 1 check unresolved and ${missingCheckIds.length} checks without results (--fail-on-unresolved).`,
+    )
+    expect(stderr).not.toContain('Pass --fail-on-unresolved')
+    expect(process.exitCode).toBe(1)
+  })
+
+  test('writes a run narrowed by --check-id with its category', async () => {
+    const checkIds = ['MISSING_TENANT_ISOLATION', 'CREDENTIAL_LOG_LEAKAGE']
+    const json = (await jsonResult(both, {checkIds})) as AppSecurityReviewResult
+
+    const {sarif} = await sarifOutput(both, {checkIds})
+
+    expect(sarif).toStrictEqual(appSecurityReviewSarif(json, {checkIds}))
+    expect(sarif.runs[0]!.automationDetails).toStrictEqual({
+      id: 'shopify-app-security/check-id/CREDENTIAL_LOG_LEAKAGE,MISSING_TENANT_ISOLATION/client-id/toml-client-id/',
+    })
+    expect(sarif.runs[0]!.tool.driver.rules.map((rule) => rule.id).sort()).toStrictEqual([...checkIds].sort())
+  })
+
+  test('warns that a log without results would close every open alert, and still writes it', async () => {
+    const {sarif, stderr} = await sarifOutput({deterministic: null, agent: null})
+
+    expect(sarif.runs[0]!.invocations[0]!.executionSuccessful).toBe(false)
+    expect(stderr).toContain(
+      'The SARIF log has no results, so code scanning would close every open alert as fixed. Pass --fail-on-unresolved to exit with code 1 while a check is unresolved or has no result.',
+    )
   })
 })

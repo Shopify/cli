@@ -44,7 +44,7 @@ test('fetches the client secret when the app lookup did not include it', async (
   expect(result.variables).toContainEqual({name: 'SHOPIFY_API_SECRET', value: 'fetched-secret', isSecret: true})
 })
 
-test('marks SHOPIFY_API_SECRET as unavailable and warns when the Developer Dashboard returns no secret', async () => {
+test('marks SHOPIFY_API_SECRET as unavailable and warns when the App Management API returns no secret', async () => {
   const output = mockAndCaptureOutput()
   const remoteApp = testOrganizationAppWithoutClientSecret()
 

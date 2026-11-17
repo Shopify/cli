@@ -5,6 +5,7 @@ import * as path from 'path'
 import {withOctokit} from './github-utils.js'
 import {runCommand} from './run-command.js'
 import {execSync} from "node:child_process";
+import {parseArgs} from 'node:util'
 
 const BRANCH = 'main'
 
@@ -205,6 +206,19 @@ async function fetchFiles() {
 }
 
 /**
+ * @param {Schema} schema
+ * @param {string} repoDirectory - A local checkout of the schema's repository.
+ * @returns {void}
+ */
+function copyFileForSchema(schema, repoDirectory) {
+  const sourcePath = path.join(repoDirectory, schema.pathToFile)
+  for (const localPath of schema.localPaths) {
+    console.log('Copying', sourcePath, 'to', localPath)
+    fs.copyFileSync(sourcePath, localPath)
+  }
+}
+
+/**
  * @returns {Promise<void>}
  */
 async function fetchFilesFromLocal() {
@@ -212,16 +226,34 @@ async function fetchFilesFromLocal() {
     // "dev cd world" is deprecated in favor of "dev cd //"
     const localDir = schema.repo === 'world' ? '//' : schema.repo
     const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${localDir}`).toString().split('/areas')[0].trim()
-    const sourcePath = path.join(localRepoDirectory, schema.pathToFile)
-    for (const localPath of schema.localPaths) {
-      console.log('Copying', sourcePath, 'to', localPath)
-      fs.copyFileSync(sourcePath, localPath)
-    }
+    copyFileForSchema(schema, localRepoDirectory)
   }
   console.log('Done!')
 }
 
-if (process.env.SHOPIFY_SERVICE_ENV === 'local') {
+/**
+ * @param {string} repoDirectory - A local checkout of the repository that holds every schema.
+ * @returns {void}
+ */
+function copyFilesFromDirectory(repoDirectory) {
+  for (const schema of schemas) {
+    copyFileForSchema(schema, repoDirectory)
+  }
+  console.log('Done!')
+}
+
+// --from-dir copies the schemas from a checkout at a known commit, for CI that has the schemas'
+// repository on disk instead of a token for the GitHub API.
+const {values: args} = parseArgs({
+  options: {
+    'from-dir': {type: 'string'},
+  },
+  strict: true,
+})
+
+if (args['from-dir']) {
+  copyFilesFromDirectory(args['from-dir'])
+} else if (process.env.SHOPIFY_SERVICE_ENV === 'local') {
   fetchFilesFromLocal()
 } else {
   fetchFiles()

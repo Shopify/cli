@@ -8,7 +8,7 @@ import {
 } from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
+import {activeFindings, listSettleableCheckIds, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 
@@ -20,9 +20,10 @@ interface SecurityReviewOptions {
   /** Exact check IDs from `--check-id`; empty means every check. */
   checkIds: string[]
   blocking: AppSecurityBlockingLevel
+  failOnUnresolved?: boolean
 }
 
-/** The reviewed results: the loaded sources, the checks after `--check-id`, and the blocking outcome. */
+/** The reviewed results: the loaded sources, the checks after `--check-id`, and what fails the review. */
 export interface SecurityReviewResult {
   resultsDirectory: string
   sources: AppSecurityResults['sources']
@@ -38,6 +39,11 @@ export interface SecurityReviewResult {
     /** Filtered checks with an active finding at or above the level. Zero for `none`. */
     blockedChecks: number
   }
+  failOnUnresolved: boolean
+  /** Filtered checks whose combined status is unresolved. */
+  unresolvedChecks: number
+  /** The IDs of the filtered settleable checks that neither results file has, sorted. */
+  missingCheckIds: string[]
 }
 
 /** What `securityReview` returns: the selected app, its reviewed results, and the commands to run next. */
@@ -60,17 +66,28 @@ const defaultDependencies: SecurityReviewDependencies = {
 }
 
 /**
- * Applies `--check-id` and `--blocking` to the loaded results (§9.2). Pure, so the presenter and the JSON
- * codec both work from the same data.
+ * Applies `--check-id`, `--blocking` and `--fail-on-unresolved` to the loaded results (§9.2). Pure, so the presenter
+ * and the JSON codec both work from the same data.
  */
 export function reviewAppSecurityResults(
   results: AppSecurityResults,
-  options: {resultsDirectory: string; checkIds: string[]; blocking: AppSecurityBlockingLevel},
+  options: {
+    resultsDirectory: string
+    checkIds: string[]
+    blocking: AppSecurityBlockingLevel
+    failOnUnresolved?: boolean
+  },
 ): SecurityReviewResult {
   const filter = options.checkIds.length > 0 ? {checkIds: options.checkIds} : null
+  const failOnUnresolved = options.failOnUnresolved ?? false
   const anyFilePresent = results.sources.deterministic !== null || results.sources.agent !== null
+  const missingIds = listMissingCheckIds(results.checks)
   // Without a file there's nothing to match against, so an unknown ID isn't an error: the summary alone is shown.
-  if (filter && anyFilePresent) assertKnownCheckIds(filter.checkIds, results.checks)
+  // With --fail-on-unresolved a check without results is still reviewed, so its ID is known, with or without a file.
+  if (filter && (anyFilePresent || failOnUnresolved)) {
+    const recordedIds = results.checks.map((check) => check.id)
+    assertKnownCheckIds(filter.checkIds, failOnUnresolved ? [...recordedIds, ...missingIds] : recordedIds)
+  }
 
   const checks = filter ? results.checks.filter((check) => filter.checkIds.includes(check.id)) : results.checks
 
@@ -82,7 +99,26 @@ export function reviewAppSecurityResults(
     filter,
     scopeDiffers: scopeDiffers(results.sources),
     blocking: {level: options.blocking, blockedChecks: countBlockedChecks(checks, options.blocking)},
+    failOnUnresolved,
+    unresolvedChecks: checks.filter((check) => check.status === 'unresolved').length,
+    missingCheckIds: filter ? missingIds.filter((id) => filter.checkIds.includes(id)) : missingIds,
   }
+}
+
+/** Whether the review fails `--blocking` or `--fail-on-unresolved`: decides the exit code and `valid`. */
+export function reviewFailed(
+  result: Pick<SecurityReviewResult, 'blocking' | 'failOnUnresolved' | 'unresolvedChecks' | 'missingCheckIds'>,
+): boolean {
+  return (
+    result.blocking.blockedChecks > 0 ||
+    (result.failOnUnresolved && (result.unresolvedChecks > 0 || result.missingCheckIds.length > 0))
+  )
+}
+
+/** The settleable checks that neither results file has, such as one the agent never recorded, sorted by ID. */
+function listMissingCheckIds(recorded: CombinedCheck[]): string[] {
+  const recordedIds = new Set(recorded.map((check) => check.id))
+  return listSettleableCheckIds().filter((id) => !recordedIds.has(id))
 }
 
 /** Compares the scope blocks as recorded: the same values in the same order. */
@@ -102,17 +138,16 @@ function countBlockedChecks(checks: CombinedCheck[], level: AppSecurityBlockingL
   ).length
 }
 
-function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void {
-  const knownIds = new Set(checks.map((check) => check.id))
-  const unknownIds = checkIds.filter((id) => !knownIds.has(id))
+function assertKnownCheckIds(checkIds: string[], availableIds: string[]): void {
+  const unknownIds = checkIds.filter((id) => !availableIds.includes(id))
   if (unknownIds.length === 0) return
 
   const label = unknownIds.length === 1 ? 'check ID' : 'check IDs'
   const error = new AbortError(
     `Unknown ${label}: ${unknownIds.join(', ')}.`,
-    'Pass --check-id with one of the checks in the results files.',
+    'Pass --check-id with one of the available check IDs.',
     [],
-    [{title: 'Available check IDs', body: {list: {items: checks.map((check) => check.id)}}}],
+    [{title: 'Available check IDs', body: {list: {items: availableIds}}}],
   )
   error.code = 'unknown-check-id'
   error.details = {checkIds: unknownIds}
@@ -141,6 +176,7 @@ export default async function securityReview(
     resultsDirectory: appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection)).resultsDirectory,
     checkIds: options.checkIds,
     blocking: options.blocking,
+    failOnUnresolved: options.failOnUnresolved,
   })
 
   // Every check, not just the --check-id ones, so the count doesn't depend on the filter. Without result files

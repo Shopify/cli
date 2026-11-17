@@ -1,8 +1,24 @@
 import {loadChecks, type Check} from '../checks/index.js'
 import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {DETERMINISTIC_CHECKS, type DeterministicCheckDefinition} from '../scanners/index.js'
+import type {CheckPrecedence} from '../types.js'
 
 export type ImplementationProvenance = 'deterministic' | 'agent'
+
+/** One check the coding agent can run, as the terminal output needs it to say which checks still need the agent. */
+export interface AgentCheckCatalogEntry {
+  id: string
+  /**
+   * How a recorded agent result combines with the deterministic one. The results files only record it with an agent
+   * result, so a check the agent hasn't run needs the catalog's.
+   */
+  precedence: CheckPrecedence
+}
+
+/** The checks the coding agent can run, with the precedence of each. */
+export function getAgentCheckCatalog(): AgentCheckCatalogEntry[] {
+  return [...loadChecks().values()].map(({id, precedence}) => ({id, precedence}))
+}
 
 export interface RegistryEntry {
   id: string
@@ -96,6 +112,14 @@ export function getRegistry(): RegistryEntry[] {
   return [...deterministic, ...agent].sort((left, right) =>
     `${left.id}|${left.kind}`.localeCompare(`${right.id}|${right.kind}`),
   )
+}
+
+/** The IDs of the checks a results file can settle: the active registry entries, each ID once. */
+export function listSettleableCheckIds(): string[] {
+  const ids = getRegistry()
+    .filter((entry) => entry.status === 'active')
+    .map((entry) => entry.id)
+  return [...new Set(ids)].sort()
 }
 
 function registryEntry(

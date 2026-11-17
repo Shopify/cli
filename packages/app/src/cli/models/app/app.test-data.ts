@@ -208,7 +208,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
 }
 
 /**
- * An app whose client secret the Developer Dashboard doesn't return, as for credentials that can't read it.
+ * An app whose client secret the App Management API doesn't return, as for credentials that can't read it.
  */
 export function testOrganizationAppWithoutClientSecret(app: Partial<OrganizationApp> = {}): OrganizationApp {
   return testOrganizationApp({

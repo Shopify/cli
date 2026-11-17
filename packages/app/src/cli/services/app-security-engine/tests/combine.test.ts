@@ -286,6 +286,23 @@ describe('combineFindings', () => {
       expect(agentDispositions).toEqual(agentStatus === 'not_applicable' ? [] : ['active', 'suppressed'])
     })
 
+    test('keeps an agent finding active when the deterministic check could not run', () => {
+      for (const [status, reason] of [
+        ['not_applicable', {code: 'no_relevant_files', message: 'No app source files apply.'}],
+        ['unresolved', {code: 'unsupported_language', message: 'The app source language is unsupported.'}],
+      ] as const) {
+        const combined = combineOne(
+          check({status, reason}),
+          check({precedence: 'prefer-agent', findings: [agentFinding]}),
+        )
+
+        expect(combined.applied_precedence).toBe('prefer-agent')
+        expect(combined.status).toBe('executed')
+        expect(combined.findings.map((item) => item.disposition)).toEqual(['active'])
+        expect(summarizeCombinedChecks([combined])).toMatchObject({withFindings: 1, notApplicable: 0, unresolved: 0})
+      }
+    })
+
     test('keeps every stored field of a finding', () => {
       const stored = finding({
         snippet: 'console.log(token)',

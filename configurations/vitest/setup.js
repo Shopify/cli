@@ -1,5 +1,5 @@
 import {expect} from 'vitest'
-import {z} from 'zod'
+import {z} from 'zod/v3'
 
 process.env.SHOPIFY_UNIT_TEST = '1'
 process.removeAllListeners('warning')
