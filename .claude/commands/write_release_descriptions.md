@@ -6,7 +6,7 @@ description: Write CLI release description and generate RELEASE_NOTES given a ch
 
 You need to create release documentation for Shopify CLI based on the changeset PR at: $ARGUMENTS
 
-For `main`, the version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`, and the mirror carries it here: it opens or refreshes a pull request automatically after each upstream merge. Never merge "Version Packages - main" here: the mirror would refuse every later publish. `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests here.
+For `main`, the version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`, and the mirror carries it here: it opens or refreshes a pull request automatically after each upstream merge and merges it once `main`'s required checks pass. Never merge "Version Packages - main" here: the mirror would refuse every later publish. `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests here.
 
 ## Step 1: Generate Release Markdown
 

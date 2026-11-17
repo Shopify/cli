@@ -57,7 +57,7 @@ If the change is not ready to be public, do not add a changeset.
 
 ## Releases
 
-- `main`'s version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`. The mirror carries it here: it opens or refreshes a pull request automatically after each upstream merge, and `release.yml` publishes as before.
+- `main`'s version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`. The mirror carries it here: it opens or refreshes a pull request automatically after each upstream merge and merges it once `main`'s required checks pass, and `release.yml` publishes as before.
 - Never merge "Version Packages - main" here. It would put commits on `main` that the mirror didn't make, and the mirror would refuse every later publish.
 - `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests here, as before.
 - Each `X.Y.0` release gets a `stable/X.Y` branch for its patch releases. Only Dev Experience members can create one: after the release job, a Dev Experience member creates it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`.
