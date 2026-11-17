@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 4.9.6
+
+### Patch Changes
+
+- bfc78ad: Improve error messages and guidance for app commands.
+
 ## 4.9.5
 
 ## 4.9.4

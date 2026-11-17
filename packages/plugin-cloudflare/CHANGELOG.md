@@ -1,5 +1,11 @@
 # @shopify/plugin-cloudflare
 
+## 4.9.6
+
+### Patch Changes
+
+- @shopify/cli-kit@4.9.6
+
 ## 4.9.5
 
 ### Patch Changes
