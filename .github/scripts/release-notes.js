@@ -16,6 +16,9 @@ const areaOfPackage = {app: 'App', store: 'Store', theme: 'Theme'}
 const areas = ['App', 'Store', 'Theme', 'CLI']
 // Stable lines keep changesets' default formatter, which starts each entry with a commit hash.
 const commitPrefix = /^[0-9a-f]{7}: /
+// That formatter also lists dependency updates as bare package versions, at the top level or nested
+// under an entry. They aren't changes.
+const dependencyLine = /^\s*- @?[a-z0-9-]+(\/[a-z0-9-]+)?@\d+\.\d+\.\d+\S*$/
 
 function changelogEntries(changelog) {
   const lines = changelog.split('\n')
@@ -25,7 +28,9 @@ function changelogEntries(changelog) {
   const entries = []
   let entry
   for (const line of lines.slice(start + 1, end === -1 ? undefined : end)) {
-    if (line.startsWith('- ')) {
+    if (dependencyLine.test(line)) {
+      if (line.startsWith('- ')) entry = undefined
+    } else if (line.startsWith('- ')) {
       entry = [line]
       entries.push(entry)
     } else if (line.startsWith('#')) {
