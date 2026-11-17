@@ -31,6 +31,7 @@
 │  │  └─ dashboard-extensions
 │  ├─ info
 │  ├─ init
+│  ├─ logs
 │  ├─ release
 │  ├─ security
 │  │  ├─ check
