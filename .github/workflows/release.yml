@@ -1,8 +1,9 @@
 name: Release
 
 on:
-  # Publishes the versions a push brings: on main, World's Version Packages commit, which the public
-  # mirror publishes here; on stable/*, a merged "Version Packages - stable/X.Y" pull request.
+  # Releases ship from stable/*: a merged "Version Packages - stable/X.Y" pull request publishes the
+  # versions it changed. main doesn't publish releases; its check fails if a version on it isn't on
+  # npm.
   push:
     branches:
       - main
@@ -21,8 +22,8 @@ on:
         options:
           - nightly
           - experimental
-          # On main or stable/*: publishes the versions that the branch's head commit itself changed,
-          # for a release whose push started no run, or whose run can no longer be re-run.
+          # On stable/*: publishes the versions that the branch's head commit itself changed, for a
+          # release whose push started no run, or whose run can no longer be re-run.
           - release
 
 concurrency:
@@ -34,8 +35,8 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  # Opens or updates a stable line's Version Packages pull request. main's versions come from World
-  # through the public mirror, so main gets no Version Packages pull request here.
+  # Opens or updates a stable line's Version Packages pull request. main gets the released versions
+  # back after each release, so it has no Version Packages pull request.
   version-packages:
     name: Version Packages
     if: github.event_name == 'push' && startsWith(github.ref_name, 'stable/')
@@ -63,6 +64,28 @@ jobs:
           createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A line cut from a main that hasn't caught up with the last release would compute a version
+      # npm already has, and its release would then publish nothing.
+      - name: Refuse a version npm already has
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          BRANCH="changeset-release/$GITHUB_REF_NAME"
+          if ! git fetch --no-tags --depth=1 origin "$BRANCH"; then
+            echo "No $BRANCH branch, so there's no new version to check"
+            exit 0
+          fi
+          CURRENT=$(node -p "require('./packages/cli/package.json').version")
+          VERSION=$(git show FETCH_HEAD:packages/cli/package.json | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).version))')
+          if [ "$VERSION" = "$CURRENT" ]; then
+            echo "$BRANCH has this line's current version, $CURRENT"
+            exit 0
+          fi
+          if [ "$(npm view "@shopify/cli@$VERSION" version --registry=https://registry.npmjs.org/ 2>/dev/null || true)" = "$VERSION" ]; then
+            echo "::error::$BRANCH proposes @shopify/cli $VERSION, which npm already has. The line was cut before main got that release back: bring the release back to main, then into this line, so its next version is new."
+            exit 1
+          fi
+          echo "$BRANCH proposes $VERSION, which npm doesn't have yet"
 
   # Decides, without an npm credential, whether a push has anything to publish. Only versions this
   # push changed count, and the publish job publishes only those. A version that an earlier push
@@ -90,6 +113,10 @@ jobs:
           MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
+          if [ "$MANUAL" = true ] && [ "$GITHUB_REF_NAME" = main ]; then
+            echo "::error::main doesn't publish releases. Releases ship from stable/*."
+            exit 1
+          fi
           if [ "$MANUAL" = true ]; then
             # A manual release counts only the versions this commit changed against its first parent.
             git fetch --no-tags --depth=2 origin "$GITHUB_SHA"
@@ -130,6 +157,7 @@ jobs:
             }
           ' "$BEFORE")
           UNPUBLISHED=false
+          MISSING=""
           PUSHED=""
           while read -r STATE PACKAGE; do
             [ -n "$PACKAGE" ] || continue
@@ -140,6 +168,11 @@ jobs:
             # already has, so publishing a pushed version that npm does have is harmless.
             if [ "$(npm view "$PACKAGE" version 2>/dev/null || true)" = "${PACKAGE##*@}" ]; then
               echo "$PACKAGE is on npm"
+              continue
+            fi
+            MISSING="$MISSING $PACKAGE"
+            if [ "$GITHUB_REF_NAME" = main ]; then
+              echo "$PACKAGE is not on npm"
             elif [ "$STATE" = pushed ]; then
               echo "$PACKAGE is not on npm, and this run publishes it"
               UNPUBLISHED=true
@@ -148,6 +181,11 @@ jobs:
             fi
           done <<< "$LINES"
           echo "Version $VERSION, unpublished $UNPUBLISHED, packages:$PUSHED"
+          if [ "$GITHUB_REF_NAME" = main ] && [ -n "$MISSING" ]; then
+            # main only gets versions back after a stable line published them.
+            echo "::error::main has versions that npm doesn't:$MISSING. main doesn't publish them; releases ship from stable/*."
+            exit 1
+          fi
           if [ "$MANUAL" = true ] && [ -z "$PUSHED" ]; then
             echo "::error::$GITHUB_SHA didn't change any public package's version against its first parent, so a manual release has nothing it may publish. Re-run the failed jobs of the Release run for the commit that changed the version, or publish a new version."
             exit 1
@@ -165,7 +203,7 @@ jobs:
     needs: check
     # check's own skipped dependency (version-packages, on main) would skip this job under the
     # implicit success(), so the condition names check's result instead.
-    if: ${{ !cancelled() && needs.check.result == 'success' && needs.check.outputs.unpublished == 'true' }}
+    if: ${{ !cancelled() && needs.check.result == 'success' && needs.check.outputs.unpublished == 'true' && startsWith(github.ref_name, 'stable/') }}
     runs-on: ubuntu-latest
     environment: npm-release
     # Approved runs on one branch publish one at a time, in order; none is cancelled.
@@ -178,6 +216,23 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
+      # The release is the merge of the Version Packages pull request that was tested. A merge commit
+      # whose tree differs from that pull request's head means the line moved after the pull request
+      # was made, so the release would carry changes nobody tested with it.
+      - name: Check the release is the tested pull request head
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=2 origin "$GITHUB_SHA"
+          if [ "$(git rev-list --parents -n 1 "$GITHUB_SHA" | wc -w)" -ne 3 ]; then
+            echo "::error::$GITHUB_SHA isn't a merge commit. A release publishes only from merging its Version Packages pull request with a merge commit."
+            exit 1
+          fi
+          HEAD_SHA=$(git rev-parse "$GITHUB_SHA^2")
+          if [ "$(git rev-parse "$GITHUB_SHA^{tree}")" != "$(git rev-parse "$HEAD_SHA^{tree}")" ]; then
+            echo "::error::The merge's files differ from the pull request head $HEAD_SHA, so the line moved after the pull request was made. Let the Version Packages pull request update, test its new head and merge that."
+            exit 1
+          fi
+          echo "Publishing the files of $HEAD_SHA, the merged pull request's head"
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
@@ -190,18 +245,16 @@ jobs:
           VERSION: ${{ needs.check.outputs.version }}
         run: |
           set -euo pipefail
-          # A stable line's patch that is older than npm's `latest` goes under stable-X.Y, so it
-          # doesn't move `latest` backwards. main always publishes under `latest`.
+          # A release older than npm's `latest`, such as an older line's patch, goes under stable-X.Y,
+          # so it doesn't move `latest` backwards.
           DIST_TAG=latest
-          if [ "$GITHUB_REF_NAME" != main ]; then
-            LATEST=$(npm view @shopify/cli dist-tags.latest)
-            if ! node -e '
-              const [version, latest] = process.argv.slice(1).map((v) => v.split(".").map(Number))
-              const difference = version.map((part, i) => part - latest[i]).find((d) => d !== 0) ?? 0
-              process.exit(difference >= 0 ? 0 : 1)
-            ' "$VERSION" "$LATEST"; then
-              DIST_TAG="stable-${VERSION%.*}"
-            fi
+          LATEST=$(npm view @shopify/cli dist-tags.latest)
+          if ! node -e '
+            const [version, latest] = process.argv.slice(1).map((v) => v.split(".").map(Number))
+            const difference = version.map((part, i) => part - latest[i]).find((d) => d !== 0) ?? 0
+            process.exit(difference >= 0 ? 0 : 1)
+          ' "$VERSION" "$LATEST"; then
+            DIST_TAG="stable-${VERSION%.*}"
           fi
           echo "Publishing $VERSION under $DIST_TAG"
           echo "dist-tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
@@ -249,43 +302,6 @@ jobs:
           git push origin "$TAG"
           echo "Created tag $TAG"
 
-      - name: Create stable branch
-        id: stable-branch
-        if: github.ref_name == 'main' && endsWith(needs.check.outputs.version, '.0')
-        # Only Dev Experience members can create stable/* branches, so this push can be refused.
-        # The release goes on, and the next step asks Dev Experience to create the branch.
-        continue-on-error: true
-        env:
-          VERSION: ${{ needs.check.outputs.version }}
-        run: |
-          set -euo pipefail
-          MINOR=${VERSION%.0}
-          BRANCH="stable/$MINOR"
-          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-            echo "Branch $BRANCH already exists, skipping"
-            exit 0
-          fi
-          git push origin "HEAD:refs/heads/$BRANCH"
-          echo "Created branch $BRANCH"
-
-      - name: Ask Dev Experience to create the stable branch
-        if: steps.stable-branch.outcome == 'failure'
-        env:
-          VERSION: ${{ needs.check.outputs.version }}
-        run: |
-          MINOR=${VERSION%.0}
-          MESSAGE="Create stable/$MINOR from tag $VERSION; only Dev Experience can."
-          echo "::warning title=stable/$MINOR was not created::$MESSAGE"
-          {
-            echo "### stable/$MINOR was not created"
-            echo
-            echo "$MESSAGE"
-            echo
-            echo '```sh'
-            echo "git push origin refs/tags/$VERSION:refs/heads/stable/$MINOR"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Create GitHub release
         if: ${{ !endsWith(needs.check.outputs.version, '.0.0') }}
         env:
@@ -305,8 +321,8 @@ jobs:
             echo "Release $TAG already exists; ensured make_latest=legacy"
             exit 0
           fi
-          # The public repository's pull requests are mirror publishes from World, so the notes come
-          # from the version's changelog entries rather than from GitHub's generated notes.
+          # The notes come from the version's changelog entries. GitHub's generated notes would list
+          # only the Version Packages pull request.
           node .github/scripts/release-notes.js "$TAG" > "$RUNNER_TEMP/release-notes.md"
           gh api \
             --method POST \
