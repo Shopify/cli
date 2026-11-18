@@ -26,10 +26,10 @@ pnpm bundle-for-release
 # Create a duplicate package for the CLI (to be deployed as just `shopify`)
 node bin/create-cli-duplicate-package.js
 
-# Packages outside the fixed version group publish from main, under `latest`. A prerelease run
-# would put their real version under the prerelease tag, and a stable line's run under
-# stable-X.Y; npm then has that version, a later `latest` run skips it, and `latest` never points
-# to it. They are marked private for this run, and `changeset publish` skips them. `shopify` is
+# Packages outside the fixed version group publish only under `latest`, from the newest stable
+# line's release. A prerelease run would put their real version under the prerelease tag, and an
+# older line's run under stable-X.Y; npm then has that version, a later `latest` run skips it, and
+# `latest` never points to it. They are marked private for this run, and `changeset publish` skips them. `shopify` is
 # the copy of @shopify/cli that bin/create-cli-duplicate-package.js makes in packages/cli-copy.
 if [ "$tag" != "latest" ]; then
   node -e '
