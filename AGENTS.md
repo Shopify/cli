@@ -57,11 +57,13 @@ If the change is not ready to be public, do not add a changeset.
 
 ## Releases
 
-- `main`'s version bump is made upstream, in Shopify's internal monorepo, with `pnpm changeset-manifests`. The mirror carries it here: it opens or refreshes a pull request automatically after each upstream merge and merges it once `main`'s required checks pass, and `release.yml` publishes as before.
+- Minor and patch releases ship from `stable/X.Y` branches. `main` never publishes a release: its version bump is made upstream, in Shopify's internal monorepo, after npm has the release, and the mirror carries it here. Nightlies still publish from `main`.
 - Never merge "Version Packages - main" here. It would put commits on `main` that the mirror didn't make, and the mirror would refuse every later publish.
-- `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests here. GitHub Actions can't open them, so a Dev Experience member opens each one from `changeset-release/stable/X.Y`.
-- Each `X.Y.0` release gets a `stable/X.Y` branch for its patch releases. Only Dev Experience members can create one: after the release job, a Dev Experience member creates it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`.
-- Changes to `stable/*` branches, such as patch-release backports and their "Version Packages" pull requests, go through a pull request that a Dev Experience member merges with the branch rules' bypass (`gh pr merge <number> --merge --admin`), with no review. Do not push to them directly.
+- Before a minor release, a Dev Experience member creates `stable/X.Y` at a green `main` commit with `git push origin <commit>:refs/heads/stable/X.Y`. Only Dev Experience members can create `stable/*` branches or push to them without a pull request. Force-pushes and deletions stay blocked.
+- Every release, minor or patch, is a "Version Packages - stable/X.Y" pull request. `release.yml`'s Version Packages job pushes the version bump to `changeset-release/stable/X.Y`, but GitHub Actions can't open pull requests here, so a Dev Experience member opens it by hand, closes and reopens it so its checks run, and tests its head commit `H` with the Release QA package workflow (`release-qa-package.yml`).
+- The release owner merges it once `stable/X.Y`'s head is `H`'s parent, with `gh pr merge <number> -R Shopify/cli --merge --admin --match-head-commit <H>`. Use a merge commit (`--merge`): a squash merge publishes nothing. That merge publishes the versions it changed, and nothing else.
+- While a release is open, only its release owner merges into `stable/X.Y`. Anyone else, people and agents alike, asks the release owner first.
+- A patch starts with a backport pull request into `stable/X.Y` with the fix and the same changeset file as on `main`. A Dev Experience member merges it with the branch rules' bypass (`gh pr merge <number> -R Shopify/cli --merge --admin`), with no review; then the same Version Packages steps follow.
 
 ## Further reading
 
