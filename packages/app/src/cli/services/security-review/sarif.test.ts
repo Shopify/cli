@@ -29,6 +29,9 @@ const ordersUri = onWindows
 const settingsUri = onWindows
   ? 'file:///C:/apps/my-app/app/routes/settings.tsx'
   : 'file:///apps/my-app/app/routes/settings.tsx'
+const suppressionsFilePath = onWindows
+  ? 'C:\\apps\\my-app\\shopify.app-security.json'
+  : '/apps/my-app/shopify.app-security.json'
 const bundlePath = onWindows ? 'C:\\apps\\my-app\\public\\bundle.js' : '/apps/my-app/public/bundle.js'
 const bundleUri = onWindows ? 'file:///C:/apps/my-app/public/bundle.js' : 'file:///apps/my-app/public/bundle.js'
 const scope = {includeDirs: [], excludes: [], noGitIgnore: false}
@@ -48,15 +51,18 @@ const credentialCheck = {
   findings: [
     {
       source: 'deterministic',
+      number: 1,
       disposition: 'superseded',
       location: {filePath: ordersPath, line: 12, column: 5},
       message: 'accessToken flows into console.log.',
       snippet: 'console.log(session.accessToken)',
       evidence: [],
       fix: {description: 'Remove credentials from logs.', guide: null, automated: false},
+      suppression: null,
     },
     {
       source: 'agent',
+      number: 2,
       disposition: 'active',
       location: {filePath: ordersPath, line: 12, column: 5},
       message: 'The session access token is written to the server log.',
@@ -86,6 +92,7 @@ const tenantCheck = {
   findings: [
     {
       source: 'agent',
+      number: 3,
       disposition: 'active',
       location: {filePath: settingsPath, line: null, column: null},
       message: 'Settings are read by ID without checking the owning shop.',
@@ -97,6 +104,7 @@ const tenantCheck = {
     },
     {
       source: 'agent',
+      number: 4,
       disposition: 'suppressed',
       location: {filePath: settingsPath, line: 20, column: null},
       message: 'Settings are deleted by ID without checking the owning shop.',
@@ -104,7 +112,7 @@ const tenantCheck = {
       evidence: [],
       confidence: null,
       reasoning: null,
-      suppression: {justification: 'An allowlist middleware restricts the route to the app owner.'},
+      suppression: {justification: 'An allowlist middleware restricts the route to the app owner.', origin: 'agent'},
     },
   ],
 } satisfies AppSecurityReviewResult['checks'][number]
@@ -176,9 +184,19 @@ const result = appSecurityReviewJsonOutputSchema.validate({
   coverage: null,
   scopeDiffers: false,
   checks: [credentialCheck, tenantCheck, passedCheck],
+  resultsDigest: '0123456789ab',
   blocking: {level: 'none', blockedCheckCount: 0},
   failOnUnresolved: false,
   missingCheckIds: [],
+  suppressions: {
+    filePath: suppressionsFilePath,
+    entryCount: 0,
+    suppressedFindingCount: 0,
+    staleEntryCount: 0,
+    ambiguousEntryCount: 0,
+    entries: [],
+  },
+  savedSuppressions: null,
 })
 
 /**
@@ -224,6 +242,7 @@ const noResultsFile = appSecurityReviewJsonOutputSchema.validate({
   resultsFiles: {deterministic: null, agent: null},
   checks: [],
   missingCheckIds: ['SQL_INJECTION', 'SSRF_REQUEST_FORGERY'],
+  resultsDigest: null,
 })
 
 function missingCheckNotification(checkId: string) {

@@ -6,10 +6,12 @@ import {
   findSourceCandidates,
   configureRepositoryReader,
   getSkippedFiles,
+  isParseFailure,
   findManifests,
   findManifestPaths,
   findDependencyAutomationInputs,
   gatherPaths,
+  readRepositoryTextFile,
 } from './discover.js'
 import {createPathRules} from './path-rules.js'
 import {
@@ -38,8 +40,9 @@ import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../scan-artifact/index.js'
+import {createCodeExcerpts, withCodeExcerpts, type SourceTextReader} from '../results/code-excerpt.js'
 import {getEngineVersion} from '../version.js'
-import {normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
@@ -559,7 +562,7 @@ function skippedInputsForCheck(
   const isDependencyAutomationInput = (path: string) =>
     /(^|\/)package\.json$/.test(path) || context.dependencyAutomation.files.some((file) => file.path === path)
   const isSecretInput = (file: SkippedFile) =>
-    !file.detail?.includes('could not be parsed') &&
+    !isParseFailure(file) &&
     (context.sourceCandidates.some((candidate) => candidate.path === file.path) ||
       context.sensitiveFiles.some((sensitiveFile) => sensitiveFile.path === file.path) ||
       /(^|\/)(?:\.env(?:\.[^/]+)?|secrets\.json|credentials\.json)$/.test(file.path))
@@ -579,9 +582,7 @@ function skippedInputsForCheck(
 function skippedInputReason(definition: DeterministicCheckDefinition, files: SkippedFile[]): CheckExecutionReason {
   const parserFailure = files.some(
     (file) =>
-      Boolean(file.detail?.includes('could not be parsed')) ||
-      file.path.endsWith('shopify.extension.toml') ||
-      file.path.endsWith('package.json'),
+      isParseFailure(file) || file.path.endsWith('shopify.extension.toml') || file.path.endsWith('package.json'),
   )
   return {
     code: parserFailure ? 'parser_unavailable' : 'input_rejected',
@@ -596,6 +597,22 @@ function runnerContext(definition: DeterministicCheckDefinition, context: ScanCo
   return definition.target === 'source' || definition.target === 'config_and_source'
     ? {...context, sourceFiles: reactRouterFiles(context)}
     : context
+}
+
+/** The contents the checks inspected, by the project-relative path that their findings name. */
+function scannedFileContents(context: ScanContext): Map<string, string> {
+  const files: {path: string; content?: string}[] = [
+    ...context.appTomls.map(({path, content}) => ({
+      path: relativePath(context.appRoot, path).replace(/\\/g, '/'),
+      content,
+    })),
+    ...context.extensions.flatMap((extension) => [extension, ...extension.files]),
+    ...context.sourceFiles,
+    ...context.sensitiveFiles,
+    ...context.manifests,
+    ...context.dependencyAutomation.files,
+  ]
+  return new Map(files.flatMap(({path, content}) => (content === undefined ? [] : [[path, content] as const])))
 }
 
 function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
@@ -613,6 +630,28 @@ function gatherScanPaths(
     selectedAppConfigFilePath: appConfigFilePath,
     rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })
+}
+
+/**
+ * Reads the files that agent findings cite, for their code excerpts, with the scan's rules: a file is read only when
+ * `gatheredPaths` holds it, which are the paths relative to the app directory that `listGatheredPaths` returns for
+ * `directories` and the scope, so never when Git ignores it, it's excluded, or it's in `.git`. It's read only below
+ * one of `directories`, which are absolute real paths, never through a symbolic link that leaves it, within the size
+ * limit, and not when it's binary. Cited paths are relative to the app directory. Configures the repository reader, as
+ * a scan does.
+ */
+export function createCitedFileReader(
+  appDirectory: string,
+  directories: ReadonlyArray<string>,
+  gatheredPaths: ReadonlySet<string>,
+): SourceTextReader {
+  configureRepositoryReader({appDirectory, scanDirectories: directories, explicitInputs: new Set()})
+  // The repository reader is module state. The returned reader reads with this configuration only while nothing
+  // configures it again, such as a scan or `listGatheredPaths`, so create it after those and use it before any other.
+  return (file) => {
+    const path = resolvePath(appDirectory, file)
+    return gatheredPaths.has(normalizePath(relativePath(appDirectory, path))) ? readRepositoryTextFile(path) : undefined
+  }
 }
 
 /**
@@ -738,7 +777,13 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
   const versionById = new Map(
     [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
   )
-  issues = issues.map((issue) => redactIssue({...issue, rule_version: versionById.get(issue.id) ?? 1}))
+  const scannedContents = scannedFileContents(context)
+  const excerpts = createCodeExcerpts((file) =>
+    readRepositoryTextFile(resolvePath(input.appDirectory, file)) === undefined ? undefined : scannedContents.get(file),
+  )
+  issues = issues.map((issue) =>
+    redactIssue(withCodeExcerpts({...issue, rule_version: versionById.get(issue.id) ?? 1}, excerpts)),
+  )
   for (const execution of checksExecuted)
     execution.findings = issues.filter((issue) => issue.id === execution.id).length
 

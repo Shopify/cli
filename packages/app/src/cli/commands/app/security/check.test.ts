@@ -420,6 +420,16 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).not.toMatch(/--findings|--clean|compile|trace/)
   })
 
+  test('points the coding agent to review --suppress to add entries, because record never changes the file', () => {
+    const help = SecurityCheck.descriptionWithMarkdown
+
+    expect(help).toContain(
+      'ask your coding agent to run `shopify app security review --suppress` for a suppression that you approve',
+    )
+    expect(help).toContain('`shopify app security record` never changes the file')
+    expect(help).not.toContain('have your coding agent record a suppression')
+  })
+
   test('documents what is scanned, --exclude and --no-git-ignore', () => {
     expect(SecurityCheck.flags.exclude.multiple).toBe(true)
     expect(SecurityCheck.flags.exclude.description).toBe(
