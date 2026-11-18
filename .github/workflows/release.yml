@@ -21,6 +21,9 @@ on:
         options:
           - nightly
           - experimental
+          # Publishes the current commit's versions on main or stable/*, for a release whose push
+          # started no run, or whose run can no longer be re-run.
+          - release
 
 concurrency:
   group: changeset-${{ github.head_ref || github.run_id }}
@@ -61,51 +64,97 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Decides, without an npm credential, whether a push has anything to publish, so a push that
-  # doesn't change a version never waits for the npm-release approval. Every public package counts,
-  # so a partly failed publish is retried.
+  # Decides, without an npm credential, whether a push has anything to publish. Only versions this
+  # push changed count, and the publish job publishes only those. A version that an earlier push
+  # brought, which npm still lacks, is finished by re-running that push's run, which builds the same
+  # commit, or by the `release` option of a manual run. A later push never publishes it from a
+  # newer tree that wasn't released under that version.
   check:
     name: Check for unpublished versions
     needs: version-packages
     # Like changesets/action before it, a stable line doesn't publish while changesets are pending.
-    if: ${{ !cancelled() && github.event_name == 'push' && needs.version-packages.result != 'failure' && needs.version-packages.outputs.has-changesets != 'true' }}
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event.inputs.tag == 'release') && needs.version-packages.result != 'failure' && needs.version-packages.outputs.has-changesets != 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
       unpublished: ${{ steps.npm.outputs.unpublished }}
       version: ${{ steps.npm.outputs.version }}
+      packages: ${{ steps.npm.outputs.packages }}
     steps:
       - uses: actions/checkout@v6
-      - name: Compare package versions with npm
+      - name: Compare the pushed versions with npm
         id: npm
+        env:
+          BEFORE: ${{ github.event.before }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
+          if [ "$MANUAL" = true ]; then
+            # A manual release counts every version at this commit.
+            BEFORE=all
+          elif [[ "$BEFORE" =~ ^0*$ ]]; then
+            # A push that creates the branch has no earlier commit, so it changes no version.
+            BEFORE=none
+          else
+            git fetch --no-tags --depth=1 origin "$BEFORE"
+          fi
           VERSION=$(node -p "require('./packages/cli/package.json').version")
-          # `shopify` is published from a copy of packages/cli (bin/create-cli-duplicate-package.js).
-          PACKAGES="shopify@$VERSION"
-          for MANIFEST in packages/*/package.json; do
-            PACKAGES="$PACKAGES $(node -p "const p = require('./$MANIFEST'); p.private ? '' : p.name + '@' + p.version")"
-          done
+          # One "pushed|carried name@version" line per public package. A package counts as pushed
+          # when this push changed its version or made it public. `shopify` is published from a
+          # copy of packages/cli (bin/create-cli-duplicate-package.js).
+          LINES=$(node -e '
+            const {execFileSync} = require("node:child_process")
+            const fs = require("node:fs")
+            const before = process.argv[1]
+            const manifestAt = (path) => {
+              try {
+                return JSON.parse(execFileSync("git", ["show", `${before}:${path}`], {encoding: "utf8", stdio: ["ignore", "pipe", "ignore"]}))
+              } catch {
+                return undefined
+              }
+            }
+            for (const directory of fs.readdirSync("packages")) {
+              const path = `packages/${directory}/package.json`
+              if (!fs.existsSync(path)) continue
+              const manifest = JSON.parse(fs.readFileSync(path, "utf8"))
+              if (manifest.private) continue
+              let pushed = before === "all"
+              if (before !== "all" && before !== "none") {
+                const previous = manifestAt(path)
+                pushed = !previous || previous.private === true || previous.version !== manifest.version
+              }
+              const names = directory === "cli" ? [manifest.name, "shopify"] : [manifest.name]
+              for (const name of names) console.log(`${pushed ? "pushed" : "carried"} ${name}@${manifest.version}`)
+            }
+          ' "$BEFORE")
           UNPUBLISHED=false
-          for PACKAGE in $PACKAGES; do
-            # An npm error counts as unpublished: the publish job then asks for approval, and
-            # `changeset publish` skips every version npm already has.
+          PUSHED=""
+          while read -r STATE PACKAGE; do
+            [ -n "$PACKAGE" ] || continue
+            if [ "$STATE" = pushed ]; then
+              PUSHED="$PUSHED ${PACKAGE%@*}"
+            fi
+            # An npm error counts as unpublished. `changeset publish` skips every version npm
+            # already has, so publishing a pushed version that npm does have is harmless.
             if [ "$(npm view "$PACKAGE" version 2>/dev/null || true)" = "${PACKAGE##*@}" ]; then
               echo "$PACKAGE is on npm"
-            else
-              echo "$PACKAGE is not on npm"
+            elif [ "$STATE" = pushed ]; then
+              echo "$PACKAGE is not on npm, and this run publishes it"
               UNPUBLISHED=true
+            else
+              echo "::warning::$PACKAGE is not on npm, but an earlier push brought that version, so this run doesn't publish it. If that push's Release run failed, re-run its failed jobs; if it can't be re-run, start this workflow by hand with the release option."
             fi
-          done
-          echo "Version $VERSION, unpublished $UNPUBLISHED"
+          done <<< "$LINES"
+          echo "Version $VERSION, unpublished $UNPUBLISHED, packages:$PUSHED"
           {
             echo "version=$VERSION"
             echo "unpublished=$UNPUBLISHED"
+            echo "packages=${PUSHED# }"
           } >> "$GITHUB_OUTPUT"
 
   # The only job that publishes a release. The npm-release environment limits it to main and
-  # stable/* and asks Dev Experience to approve each run.
+  # stable/*.
   publish:
     name: Publish to npm
     needs: check
@@ -129,7 +178,7 @@ jobs:
         with:
           node-version: 24.22.1
 
-      # After the approval, which can take hours, so a release that published meanwhile counts.
+      # Read when the job runs, so a release that published meanwhile counts.
       - name: Choose the dist-tag
         id: dist-tag
         env:
@@ -151,6 +200,27 @@ jobs:
           fi
           echo "Publishing $VERSION under $DIST_TAG"
           echo "dist-tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+
+      # Leaves every other package out of this publish, so a version that an earlier push brought
+      # is never published from this commit's tree.
+      - name: Publish only the checked packages
+        env:
+          PACKAGES: ${{ needs.check.outputs.packages }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("node:fs")
+            const keep = new Set(process.argv[1].split(" ").filter(Boolean))
+            for (const directory of fs.readdirSync("packages")) {
+              const path = `packages/${directory}/package.json`
+              if (!fs.existsSync(path)) continue
+              const manifest = JSON.parse(fs.readFileSync(path, "utf8"))
+              if (manifest.private || keep.has(manifest.name)) continue
+              manifest.private = true
+              fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`)
+              console.log(`Not publishing ${manifest.name}@${manifest.version} from this commit`)
+            }
+          ' "$PACKAGES"
 
       - name: Publish packages
         run: pnpm release "$DIST_TAG"
@@ -269,11 +339,11 @@ jobs:
           fi
 
   # Nightly on schedule, nightly or experimental by hand, from main only. A nightly runs in the
-  # npm-nightly environment; an experimental release, which is rare, waits for the npm-release approval.
+  # npm-nightly environment; an experimental release, which is rare, runs in npm-release.
   manual-cron-release:
     name: Manual & Cron Release
     needs: nightly-changes
-    if: ${{ !cancelled() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'main' && needs.nightly-changes.outputs.changed != 'false' }}
+    if: ${{ !cancelled() && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != 'release')) && github.ref_name == 'main' && needs.nightly-changes.outputs.changed != 'false' }}
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.tag == 'experimental' && 'npm-release' || 'npm-nightly' }}
     permissions:
