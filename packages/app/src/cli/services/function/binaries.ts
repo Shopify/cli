@@ -1,5 +1,6 @@
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {chmod, createFileWriteStream, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
+import {chmod, createFileWriteStream, fileExists, mkdir, removeFile, renameFile} from '@shopify/cli-kit/node/fs'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -239,14 +240,10 @@ export async function downloadBinary(bin: DownloadableBinary) {
     return
   }
 
-  // Downloads cannot run concurrently with `exec` since the `moveFile`
-  // operation is not atomic. It will delete the destination file if it exists
-  // which will cause `exec` to break if it tries to execute the file before
-  // the source file has been moved.
-  // We prevent downloads from happening concurrently with `exec` by enforcing
-  // that only one download happens for an executable. If we get here, we check
-  // if a download is in progress, wait for it to finish, and return without
-  // downloading again. If it's not in progress, then we start the download.
+  // Only one download happens for an executable in this process. If we get
+  // here, we check if a download is in progress, wait for it to finish, and
+  // return without downloading again. If it's not in progress, then we start
+  // the download.
   const downloadPromise = downloadsInProgress.get(bin.path)
   if (downloadPromise) {
     await downloadPromise
@@ -295,20 +292,36 @@ async function performDownload(bin: DownloadableBinary) {
         throw new Error(`Downloading ${bin.name} failed with empty response body`)
       }
 
-      // Download to a temp location and then move the file only after it's fully processed
-      // so the `isDownloaded` check above will continue to return false if the file hasn't
-      // been fully processed.
-      await inTemporaryDirectory(async (tmpDir) => {
-        const tmpFile = joinPath(tmpDir, 'binary')
+      // Download next to the binary and rename the file into place only after it's fully processed. The rename
+      // is atomic because both paths are on the same file system, so no CLI process can see or execute a
+      // binary that is still open for writing, which fails with ETXTBSY on Linux.
+      const tmpFile = `${bin.path}.${randomUUID()}.download`
+      try {
         const outputStream = createFileWriteStream(tmpFile)
         await bin.processResponse(responseStream, outputStream)
         await chmod(tmpFile, 0o775)
-        await moveFile(tmpFile, bin.path, {overwrite: true})
-      })
+        await moveIntoPlace(bin, tmpFile)
+      } finally {
+        await removeFile(tmpFile)
+      }
     },
     async () => {},
     2,
   )
+}
+
+async function moveIntoPlace(bin: DownloadableBinary, tmpFile: string) {
+  try {
+    await renameFile(tmpFile, bin.path)
+  } catch (error) {
+    // Windows refuses to replace a binary that another CLI process is running. Downloads rename only complete
+    // binaries into place, so the existing one can be used.
+    if (await fileExists(bin.path)) {
+      outputDebug(`Using the ${bin.name} binary that another process downloaded to ${bin.path}`)
+      return
+    }
+    throw error
+  }
 }
 
 async function gunzipResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {

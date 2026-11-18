@@ -11,8 +11,10 @@ import {
   V2_TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
-import {fileExists, removeFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readdir, readFile, removeFile, renameFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {basename, dirname} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
+import {PassThrough} from 'stream'
 import {gzipSync} from 'zlib'
 
 const javy = javyBinary()
@@ -28,6 +30,16 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
     fetch: vi.fn(),
   }
 })
+
+vi.mock('@shopify/cli-kit/node/fs', async (importActual) => {
+  const actual: any = await importActual()
+  return {...actual, renameFile: vi.fn(actual.renameFile)}
+})
+
+async function temporaryDownloads(bin: {path: string}) {
+  const files = await readdir(dirname(bin.path))
+  return files.filter((file) => file.startsWith(`${basename(bin.path)}.`))
+}
 
 describe('javy', () => {
   test('properties are set correctly', () => {
@@ -202,7 +214,7 @@ describe('javy', () => {
     // Wait for first download to reach fetch and register in downloadsInProgress
     await fetchStarted
 
-    // Simulate file appearing on disk (e.g., non-atomic moveFile creating the destination
+    // Simulate file appearing on disk (e.g., another process renaming its download into place
     // while the download is still tracked as in-progress)
     await writeFile(javy.path, 'incomplete binary')
 
@@ -362,6 +374,76 @@ describe('functionRunner', () => {
     // Then
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(functionRunner.path)).resolves.toBeTruthy()
+  })
+
+  test('writes function-runner next to its final path and renames it into place when complete', async () => {
+    // Given
+    await removeFile(functionRunner.path)
+    const gzippedBinary = gzipSync('function-runner binary')
+    const responseBody = new PassThrough()
+    responseBody.write(gzippedBinary.subarray(0, 10))
+    vi.mocked(fetch).mockResolvedValue(new Response(responseBody))
+
+    // When
+    const download = downloadBinary(functionRunner)
+
+    // Then
+    // The partial download is in the same directory, so the rename can't fall back to a copy into the final
+    // path, and the final path doesn't exist while the binary is written.
+    await vi.waitFor(() => expect(temporaryDownloads(functionRunner)).resolves.toHaveLength(1))
+    await expect(fileExists(functionRunner.path)).resolves.toBeFalsy()
+
+    responseBody.end(gzippedBinary.subarray(10))
+    await download
+    await expect(readFile(functionRunner.path)).resolves.toBe('function-runner binary')
+    await expect(temporaryDownloads(functionRunner)).resolves.toEqual([])
+  })
+
+  test('removes the partial download when the download fails', async () => {
+    // Given
+    await removeFile(functionRunner.path)
+    vi.mocked(fetch).mockImplementation(async () => new Response('not a gzipped binary'))
+
+    // When
+    const download = downloadBinary(functionRunner)
+
+    // Then
+    await expect(download).rejects.toThrow()
+    await expect(fileExists(functionRunner.path)).resolves.toBeFalsy()
+    await expect(temporaryDownloads(functionRunner)).resolves.toEqual([])
+  })
+
+  test('uses the function-runner that another process put in place when the rename fails', async () => {
+    // Given
+    await removeFile(functionRunner.path)
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('function-runner binary')))
+    vi.mocked(renameFile).mockImplementationOnce(async () => {
+      await writeFile(functionRunner.path, 'function-runner from another process')
+      throw new Error('EPERM: operation not permitted, rename')
+    })
+
+    // When
+    await downloadBinary(functionRunner)
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(readFile(functionRunner.path)).resolves.toBe('function-runner from another process')
+    await expect(temporaryDownloads(functionRunner)).resolves.toEqual([])
+  })
+
+  test('fails when the rename fails and no function-runner is in place', async () => {
+    // Given
+    await removeFile(functionRunner.path)
+    vi.mocked(fetch).mockImplementation(async () => new Response(gzipSync('function-runner binary')))
+    vi.mocked(renameFile).mockRejectedValue(new Error('EACCES: permission denied, rename'))
+
+    // When
+    const download = downloadBinary(functionRunner)
+
+    // Then
+    await expect(download).rejects.toThrow('EACCES: permission denied, rename')
+    await expect(fileExists(functionRunner.path)).resolves.toBeFalsy()
+    await expect(temporaryDownloads(functionRunner)).resolves.toEqual([])
   })
 })
 
