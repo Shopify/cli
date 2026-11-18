@@ -21,8 +21,8 @@ on:
         options:
           - nightly
           - experimental
-          # Publishes the current commit's versions on main or stable/*, for a release whose push
-          # started no run, or whose run can no longer be re-run.
+          # On main or stable/*: publishes the versions that the branch's head commit itself changed,
+          # for a release whose push started no run, or whose run can no longer be re-run.
           - release
 
 concurrency:
@@ -67,8 +67,8 @@ jobs:
   # Decides, without an npm credential, whether a push has anything to publish. Only versions this
   # push changed count, and the publish job publishes only those. A version that an earlier push
   # brought, which npm still lacks, is finished by re-running that push's run, which builds the same
-  # commit, or by the `release` option of a manual run. A later push never publishes it from a
-  # newer tree that wasn't released under that version.
+  # commit, or by the `release` option of a manual run while that commit is still the branch's head.
+  # A later commit never publishes it from a newer tree that wasn't released under that version.
   check:
     name: Check for unpublished versions
     needs: version-packages
@@ -91,8 +91,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$MANUAL" = true ]; then
-            # A manual release counts every version at this commit.
-            BEFORE=all
+            # A manual release counts only the versions this commit changed against its first parent.
+            git fetch --no-tags --depth=2 origin "$GITHUB_SHA"
+            BEFORE=$(git rev-parse "$GITHUB_SHA^1")
           elif [[ "$BEFORE" =~ ^0*$ ]]; then
             # A push that creates the branch has no earlier commit, so it changes no version.
             BEFORE=none
@@ -119,8 +120,8 @@ jobs:
               if (!fs.existsSync(path)) continue
               const manifest = JSON.parse(fs.readFileSync(path, "utf8"))
               if (manifest.private) continue
-              let pushed = before === "all"
-              if (before !== "all" && before !== "none") {
+              let pushed = false
+              if (before !== "none") {
                 const previous = manifestAt(path)
                 pushed = !previous || previous.private === true || previous.version !== manifest.version
               }
@@ -143,10 +144,14 @@ jobs:
               echo "$PACKAGE is not on npm, and this run publishes it"
               UNPUBLISHED=true
             else
-              echo "::warning::$PACKAGE is not on npm, but an earlier push brought that version, so this run doesn't publish it. If that push's Release run failed, re-run its failed jobs; if it can't be re-run, start this workflow by hand with the release option."
+              echo "::warning::$PACKAGE is not on npm, but an earlier push brought that version, so this run doesn't publish it. If that push's Release run failed, re-run its failed jobs; if it can't be re-run and that commit is still the branch's head, start this workflow by hand with the release option."
             fi
           done <<< "$LINES"
           echo "Version $VERSION, unpublished $UNPUBLISHED, packages:$PUSHED"
+          if [ "$MANUAL" = true ] && [ -z "$PUSHED" ]; then
+            echo "::error::$GITHUB_SHA didn't change any public package's version against its first parent, so a manual release has nothing it may publish. Re-run the failed jobs of the Release run for the commit that changed the version, or publish a new version."
+            exit 1
+          fi
           {
             echo "version=$VERSION"
             echo "unpublished=$UNPUBLISHED"
