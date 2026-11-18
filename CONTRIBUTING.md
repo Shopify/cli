@@ -63,6 +63,6 @@ Before removing or incompatibly changing a stable interface:
 
 - This repository is published from Shopify's internal monorepo. `main`'s version bump is made upstream with `pnpm changeset-manifests`, and the mirror carries it to GitHub: it opens or refreshes a pull request here automatically after each upstream merge, and merges it once `main`'s required checks pass. GitHub's `release.yml` then publishes as before.
 - Never merge "Version Packages - main" on GitHub. It would put commits on GitHub `main` that the mirror didn't make, and the mirror would refuse every later publish.
-- `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests on GitHub, as before.
+- `stable/*` patch lines keep their own "Version Packages - stable/X.Y" pull requests on GitHub. GitHub Actions can't open them, so a Dev Experience member opens each one from `changeset-release/stable/X.Y`.
 - Each `X.Y.0` release gets a `stable/X.Y` branch for its patch releases. Only Dev Experience members can create one: after the release, a Dev Experience member creates it from the release tag with `git push origin refs/tags/X.Y.0:refs/heads/stable/X.Y`.
-- Changes to `stable/*` branches, such as patch-release cherry-picks, need a pull request with code-owner review.
+- Changes to `stable/*` branches, such as patch-release backports and their "Version Packages" pull requests, go through a pull request that a Dev Experience member merges with the branch rules' bypass, with no review.
