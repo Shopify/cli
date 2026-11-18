@@ -14,6 +14,7 @@ import {
 } from './session.js'
 
 import {nonRandomUUID} from './crypto.js'
+import {AbortError, shouldReportErrorAsUnexpected} from './error.js'
 import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {
@@ -329,6 +330,30 @@ describe('ensureAuthenticatedTheme', () => {
     expect(resolvePermanentStoreFqdn).toHaveBeenCalledWith('renamed-store.myshopify.com')
     expect(got).toEqual({token: 'shptka_password', storeFqdn: 'abc123-xy.myshopify.com'})
   })
+
+  // Synthetic passwords with a line break, an arrow-key escape sequence, the dots that hide a password, and letters
+  // outside ASCII. An HTTP client refuses each one in a request header.
+  test.each([
+    'shptka_0000\n0000',
+    '\u001b[Cshptka_00000000',
+    '\u2022\u2022\u2022\u2022\u2022\u2022',
+    'shptka_\u0160\u0172',
+  ])('rejects a password with a character that a request header cannot carry (%j)', async (password) => {
+    // When
+    const error = await ensureAuthenticatedThemes('mystore.myshopify.com', password).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(
+      "The password for mystore.myshopify.com contains a character that isn't allowed.",
+    )
+    const {message, tryMessage, nextSteps} = error as AbortError
+    expect(`${message} ${tryMessage} ${nextSteps}`).not.toContain(password)
+    expect(setLastSeenAuthMethod).not.toHaveBeenCalled()
+    expect(setLastSeenUserIdAfterAuth).not.toHaveBeenCalled()
+    expect(resolvePermanentStoreFqdn).not.toHaveBeenCalled()
+  })
 })
 
 describe('ensureAuthenticatedBusinessPlatform', () => {
@@ -463,8 +488,8 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
-    // App commands keep the exchange's default Business Platform scopes.
-    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
+    // No fixed scopes, so a service account with Dev store management gets the scope that store lookups need.
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token', [])
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })

@@ -224,6 +224,36 @@ describe('fetchApiVersions error classification', () => {
     expect((error as AbortError).message).not.toContain('Unknown error')
   })
 
+  test('reports a 423 locked store as an expected store-state failure, not a CLI bug', async () => {
+    // Given
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(423, 'This store is unavailable'))
+
+    // When
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).not.toBeInstanceOf(BugError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(`The store ${Session.storeFqdn} is temporarily locked.`)
+    expect(String((error as AbortError).tryMessage)).toContain('Wait a few minutes and try again.')
+  })
+
+  test('reports a 422 Unavailable Shop as an expected store-state failure, not a CLI bug', async () => {
+    // Given
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(422, 'Unavailable Shop'))
+
+    // When
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).not.toBeInstanceOf(BugError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(`The store ${Session.storeFqdn} can't accept requests yet.`)
+    expect(String((error as AbortError).tryMessage)).toContain("setup isn't complete")
+  })
+
   test('reports an Admin API 5xx as an expected server-side failure, not a CLI bug', async () => {
     // Given
     vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(500, 'Internal Server Error'))

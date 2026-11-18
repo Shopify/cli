@@ -189,7 +189,10 @@ ${outputToken.json(appManagementScopes)}
   const envToken = getAppAutomationToken()
   if (envToken) {
     const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(envToken)
-    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
+    // Request no explicit scopes, as ensureAuthenticatedBusinessPlatform does. App commands also call the
+    // organizations API to find and list stores, which admits the token only with an organization scope such as
+    // organization.store-management. Only some tokens hold it, so naming it would fail the exchange for the others.
+    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken, [])
 
     return {
       appManagementToken: appManagmentToken.accessToken,
@@ -297,6 +300,7 @@ export async function ensureAuthenticatedThemes(
 ${outputToken.json(scopes)}
 `)
   if (password) {
+    validateThemePassword(password, store)
     const session = {token: password, storeFqdn: store}
     const themeAccess = isThemeAccessSession(session)
     setLastSeenAuthMethod(themeAccess ? 'theme_access_token' : 'custom_app_token')
@@ -305,6 +309,27 @@ ${outputToken.json(scopes)}
     return session
   }
   return ensureAuthenticatedAdmin(store, scopes, options)
+}
+
+/**
+ * Rejects a password with a character outside printable ASCII, which no Theme Access password or Admin API token has.
+ * The password goes into a request header. The HTTP client refuses most of these characters before the request leaves
+ * the machine, with an error that repeats the password, and the store rejects the rest.
+ *
+ * @param password - Password generated from the Theme Access app, or an Admin API access token.
+ * @param store - Store the password is for.
+ * @throws AbortError when the password has a character outside printable ASCII.
+ */
+function validateThemePassword(password: string, store: string): void {
+  if (/^[\x20-\x7E]*$/.test(password)) return
+
+  throw new AbortError(
+    `The password for ${store} contains a character that isn't allowed.`,
+    'A password can contain only printable ASCII characters. Line breaks, arrow-key presses, and the dots that hide a password often get into a password when it is copied.',
+    [
+      'Copy the password again from the Theme Access app, or the Admin API access token again from your app, and run the command again.',
+    ],
+  )
 }
 
 /**
