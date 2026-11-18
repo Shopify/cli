@@ -26,7 +26,11 @@ async function resolveApiVersion(options: {
     return supportedVersions.sort().reverse()[0]!
   }
 
-  const versionList = availableVersions.map((version) => version.handle)
+  if (availableVersions.some((version) => version.handle === userSpecifiedVersion)) return userSpecifiedVersion
+
+  // The list may come from the cache, so check a fresh copy before rejecting a newly released version.
+  const freshVersions = await fetchPublicApiVersions({adminSession, session, useCache: false})
+  const versionList = freshVersions.map((version) => version.handle)
   if (versionList.includes(userSpecifiedVersion)) return userSpecifiedVersion
 
   throw new AbortError(`Invalid API version: ${userSpecifiedVersion}`, `Allowed versions: ${versionList.join(', ')}`)
