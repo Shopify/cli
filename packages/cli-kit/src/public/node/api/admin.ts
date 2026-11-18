@@ -218,6 +218,22 @@ export async function fetchApiVersions(
       )
     }
 
+    // HTTP 423 means Shopify locked the store for a short time. The lock ends without any action from the user.
+    if (error instanceof ClientError && error.response.status === 423) {
+      throw new AbortError(
+        `The store ${session.storeFqdn} is temporarily locked.`,
+        'Shopify locks a store for a short time, for example during maintenance. Wait a few minutes and try again.',
+      )
+    }
+
+    // HTTP 422 on this query, which takes no input, comes from the store and not from the request.
+    if (error instanceof ClientError && error.response.status === 422) {
+      throw new AbortError(
+        `The store ${session.storeFqdn} can't accept requests yet.`,
+        "This usually means the store's setup isn't complete. Finish setting up the store in the Shopify admin and try again.",
+      )
+    }
+
     // HTTP 5xx is a Shopify-side failure. This query takes no user input, so the user's command
     // cannot have caused it. `isExpectedApiError` covers 502/503/504, but only for raw errors, so
     // it never sees one we have already wrapped in a BugError.
