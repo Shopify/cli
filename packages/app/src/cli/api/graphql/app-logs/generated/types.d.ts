@@ -134,7 +134,7 @@ export type LogType =
   /** A webhook delivery. */
   | 'WEBHOOK';
 
-/** The input fields for a time range of up to 7 days within the last 30 days. logQueryLimits returns these limits. */
+/** The input fields for a time range of up to 1 day within the last 7 days. logQueryLimits returns these limits. */
 export type TimestampRangeInput = {
   /** The start of the range, inclusive. */
   gte: Scalars['DateTime']['input'];
