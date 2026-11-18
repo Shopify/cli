@@ -47,6 +47,7 @@ overrides:
   immutable@<4: 3.8.4
   follow-redirects: 1.16.2
   fast-uri: 3.1.9
+  immutable@>=5.0.0 <5.1.8: 5.1.8
 
 patchedDependencies:
   when-exit@2.1.5:
@@ -6160,11 +6161,8 @@ packages:
     resolution: {integrity: sha512-ZQv17KolYrYmsDoDB8N67zhIKsNi9mGYlk96y/yuxyAqJB2hLzSGSM7k/sB0/ZvO4kx27U9+fBeD/XlLGh/uXQ==, tarball: https://registry.npmjs.org/immutable/-/immutable-3.8.4.tgz}
     engines: {node: '>=0.10.0'}
 
-  immutable@5.1.6:
-    resolution: {integrity: sha512-q1swsS8K7L8usSHuOqF2TAoCCkonYz0SG38wLAggaa4Wml70zixIvt2ql4coQ2C2B3hTjltJry4r6bULwgAXLQ==, tarball: https://registry.npmjs.org/immutable/-/immutable-5.1.6.tgz}
-
-  immutable@5.2.1:
-    resolution: {integrity: sha512-CgXNM1BhKqpMjFHTyqQSk09OWqzHNJ/U4BdeBgXoBdR2DdgBdOSv131cO1/YMgzopqnka3B/i949UaMLEKUxOA==, tarball: https://registry.npmjs.org/immutable/-/immutable-5.2.1.tgz}
+  immutable@5.1.8:
+    resolution: {integrity: sha512-TM5YqrGeTsVIPPpILzeqZ8D2Zc2TvNgSDi88zPF2a4cyqQdWV/wVWBDRDbNzzrLeRWScrFcOX9lW2iX6GOtUDw==, tarball: https://registry.npmjs.org/immutable/-/immutable-5.1.8.tgz}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==, tarball: https://registry.npmjs.org/import-fresh/-/import-fresh-3.3.1.tgz}
@@ -8981,7 +8979,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       graphql: 16.14.2
-      immutable: 5.1.6
+      immutable: 5.1.8
       invariant: 2.2.4
 
   '@asamuzakjp/css-color@3.2.0':
@@ -15316,10 +15314,7 @@ snapshots:
 
   immutable@3.8.4: {}
 
-  immutable@5.1.6: {}
-
-  immutable@5.2.1:
-    optional: true
+  immutable@5.1.8: {}
 
   import-fresh@3.3.1:
     dependencies:
@@ -17196,7 +17191,7 @@ snapshots:
   sass@1.100.0:
     dependencies:
       chokidar: 5.0.0
-      immutable: 5.2.1
+      immutable: 5.1.8
       source-map-js: 1.2.2
     optionalDependencies:
       '@parcel/watcher': 2.5.6
