@@ -156,6 +156,14 @@ jobs:
               for (const name of names) console.log(`${pushed ? "pushed" : "carried"} ${name}@${manifest.version}`)
             }
           ' "$BEFORE")
+          # npm view, retried, so a brief registry error doesn't read as a missing version.
+          on_npm() {
+            for attempt in 1 2 3; do
+              if [ "$(npm view "$1" version 2>/dev/null || true)" = "${1##*@}" ]; then return 0; fi
+              [ "$attempt" = 3 ] || sleep 5
+            done
+            return 1
+          }
           UNPUBLISHED=false
           MISSING=""
           PUSHED=""
@@ -166,7 +174,7 @@ jobs:
             fi
             # An npm error counts as unpublished. `changeset publish` skips every version npm
             # already has, so publishing a pushed version that npm does have is harmless.
-            if [ "$(npm view "$PACKAGE" version 2>/dev/null || true)" = "${PACKAGE##*@}" ]; then
+            if on_npm "$PACKAGE"; then
               echo "$PACKAGE is on npm"
               continue
             fi
@@ -214,12 +222,15 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
-      # The release is the merge of the Version Packages pull request that was tested. A merge commit
-      # whose tree differs from that pull request's head means the line moved after the pull request
+      # The release is the merge of this line's Version Packages pull request, whose head was tested.
+      # A merge commit whose tree differs from that head means the line moved after the pull request
       # was made, so the release would carry changes nobody tested with it.
       - name: Check the release is the tested pull request head
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git fetch --no-tags --depth=2 origin "$GITHUB_SHA"
@@ -228,11 +239,16 @@ jobs:
             exit 1
           fi
           HEAD_SHA=$(git rev-parse "$GITHUB_SHA^2")
+          PULL=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq "[.[] | select(.merged_at != null and .merge_commit_sha == \"$GITHUB_SHA\" and .base.ref == \"$GITHUB_REF_NAME\" and .head.sha == \"$HEAD_SHA\" and .head.ref == \"changeset-release/$GITHUB_REF_NAME\")] | first | .number // empty")
+          if [ -z "$PULL" ]; then
+            echo "::error::$GITHUB_SHA isn't the merge of a Version Packages pull request from changeset-release/$GITHUB_REF_NAME into $GITHUB_REF_NAME, so nothing publishes from it."
+            exit 1
+          fi
           if [ "$(git rev-parse "$GITHUB_SHA^{tree}")" != "$(git rev-parse "$HEAD_SHA^{tree}")" ]; then
             echo "::error::The merge's files differ from the pull request head $HEAD_SHA, so the line moved after the pull request was made. Let the Version Packages pull request update, test its new head and merge that."
             exit 1
           fi
-          echo "Publishing the files of $HEAD_SHA, the merged pull request's head"
+          echo "Publishing the files of $HEAD_SHA, the head of #$PULL"
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
