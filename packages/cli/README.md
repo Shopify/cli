@@ -5783,7 +5783,7 @@ DESCRIPTION
   - sidekick: Sidekick events. Filters: --status, --target.
   - ui-extension: UI extension errors. Filters: --status, --target.
 
-  Defaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept
+  Defaults: preceding hour, 20 records. Maximum: 1-day window within the last 7 days, 1000 records. Time inputs accept
   whole seconds only.
 
   --json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and
