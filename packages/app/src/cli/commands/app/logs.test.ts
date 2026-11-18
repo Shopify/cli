@@ -61,6 +61,10 @@ test('help lists every log type with its filters, and every filter applies to a 
   for (const {name} of logTypes) expect(Logs.description).toContain(`- ${name}: `)
 })
 
+test('help states the backend time-window limits', () => {
+  expect(Logs.description).toContain('Maximum: 1-day window within the last 7 days, 1000 records.')
+})
+
 test('parses space/equals forms and forwards effective defaults', async () => {
   vi.mocked(retrieveLogs).mockResolvedValue(result())
   await new Logs(
