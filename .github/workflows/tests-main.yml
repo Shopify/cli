@@ -61,8 +61,6 @@ jobs:
         run: pnpm vitest run ${{ env.POOL_OPTIONS }}
         env:
           POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
-          VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
         if: ${{ failure() && !cancelled() }}

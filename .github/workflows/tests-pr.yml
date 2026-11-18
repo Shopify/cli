@@ -210,8 +210,6 @@ jobs:
         env:
           POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
           SHARD_OPTIONS: ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
-          VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
 
   unit-tests-gate:
     name: "Unit tests"
