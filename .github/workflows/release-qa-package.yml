@@ -37,7 +37,9 @@ jobs:
           fi
           # Only the head of one of this repository's branches, such as a Version Packages pull
           # request's branch, so the job never builds a fork's code with this repository's cache.
-          if ! git ls-remote --heads "https://github.com/$GITHUB_REPOSITORY" | cut -f 1 | grep -qx "$SHA"; then
+          # Read the list first: under pipefail, grep -q exiting at its first match breaks the pipe.
+          HEADS=$(git ls-remote --heads "https://github.com/$GITHUB_REPOSITORY" | cut -f 1)
+          if ! grep -qx "$SHA" <<< "$HEADS"; then
             echo "::error::$SHA isn't the head of a branch in $GITHUB_REPOSITORY."
             exit 1
           fi
