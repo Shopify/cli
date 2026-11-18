@@ -10,6 +10,12 @@ export function countLabel(total: number, noun: string): string {
   return `${total} ${total === 1 ? noun : `${noun}s`}`
 }
 
+/** "7", "7 and 8", "7, 8 and 9". */
+export function listedNumbers(numbers: (number | string)[]): string {
+  if (numbers.length === 1) return String(numbers[0])
+  return `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
+}
+
 /** "3 checks with findings". */
 export function checksWithFindingsLabel(summary: CombinedChecksSummary): string {
   return `${countLabel(summary.withFindings, 'check')} with findings`

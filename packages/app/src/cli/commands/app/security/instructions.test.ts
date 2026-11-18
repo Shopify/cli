@@ -81,6 +81,14 @@ describe('app security instructions command', () => {
     expect(SecurityInstructions.jsonOutputSchema).toBe(appSecurityInstructionsJsonOutputSchema)
   })
 
+  test('says that record never changes shopify.app-security.json, and that review --suppress saves a suppression', () => {
+    const help = SecurityInstructions.descriptionWithMarkdown
+
+    expect(help).toContain('`record` never changes `shopify.app-security.json`')
+    expect(help).toContain('the agent runs `shopify app security review --suppress`')
+    expect(help).not.toMatch(/record`, which saves/)
+  })
+
   test('defines the selection flags as check does', () => {
     expect(SecurityInstructions.flags.path).toBe(appFlags.path)
     expect(SecurityInstructions.flags.config).toBe(appFlags.config)

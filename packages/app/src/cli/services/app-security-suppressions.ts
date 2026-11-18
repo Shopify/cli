@@ -1,0 +1,679 @@
+import {
+  APP_SECURITY_SUPPRESSIONS_FILE_NAME,
+  appSecuritySuppressionsPath,
+  readJsonArtifact,
+  prepareAppSecuritySuppressionsFile,
+} from './app-security-artifacts.js'
+import {projectAppSecurityPath} from './app-security/result.js'
+import {
+  MAX_JUSTIFICATION_LENGTH,
+  MAX_PATH_LENGTH,
+  MAX_SNIPPET_LENGTH,
+  MIN_SUPPRESSION_CODE_LENGTH,
+  isSpecificSuppressionCode,
+  matchSuppressionEntries,
+  reportingSourcesByCheckId,
+  type AgentFindingsDocument,
+  type DeterministicFindingsDocument,
+  type FindingsSource,
+  type StoredFinding,
+  type SuppressionKind,
+} from './app-security-engine/index.js'
+import {isMissingFilesystemEntry} from './app-security-engine/scanners/filesystem-errors.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileRealPath} from '@shopify/cli-kit/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {zod} from '@shopify/cli-kit/node/schema'
+import lockfile from 'proper-lockfile'
+import {isDeepStrictEqual} from 'node:util'
+
+const SUPPRESSIONS_SCHEMA_VERSION = 1
+
+const FINDINGS_SOURCES = ['deterministic', 'agent'] as const satisfies ReadonlyArray<FindingsSource>
+/** The kinds of an entry, which `--kind` takes with the same spelling. */
+export const SUPPRESSION_KINDS = ['false-positive', 'accepted-risk'] as const
+
+// The schema's messages quote no value from the file, which can hold code from the app. Only unknown keys are named,
+// shortened.
+const requiredString = () => zod.string({required_error: 'required', invalid_type_error: 'must be a string'})
+
+const choice = <TValues extends Readonly<[string, ...string[]]>>(values: TValues) =>
+  zod.enum(values, {
+    errorMap: (_issue, context) => ({
+      message: context.data === undefined ? `required (${values.join(' or ')})` : `must be ${values.join(' or ')}`,
+    }),
+  })
+
+const nonBlankText = (maxLength: number) =>
+  requiredString()
+    .max(maxLength, `must be at most ${maxLength} characters`)
+    .refine((text) => text.trim() !== '', 'must not be empty')
+
+/**
+ * Finding locations are normalized paths relative to the app directory, and the matching is exact, so an entry
+ * whose path isn't in that form could never match. `..` can only lead: a scan directory can sit outside the app.
+ */
+function pathProblem(path: string): string | undefined {
+  if (path === '') return 'must not be empty'
+  if (path.length > MAX_PATH_LENGTH) return `must be at most ${MAX_PATH_LENGTH} characters`
+  if (path.includes('\0')) return "can't contain a NUL character"
+  if (path.trim() !== path) return 'must not start or end with whitespace'
+  if (path.includes('\\')) return 'must use / as the separator'
+  if (path.startsWith('/') || /^[a-zA-Z]:/.test(path)) return 'must be relative to the app directory'
+  // Brackets stay allowed: React Router route files use them as escapes, as in app/routes/sitemap[.]xml.tsx.
+  if (/[*?]/.test(path)) return "can't contain wildcards: name one file"
+  const segments = path.split('/')
+  const firstName = segments.findIndex((segment) => segment !== '..')
+  const normalized =
+    firstName !== -1 &&
+    segments.slice(firstName).every((segment) => segment !== '' && segment !== '.' && segment !== '..')
+  if (!normalized) return 'must name a file, without empty or "." segments, and with ".." only at the start'
+  return undefined
+}
+
+const suppressionSchema = zod.strictObject(
+  {
+    source: choice(FINDINGS_SOURCES),
+    check: requiredString().min(1, 'must not be empty'),
+    kind: choice(SUPPRESSION_KINDS),
+    path: requiredString().superRefine((path, context) => {
+      const problem = pathProblem(path)
+      if (problem) context.addIssue({code: zod.ZodIssueCode.custom, message: problem})
+    }),
+    // `code` matches the finding's saved code excerpt, ignoring whitespace, commas, and semicolons, so it needs enough
+    // other characters to name its finding. Without `code`, the entry covers every finding of the check in the file.
+    code: nonBlankText(MAX_SNIPPET_LENGTH)
+      .refine(
+        (code) => code.trim() === '' || isSpecificSuppressionCode(code),
+        `must contain at least ${MIN_SUPPRESSION_CODE_LENGTH} characters that are not whitespace, commas, or semicolons`,
+      )
+      .optional(),
+    reason: nonBlankText(MAX_JUSTIFICATION_LENGTH),
+  },
+  {invalid_type_error: 'must be an object'},
+)
+
+/**
+ * The Zod schema for schema_version 1 of shopify.app-security.json. Unknown keys are rejected, not stripped: dropping
+ * a misspelled `code`, or a field that a later CLI adds to narrow an entry, would make the entry cover more findings
+ * than its author wrote. A later field bumps schema_version instead, which this CLI rejects. `$schema` is allowed for
+ * editors. Whether `check` is a check ID that `source` can report depends on the registry, so `parseSuppressionsFile`
+ * checks that separately.
+ */
+const suppressionsFileSchema = zod.strictObject({
+  $schema: zod.string({invalid_type_error: 'must be a string'}).optional(),
+  schema_version: zod.literal(SUPPRESSIONS_SCHEMA_VERSION),
+  suppressions: zod.array(suppressionSchema, {required_error: 'required', invalid_type_error: 'must be an array'}),
+})
+
+/** One entry of shopify.app-security.json: a finding that the team decided not to fix, with the reason. */
+export type AppSecuritySuppression = zod.infer<typeof suppressionSchema>
+
+type ParseSuppressionsFileResult = {ok: true; suppressions: AppSecuritySuppression[]} | {ok: false; errors: string[]}
+
+/** One problem, with the index of the entry it belongs to, or -1 for the file as a whole. */
+interface SuppressionsFileProblem {
+  entryIndex: number
+  message: string
+}
+
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+
+const isFindingsSource = (value: unknown): value is FindingsSource =>
+  FINDINGS_SOURCES.some((source) => source === value)
+
+function describeJsonType(value: unknown): string {
+  if (value === null) return 'null'
+  if (Array.isArray(value)) return 'array'
+  return typeof value
+}
+
+/** Unknown keys are quoted in messages, so each is cut to this many characters. */
+const MAX_QUOTED_KEY_LENGTH = 40
+
+/** Names an unknown key, and the known key it differs from only in case, as in `Code` for `code`. */
+function describeUnknownKey(key: string, knownKeys: string[]): string {
+  if (key === 'configurations') {
+    return 'configurations is no longer supported. Suppressions apply to all app configurations; remove this field.'
+  }
+  const shortKey = key.length > MAX_QUOTED_KEY_LENGTH ? `${key.slice(0, MAX_QUOTED_KEY_LENGTH)}\u2026` : key
+  const knownKey = knownKeys.find((candidate) => candidate.toLowerCase() === key.toLowerCase())
+  const hint = knownKey === undefined ? '' : `. Did you mean ${JSON.stringify(knownKey)}?`
+  return `unknown key ${JSON.stringify(shortKey)}${hint}`
+}
+
+/**
+ * Renders a Zod issue as `path: message`, such as `suppressions[2].reason: must not be empty`. Unknown keys get one
+ * problem each.
+ */
+function describeIssue(issue: zod.ZodIssue): SuppressionsFileProblem[] {
+  const path = issue.path
+    .map((segment, index) => {
+      if (typeof segment === 'number') return `[${segment}]`
+      return index === 0 ? String(segment) : `.${segment}`
+    })
+    .join('')
+  const [field, entryIndex] = issue.path
+  const problem = (message: string): SuppressionsFileProblem => ({
+    entryIndex: field === 'suppressions' && typeof entryIndex === 'number' ? entryIndex : -1,
+    message: path === '' ? message : `${path}: ${message}`,
+  })
+  if (issue.code === zod.ZodIssueCode.unrecognized_keys) {
+    // The file and its entries are the only objects, and the file's own issues have an empty path.
+    const knownKeys = Object.keys(path === '' ? suppressionsFileSchema.shape : suppressionSchema.shape)
+    return issue.keys.map((key) => problem(describeUnknownKey(key, knownKeys)))
+  }
+  return [problem(issue.message)]
+}
+
+/**
+ * The problems with each entry's `check`: it must be a check ID in the registry, and the entry's `source` must be
+ * able to report it. Only entries whose `check` is a non-empty string are checked; the schema reports the others.
+ * A newer CLI can add a check, or a source for one, so the messages name upgrading as well as fixing the entry.
+ */
+function checkIdProblems(entries: unknown): SuppressionsFileProblem[] {
+  if (!Array.isArray(entries)) return []
+  const reportingSources = reportingSourcesByCheckId()
+  return entries.flatMap((entry: unknown, entryIndex): SuppressionsFileProblem[] => {
+    if (!isJsonObject(entry) || typeof entry.check !== 'string' || entry.check === '') return []
+    const label = `suppressions[${entryIndex}].check`
+    const sources = reportingSources.get(entry.check)
+    if (!sources) {
+      const message = `${label}: not a check ID that this version of Shopify CLI knows. Check the spelling, or upgrade Shopify CLI.`
+      return [{entryIndex, message}]
+    }
+    if (!isFindingsSource(entry.source) || sources.has(entry.source)) return []
+    const otherSources = [...sources].join(' or ')
+    return [
+      {
+        entryIndex,
+        message: `${label}: ${entry.source} checks in this version of Shopify CLI don't report ${entry.check}. Use "source": "${otherSources}", or upgrade Shopify CLI.`,
+      },
+    ]
+  })
+}
+
+/**
+ * The entries that match what an earlier entry matches: the same source, check, path, and code (or no code). `code`
+ * is compared without whitespace, commas, and semicolons, which the matching ignores. Only one of the entries could
+ * apply, so a duplicate is a problem even when its kind or reason differs. Only entries that are valid on their own are
+ * compared; the schema reports the others.
+ */
+function duplicateProblems(entries: unknown): SuppressionsFileProblem[] {
+  if (!Array.isArray(entries)) return []
+  const firstIndexByMatch = new Map<string, number>()
+  return entries.flatMap((entry: unknown, entryIndex): SuppressionsFileProblem[] => {
+    const parsed = suppressionSchema.safeParse(entry)
+    if (!parsed.success) return []
+    const {source, check, path, code} = parsed.data
+    const match = JSON.stringify([source, check, path, code?.replace(/[\s,;]/g, '') ?? null])
+    const firstIndex = firstIndexByMatch.get(match)
+    if (firstIndex === undefined) {
+      firstIndexByMatch.set(match, entryIndex)
+      return []
+    }
+    return [{entryIndex, message: `suppressions[${entryIndex}]: duplicates suppressions[${firstIndex}]`}]
+  })
+}
+
+/** Validates the parsed JSON of a suppressions file. All or nothing: any problem rejects the whole file. */
+function parseSuppressionsFile(value: unknown): ParseSuppressionsFileResult {
+  if (!isJsonObject(value)) {
+    return {ok: false, errors: [`expected a JSON object, received ${describeJsonType(value)}`]}
+  }
+  const schemaVersion = value.schema_version
+  if (schemaVersion !== SUPPRESSIONS_SCHEMA_VERSION) {
+    // A later schema_version comes from a newer CLI; any other value is a mistake in the file.
+    const isLater =
+      typeof schemaVersion === 'number' &&
+      Number.isSafeInteger(schemaVersion) &&
+      schemaVersion > SUPPRESSIONS_SCHEMA_VERSION
+    const error = isLater
+      ? `schema_version ${schemaVersion} needs a newer version of Shopify CLI`
+      : `schema_version must be ${SUPPRESSIONS_SCHEMA_VERSION}`
+    return {ok: false, errors: [error]}
+  }
+
+  const parsed = suppressionsFileSchema.safeParse(value)
+  const problems = [
+    ...(parsed.success ? [] : parsed.error.issues.flatMap(describeIssue)),
+    ...checkIdProblems(value.suppressions),
+    ...duplicateProblems(value.suppressions),
+  ].sort((left, right) => left.entryIndex - right.entryIndex)
+  if (!parsed.success || problems.length > 0) {
+    return {ok: false, errors: problems.map((problem) => problem.message)}
+  }
+  return {ok: true, suppressions: parsed.data.suppressions}
+}
+
+/** A file of up to 5 MB can have tens of thousands of problems, so the error lists only this many. */
+const MAX_LISTED_PROBLEMS = 50
+
+/**
+ * Aborts with one error that lists the first 50 problems under the file's path, then the count of the others.
+ * `details` repeats the absolute path and the same list for JSON output.
+ */
+function abortInvalidSuppressionsFile(path: string, problems: string[]): never {
+  const unlisted = problems.length - MAX_LISTED_PROBLEMS
+  const errors = unlisted > 0 ? [...problems.slice(0, MAX_LISTED_PROBLEMS), `\u2026and ${unlisted} more`] : problems
+  const error = new AbortError(
+    `The app security suppressions could not be loaded because ${APP_SECURITY_SUPPRESSIONS_FILE_NAME} is invalid.`,
+    null,
+    [`Fix every error in ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}, then run the command again.`],
+    [{title: path, body: {list: {items: errors}}}],
+  )
+  error.code = 'suppressions-file-invalid'
+  error.details = {path: projectAppSecurityPath(path), errors}
+  throw error
+}
+
+/**
+ * Reads `<app directory>/shopify.app-security.json`. A missing file means no suppressions. An invalid file (JSON
+ * that doesn't parse, an unknown schema_version, or any invalid entry) aborts with one error that lists its
+ * problems, so nothing in it applies. The entries keep the file's order, so an entry's index is its index in the file.
+ */
+export async function readAppSecuritySuppressions(appDirectory: string): Promise<AppSecuritySuppression[]> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const file = await readJsonArtifact(path)
+  if (file.status === 'missing') return []
+  if (file.status === 'invalid') abortInvalidSuppressionsFile(path, file.errors)
+
+  const parsed = parseSuppressionsFile(file.value)
+  if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
+  return parsed.suppressions
+}
+
+/**
+ * The paths of the entries with `code` whose files no longer exist in the app directory, which a stale entry needs for
+ * its likely new path. It only tests whether each file exists, and reads none.
+ */
+export async function missingSuppressionPaths(
+  appDirectory: string,
+  suppressions: AppSecuritySuppression[],
+): Promise<string[]> {
+  const paths = [...new Set(suppressions.filter((suppression) => suppression.code !== undefined).map(({path}) => path))]
+  const missing = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        await fileRealPath(joinPath(appDirectory, path))
+        return false
+        // eslint-disable-next-line no-catch-all/no-catch-all -- Optional hints must not fail the report on inspection errors.
+      } catch (error) {
+        // An access error does not establish that the old file is gone.
+        return isMissingFilesystemEntry(error)
+      }
+    }),
+  )
+  return paths.filter((_path, index) => missing[index])
+}
+
+/**
+ * Parses `--kind` and `--reason`, which give the kind and reason of a new entry, or replace those of an entry that
+ * `review --suppress` re-attaches. A problem is worded as the file's validation words it, after the flag's name, such
+ * as `--reason: must not be empty`. A flag that isn't given is left out of the decision, and `missing` holds its
+ * problem, such as `--reason: required`: only a re-attached entry, which keeps its own kind and reason, does without it.
+ */
+export function parseSuppressionFlags(flags: {
+  kind: string | undefined
+  reason: string | undefined
+}): {ok: true; decision: Partial<SuppressionDecision>; missing: string[]} | {ok: false; errors: string[]} {
+  const kind = choice(SUPPRESSION_KINDS).safeParse(flags.kind)
+  const reason = nonBlankText(MAX_JUSTIFICATION_LENGTH).safeParse(flags.reason)
+  const kindErrors = kind.success ? [] : kind.error.issues.map((issue) => `--kind: ${issue.message}`)
+  const reasonErrors = reason.success ? [] : reason.error.issues.map((issue) => `--reason: ${issue.message}`)
+  const invalid = [...(flags.kind === undefined ? [] : kindErrors), ...(flags.reason === undefined ? [] : reasonErrors)]
+  if (invalid.length > 0) return {ok: false, errors: invalid}
+  return {
+    ok: true,
+    decision: {...(kind.success ? {kind: kind.data} : {}), ...(reason.success ? {reason: reason.data} : {})},
+    missing: [...(flags.kind === undefined ? kindErrors : []), ...(flags.reason === undefined ? reasonErrors : [])],
+  }
+}
+
+/**
+ * What is wrong with the reason of a new entry, worded as the file's validation words it, such as `must not be empty`,
+ * or undefined when the reason is valid.
+ */
+export function suppressionReasonProblem(reason: string): string | undefined {
+  const parsed = nonBlankText(MAX_JUSTIFICATION_LENGTH).safeParse(reason)
+  return parsed.success ? undefined : parsed.error.issues[0]?.message
+}
+
+/** The stored results that a new entry must match. */
+export interface SuppressionResults {
+  deterministic: DeterministicFindingsDocument | null
+  agent: AgentFindingsDocument | null
+}
+
+/** A stored finding to suppress. */
+export interface SuppressionTarget {
+  source: FindingsSource
+  checkId: string
+  /** The finding's index in the findings of its source's stored check. */
+  findingIndex: number
+  finding: StoredFinding
+}
+
+/** What a person or the agent decided about a finding. */
+export interface SuppressionDecision {
+  kind: SuppressionKind
+  reason: string
+}
+
+/**
+ * A change to shopify.app-security.json: append an entry or
+ * re-attach a stale entry to its likely finding: replace its `code`, and set its kind and reason, which are its own
+ * unless the person replaced them.
+ */
+type SuppressionChange =
+  | {type: 'add'; entry: AppSecuritySuppression}
+  | {type: 'replace-code'; index: number; code: string; kind: SuppressionKind; reason: string}
+
+/**
+ * - `saved`: an entry of the file already suppresses the finding, so nothing changes.
+ * - `change`: the change that suppresses the finding, and only that finding.
+ * - `refused`: no automatic candidate selected the finding alone. `problem` says why, as the end of a sentence.
+ *   `withoutCode` is set when the broader entry without `code`, which suppresses every finding of this source and check
+ *   in the file, is an option. The review names those findings from its numbered findings. The plan does not establish
+ *   whether a manual code selector can select the finding alone.
+ *   `invalidFields` lists fields rejected by file validation. An entry written by hand with the same values would
+ *   also be invalid.
+ */
+export type SuppressionPlan =
+  | {status: 'saved'; entryIndex: number}
+  | {status: 'change'; change: SuppressionChange}
+  | {status: 'refused'; problem: string; withoutCode?: true; invalidFields?: string[]}
+
+/**
+ * Lines before and after the flagged line that a candidate `code` covers, in the order the candidates widen: the line
+ * alone, then more of the statement around it, up to the two lines on each side that the excerpt holds.
+ */
+const CODE_WINDOWS: [number, number][] = [
+  [0, 0],
+  [-1, 0],
+  [0, 1],
+  [-1, 1],
+  [-2, 1],
+  [-1, 2],
+  [-2, 2],
+]
+
+/** A word of a code line that a `code` can name: an identifier, a property path, or a URL part. */
+const CODE_WORD = /[\w$.:/@-]{3,}/g
+
+/**
+ * Plans how to save a suppression for one finding of the current results. The new entry names the finding's source,
+ * check and path, and `code` from the finding's redacted excerpt, never from a source file.
+ * A finding without a line gets no `code`. The plan holds only an entry that the matching of `review` and `check`
+ * applies to that finding and to no other one in the current results:
+ * 1. An entry that already suppresses the finding leaves the file as it is.
+ * 2. Otherwise a new entry gets the shortest `code` that names the finding alone: its flagged line, then wider parts
+ *    of the statement, then a word of the line that the finding's message names (the matching keeps the finding whose
+ *    code and message both hold the text). A candidate that the file would reject as too short is skipped.
+ */
+export function planSuppression(
+  target: SuppressionTarget,
+  decision: SuppressionDecision,
+  results: SuppressionResults,
+  entries: AppSecuritySuppression[],
+): SuppressionPlan {
+  const savedIndex = matchingEntryIndex(entries, target, results)
+  if (savedIndex !== undefined) return {status: 'saved', entryIndex: savedIndex}
+
+  const path = normalizePath(target.finding.location.file)
+  // The keys in the order of the file's schema, which a new entry keeps.
+  const entryWithCode = (code: string | undefined): AppSecuritySuppression => ({
+    source: target.source,
+    check: target.checkId,
+    kind: decision.kind,
+    path,
+    ...(code === undefined ? {} : {code}),
+    reason: decision.reason,
+  })
+  const base = entryWithCode(undefined)
+  const problems = entryProblems(base)
+  if (problems.length > 0) {
+    return {
+      status: 'refused',
+      problem: `its entry would be invalid: ${problems.map(({message}) => message).join('; ')}`,
+      invalidFields: [...new Set(problems.map(({field}) => field))],
+    }
+  }
+
+  const named = codeNamingTarget(target, results, codeCandidates(target.finding), entryWithCode, base)
+  if (named.status === 'refused') return named
+  return {status: 'change', change: {type: 'add', entry: named.entry}}
+}
+
+/**
+ * Plans how to re-attach a stale entry to its likely finding (`likely_finding`), the target: the entry gets the `code`
+ * that a new entry for the target would get, the shortest of `planSuppression`'s candidates that names the target
+ * alone, and the decision's kind and reason. Its source, check, path and every other key stay. When no
+ * code names the target alone, the plan is refused as `planSuppression` refuses it, and the entry stays as it is.
+ */
+export function planReattachment(
+  target: SuppressionTarget,
+  entryIndex: number,
+  decision: SuppressionDecision,
+  results: SuppressionResults,
+  entries: AppSecuritySuppression[],
+): SuppressionPlan {
+  const {code: _code, ...entry} = entries[entryIndex]!
+  const reattached = (code: string | undefined): AppSecuritySuppression => ({
+    ...entry,
+    kind: decision.kind,
+    ...(code === undefined ? {} : {code}),
+    reason: decision.reason,
+  })
+  const codes = codeCandidates(target.finding).filter((code): code is string => code !== undefined)
+  const named = codeNamingTarget(target, results, codes, reattached, reattached(undefined))
+  if (named.status === 'refused') return named
+  return {
+    status: 'change',
+    change: {type: 'replace-code', index: entryIndex, code: named.code, kind: decision.kind, reason: decision.reason},
+  }
+}
+
+/**
+ * The first of the codes whose entry (`entryWithCode`) names the target alone, or the refusal when none does. A refusal
+ * offers the broader entry without `code`. The candidate search does not establish whether a manual code selector can
+ * select the finding alone.
+ */
+function codeNamingTarget<TCode extends string | undefined>(
+  target: SuppressionTarget,
+  results: SuppressionResults,
+  codes: TCode[],
+  entryWithCode: (code: string | undefined) => AppSecuritySuppression,
+  base: AppSecuritySuppression,
+): {status: 'named'; code: TCode; entry: AppSecuritySuppression} | Extract<SuppressionPlan, {status: 'refused'}> {
+  const {path} = base
+  const refusedPlan = (problem: string): Extract<SuppressionPlan, {status: 'refused'}> => ({
+    status: 'refused',
+    problem,
+    withoutCode: true,
+  })
+
+  if (codes.length === 0) {
+    return refusedPlan('the results hold no code for its line, so no automatic code selector is available')
+  }
+  const named = codes
+    .map((code) => ({code, entry: entryWithCode(code)}))
+    .find(({entry}) => matchesOnly(entry, target, results))
+  if (named) return {status: 'named', ...named}
+  return refusedPlan(
+    target.finding.location.line === undefined
+      ? `it has no line, so its entry would cover every finding of ${target.checkId} in ${path}, and there are several`
+      : `every automatic code candidate also names another finding of ${target.checkId} in ${path}`,
+  )
+}
+
+/** The `code` candidates in the order `planSuppression` tries them: `undefined` alone for a finding without a line. */
+function codeCandidates(finding: StoredFinding): (string | undefined)[] {
+  const {line} = finding.location
+  if (line === undefined) return [undefined]
+  const excerpt = finding.code_excerpt ?? []
+  const flaggedLine = excerpt.find((excerptLine) => excerptLine.line === line)
+  if (!flaggedLine) return []
+
+  const windows = CODE_WINDOWS.map(([before, after]) =>
+    excerpt
+      .filter((excerptLine) => excerptLine.line >= line + before && excerptLine.line <= line + after)
+      .map((excerptLine) => excerptLine.text.trim())
+      .filter((text) => text !== '')
+      .join(' '),
+  )
+  const wordsInMessage = (flaggedLine.text.match(CODE_WORD) ?? [])
+    .filter((word) => finding.message.includes(word))
+    .sort((left, right) => right.length - left.length)
+  return [...new Set([...windows, ...wordsInMessage])].filter(
+    (code) => isSpecificSuppressionCode(code) && code.length <= MAX_SNIPPET_LENGTH,
+  )
+}
+
+function recordedCheckLookup(results: SuppressionResults) {
+  return (source: FindingsSource, checkId: string) => results[source]?.checks.find((check) => check.id === checkId)
+}
+
+/** The index of the first entry that suppresses the target in the current results, if any. */
+function matchingEntryIndex(
+  entries: AppSecuritySuppression[],
+  target: SuppressionTarget,
+  results: SuppressionResults,
+): number | undefined {
+  const matches = matchSuppressionEntries({entries}, recordedCheckLookup(results))
+  return matches.entryFor(target.source, target.checkId, target.findingIndex)?.index
+}
+
+/** Whether the entry matches the target, and no other finding, in the current results. */
+function matchesOnly(entry: AppSecuritySuppression, target: SuppressionTarget, results: SuppressionResults): boolean {
+  const matches = matchSuppressionEntries({entries: [entry]}, recordedCheckLookup(results))
+  const [result] = matches.entries
+  return (
+    result?.status === 'matched' &&
+    result.matched_finding_count === 1 &&
+    matches.entryFor(target.source, target.checkId, target.findingIndex) !== undefined
+  )
+}
+
+/**
+ * The problems that the file's validation would report for this entry, without the `suppressions[n].` prefix or a final
+ * period, since a refusal's problem ends a sentence, each with the field it belongs to.
+ */
+function entryProblems(entry: AppSecuritySuppression): {field: string; message: string}[] {
+  const parsed = suppressionSchema.safeParse(entry)
+  return [
+    ...(parsed.success
+      ? []
+      : parsed.error.issues.flatMap((issue) =>
+          describeIssue(issue).map(({message}) => ({field: String(issue.path[0]), message})),
+        )),
+    ...checkIdProblems([entry]).map((problem) => ({
+      field: 'check',
+      message: problem.message.replace(/^suppressions\[0\]\./, '').replace(/\.$/, ''),
+    })),
+  ]
+}
+
+/** An entry of shopify.app-security.json as `saveAppSecuritySuppressions` left it. */
+export interface SavedSuppression {
+  /** The entry's index in the file, from 0. */
+  index: number
+  /**
+   * `added` for a new entry and
+   * `code-replaced` for a stale entry that was re-attached to its likely finding.
+   */
+  change: 'added' | 'code-replaced'
+  entry: AppSecuritySuppression
+  /** For `code-replaced` only: the entry's code, kind and reason before the change. */
+  previous?: Pick<AppSecuritySuppression, 'code' | 'kind' | 'reason'>
+}
+
+/**
+ * Applies the changes to `<app directory>/shopify.app-security.json` in one atomic write, creating the file with
+ * schema_version 1 when it doesn't exist. Refuses an invalid file with the error of `readAppSecuritySuppressions`, and
+ * writes nothing. Checks the entries used to plan the changes and serializes CLI writers with a file lock, which a
+ * writer waits for.
+ * Validates the final bytes before `beforeCommit`, then commits those same bytes. New entries go at the end. Every
+ * other key, value and order stays as the file has them, in two-space
+ * JSON with a trailing newline, so a file in that format changes only where an entry is added or re-attached.
+ */
+export async function saveAppSecuritySuppressions(
+  appDirectory: string,
+  changes: SuppressionChange[],
+  expectedEntries: AppSecuritySuppression[],
+  beforeCommit?: () => Promise<void>,
+): Promise<{path: string; saved: SavedSuppression[]}> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const release = await lockSuppressionsFile(appDirectory, path)
+  try {
+    const document = await readSuppressionDocument(appDirectory)
+    const parsed = parseSuppressionsFile(document)
+    if (!parsed.ok) abortInvalidSuppressionsFile(path, parsed.errors)
+    if (!isDeepStrictEqual(parsed.suppressions, expectedEntries)) abortChangedSuppressions()
+
+    // Zod's output puts the keys in the order of the schema. Clone the validated document to keep the file's order.
+    const updated = structuredClone(document) as zod.infer<typeof suppressionsFileSchema>
+    const saved = changes.map((change): SavedSuppression => {
+      if (change.type === 'add') {
+        updated.suppressions.push(change.entry)
+        return {index: updated.suppressions.length - 1, change: 'added', entry: change.entry}
+      }
+      const entry = updated.suppressions[change.index]
+      if (!entry) abortChangedSuppressions()
+      const previous = {
+        ...(entry.code === undefined ? {} : {code: entry.code}),
+        kind: entry.kind,
+        reason: entry.reason,
+      }
+      entry.code = change.code
+      entry.kind = change.kind
+      entry.reason = change.reason
+      return {index: change.index, change: 'code-replaced', entry: suppressionSchema.parse(entry), previous}
+    })
+    const validated = parseSuppressionsFile(updated)
+    if (!validated.ok) abortInvalidSuppressionsFile(path, validated.errors)
+    const commit = await prepareAppSecuritySuppressionsFile(appDirectory, updated)
+    await beforeCommit?.()
+    // The lock serializes CLI writers. Also refuse edits made by an editor while another artifact was written.
+    if (!isDeepStrictEqual(await readSuppressionDocument(appDirectory), document)) abortChangedSuppressions()
+    await commit()
+    return {path, saved}
+  } finally {
+    await release()
+  }
+}
+
+/** A save takes milliseconds, so a writer waits for another one: five attempts over about 1.5 seconds. */
+const LOCK_RETRIES = {retries: 4, minTimeout: 100, factor: 2}
+
+/** Locks the file for one CLI writer, and returns the function that releases it. */
+async function lockSuppressionsFile(appDirectory: string, path: string): Promise<() => Promise<void>> {
+  try {
+    return await lockfile.lock(appDirectory, {lockfilePath: `${path}.lock`, retries: LOCK_RETRIES})
+  } catch (error) {
+    if (!(error instanceof Error) || !('code' in error) || error.code !== 'ELOCKED') throw error
+    const locked = new AbortError(
+      `Another Shopify CLI command is saving ${APP_SECURITY_SUPPRESSIONS_FILE_NAME}.`,
+      'Run the command again.',
+    )
+    locked.code = 'suppressions-file-locked'
+    throw locked
+  }
+}
+
+async function readSuppressionDocument(appDirectory: string): Promise<unknown> {
+  const path = appSecuritySuppressionsPath(appDirectory)
+  const file = await readJsonArtifact(path)
+  if (file.status === 'invalid') abortInvalidSuppressionsFile(path, file.errors)
+  return file.status === 'missing' ? {schema_version: SUPPRESSIONS_SCHEMA_VERSION, suppressions: []} : file.value
+}
+
+function abortChangedSuppressions(): never {
+  const error = new AbortError(
+    'The app security suppressions changed before they could be saved.',
+    'Run the command again to use the current suppressions file.',
+  )
+  error.code = 'suppressions-file-changed'
+  throw error
+}

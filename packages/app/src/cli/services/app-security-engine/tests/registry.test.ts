@@ -1,5 +1,10 @@
 import {loadChecks} from '../checks/index.js'
-import {assertRegistryInvariants, getAgentCheckCatalog, getRegistry} from '../registry/index.js'
+import {
+  assertRegistryInvariants,
+  getAgentCheckCatalog,
+  getRegistry,
+  reportingSourcesByCheckId,
+} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, DETERMINISTIC_RULES} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {describe, expect, test} from 'vitest'
@@ -64,6 +69,17 @@ describe('authoritative registry', () => {
     ).toEqual([...PREFER_AGENT_CHECK_IDS].sort())
     expect(catalog).toContainEqual({id: 'CREDENTIAL_LOG_LEAKAGE', precedence: 'prefer-agent'})
     expect(catalog).toContainEqual({id: 'MISSING_TENANT_ISOLATION', precedence: 'union'})
+  })
+})
+
+describe('reportingSourcesByCheckId', () => {
+  test('maps every check ID in the registry to the sources that report it', () => {
+    const sources = reportingSourcesByCheckId()
+
+    expect(sources.get('COMMITTED_SECRET')).toEqual(new Set(['deterministic', 'agent']))
+    expect(sources.get('SQL_INJECTION')).toEqual(new Set(['agent']))
+    expect(sources.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')).toEqual(new Set(['deterministic']))
+    expect([...sources.keys()].sort()).toEqual([...new Set(getRegistry().map((entry) => entry.id))].sort())
   })
 })
 

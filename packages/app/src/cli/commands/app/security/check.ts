@@ -23,7 +23,11 @@ Use \`--list-files\` to check the scope before scanning: it prints the files the
 
 In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later. With \`--json\`, the command offers to include the instructions in the result, with or without copying them, and \`--print-instructions\` includes them.
 
-With \`--json\`, the result describes the scan and the files it wrote, and whether \`--blocking\` passed, but not the findings: run \`shopify app security review --json\` for those.
+Findings that an entry of \`shopify.app-security.json\` in the app directory matches are suppressed: they don't count for \`--blocking\`, and the output lists each one with its kind and reason. An entry that matches no finding is stale, and an entry whose code matches more than one finding is ambiguous. Neither suppresses anything, and the output lists both, so you can remove or update them. When an edit to the flagged code, such as a rename, makes an entry stale, the output names the location of its likely finding: run \`shopify app security review\` to see that finding's number, and \`shopify app security review --suppress\` with it to re-attach the entry. It names none when the entry's code or the finding's line holds a redacted secret, because redaction hides the only text that tells two credentials apart, or when the entry's code holds a secret that the CLI would redact. Agent entries aren't evaluated, because the check reads no agent results. An invalid file makes the check fail with every problem. To add entries, run \`shopify app security review --interactive\` or \`shopify app security review --suppress\`, or ask your coding agent to run \`shopify app security review --suppress\` for a suppression that you approve, then review and commit the file. \`shopify app security record\` never changes the file: a suppression in the agent findings applies only to them.
+
+With \`--json\`, the result describes the scan and the files it wrote, whether \`--blocking\` passed, and how the entries of \`shopify.app-security.json\` applied, but not the findings: run \`shopify app security review --json\` for those.
+
+Findings that an entry of \`shopify.app-security.json\` in the app directory suppresses don't count for \`--blocking\`. The results files still hold every finding. Suppressions apply to all app configurations and client-ID runs. An entry's \`code\` matches the code excerpt that the results file saves with the finding. A results file that would be larger than 5 MB with excerpts is saved without them; then an entry with \`code\` matches only the finding's message, so it can go stale and leave the finding active. The check reads \`shopify.app-security.json\` before it scans, so an invalid file stops the command before any results file is replaced.
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
@@ -39,6 +43,7 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
     '<%= config.bin %> <%= command.id %> --path app --include-dir . --exclude marketing --exclude "**/generated"',
     '<%= config.bin %> <%= command.id %> --no-git-ignore --exclude local-data',
     '<%= config.bin %> <%= command.id %> --include-dir ../backend --list-files',
+    '<%= config.bin %> <%= command.id %> --blocking high',
   ]
 
   static flags = {

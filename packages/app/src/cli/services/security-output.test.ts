@@ -1,10 +1,12 @@
 import {buildSecurityAlert} from './security-output.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {combineFindings} from './app-security-engine/index.js'
+import {buildDeterministicFindings} from './app-security-engine/scan-artifact/index.js'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {SecurityReportInput} from './security-output.js'
 import type {AppSecuritySelection} from './app-security-selection.js'
-import type {ScanResult} from './app-security-engine/index.js'
+import type {Issue, ScanResult, SuppressionEntry} from './app-security-engine/index.js'
 
 const appSelection: AppSecuritySelection = {
   kind: 'config',
@@ -87,6 +89,8 @@ function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityRepo
     deterministicFindingsPath: '/tmp/app/.shopify/app-security/deterministic-findings.json',
     agentChecksPath: '/tmp/app/.shopify/app-security/agent-checks.json',
     agentCheckCount: 31,
+    checks: [],
+    suppressions: [],
     ...overrides,
   }
 }
@@ -445,5 +449,149 @@ describe('buildSecurityAlert', () => {
 
     expect(serialized).toContain('[REDACTED: Shopify token]')
     expect(serialized).not.toContain('shpat_')
+  })
+})
+
+describe('buildSecurityAlert with shopify.app-security.json', () => {
+  const executed = (id: string): ScanResult['scan']['checks_executed'][number] => ({
+    id,
+    version: 1,
+    kind: 'deterministic',
+    status: 'executed',
+    applicable: true,
+    languages: ['typescript'],
+    framework: 'react_router',
+    surface: 'react_router',
+    inspected_files: [],
+    findings: 0,
+    analysis_mode: 'regex',
+  })
+  const fixtureSecret = (line: number): Issue => ({
+    id: 'COMMITTED_SECRET',
+    severity: 'high',
+    points: -25,
+    title: 'Committed secret or environment file',
+    message: 'A Shopify access token is committed.',
+    location: {file: 'test/fixtures/session.ts', line},
+    fix: {automated: false, description: 'Remove the token and rotate it.'},
+  })
+  const scriptTagScope: Issue = {
+    id: 'DEPRECATED_SCRIPT_TAG_SCOPE',
+    severity: 'medium',
+    points: -5,
+    title: 'Deprecated ScriptTag capability',
+    message: 'The app requests write_script_tags.',
+    location: {file: 'shopify.app.toml', line: 5},
+    fix: {automated: false, description: 'Use a theme app extension.'},
+  }
+  const adminContext = scanWithIssues.issues[0]!
+  const fixtureEntry: SuppressionEntry = {
+    source: 'deterministic',
+    check: 'COMMITTED_SECRET',
+    kind: 'false-positive',
+    path: 'test/fixtures/session.ts',
+    reason: 'Fake tokens in a unit test fixture.',
+  }
+  const scriptTagEntry: SuppressionEntry = {
+    source: 'deterministic',
+    check: 'DEPRECATED_SCRIPT_TAG_SCOPE',
+    kind: 'accepted-risk',
+    path: 'shopify.app.toml',
+    code: 'write_script_tags',
+    reason: 'Kept until the app embed ships.',
+  }
+
+  /** The report of a scan with these issues, after `check` applied these entries to its deterministic findings. */
+  function suppressedReportInput(issues: Issue[], entries: SuppressionEntry[]): SecurityReportInput {
+    const scan: ScanResult = {
+      ...scanWithIssues,
+      scan: {...scanWithIssues.scan, checks_executed: [...new Set(issues.map((issue) => issue.id))].map(executed)},
+      issues,
+    }
+    const deterministic = buildDeterministicFindings(scan, {
+      scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+      scanDirectories: [{directory: '.', origin: 'app_directory'}],
+    })
+    const {checks, suppressions} = combineFindings({
+      deterministic,
+      agent: null,
+      suppressions: {entries},
+    })
+    return reportInput({scan, checks, suppressions})
+  }
+
+  test('places suppressed findings after active issues, with severity order and counts, without --verbose', () => {
+    const input = suppressedReportInput(
+      [adminContext, fixtureSecret(3), fixtureSecret(8), scriptTagScope],
+      [fixtureEntry, scriptTagEntry],
+    )
+    const alert = buildSecurityAlert(input)
+    const sections = alert.options.customSections ?? []
+    const suppressedIndex = sections.findIndex((entry) => entry.title === 'Suppressed findings')
+
+    expect(alert.type).toBe('error')
+    expect(alert.options.headline).toBe('1 security issue found.')
+    expect(sections.map((entry) => entry.title)).toEqual([
+      'Selection',
+      'High',
+      'Suppressed findings',
+      'High · COMMITTED_SECRET · 0 active · 2 suppressed',
+      'Medium · DEPRECATED_SCRIPT_TAG_SCOPE · 0 active · 1 suppressed',
+      'Entries in shopify.app-security.json',
+      'Artifacts',
+      'Next steps',
+    ])
+    expect(JSON.stringify(section(input, 'High'))).not.toContain('COMMITTED_SECRET')
+    expect(sections[suppressedIndex]?.body).toBe('1 active · 3 suppressed')
+  })
+
+  test('says no active issue was found when every finding is suppressed', () => {
+    const alert = buildSecurityAlert(suppressedReportInput([fixtureSecret(3)], [fixtureEntry]))
+
+    expect(alert.type).toBe('success')
+    expect(alert.options.headline).toBe('No active security issues found.')
+    expect(alert.options.customSections).toContainEqual({title: 'Suppressed findings', body: '0 active · 1 suppressed'})
+  })
+
+  test('shows the same report as before without a file', () => {
+    const withoutFile = suppressedReportInput([adminContext, fixtureSecret(3), scriptTagScope], [])
+
+    expect(buildSecurityAlert(withoutFile)).toEqual(buildSecurityAlert({...withoutFile, checks: [], suppressions: []}))
+  })
+
+  test('lists the entries that apply to nothing before the artifacts, and keeps the alert type and headline', () => {
+    const issues = [adminContext, fixtureSecret(3), fixtureSecret(8), scriptTagScope]
+    const entries: SuppressionEntry[] = [
+      {...fixtureEntry, path: 'test/fixtures/deleted.ts'},
+      // Both committed tokens have this message.
+      {...fixtureEntry, code: 'A Shopify access token'},
+      {...scriptTagEntry, source: 'agent', check: 'SCOPE_OVER_REQUEST'},
+      {...scriptTagEntry, source: 'agent', check: 'CSRF_MISSING_PROTECTION'},
+    ]
+    const withoutFile = buildSecurityAlert(suppressedReportInput(issues, []))
+
+    const alert = buildSecurityAlert(suppressedReportInput(issues, entries))
+    const sections = alert.options.customSections ?? []
+
+    expect(alert.type).toBe(withoutFile.type)
+    expect(alert.options.headline).toBe(withoutFile.options.headline)
+    expect(sections.map((section) => section.title)).toEqual([
+      'Selection',
+      'High',
+      'Medium',
+      'Stale entries in shopify.app-security.json',
+      undefined,
+      'Ambiguous entries in shopify.app-security.json',
+      undefined,
+      undefined,
+      'Artifacts',
+      'Next steps',
+    ])
+    expect(JSON.stringify(sections[5])).toContain('· matches 2 findings')
+    expect(sections[7]).toEqual({
+      body: {
+        subdued: 'Not evaluated: 2 entries (no executed results for their checks).',
+      },
+    })
   })
 })

@@ -19,13 +19,18 @@ export interface PathRules {
 export function createPathRules(options: {excludePatterns: ReadonlyArray<string>; noGitIgnore: boolean}): PathRules {
   const workingDirectory = realpathSync(cwd())
   return {
-    // An empty pattern names nothing, but it would match the working directory, whose relative path is empty.
-    excludePatterns: options.excludePatterns
-      .filter((pattern) => pattern !== '')
-      .map((pattern) => normalizeExcludePattern(pattern, workingDirectory)),
+    excludePatterns: normalizeExcludePatterns(options.excludePatterns, workingDirectory),
     gitFiltering: !options.noGitIgnore,
     workingDirectory,
   }
+}
+
+/** `--exclude` globs as the scan matches them, against paths relative to `workingDirectory`. */
+export function normalizeExcludePatterns(excludePatterns: ReadonlyArray<string>, workingDirectory: string): string[] {
+  // An empty pattern names nothing, but it would match the working directory, whose relative path is empty.
+  return excludePatterns
+    .filter((pattern) => pattern !== '')
+    .map((pattern) => normalizeExcludePattern(pattern, workingDirectory))
 }
 
 /** A segment with glob syntax, or an escape, ends the literal start of a pattern. */
