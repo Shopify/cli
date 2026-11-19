@@ -34,6 +34,10 @@ const suppressionsFilePath = onWindows
   : '/apps/my-app/shopify.app-security.json'
 const bundlePath = onWindows ? 'C:\\apps\\my-app\\public\\bundle.js' : '/apps/my-app/public/bundle.js'
 const bundleUri = onWindows ? 'file:///C:/apps/my-app/public/bundle.js' : 'file:///apps/my-app/public/bundle.js'
+const configurationPath = onWindows ? 'C:\\apps\\my-app\\shopify.app.toml' : '/apps/my-app/shopify.app.toml'
+const productPath = onWindows
+  ? 'C:\\apps\\my-app\\app\\routes\\products.[id].tsx'
+  : '/apps/my-app/app/routes/products.[id].tsx'
 const scope = {includeDirs: [], excludes: [], noGitIgnore: false}
 const sourceResult = {version: 2, status: 'executed', reason: null, analysisMode: null, generatedAt: null} as const
 
@@ -159,6 +163,27 @@ const notApplicableCheck = {
   },
 } satisfies AppSecurityReviewResult['checks'][number]
 
+/** A deterministic finding whose message and evidence have brackets. */
+const redirectCheck = {
+  ...passedCheck,
+  id: 'INSECURE_WEBHOOK_URL',
+  title: 'Configured callback URL is not HTTPS',
+  severity: 'high',
+  findings: [
+    {
+      source: 'deterministic',
+      number: 5,
+      disposition: 'active',
+      location: {filePath: configurationPath, line: 4, column: 1},
+      message: 'OAuth redirect URI at auth.redirect_urls[0] is not a conservative secure URL.',
+      snippet: null,
+      evidence: [{location: {filePath: productPath, line: 3, column: null}, quote: String.raw`path.match(/\[id\]/)`}],
+      fix: null,
+      suppression: null,
+    },
+  ],
+} satisfies AppSecurityReviewResult['checks'][number]
+
 const resultsFiles = {
   deterministic: {
     path: `${resultsDirectory}${onWindows ? '\\' : '/'}deterministic-findings.json`,
@@ -245,6 +270,25 @@ const noResultsFile = appSecurityReviewJsonOutputSchema.validate({
   resultsDigest: null,
 })
 
+/** A finding, its evidence and a coverage gap whose messages have brackets. */
+const bracketed = appSecurityReviewJsonOutputSchema.validate({
+  ...result,
+  coverage: {
+    filesScanned: 1,
+    filesSkipped: [],
+    gaps: [
+      {
+        code: 'skipped-file',
+        message: 'app/routes/products.[id].tsx was too large to scan.',
+        checkId: null,
+        filePath: productPath,
+      },
+    ],
+    scanDirectories: [],
+  },
+  checks: [redirectCheck],
+})
+
 function missingCheckNotification(checkId: string) {
   return {
     level: 'warning',
@@ -260,6 +304,7 @@ describe('appSecurityReviewSarif', () => {
     ['a run narrowed by --check-id', incomplete, ['OPEN_REDIRECT', 'CREDENTIAL_LOG_LEAKAGE']],
     ['checks without results', withoutResults, []],
     ['no results file', noResultsFile, []],
+    ['messages with brackets', bracketed, []],
   ])('writes a valid SARIF 2.1.0 log for %s', async (_description, value, checkIds) => {
     const validation = jsonSchemaValidate(
       appSecurityReviewSarif(value, {checkIds}),
@@ -330,7 +375,9 @@ describe('appSecurityReviewSarif', () => {
               ruleId: 'CREDENTIAL_LOG_LEAKAGE',
               ruleIndex: 0,
               level: 'error',
-              message: {text: 'The session access token is written to the server log.'},
+              message: {
+                text: 'The session access token is written to the server log. Evidence: [app/routes/orders.tsx:10](0), [app/routes/orders.tsx](1).',
+              },
               locations: [
                 {
                   physicalLocation: {
@@ -361,6 +408,18 @@ describe('appSecurityReviewSarif', () => {
         },
       ],
     })
+  })
+
+  test('escapes brackets and backslashes in messages, since SARIF reads [text](id) as a link to a location', () => {
+    const [run] = appSecurityReviewSarif(bracketed, {checkIds: []}).runs
+
+    expect(run!.results[0]!.message.text).toBe(
+      String.raw`OAuth redirect URI at auth.redirect_urls\[0\] is not a conservative secure URL. Evidence: [app/routes/products.\[id\].tsx:3](0).`,
+    )
+    expect(run!.results[0]!.relatedLocations![0]!.message).toStrictEqual({text: String.raw`path.match(/\\\[id\\\]/)`})
+    expect(run!.invocations[0]!.toolExecutionNotifications.map((notification) => notification.message)).toStrictEqual([
+      {text: String.raw`app/routes/products.\[id\].tsx was too large to scan.`},
+    ])
   })
 
   test('lists unresolved, not applicable and missing checks and coverage gaps, and marks the execution unsuccessful', () => {
