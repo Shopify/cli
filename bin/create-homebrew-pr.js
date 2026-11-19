@@ -5,9 +5,9 @@ process.removeAllListeners('warning');
 import {findUp} from "find-up"
 import {createHash} from 'node:crypto'
 import {createRequire} from 'module'
+import {Readable} from 'node:stream'
 import {fileURLToPath} from "node:url"
 import * as path from "pathe"
-import fetch from 'node-fetch'
 import glob from 'fast-glob';
 import {Liquid} from 'liquidjs'
 
@@ -160,7 +160,7 @@ async function getTarballForPackage(pkg, cliVersion) {
 async function getSha256ForTarball(url) {
   const hash = createHash('sha256').setEncoding('hex')
   const response = await fetch(url)
-  const stream = response.body.pipe(hash)
+  const stream = Readable.fromWeb(response.body).pipe(hash)
   await new Promise((resolve) => stream.on('finish', resolve))
   return hash.read()
 }
