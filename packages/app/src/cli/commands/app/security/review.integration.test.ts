@@ -674,6 +674,31 @@ describe('app security review command boundary', () => {
     })
   })
 
+  test('--sarif leaves out the findings that shopify.app-security.json suppresses, from both sources', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: deterministicFindings, agent: agentFindings})
+      const withoutFile = await runCommand(['--path', directory, '--sarif'])
+      // Without the file, the agent finding of CREDENTIAL_LOG_LEAKAGE and the deterministic finding of EOL_API_VERSION
+      // are results.
+      expect(
+        JSON.parse(withoutFile.stdout).runs[0].results.map((sarifResult: {ruleId: string}) => sarifResult.ruleId),
+      ).toStrictEqual(['CREDENTIAL_LOG_LEAKAGE', 'EOL_API_VERSION'])
+      await writeAppSecuritySuppressionsFixture(appDirectory, suppressionEntries)
+
+      const result = await runCommand(['--path', directory, '--blocking', 'low', '--sarif'])
+
+      // The file's entries suppress both findings, so the log has no results, and every check keeps its rule.
+      expect(result.exitCode).toBe(0)
+      const [run] = JSON.parse(result.stdout).runs
+      expect(run.results).toStrictEqual([])
+      expect(run.tool.driver.rules.map((rule: {id: string}) => rule.id)).toStrictEqual([
+        'CREDENTIAL_LOG_LEAKAGE',
+        'MISSING_TENANT_ISOLATION',
+        'EOL_API_VERSION',
+      ])
+    })
+  })
+
   test('refuses --sarif with --json', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory, {deterministic: deterministicFindings})

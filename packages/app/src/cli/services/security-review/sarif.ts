@@ -1,5 +1,6 @@
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {pathToFileURL} from '@shopify/cli-kit/node/fs'
+import {relativePath} from '@shopify/cli-kit/node/path'
 import type {AppSecurityReviewResult} from './types.js'
 
 /**
@@ -91,7 +92,9 @@ export function narrowedSarifCategory(checkIds: string[], clientId: string | nul
 /**
  * One rule per reviewed check, and one result per active finding. A superseded finding is left out, since the check's
  * agent result replaced it, as in the review. A suppressed finding is left out too: GitHub code scanning ignores SARIF
- * `suppressions` and would open an alert for it, so its alert, if open, closes as fixed instead.
+ * `suppressions` and would open an alert for it, so its alert, if open, closes as fixed instead. A finding's evidence is
+ * a related location of its result, which the result's message links to, as code scanning shows only the related
+ * locations that the message links to.
  *
  * The invocation lists each unresolved or not applicable check, each check that neither results file has, and each
  * coverage gap, as a notification. Code scanning reads a rule without results as passing, so a check without results
@@ -135,16 +138,29 @@ export function appSecurityReviewSarif(result: AppSecurityReviewResult, {checkId
         results: result.checks.flatMap((check, ruleIndex) =>
           check.findings
             .filter((finding) => finding.disposition === 'active')
-            .map((finding) => sarifResult(check, ruleIndex, finding)),
+            .map((finding) => sarifResult(check, ruleIndex, finding, result.app.directory)),
         ),
       },
     ],
   }
 }
 
+/**
+ * A plain text message. SARIF reads `[text](id)` in a message as a link to a location of the result, so literal
+ * brackets, such as those of `redirect_urls[0]` or of a route file's `[id]`, and the backslash that escapes them, are
+ * escaped with a backslash.
+ */
+function sarifMessage(text: string): SarifMessage {
+  return {text: escapeSarifText(text)}
+}
+
+function escapeSarifText(text: string): string {
+  return text.replace(/[\\[\]]/g, '\\$&')
+}
+
 const NO_RESULTS_FILE_NOTIFICATION: SarifNotification = {
   level: 'error',
-  message: {text: 'No results file to review: run shopify app security check first.'},
+  message: sarifMessage('No results file to review: run shopify app security check first.'),
   descriptor: {id: 'no-results-file'},
 }
 
@@ -163,7 +179,7 @@ function checkNotifications(check: AppSecurityCheck, ruleIndex: number): SarifNo
   return [
     {
       level: check.status === 'unresolved' ? 'warning' : 'note',
-      message: {text: `${check.id} ${STATUS_TEXT[check.status]}${because}`},
+      message: sarifMessage(`${check.id} ${STATUS_TEXT[check.status]}${because}`),
       descriptor: {id: check.status},
       associatedRule: {id: check.id, index: ruleIndex},
     },
@@ -177,7 +193,7 @@ function checkNotifications(check: AppSecurityCheck, ruleIndex: number): SarifNo
 function missingCheckNotification(checkId: string): SarifNotification {
   return {
     level: 'warning',
-    message: {text: `${checkId} has no result: neither results file has this check.`},
+    message: sarifMessage(`${checkId} has no result: neither results file has this check.`),
     descriptor: {id: 'no-result'},
   }
 }
@@ -194,7 +210,7 @@ function gapNotifications(gap: AppSecurityGap, checks: AppSecurityCheck[]): Sari
   return [
     {
       level: 'warning',
-      message: {text: gap.message},
+      message: sarifMessage(gap.message),
       descriptor: {id: gap.code},
       ...(gap.checkId === null ? {} : {associatedRule: {id: gap.checkId, index: ruleIndex}}),
       ...(gap.filePath === null ? {} : {locations: [{physicalLocation: {artifactLocation: fileUri(gap.filePath)}}]}),
@@ -215,17 +231,30 @@ function sarifRule(check: AppSecurityCheck): SarifRule {
   }
 }
 
-function sarifResult(check: AppSecurityCheck, ruleIndex: number, finding: AppSecurityFinding): SarifResult {
+/**
+ * The message ends with a link to each evidence location, with the location relative to the app as its text, as in the
+ * review.
+ */
+function sarifResult(
+  check: AppSecurityCheck,
+  ruleIndex: number,
+  finding: AppSecurityFinding,
+  appDirectory: string,
+): SarifResult {
   const relatedLocations = finding.evidence.map((evidence, id) => ({
     id,
     physicalLocation: sarifPhysicalLocation(evidence.location),
-    ...(evidence.quote === null ? {} : {message: {text: evidence.quote}}),
+    ...(evidence.quote === null ? {} : {message: sarifMessage(evidence.quote)}),
   }))
+  const text = escapeSarifText(finding.message === '' ? check.title : finding.message)
+  const evidenceLinks = finding.evidence.map(
+    (evidence, id) => `[${escapeSarifText(appRelativeLocation(evidence.location, appDirectory))}](${id})`,
+  )
   return {
     ruleId: check.id,
     ruleIndex,
     level: LEVELS[check.severity],
-    message: {text: finding.message === '' ? check.title : finding.message},
+    message: {text: evidenceLinks.length === 0 ? text : `${text} Evidence: ${evidenceLinks.join(', ')}.`},
     locations: [{physicalLocation: sarifPhysicalLocation(finding.location, finding.snippet)}],
     ...(relatedLocations.length > 0 ? {relatedLocations} : {}),
     properties: {
@@ -233,6 +262,11 @@ function sarifResult(check: AppSecurityCheck, ruleIndex: number, finding: AppSec
       ...(finding.source === 'agent' && finding.confidence !== null ? {confidence: finding.confidence} : {}),
     },
   }
+}
+
+function appRelativeLocation(location: AppSecurityLocation, appDirectory: string): string {
+  const path = relativePath(appDirectory, location.filePath)
+  return location.line === null ? path : `${path}:${location.line}`
 }
 
 /**
