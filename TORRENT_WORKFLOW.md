@@ -18,8 +18,10 @@ work. The task statement governs _what_ to build.
 `main` branch changes only through the mirror's pull requests. Code changes are made upstream and
 mirrored here, so don't open a PR into `main` for them. PRs into this repository are only for the
 files the mirror doesn't manage (`.github`, `.spin`, `dev.yml`, `TORRENT_WORKFLOW.md`, `AGENTS.md`,
-`.agents`, `.claude` and `.cursor`) and for `stable/*` patch branches. Outside contributors still
-open PRs here.
+`.agents`, `.claude` and `.cursor`) and for patch backports into `stable/X.Y` release branches.
+Outside contributors still open PRs here. Minor and patch releases ship from `stable/X.Y`. While
+a release is open, only its release owner merges into that branch; anyone else, agents included,
+asks the release owner first.
 
 A dispatched session reads this file as its instructions say: the `<torrent-workflow>` block, or
 `torrent worker workflow <session>`. A human-directed session reads it with
@@ -184,7 +186,7 @@ memory and the human's window into your progress. `torrent help` lists the `work
   - Open:
     `torrent github pr open --draft --base main --title "<title>" --body-file <file>`.
     Always name the base: without `--base`, the command opens the PR into `main`. Use `main` only
-    for the files the mirror doesn't manage, and `stable/X.Y` for a patch.
+    for the files the mirror doesn't manage, and `stable/X.Y` for a patch backport.
   - Link: `torrent link add <id> https://github.com/Shopify/cli/pull/<n>`. Torrent does not find
     or link a GitHub PR by itself.
   - This repository is public, so also set
