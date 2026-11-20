@@ -5,7 +5,7 @@ import {
   throwIfStoredStoreAuthIsInvalid,
   ABORTED_FETCH_MESSAGE_FRAGMENTS,
 } from '../admin-errors.js'
-import {adminUrl} from '@shopify/cli-kit/node/api/admin'
+import {AdminServerError, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -65,10 +65,7 @@ export async function fetchPublicApiVersions(input: {
     // Not in `classifyAdminApiError`, which `runAdminStoreGraphQLOperation` also calls. There a
     // 5xx can carry GraphQL errors about the user's own query, which must stay visible.
     if (isGraphQLClientErrorLike(error) && typeof error.response.status === 'number' && error.response.status >= 500) {
-      throw new AbortError(
-        `Couldn't read the supported API versions for ${input.adminSession.storeFqdn}: the Admin API returned a server error (HTTP ${error.response.status}).`,
-        'This is a problem on the Shopify side, not with your command. Wait a moment and run it again.',
-      )
+      throw new AdminServerError(input.adminSession.storeFqdn, error.response.status)
     }
 
     throw error

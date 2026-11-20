@@ -2,10 +2,16 @@ import {ThemeManager} from './theme-manager.js'
 import {Theme} from './types.js'
 import {fetchTheme, findDevelopmentThemeByName, themeCreate} from './api.js'
 import {DEVELOPMENT_THEME_ROLE, UNPUBLISHED_THEME_ROLE} from './utils.js'
-import {BugError} from '../error.js'
+import {adminRequestDoc} from '../api/admin.js'
+import {AbortError, BugError} from '../error.js'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
+import {ClientError} from 'graphql-request'
 
 vi.mock('./api.js')
+vi.mock('../api/admin.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api/admin.js')>()
+  return {...actual, adminRequestDoc: vi.fn()}
+})
 vi.mock('../../../private/node/themes/generate-theme-name.js', () => ({
   generateThemeName: vi.fn((context: string) => `${context} (test-123-hostname)`),
 }))
@@ -27,6 +33,10 @@ class TestThemeManager extends ThemeManager {
 
   setThemeId(themeId: string | undefined): void {
     this.themeId = themeId
+  }
+
+  storeThemeId(themeId: string): void {
+    this.setTheme(themeId)
   }
 
   protected setTheme(themeId: string): void {
@@ -161,6 +171,25 @@ describe('ThemeManager', () => {
       expect(fetchTheme).toHaveBeenCalledWith(123, session)
       expect(result).toBeUndefined()
       expect(manager.getStoredThemeId()).toBeUndefined()
+    })
+
+    test('keeps the stored theme ID when the Admin API returns a server error', async () => {
+      // Given
+      const api = await vi.importActual<typeof import('./api.js')>('./api.js')
+      vi.mocked(fetchTheme).mockImplementation(api.fetchTheme)
+      vi.mocked(adminRequestDoc).mockRejectedValue(
+        new ClientError({status: 500, errors: 'Internal Server Error' as any, headers: new Headers()} as any, {
+          query: '',
+        }),
+      )
+      manager.storeThemeId('123')
+
+      // When
+      const result = manager.fetch()
+
+      // Then
+      await expect(result).rejects.toThrowError(AbortError)
+      expect(manager.getStoredThemeId()).toBe('123')
     })
   })
 

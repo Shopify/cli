@@ -436,9 +436,7 @@ describe('fetchPublicApiVersions', () => {
     expect(captured).toBeInstanceOf(AbortError)
     expect(captured).not.toBeInstanceOf(BugError)
     // A raw `ClientError` reaching the reporter is filed as an unexpected CLI bug; an AbortError is not.
-    expect(captured?.message).toBe(
-      `Couldn't read the supported API versions for ${store}: the Admin API returned a server error (HTTP 500).`,
-    )
+    expect(captured?.message).toBe(`The Admin API for ${store} returned a server error (HTTP 500).`)
     expect(String((captured as unknown as {tryMessage?: string})?.tryMessage ?? '')).toContain(
       'This is a problem on the Shopify side',
     )

@@ -270,6 +270,25 @@ describe('fetchApiVersions error classification', () => {
     )
   })
 
+  test('includes the request ID of an Admin API 5xx in the server error', async () => {
+    // Given
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(
+      new ClientError({status: 503, headers: new Headers({'x-request-id': 'request-id'})} as any, {query: ''}),
+    )
+
+    // When
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(
+      `The Admin API for ${Session.storeFqdn} returned a server error (HTTP 503).`,
+    )
+    expect(String((error as AbortError).tryMessage)).toBe(
+      'This is a problem on the Shopify side, not with your command. Wait a moment and try again. If the problem continues, contact Shopify support and include this request ID: request-id',
+    )
+  })
+
   // The literal messages the runtimes emit, not the production constant: asserting against real
   // observed wording keeps the test honest if someone edits the fragment list.
   // 'The user aborted a request.' is node-fetch; 'This operation was aborted' is undici;

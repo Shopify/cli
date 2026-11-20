@@ -27,10 +27,10 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
-import {errorHandler, extractGraphQLErrors} from '../../../private/node/api/graphql.js'
+import {errorHandler, extractGraphQLErrors, requestIdFromClientError} from '../../../private/node/api/graphql.js'
 import {TrustChallengeError, withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
+import {adminRequestDoc, AdminServerError, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
@@ -76,8 +76,8 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
-    // A temporary server failure doesn't mean the theme is missing, so don't report it as one.
-    abortIfTransientServerError(error)
+    // A server error does not mean that the theme is missing. Callers remove their stored theme ID on `undefined`.
+    abortIfServerError(error, session)
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -650,14 +650,14 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
-    abortIfTransientServerError(error)
+    abortIfServerError(error, options.session)
     throw error
   }
 }
 
 /**
- * Requests a theme read with transient retries. An exhausted transient error gets the friendly theme
- * error; any other API failure gets the default Admin API error mapping.
+ * Requests a theme read with transient retries. A server error gets the Shopify-side theme error;
+ * any other API failure gets the default Admin API error mapping.
  *
  * @param options - The Admin API request, without response options or request behaviour.
  * @returns The response data.
@@ -677,22 +677,21 @@ async function requestThemeReadDoc<TResult, TVariables extends Variables>(
 }
 
 /**
- * Turns a transient server-side failure that is still failing after retries into a friendly,
- * expected error instead of a crash with the raw GraphQL response.
+ * Turns a Shopify-side failure of a theme request into an `AbortError`, so it does not reach the
+ * error reporter as a CLI bug. It covers every HTTP 5xx, and a transient server error that still
+ * fails after its retries. Theme requests set `handleErrors: false`, so the GraphQL error handler
+ * does not map these errors for them.
  *
  * @param error - The error thrown by the Admin API request.
+ * @param session - The session of the request, for the store name in the message.
  */
-function abortIfTransientServerError(error: unknown): void {
-  if (!isTransientServerError(error)) return
+function abortIfServerError(error: unknown, session: AdminSession): void {
+  if (!(error instanceof ClientError)) return
+  const {status} = error.response
+  if (status < 500 && !isTransientServerError(error)) return
 
-  const requestId = clientErrorRequestId(error)
   throw recordError(
-    new AbortError(
-      'Shopify had a temporary problem and could not complete the request.',
-      requestId
-        ? `Wait a moment and try again. If the problem continues, contact Shopify support and include this request ID: ${requestId}`
-        : 'Wait a moment and try again.',
-    ),
+    new AdminServerError(session.storeFqdn, status >= 500 ? status : undefined, clientErrorRequestId(error)),
   )
 }
 
@@ -704,8 +703,7 @@ function clientErrorRequestId(error: ClientError): string | undefined {
       if (typeof requestId === 'string') return requestId
     }
   }
-  const headers = error.response.headers as {get?: (name: string) => string | null} | undefined
-  return headers?.get?.('x-request-id') ?? undefined
+  return requestIdFromClientError(error)
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {
