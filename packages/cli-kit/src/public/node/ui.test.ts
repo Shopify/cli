@@ -226,11 +226,11 @@ describe('renderTable', async () => {
     `)
   })
 
-  test("keeps a terminal's own width", async () => {
-    // Given: a terminal 80 columns wide.
+  test('keeps every character of a cell in a terminal narrower than the table', async () => {
+    // Given: a terminal 50 columns wide, where Ink wrapping drops characters from cells.
     const mockOutput = mockAndCaptureOutput()
     const stdoutColumns = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
-    Object.defineProperty(process.stdout, 'columns', {value: 80, configurable: true})
+    Object.defineProperty(process.stdout, 'columns', {value: 50, configurable: true})
 
     try {
       // When
@@ -240,10 +240,12 @@ describe('renderTable', async () => {
       else delete (process.stdout as {columns?: number}).columns
     }
 
-    // Then: Ink fits the table to the terminal, as before.
-    const lines = unstyled(mockOutput.info()).split('\n')
-    expect(Math.max(...lines.map((line) => line.length))).toBeLessThanOrEqual(80)
-    expect(lines.length).toBeGreaterThan(3)
+    // Then: one line per row, with every header and cell whole; the terminal wraps the long lines.
+    expect(unstyled(mockOutput.info())).toMatchInlineSnapshot(`
+      "Subdomain                          Name                               Type  Plan  Created
+      ─────────────────────────────────  ─────────────────────────────────  ────  ────  ────────────
+      parimi-photography-dev-test-store  Parimi photography dev test store  Dev   Plus  Apr 01, 2026"
+    `)
   })
 })
 
