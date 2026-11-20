@@ -1038,14 +1038,28 @@ test('propagates app lookup failures without querying logs', async () => {
 })
 
 test.each([
-  [{since: '8d'}, 'The timestamp range must not exceed 7 days.'],
-  [{since: '2026-09-01T12:00:00Z', until: '2026-09-01T13:00:00Z'}, 'timestamp.gte must be within the last 30 days.'],
-  [{until: '2026-10-06T14:02:00Z'}, 'timestamp.lt must not be more than 1 minute in the future.'],
-])('surfaces backend time-policy errors for %j without retrying', async (input, message) => {
+  [{since: '8d'}, '--since must be within the last 7 days.'],
+  [{since: '2d'}, '--since and --until must be at most 1 day apart'],
+  [{until: '2026-10-06T14:02:00Z'}, '--until must not be more than 1 minute in the future.'],
+])('rejects windows outside the API limits for %j before querying logs', async (input, message) => {
   authorize()
-  const errors = [{message, path: ['app', 'logs'], extensions: {code: 'INVALID_LOG_QUERY'}}]
+  await expect(retrieveLogs({...scope, ...input})).rejects.toMatchObject({
+    code: 'invalid-argument',
+    message: expect.stringContaining(message),
+  })
+  expect(shopifyFetch).not.toHaveBeenCalled()
+})
+
+// A window that passes the local limits can still fail on the server, for example when the clocks disagree.
+test.each([
+  'timestamp.gte must be within the last 7 days.',
+  'The timestamp range must not exceed 1 day.',
+  'timestamp.lt must not be more than 1 minute in the future.',
+])('surfaces backend time-policy error %s without retrying', async (message) => {
+  authorize()
+  const errors = [{message, path: ['app', 'logs'], extensions: {code: 'BAD_REQUEST'}}]
   respond({errors})
-  const failure = await retrieveLogs({...scope, ...input}).catch((error: unknown) => error)
+  const failure = await retrieveLogs(scope).catch((error: unknown) => error)
   expect(failure).toMatchObject({message, code: 'log-query-failed', details: {errors}})
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await handler(failure)

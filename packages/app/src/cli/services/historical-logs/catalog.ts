@@ -82,6 +82,9 @@ export const queryLimits = {
   defaultLimit: 20,
   defaultSince: '1h',
   maximumLimit: 1000,
+  maximumLookbackDays: 7,
+  maximumWindowDays: 1,
+  maximumFutureSkewMinutes: 1,
 }
 
 export function logError(code: string, message: string, requestId?: string | null): AbortError {

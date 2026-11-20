@@ -176,16 +176,34 @@ test('normalizes whole-second offset inputs to UTC and makes since relative to u
   })
 })
 
-test.each([
-  [{since: '8d'}, {since: '2026-09-28T14:00:00Z', until: '2026-10-06T14:00:00Z'}],
-  [
-    {since: '2026-09-01T14:00:00Z', until: '2026-09-09T14:00:00Z'},
-    {since: '2026-09-01T14:00:00Z', until: '2026-09-09T14:00:00Z'},
-  ],
-  [{until: '2026-10-06T14:02:00Z'}, {since: '2026-10-06T13:02:00Z', until: '2026-10-06T14:02:00Z'}],
-])('leaves time-policy eligibility to the server for %j', (input, expected) => {
-  expect(window(input)).toEqual(expected)
+test('accepts windows at the API limits', () => {
+  expect(window({since: '1d'})).toEqual({since: '2026-10-05T14:00:00Z', until: '2026-10-06T14:00:00Z'})
+  expect(window({since: '2026-09-29T14:00:00Z', until: '2026-09-29T15:00:00Z'})).toEqual({
+    since: '2026-09-29T14:00:00Z',
+    until: '2026-09-29T15:00:00Z',
+  })
+  expect(window({until: '2026-10-06T14:01:00Z'})).toEqual({
+    since: '2026-10-06T13:01:00Z',
+    until: '2026-10-06T14:01:00Z',
+  })
 })
+
+test.each([
+  [{since: '8d'}, '--since must be within the last 7 days.'],
+  [{since: '2026-09-29T13:59:59Z', until: '2026-09-29T14:30:00Z'}, '--since must be within the last 7 days.'],
+  [{until: '2026-09-28T14:00:00Z'}, '--since must be within the last 7 days.'],
+  [{since: '2d'}, '--since and --until must be at most 1 day apart (--until is the current time by default).'],
+  [
+    {since: '2026-10-04T14:00:00Z', until: '2026-10-05T14:00:01Z'},
+    '--since and --until must be at most 1 day apart (--until is the current time by default).',
+  ],
+  [{until: '2026-10-06T14:01:01Z'}, '--until must not be more than 1 minute in the future.'],
+] satisfies [LogInput, string][])(
+  'rejects windows outside the API limits for %j with the flag to change',
+  (input, message) => {
+    expect(() => window(input)).toThrow(expect.objectContaining({code: 'invalid-argument', message}))
+  },
+)
 
 test.each([
   {since: '0h'},
