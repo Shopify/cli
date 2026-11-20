@@ -493,14 +493,18 @@ export function renderTable<T extends ScalarDict>({renderOptions, ...props}: Ren
 }
 
 // Output that isn't a terminal (a pipe, a file, a CI log) has no width, and Ink then lays the table out in 80
-// columns, squeezing headers to "Typ" and wrapping cells onto extra lines. Give the table the width it needs
-// instead; a terminal keeps its own width.
+// columns, squeezing headers to "Typ" and wrapping cells onto extra lines. In a terminal narrower than the table,
+// Ink wraps the cells too, and each wrap loses a character ("WEBHOOK" becomes "WEBH" and "OK"). In both cases,
+// give the table the width it needs; a terminal wraps the long lines itself and keeps every character.
 function tableRenderOptions<T extends ScalarDict>(
   props: TableProps<T>,
   renderOptions: RenderOptions | undefined,
 ): RenderOptions | undefined {
-  if (renderOptions?.stdout || process.stdout.columns !== undefined) return renderOptions
-  const columns = Math.max(DEFAULT_OUTPUT_COLUMNS, tableWidth(props))
+  if (renderOptions?.stdout) return renderOptions
+  const width = tableWidth(props)
+  const terminalColumns = process.stdout.columns
+  if (terminalColumns !== undefined && terminalColumns >= width) return renderOptions
+  const columns = Math.max(terminalColumns ?? DEFAULT_OUTPUT_COLUMNS, width)
   return {...renderOptions, stdout: new Stdout({columns}) as unknown as NodeJS.WriteStream}
 }
 
