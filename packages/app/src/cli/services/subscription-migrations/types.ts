@@ -116,7 +116,10 @@ const MigratableSubscriptionSchema = zod
       .union([CalendarDateSchema, UtcInstantSchema])
       .nullable()
       .describe('The upstream calendar date or whole-second UTC instant; date-only values retain their format.'),
-    lastFailureReason: zod.string().nullable().describe('Known values: SUPERSEDED, SCHEDULING_FAILED.'),
+    lastFailureReason: zod
+      .string()
+      .nullable()
+      .describe('Known values: SUPERSEDED, SCHEDULING_FAILED, PLAN_REQUIREMENTS_NOT_MET, SHOP_FEATURES_UNVERIFIED.'),
   })
   .strict()
   .describe('All subscription projection fields are present; unavailable values are null.')
