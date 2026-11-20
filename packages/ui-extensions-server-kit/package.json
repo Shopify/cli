@@ -26,7 +26,15 @@
   "module": "index.mjs",
   "types": "index.d.ts",
   "files": [
-    "**"
+    "/dist",
+    "!/dist/**/*.test.d.ts",
+    "!/dist/tsconfig.tsbuildinfo",
+    "/index.js",
+    "/index.mjs",
+    "/index.d.ts",
+    "/testing.js",
+    "/testing.mjs",
+    "/testing.d.ts"
   ],
   "scripts": {
     "build": "nx build",
