@@ -1,5 +1,5 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
-import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
+import {debugLogRequestInfo, errorHandler, requestIdFromClientError} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
@@ -289,17 +289,6 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   )
 
   return JSON.parse(result) as TResult
-}
-
-function requestIdFromClientError(error: ClientError): string | undefined {
-  try {
-    // graphql-request types the response without headers, but it carries the fetch Response's headers.
-    const headers = (error.response as {headers?: {get?: (name: string) => string | null}}).headers
-    return headers?.get?.('x-request-id') ?? undefined
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return undefined
-  }
 }
 
 function graphQLCachePrincipalHash(url: string, token: string | undefined): string {

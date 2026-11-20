@@ -41,7 +41,10 @@ import {isTTY, keypress} from '../ui.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
-vi.mock('../api/admin.js')
+vi.mock('../api/admin.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api/admin.js')>()
+  return {...actual, adminRequestDoc: vi.fn(), supportedApiVersions: vi.fn()}
+})
 vi.mock('../context/fqdn.js')
 vi.mock('../ui.js')
 vi.mock('@shopify/cli-kit/node/system')
@@ -184,12 +187,23 @@ describe('fetchTheme', () => {
       'The authenticated account or access token is missing `read_themes` access scope.',
     )
   })
-  test('throws a friendly error instead of returning undefined when the server has a temporary problem', async () => {
+
+  test('throws a Shopify-side error instead of returning undefined when the server has a temporary problem', async () => {
     vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('request-id'))
 
-    await expect(fetchTheme(123, session)).rejects.toThrow(
-      'Shopify had a temporary problem and could not complete the request.',
-    )
+    await expect(fetchTheme(123, session)).rejects.toThrow(TRANSIENT_SERVER_ERROR_MESSAGE)
+  })
+
+  test('aborts with a Shopify-side error instead of returning undefined when the Admin API returns HTTP 500', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(serverError(500, 'request-id'))
+
+    // When
+    const error = await fetchTheme(123, session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(serverErrorMessage(500))
   })
 })
 
@@ -200,7 +214,7 @@ describe('fetchThemeAssets', () => {
     const error = await fetchThemeAssets(123, ['templates/index.json'], session).catch((error) => error)
 
     expect(error).toBeInstanceOf(AbortError)
-    expect(error.message).toEqual('Shopify had a temporary problem and could not complete the request.')
+    expect(error.message).toEqual(TRANSIENT_SERVER_ERROR_MESSAGE)
     expect(error.tryMessage).toContain('request-id')
     expect(adminRequestDoc).toHaveBeenCalledWith(expect.objectContaining({preferredBehaviour: expectedApiOptions}))
   })
@@ -251,16 +265,14 @@ describe('passwordProtected', () => {
     })
   })
 
-  test('keeps the default handled error for a non-transient server error', async () => {
-    vi.mocked(adminRequestDoc).mockRejectedValue(
-      new ClientError({status: 500, headers: new Headers({'x-request-id': 'request-id'})} as any, {query: ''}),
-    )
+  test('throws a Shopify-side error for a non-transient HTTP 500', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(serverError(500, 'request-id'))
 
     const error = await passwordProtected(session).catch((error) => error)
 
     expect(error).toBeInstanceOf(AbortError)
-    expect(error.message).toContain('The Admin GraphQL API responded unsuccessfully with the HTTP status 500.')
-    expect(error.message).toContain('Request ID: request-id')
+    expect(error.message).toEqual(serverErrorMessage(500))
+    expect(error.tryMessage).toContain('request-id')
     expect(shouldReportErrorAsUnexpected(error)).toBe(false)
   })
 })
@@ -398,7 +410,7 @@ describe('fetchThemes', () => {
     )
   })
 
-  test('throws a friendly error without the HTML body when retries of an HTTP 520 are exhausted', async () => {
+  test('throws a Shopify-side error without the HTML body when retries of an HTTP 520 are exhausted', async () => {
     // Given
     const errorResponse = {
       status: 520,
@@ -412,10 +424,52 @@ describe('fetchThemes', () => {
 
     // Then
     expect(error).toBeInstanceOf(AbortError)
-    expect(error.message).toEqual('Shopify had a temporary problem and could not complete the request.')
+    expect(error.message).toEqual(serverErrorMessage(520))
     expect(error.tryMessage).toContain('edge-request-id')
     expect(error.tryMessage).not.toContain('<!DOCTYPE html>')
     expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+  })
+
+  test('aborts with a Shopify-side error instead of rethrowing a raw HTTP 500 ClientError', async () => {
+    // Given
+    const rawError = serverError(500, 'request-id')
+    vi.mocked(adminRequestDoc).mockRejectedValue(rawError)
+
+    // When
+    const error = await fetchThemes(session).catch((error: unknown) => error)
+
+    // Then
+    expect(shouldReportErrorAsUnexpected(rawError)).toBe(true)
+    expect(error).toBeInstanceOf(AbortError)
+    expect(shouldReportErrorAsUnexpected(error as AbortError)).toBe(false)
+    expect((error as AbortError).message).toBe(serverErrorMessage(500))
+    expect(String((error as AbortError).tryMessage)).toBe(
+      'This is a problem on the Shopify side, not with your command. Wait a moment and try again. If the problem continues, contact Shopify support and include this request ID: request-id',
+    )
+  })
+
+  test.each([501, 503])('aborts with a Shopify-side error for a raw HTTP %i ClientError', async (status) => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(serverError(status))
+
+    // When
+    const error = await fetchThemes(session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(serverErrorMessage(status))
+  })
+
+  test('rethrows a raw HTTP 404 ClientError unchanged', async () => {
+    // Given
+    const clientError = new ClientError({status: 404, headers: new Headers()} as any, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(clientError)
+
+    // When
+    const request = fetchThemes(session)
+
+    // Then
+    await expect(request).rejects.toBe(clientError)
   })
 })
 
@@ -467,6 +521,21 @@ describe('fetchChecksums', () => {
     expect(checksum[0]!.checksum).toEqual('29e2e56057c3b58c02bc7946d7600481')
     expect(checksum[1]!.checksum).toEqual('f14a0bd594f4fee47b13fc09543098ff')
     expect(checksum[2]!.checksum).toEqual(null)
+  })
+
+  test('aborts with a Shopify-side error without a request ID when the HTTP 500 response has none', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(serverError(500))
+
+    // When
+    const error = await fetchChecksums(123, session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(serverErrorMessage(500))
+    expect(String((error as AbortError).tryMessage)).toBe(
+      'This is a problem on the Shopify side, not with your command. Wait a moment and try again.',
+    )
   })
 })
 
@@ -539,6 +608,19 @@ describe('themeCreate', () => {
       responseOptions: {handleErrors: false},
       preferredBehaviour: expectedApiOptions,
     })
+  })
+
+  test('aborts with a Shopify-side error and sends the mutation once when the Admin API returns HTTP 500', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(serverError(500, 'request-id'))
+
+    // When
+    const error = await themeCreate(params, session).catch((error: unknown) => error)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(serverErrorMessage(500))
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
   })
 
   test('throws a friendly error when access is denied by a missing theme write access scope', async () => {
@@ -1139,6 +1221,23 @@ describe('parseThemeFileContent', () => {
     })
   })
 })
+
+const TRANSIENT_SERVER_ERROR_MESSAGE = 'The Admin API for my-shop.myshopify.com returned a server error.'
+
+function serverErrorMessage(status: number): string {
+  return `The Admin API for my-shop.myshopify.com returned a server error (HTTP ${status}).`
+}
+
+function serverError(status: number, requestId?: string): ClientError {
+  return new ClientError(
+    {
+      status,
+      errors: 'Internal Server Error' as any,
+      headers: new Headers(requestId ? {'x-request-id': requestId} : {}),
+    } as any,
+    {query: ''},
+  )
+}
 
 function trustChallengeError(redirectTo: string): ClientError {
   return new ClientError(

@@ -15,6 +15,7 @@ import {
   isThemeAccessSession,
 } from '../../../private/node/api/rest.js'
 import {isAbortedFetchError, isNetworkError} from '../../../private/node/api.js'
+import {requestIdFromClientError} from '../../../private/node/api/graphql.js'
 import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
@@ -155,6 +156,30 @@ export async function supportedApiVersions(
 }
 
 /**
+ * An Admin API request that failed on the Shopify side, such as an HTTP 5xx. It is an `AbortError`,
+ * so the CLI does not report it as a bug.
+ */
+export class AdminServerError extends AbortError {
+  /**
+   * Creates the error with the store, the HTTP status and the request ID in its message.
+   *
+   * @param storeFqdn - The store that the request went to.
+   * @param status - The HTTP status of the response, when it is a 5xx.
+   * @param requestId - The request ID of the response, when it has one.
+   */
+  constructor(storeFqdn: string, status?: number, requestId?: string) {
+    const httpStatus = status === undefined ? '' : ` (HTTP ${status})`
+    const contactSupport = requestId
+      ? ` If the problem continues, contact Shopify support and include this request ID: ${requestId}`
+      : ''
+    super(
+      `The Admin API for ${storeFqdn} returned a server error${httpStatus}.`,
+      `This is a problem on the Shopify side, not with your command. Wait a moment and try again.${contactSupport}`,
+    )
+  }
+}
+
+/**
  * GraphQL query to retrieve all API versions.
  *
  * @param session - Shopify admin session including token and Store FQDN.
@@ -238,10 +263,7 @@ export async function fetchApiVersions(
     // cannot have caused it. `isExpectedApiError` covers 502/503/504, but only for raw errors, so
     // it never sees one we have already wrapped in a BugError.
     if (error instanceof ClientError && error.response.status >= 500) {
-      throw new AbortError(
-        `The Admin API for ${session.storeFqdn} returned a server error (HTTP ${error.response.status}).`,
-        'This is a problem on the Shopify side, not with your command. Wait a moment and try again.',
-      )
+      throw new AdminServerError(session.storeFqdn, error.response.status, requestIdFromClientError(error))
     }
 
     // A cancelled request is neither a store-state failure nor a CLI bug. Checked before
