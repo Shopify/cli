@@ -9,19 +9,19 @@ import {
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
-import {IdentityToken, Session, Sessions} from './session/schema.js'
+import {IdentityToken, Session} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {automationTokenAuthMethod, automationTokenVariablesProblem} from './session/automation-token.js'
 import {isThemeAccessSession} from './api/rest.js'
-import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
+import {getCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
-import {AdminSession, ensureNoServiceAccountToken, logout} from '../../public/node/session.js'
+import {AdminSession, ensureNoServiceAccountToken} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -230,7 +230,8 @@ export async function ensureAuthenticated(
 
   const sessions = (await sessionStore.fetch()) ?? {}
 
-  let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? getCurrentSessionId())
+  const storedCurrentSessionId = commandSessionId ? undefined : getCurrentSessionId()
+  let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? storedCurrentSessionId)
   if (!currentSessionId && !commandSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})
     if (userIds.length > 0) currentSessionId = userIds[0]
@@ -248,6 +249,8 @@ ${outputToken.json(applications)}
   const validationResult = await validateSession(scopes, applications, currentSession)
 
   let newSession = {}
+  let sessionWasRefreshed = false
+  let refreshedSession: Session | undefined
 
   if (validationResult === 'needs_full_auth') {
     await throwOnNoPrompt(noPrompt)
@@ -255,32 +258,64 @@ ${outputToken.json(applications)}
     newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
-    try {
-      newSession = await refreshTokens(currentSession!, applications)
-    } catch (error) {
-      if (error instanceof InvalidGrantError) {
-        await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
-      } else if (error instanceof InvalidRequestError) {
-        await sessionStore.remove()
-        throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
-      } else {
+    const refreshResult = await sessionStore.withSessionStoreLock(async (store) => {
+      const latestSessions = (await store.fetch()) ?? {}
+      const latestSession = currentSessionId ? latestSessions[fqdn]?.[currentSessionId] : undefined
+      if (!latestSession) {
+        return {kind: 'reauthenticate' as const, alias: currentSession?.identity.alias}
+      }
+
+      if (!currentSession || !hasSameSessionCredentials(latestSession, currentSession)) {
+        const latestValidationResult = await validateSession(scopes, applications, latestSession)
+        if (latestValidationResult === 'needs_full_auth') {
+          return {kind: 'reauthenticate' as const, alias: latestSession.identity.alias}
+        }
+        if (latestValidationResult === 'ok' && !forceRefresh) {
+          return {kind: 'session' as const, session: latestSession, refreshed: false}
+        }
+      }
+
+      try {
+        const refreshedSession = {...latestSession, ...(await refreshTokens(latestSession, applications))}
+        await store.storeSession(fqdn, latestSession.identity.userId, refreshedSession)
+        return {kind: 'session' as const, session: refreshedSession, refreshed: true}
+      } catch (error) {
+        if (error instanceof InvalidGrantError) {
+          if (noPrompt) {
+            await store.removeSession(fqdn, latestSession.identity.userId, latestSession)
+            await throwOnNoPrompt(true)
+          }
+          return {kind: 'reauthenticate' as const, alias: latestSession.identity.alias}
+        }
+        if (error instanceof InvalidRequestError) {
+          await store.removeSession(fqdn, latestSession.identity.userId, latestSession)
+          throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
+        }
         throw error
       }
+    })
+
+    if (refreshResult.kind === 'reauthenticate') {
+      await throwOnNoPrompt(noPrompt)
+      newSession = await executeCompleteFlow(applications, refreshResult.alias)
+    } else {
+      refreshedSession = refreshResult.session
+      sessionWasRefreshed = refreshResult.refreshed
     }
   }
 
-  const completeSession = {...currentSession, ...newSession} as Session
+  const completeSession = {...(refreshedSession ?? currentSession), ...newSession} as Session
   const newSessionId = completeSession.identity.userId
-  const updatedSessions: Sessions = {
-    ...sessions,
-    [fqdn]: {...sessions[fqdn], [newSessionId]: completeSession},
-  }
-
   // Save the new session info if it has changed
   if (!isEmpty(newSession)) {
-    await sessionStore.store(updatedSessions)
-    if (!commandSessionId) setCurrentSessionId(newSessionId)
+    await sessionStore.withSessionStoreLock(async (store) => {
+      await store.storeSession(fqdn, newSessionId, completeSession)
+      if (!commandSessionId) store.setCurrentSessionId(newSessionId)
+    })
+  } else if (sessionWasRefreshed && !commandSessionId) {
+    await sessionStore.withSessionStoreLock(async (store) => {
+      if (store.getCurrentSessionId() === storedCurrentSessionId) store.setCurrentSessionId(newSessionId)
+    })
   }
 
   const tokens = await tokensFor(applications, completeSession)
@@ -297,12 +332,20 @@ ${outputToken.json(applications)}
 
 async function throwOnNoPrompt(noPrompt: boolean) {
   if (!noPrompt) return
-  await logout()
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 
 The CLI is currently unable to prompt for reauthentication.`,
     'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment.',
+  )
+}
+
+function hasSameSessionCredentials(first: Session, second: Session): boolean {
+  return (
+    first.identity.userId === second.identity.userId &&
+    first.identity.accessToken === second.identity.accessToken &&
+    first.identity.refreshToken === second.identity.refreshToken &&
+    first.identity.expiresAt.getTime() === second.identity.expiresAt.getTime()
   )
 }
 

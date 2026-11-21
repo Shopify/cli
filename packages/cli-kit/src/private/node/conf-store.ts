@@ -2,6 +2,7 @@ import {isLocalEnvironment} from './context/service.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
+import envPaths from 'env-paths'
 
 interface CacheValue<T> {
   value: T
@@ -45,6 +46,17 @@ let _instance: LocalStorage<ConfSchema> | undefined
 function cliKitStore() {
   _instance ??= new LocalStorage<ConfSchema>({projectName: `shopify-cli-kit${isUnitTest() ? '-test' : ''}`})
   return _instance
+}
+
+/**
+ * Returns the configuration directory used to coordinate session-store updates across CLI processes.
+ *
+ * @returns The CLI Kit configuration directory.
+ */
+export function getSessionStoreLockPath(): string {
+  const projectName = `shopify-cli-kit${isUnitTest() ? '-test' : ''}`
+  cliKitStore()
+  return envPaths(projectName, {suffix: 'nodejs'}).config
 }
 
 function sessionStoreKey(): 'devSessionStore' | 'sessionStore' {

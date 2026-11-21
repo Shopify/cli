@@ -2,7 +2,6 @@ import {renderSelectPrompt, renderTextPrompt} from './ui.js'
 import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import * as sessionStore from '../../private/node/session/store.js'
-import {setCurrentSessionId} from '../../private/node/conf-store.js'
 import type {Sessions} from '../../private/node/session/schema.js'
 
 const NEW_LOGIN_VALUE = 'NEW_LOGIN'
@@ -93,7 +92,7 @@ export async function promptSessionSelect(alias?: string): Promise<string> {
   if (alias) {
     const userId = await sessionStore.findSessionByAlias(alias)
     if (userId) {
-      setCurrentSessionId(userId)
+      await sessionStore.withSessionStoreLock(async (store) => store.setCurrentSessionId(userId))
       return alias
     }
   }
@@ -110,6 +109,6 @@ export async function promptSessionSelect(alias?: string): Promise<string> {
     return handleNewLogin()
   }
 
-  setCurrentSessionId(selectedValue)
+  await sessionStore.withSessionStoreLock(async (store) => store.setCurrentSessionId(selectedValue))
   return choices.find((choice) => choice.value === selectedValue)?.label ?? selectedValue
 }

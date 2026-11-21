@@ -7,6 +7,7 @@ import * as sessionStore from '../../private/node/session/store.js'
 import {Sessions} from '../../private/node/session/schema.js'
 
 import {describe, expect, vi, test, beforeEach} from 'vitest'
+import type {LockedSessionStore} from '../../private/node/session/store.js'
 
 vi.mock('./ui.js')
 vi.mock('./session.js')
@@ -46,6 +47,9 @@ describe('promptSessionSelect', () => {
     vi.mocked(ensureAuthenticatedUser).mockResolvedValue({userId: 'new-user-id'})
     vi.mocked(sessionStore.getSessionAlias).mockResolvedValue('new-alias')
     vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue(undefined)
+    vi.mocked(sessionStore.withSessionStoreLock).mockImplementation(async (operation) =>
+      operation({setCurrentSessionId} as LockedSessionStore),
+    )
   })
 
   test('prompts user to create new session when no existing sessions', async () => {
