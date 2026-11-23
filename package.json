@@ -203,7 +203,8 @@
       ".": {
         "entry": [
           "bin/**/*.js",
-          "configurations/vite.config.ts"
+          "configurations/vite.config.ts",
+          "internal-docs/**/*.mjs"
         ],
         "ignoreBinaries": [
           "bin/*",
