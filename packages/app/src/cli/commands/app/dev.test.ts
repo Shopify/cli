@@ -324,6 +324,7 @@ describe('app dev command', () => {
         forceRelink: false,
         userProvidedConfigName: 'prod',
       })
+      expect(storeContext).toHaveBeenCalledWith(expect.objectContaining({devSession: true}))
       expect(service).toHaveBeenCalled()
     })
   })
@@ -353,7 +354,9 @@ describe('app dev command', () => {
         tunnelUrl: undefined,
         localhostPort: undefined,
       })
-      expect(storeContext).toHaveBeenCalledWith(expect.objectContaining({storeCreationMode: 'selection-option'}))
+      expect(storeContext).toHaveBeenCalledWith(
+        expect.objectContaining({storeCreationMode: 'selection-option', devSession: true}),
+      )
       expect(dev).toHaveBeenCalledWith(
         expect.objectContaining({installMkcert: undefined, unsafeValidation: false, tunnel: {mode: 'auto'}}),
       )

@@ -33,17 +33,14 @@ export function getExtensionPointRedirectUrl(
 
   switch (surface) {
     case 'checkout':
-      // This can never be null because we always generate it
-      // whenever there is an extension point targeting Checkout
-
-      rawUrl.pathname = options.checkoutCartUrl!
+      // Dev builds the cart URL at startup, except for a service account's extension added while dev runs.
+      if (!options.checkoutCartUrl) return undefined
+      rawUrl.pathname = options.checkoutCartUrl
       rawUrl.searchParams.append('dev', `${options.url}/extensions`)
       break
     case 'post_purchase':
-      // This can never be null because we always generate it
-      // whenever there is an extension point targeting Post Purchase
-
-      rawUrl.pathname = options.checkoutCartUrl!
+      if (!options.checkoutCartUrl) return undefined
+      rawUrl.pathname = options.checkoutCartUrl
 
       rawUrl.searchParams.set(
         'script_url',
@@ -69,6 +66,8 @@ export function getExtensionPointRedirectUrl(
       rawUrl.searchParams.append('target', requestedTarget)
       break
     case 'customer-accounts':
+      // The customer account URL names the store by ID, which a service account can't look up.
+      if (!options.storeId) return undefined
       rawUrl = getCustomerAccountsRedirectUrl(extension, options, requestedTarget)
       break
     default:

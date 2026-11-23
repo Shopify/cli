@@ -3,8 +3,8 @@ import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-m
 import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {AdminSession, ensureAuthenticatedAdmin, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -47,6 +47,13 @@ export async function setupPreviewThemeAppExtensionsProcess(
   const allExtensions = localApp.allExtensions
   const themeExtensions = allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length === 0) {
+    return
+  }
+  // The theme preview calls the store's Admin API, which a service account token can't do.
+  if (isServiceAccountTokenSet()) {
+    outputWarn(
+      "The theme app extension preview isn't available with SHOPIFY_SERVICE_ACCOUNT_TOKEN. Dev runs without it.",
+    )
     return
   }
 

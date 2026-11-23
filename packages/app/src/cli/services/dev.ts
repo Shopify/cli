@@ -43,6 +43,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {withDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {basename} from '@shopify/cli-kit/node/path'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -138,7 +139,8 @@ async function prepareForDev(commandOptions: DevOptions, tunnelClient?: TunnelCl
 
   // If the dev_store_url is set in the app configuration, keep updating it.
   // If not, `store-context.ts` will take care of caching it in the hidden config.
-  if (app.configuration.build?.dev_store_url) {
+  // A service account's store is checked only when the dev session starts, so it isn't saved.
+  if (app.configuration.build?.dev_store_url && !isServiceAccountTokenSet()) {
     app.configuration.build = {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
@@ -199,7 +201,7 @@ async function prepareForDev(commandOptions: DevOptions, tunnelClient?: TunnelCl
 
   return {
     storeFqdn: store.shopDomain,
-    storeId: store.shopId,
+    storeId: store.shopId || undefined,
     remoteApp,
     remoteAppUpdated: remoteApp.apiKey !== previousAppId,
     localApp: app,
