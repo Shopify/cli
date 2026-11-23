@@ -32,8 +32,13 @@ import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/session.js')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
+  return {...original, outputWarn: vi.fn()}
+})
 vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/theme')
@@ -581,6 +586,93 @@ describe('setup-dev-processes', () => {
         appWatcher: expect.any(AppEventWatcher),
       },
     })
+  })
+
+  test('process list skips app polling when the store has no ID, as with a service account', async () => {
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_ENABLE_APP_LOG_POLLING: '1'})
+
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = undefined
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
+      subscriptionProductUrl: '/products/999999',
+      checkoutCartUrl: '/cart/999999:1',
+      theme: '1',
+      directory: '',
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      tunnel: {mode: 'auto'},
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+    const functionExtension = await testFunctionExtension()
+    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
+    const draftable = await testTaxCalculationExtension()
+    const theme = await testThemeExtensions()
+    const localApp = testAppWithConfig({
+      config: {},
+      app: {
+        webs: [
+          {
+            directory: 'web',
+            configuration: {
+              roles: [WebType.Backend, WebType.Frontend],
+              commands: {dev: 'npm exec remix dev'},
+              webhooks_path: '/webhooks',
+              hmr_server: {
+                http_paths: ['/ping'],
+              },
+            },
+          },
+        ],
+        allExtensions: [previewable, draftable, theme, functionExtension],
+      },
+    })
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecretKeys: [{secret: 'api-secret'}],
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+      developerPlatformClient,
+    }
+
+    const graphiqlKey = 'somekey'
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      apiSecret: 'api-secret',
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey,
+    })
+
+    const appLogsProcess = res.processes.find((process) => process.type === 'app-logs-subscribe')
+    expect(appLogsProcess).toBeUndefined()
+    expect(outputWarn).toHaveBeenCalledWith("Function logs aren't streamed, because dev doesn't know the store's ID.")
   })
 
   test('process list skips app polling when envVar is enabled but no functions are registered on the app', async () => {

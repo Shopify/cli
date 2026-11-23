@@ -170,6 +170,38 @@ describe('getExtensionPointRedirectUrl()', () => {
     )
   })
 
+  test('returns undefined for a customer account target when the store ID is unknown', () => {
+    const extension = {
+      devUUID: '123abc',
+    } as ExtensionInstance
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      storeId: undefined,
+      url: 'https://localhost:8081',
+      id: 123,
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    expect(getExtensionPointRedirectUrl('customer-account.page.render', extension, options)).toBeUndefined()
+  })
+
+  test('returns undefined for checkout and post-purchase targets when there is no cart URL', () => {
+    const extension = {
+      devUUID: '123abc',
+      localIdentifier: 'checkout-extension',
+      configuration: {},
+    } as ExtensionInstance
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+      apiKey: 'api-key',
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    expect(getExtensionPointRedirectUrl('purchase.checkout.block.render', extension, options)).toBeUndefined()
+    expect(getExtensionPointRedirectUrl('purchase.post.render', extension, options)).toBeUndefined()
+  })
+
   test('returns undefined if the extension point surface is not supported', () => {
     const extension = {
       devUUID: '123abc',

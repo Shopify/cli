@@ -4,10 +4,14 @@ import * as websocket from './extension/websocket.js'
 import {devUIExtensions, ExtensionDevOptions} from './extension.js'
 import {ExtensionsEndpointPayload} from './extension/payload/models.js'
 import {WebsocketConnection} from './extension/websocket/models.js'
-import {AppEventWatcher} from './app-events/app-event-watcher.js'
-import {testAppLinked} from '../../models/app/app.test-data.js'
+import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
+import {testAppLinked, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {Server} from 'http'
+
+vi.mock('@shopify/cli-kit/node/session')
 
 describe('devUIExtensions()', () => {
   const serverCloseSpy = vi.fn()
@@ -142,5 +146,48 @@ describe('devUIExtensions()', () => {
 
     // THEN
     expect(getExtensions()).toStrictEqual([newUIExtension])
+  })
+
+  test('warns instead of stopping dev when a service account adds a checkout extension without a cart URL', async () => {
+    // GIVEN
+    spyOnEverything()
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    const addExtension = vi.fn()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(function () {
+      return {addExtension} as unknown as store.ExtensionsPayloadStore
+    } as any)
+    const appWatcher = new AppEventWatcher(app, 'url', 'path')
+    const onEvent = vi.spyOn(appWatcher, 'onEvent')
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const checkoutExtension = await testUIExtension({
+      type: 'ui_extension',
+      handle: 'checkout-extension',
+      configuration: {
+        name: 'checkout-extension',
+        type: 'ui_extension',
+        handle: 'checkout-extension',
+        metafields: [],
+        extension_points: [{target: 'purchase.checkout.block.render', module: './src/index.js'}],
+      },
+    })
+    await devUIExtensions({...options, appWatcher, checkoutCartUrl: undefined, extensions: []})
+    const eventHandler = onEvent.mock.calls[0]![0]
+
+    // WHEN
+    const appEvent: AppEvent = {
+      app,
+      extensionEvents: [{type: EventType.Created, extension: checkoutExtension}],
+      path: '',
+      startTime: [0, 0],
+    }
+    await eventHandler(appEvent)
+
+    // THEN
+    expect(addExtension).toHaveBeenCalledWith(checkoutExtension, 'path')
+    expect(output.warn()).toContain("checkout-extension can't be previewed without a cart")
+    expect(output.warn()).toContain('--checkout-cart-url')
   })
 })

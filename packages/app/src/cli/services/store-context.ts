@@ -6,6 +6,8 @@ import {Store} from '../utilities/developer-platform-client.js'
 import metadata from '../metadata.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * Input options for the `storeContext` function.
@@ -15,6 +17,8 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
  * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
  * @param storeTypes - Store types to filter by. Defaults to dev stores only.
  * @param storeCreationMode - When store creation is offered during store selection. Defaults to disabled.
+ * @param devSession - Whether the command runs a dev session, whose App Dev API checks the store. Only then can a
+ * service account skip the organizations API.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
@@ -22,6 +26,7 @@ interface StoreContextOptions {
   storeFqdn?: string
   storeTypes?: Store[]
   storeCreationMode?: StoreCreationMode
+  devSession?: boolean
 }
 
 /**
@@ -30,6 +35,9 @@ interface StoreContextOptions {
  * If a storeFqdn is explicitly provided, it has preference over anything else.
  * If not, check if there is a cached storeFqdn in the app configuration. If forceReselectStore is true, it will be ignored.
  * If still don't have a store, fetch all stores for the organization and let the user select one.
+ *
+ * With SHOPIFY_SERVICE_ACCOUNT_TOKEN set, dev session commands need a store domain and don't look the store up or
+ * provision access to it: the organizations API only serves user accounts, and the App Dev API checks the store.
  */
 export async function storeContext({
   appContextResult,
@@ -37,6 +45,7 @@ export async function storeContext({
   forceReselectStore,
   storeTypes = ['APP_DEVELOPMENT'],
   storeCreationMode = 'disabled',
+  devSession = false,
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
@@ -55,7 +64,11 @@ export async function storeContext({
   // Check if we're filtering to dev stores only
   const isDevStoresOnly = storeTypes.length === 1 && storeTypes[0] === 'APP_DEVELOPMENT'
 
-  if (storeFqdnToUse) {
+  const skipsOrganizationApi = devSession && isDevStoresOnly && isServiceAccountTokenSet()
+
+  if (skipsOrganizationApi) {
+    selectedStore = serviceAccountStore(storeFqdnToUse)
+  } else if (storeFqdnToUse) {
     selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient, storeTypes)
     if (isDevStoresOnly) {
       ensureTransferDisabledStore(selectedStore)
@@ -69,15 +82,39 @@ export async function storeContext({
   selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)
   await logMetadata(selectedStore, forceReselectStore)
 
-  // Save the selected store in the hidden config file
-  if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
+  // Save the selected store in the hidden config file. A service account's store isn't checked until the dev session
+  // starts, so saving it here could replace a working store with a mistyped one.
+  if (!skipsOrganizationApi && (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig)) {
     await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
   }
 
   // Ensure that the user is able to login to the store and install apps
-  await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
+  if (!skipsOrganizationApi) {
+    await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
+  }
 
   return selectedStore
+}
+
+function serviceAccountStore(storeFqdn: string | undefined): OrganizationStore {
+  if (!storeFqdn) {
+    throw new AbortError(
+      'A service account needs a dev store to run this command.',
+      'Pass the dev store with --store, or set build.dev_store_url in the app configuration.',
+    )
+  }
+  const shopDomain = normalizeStoreFqdn(storeFqdn)
+  // The store's ID comes from the organizations API, so it's unknown here. Dev skips what needs it: app logs, and
+  // customer account extension previews.
+  return {
+    shopId: '',
+    link: '',
+    shopDomain,
+    shopName: shopDomain,
+    transferDisabled: true,
+    convertableToPartnerTest: false,
+    provisionable: false,
+  }
 }
 
 async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean) {

@@ -11,7 +11,7 @@ const MANIFEST_VERSION = '3'
 interface PreviewableExtensionOptions {
   apiKey: string
   storeFqdn: string
-  storeId: string
+  storeId?: string
   port: number
   pathPrefix: string
   cartUrl?: string

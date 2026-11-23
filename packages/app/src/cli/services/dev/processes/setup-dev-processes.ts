@@ -23,7 +23,7 @@ import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess extends BaseProcess<{
@@ -62,7 +62,7 @@ export interface DevConfig {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
-  storeId: string
+  storeId?: string
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
@@ -70,6 +70,13 @@ export interface DevConfig {
   graphiqlKey?: string
   /** The app's client secret, or undefined when dev doesn't need it or the App Management API didn't return it. */
   apiSecret: string | undefined
+}
+
+function warnAppLogsUnavailable(app: AppLinkedInterface): undefined {
+  if (app.allExtensions.some((extension) => extension.isFunctionExtension)) {
+    outputWarn("Function logs aren't streamed, because dev doesn't know the store's ID.")
+  }
+  return undefined
 }
 
 export async function setupDevProcesses({
@@ -194,17 +201,19 @@ export async function setupDevProcesses({
           apiSecret,
           remoteAppUpdated,
         }),
-    await setupAppLogsPollingProcess({
-      developerPlatformClient,
-      subscription: {
-        shopIds: [Number(storeId)],
-        apiKey,
-      },
-      storeName: storeFqdn,
-      organizationId: remoteApp.organizationId,
-      localApp,
-      appWatcher,
-    }),
+    storeId === undefined
+      ? warnAppLogsUnavailable(reloadedApp)
+      : await setupAppLogsPollingProcess({
+          developerPlatformClient,
+          subscription: {
+            shopIds: [Number(storeId)],
+            apiKey,
+          },
+          storeName: storeFqdn,
+          organizationId: remoteApp.organizationId,
+          localApp,
+          appWatcher,
+        }),
     await setupAppWatcherProcess({
       appWatcher,
     }),
