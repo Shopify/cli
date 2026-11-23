@@ -1,5 +1,23 @@
 # @shopify/cli-kit
 
+## 5.1.0
+
+### Patch Changes
+
+- Keep npm-based auto-upgrades on the newest non-deprecated stable release in the installed major, including maintenance fixes after a newer major is released.
+- Show a daily new-major upgrade notice while automatic updates continue within the current major.
+- Auto-upgrade installs the exact version it checked instead of `@shopify/cli@latest`, so a stale version cache can no longer upgrade you to a new major version.
+- Retry temporary Windows file locks when updating dev session metadata.
+- Treat HTTP 520 to 524 edge responses as gateway errors, like 502, 503 and 504
+- Keep Homebrew auto-upgrades on the installed formula and refresh its metadata to find same-major fixes.
+- Support `theme language-server --json` and `--json-schema` while preserving native LSP output and stderr diagnostics.
+- Also treat `DO_NOT_TRACK=1` as an analytics opt-out, in addition to `SHOPIFY_CLI_NO_ANALYTICS=1` and `OPT_OUT_INSTRUMENTATION=true`.
+- Fix the HTTP 401 that `app execute`, `app bulk execute` and other app commands that look up a store get with a service account token that has Dev store management access.
+- Keep every character of table cells, such as in `shopify app logs` and `shopify app versions list`, when the terminal is narrower than the table. The table keeps one line per row, and the terminal wraps the long lines.
+- Theme commands and the Admin API version check report an HTTP 5xx as a Shopify-side error with its request ID, and theme commands no longer forget the stored theme on one.
+- Explain theme passwords with characters that can't be sent, and locked or not yet set up stores, instead of reporting an unknown error.
+- Retry theme reads that fail with temporary Admin API errors, and show a friendly error with the request ID if they keep failing
+
 ## 5.0.0
 
 ### Minor Changes
