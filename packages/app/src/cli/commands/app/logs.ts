@@ -1,41 +1,21 @@
-import {logTypesHelp} from '../../services/historical-logs/catalog.js'
-import {historicalLogFlags} from '../../services/historical-logs/flags.js'
-import {retrieveLogs} from '../../services/historical-logs/service.js'
-import {renderHistoricalLogs} from '../../services/historical-logs/presenter.js'
-import {logsOutput} from '../../services/historical-logs/types.js'
-import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {authAliasFlag, globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import Command from '@shopify/cli-kit/node/base-command'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
-export default class Logs extends BaseCommand {
-  static baseFlags = {...BaseCommand.baseFlags, ...authAliasFlag}
-  static summary = 'Lists historical app logs.'
-  static descriptionWithMarkdown = `Returns a list of historical app logs and exits. Defaults to all supported log types. Use --type to select a type; repeat it to select multiple.
+export default class Logs extends Command {
+  static hidden = true
 
-Fast retrieval is the default: leave out --sort. Prefer this mode with a narrow time window and selective filters to consume less throttle capacity. The CLI orders the returned records oldest first, but when the limit is reached they aren't necessarily the oldest or newest matches.
+  static strict = false
 
-Use server-side sorting only when selecting the oldest or newest matching records matters: --sort timestamp selects oldest first; add --order desc for newest first. This sorts before the result limit and is subject to API query limits.
+  static summary = 'App logs were removed in Shopify CLI 5.0.'
 
-When fewer than --limit records are returned, all matching records available at query time were returned. Sorting isn't needed to establish completeness.
-
-Different filters combine with AND; each accepts one exact value. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records.
-
-${logTypesHelp()}
-
-Defaults: preceding hour, 20 records. Maximum: 1-day window within the last 7 days, 1000 records. Time inputs accept whole seconds only.
-
---json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.`
-
-  static jsonOutputSchema = logsOutput
-  static description = this.descriptionForHelp()
-  static flags = {...globalFlags, ...jsonFlag, ...historicalLogFlags}
-  static examples = [
-    '<%= config.bin %> <%= command.id %> --client-id APP_CLIENT_ID --type webhook --topic orders/create --status failure --since 30m',
-    '<%= config.bin %> <%= command.id %> --type graphql --operation-name MyQuery --json --no-input',
-    '<%= config.bin %> <%= command.id %> --since 1h --sort timestamp --order desc',
-  ]
+  static flags = {...globalFlags, ...jsonFlag}
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(Logs)
-    renderHistoricalLogs(await retrieveLogs(flags), flags.json, flags.limit)
+    // Skip parsing so legacy flags and the removed sources subcommand receive the migration guidance.
+    throw new AbortError(
+      '`shopify app logs` and `shopify app logs sources` were removed in Shopify CLI 5.0. ' +
+        'To see Function logs, run `shopify app dev`.',
+    )
   }
 }

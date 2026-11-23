@@ -9,7 +9,8 @@ Finite commands expose their successful result as typed data independently from 
 domain package owns this contract; CLI Kit only provides the shared schema and help infrastructure.
 
 All visible commands must include `jsonFlag` and expose a `jsonOutputSchema`. The repository lint check enforces
-both and does not accept path exceptions. Hidden commands are outside the rule's scope.
+both and does not accept path exceptions. Hidden commands, including removed command stubs such as `app logs`,
+are outside the rule's scope.
 
 ## Choose the public shape
 
@@ -84,7 +85,7 @@ envelope. Keep domain details under `details`, and add stable error codes when c
 retain `details.errors`, `details.extensions`, and partial `details.data` when available. Do not print a result followed
 by a second fatal document.
 
-Exception: `shopify app logs` omits partial `details.data` on GraphQL failures so failed queries never return
+Exception: `shopify app logs-next` omits partial `details.data` on GraphQL failures so failed queries never return
 log results.
 
 Fatal errors and diagnostic events may include a nonempty string `code` when a stable code is known. Omit unknown
