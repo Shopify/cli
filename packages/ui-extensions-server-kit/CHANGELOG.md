@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.5.1
+
+### Patch Changes
+
+- Publish only the build output, type the `update` persist payload as partial, and add the `error` build status
+
 ## 5.5.0
 
 ### Minor Changes
