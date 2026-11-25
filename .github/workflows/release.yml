@@ -351,6 +351,67 @@ jobs:
             -f make_latest=legacy >/dev/null
           echo "Created release $TAG"
 
+  # Installs the release from the public registry, as users get it, and runs the checks that need
+  # no Shopify account.
+  smoke:
+    name: Smoke test the published release on ${{ matrix.os }}
+    needs: [check, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      # Only the smoke test script, so no project files affect the global install.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts/smoke-test-cli.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.22.1
+
+      # A new version can take a few minutes to appear in the registry's metadata.
+      - name: Wait for the release on npm
+        shell: bash
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if [ "$(npm view "@shopify/cli@$VERSION" version --prefer-online --registry=https://registry.npmjs.org/ 2>/dev/null || true)" = "$VERSION" ]; then
+              echo "@shopify/cli $VERSION is on npm"
+              exit 0
+            fi
+            if [ "$attempt" != 60 ]; then sleep 30; fi
+          done
+          echo "::error::@shopify/cli $VERSION didn't appear on npm within 30 minutes."
+          exit 1
+
+      - name: Install @shopify/cli globally
+        shell: bash
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          npm install -g "@shopify/cli@$VERSION" --prefer-online --registry=https://registry.npmjs.org/
+
+      - name: Run the smoke tests
+        shell: bash
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          bash .github/scripts/smoke-test-cli.sh "$VERSION"
+
   # A scheduled nightly of an unchanged main would publish the same code again under a new version.
   nightly-changes:
     name: Check for changes since the last nightly

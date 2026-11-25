@@ -1,0 +1,313 @@
+name: Patch provenance
+
+# Passes only for the two kinds of pull request that bring a stable line nothing main doesn't have:
+# - a backport whose changes main already has: everything it changes matches the main commit that
+#   added its changesets, and it carries only patch changesets for the fixed version group;
+# - the line's Version Packages pull request: one commit on top of the line's head that only versions
+#   the packages.
+# Any other pull request into a stable line fails this check, and a maintainer reviews and merges it.
+#
+# It runs on pull_request_target, so this file comes from the stable line, not from the pull request,
+# and it never checks out or runs the pull request's code: it only reads commits.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - 'stable/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: patch-provenance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  provenance:
+    name: Patch provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check where the pull request's changes come from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/provenance"
+          cd "$RUNNER_TEMP/provenance"
+          cat > check.mjs <<'SCRIPT'
+          import {execFileSync} from 'node:child_process'
+          import {appendFileSync} from 'node:fs'
+
+          const {GITHUB_REPOSITORY: repository, PR_NUMBER, BASE_REF, HEAD_REF, HEAD_SHA, HEAD_REPO} = process.env
+          // Paths the public repository keeps for itself and main's mirrored history never changes.
+          const KEPT_PATHS = ['.github/', '.spin/', 'dev.yml', 'TORRENT_WORKFLOW.md', 'AGENTS.md', '.agents/', '.claude/', '.cursor/']
+          const DEPENDENCY_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
+          const VERSION_FILE = 'packages/cli-kit/src/public/common/version.ts'
+
+          const run = (command, args) => execFileSync(command, args, {encoding: 'utf8', maxBuffer: 512 * 1024 * 1024})
+          const git = (...args) => run('git', args).trimEnd()
+          const gitSucceeds = (...args) => {
+            try {
+              execFileSync('git', args, {stdio: 'ignore'})
+              return true
+            } catch {
+              return false
+            }
+          }
+          const fileAt = (commit, path) => {
+            try {
+              return execFileSync('git', ['show', `${commit}:${path}`], {encoding: 'utf8', maxBuffer: 512 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore']})
+            } catch {
+              return undefined
+            }
+          }
+          const summary = (text) => appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${text}\n`)
+          // Workflow commands are one line, and file names come from the pull request.
+          const commandData = (text) => text.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')
+          function fail(reason) {
+            console.log(`::error::${commandData(reason)}`)
+            summary(`### Patch provenance failed\n\n${reason}\n\nA maintainer reviews and merges this pull request.`)
+            process.exit(1)
+          }
+          function pass(text) {
+            console.log(text)
+            summary(`### Patch provenance passed\n\n${text}`)
+            process.exit(0)
+          }
+          // Fetches more history until `commit` reaches `base`, so merge bases are found in a shallow repository.
+          function deepen(ref, base) {
+            for (const depth of [50, 200, 1000, 5000]) {
+              git('fetch', '--quiet', '--no-tags', `--depth=${depth}`, 'origin', ref)
+              if (base === undefined || gitSucceeds('merge-base', base, ref)) return
+            }
+          }
+          const changesetPath = (path) => /^\.changeset\/[^/]+\.md$/.test(path) && path !== '.changeset/README.md'
+          // [{status, path}] for base..head, without rename detection, and with paths exactly as stored.
+          function changedFiles(base, head) {
+            const fields = run('git', ['diff', '--name-status', '--no-renames', '-z', base, head]).split('\0')
+            const changes = []
+            for (let index = 0; index + 1 < fields.length; index += 2) changes.push({status: fields[index], path: fields[index + 1]})
+            return changes
+          }
+          // {name: {directory, version, manifest}} for the workspace packages at a commit.
+          function packagesAt(commit) {
+            const packages = {}
+            for (const directory of git('ls-tree', '--name-only', `${commit}:packages`).split('\n').filter(Boolean)) {
+              const text = fileAt(commit, `packages/${directory}/package.json`)
+              if (text === undefined) continue
+              const manifest = JSON.parse(text)
+              packages[manifest.name] = {directory, version: manifest.version, manifest}
+            }
+            return packages
+          }
+          const fixedGroup = (commit) => new Set(JSON.parse(fileAt(commit, '.changeset/config.json')).fixed.flat())
+          // The bumps a changeset file declares, as [[package, bump]], from its front matter.
+          function changesetBumps(text) {
+            const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)
+            if (!match) return undefined
+            return match[1]
+              .split(/\r?\n/)
+              .filter((line) => line.trim() !== '')
+              .map((line) => /^\s*['"]?([^'":\s]+)['"]?\s*:\s*['"]?(patch|minor|major)['"]?\s*$/.exec(line))
+              .map((parsed) => (parsed ? [parsed[1], parsed[2]] : [undefined, undefined]))
+          }
+          const isPatchOf = (version, previous) => {
+            const [major, minor, patch] = previous.split('.').map(Number)
+            return version === `${major}.${minor}.${patch + 1}`
+          }
+
+          git('init', '--quiet', '.')
+          git('remote', 'add', 'origin', `https://github.com/${repository}`)
+          const lineHead = git('ls-remote', 'origin', `refs/heads/${BASE_REF}`).split('\t')[0]
+          if (!/^[0-9a-f]{40}$/.test(lineHead)) fail(`Couldn't read the head of ${BASE_REF}.`)
+          deepen(lineHead)
+          deepen(HEAD_SHA, lineHead)
+          if (!gitSucceeds('merge-base', lineHead, HEAD_SHA)) fail(`${HEAD_SHA} doesn't share history with ${BASE_REF}.`)
+
+          if (HEAD_REF === `changeset-release/${BASE_REF}`) {
+            checkVersionPackages()
+          } else {
+            checkBackport()
+          }
+
+          // The line's Version Packages pull request: one commit on the line's head that only moves every
+          // package in the fixed group up one patch version and consumes the line's pending changesets.
+          function checkVersionPackages() {
+            if (HEAD_REPO !== repository) fail(`A Version Packages pull request comes from ${repository}, not ${HEAD_REPO}.`)
+            const parents = git('rev-list', '--parents', '-n', '1', HEAD_SHA).split(' ').slice(1)
+            if (parents.length !== 1 || parents[0] !== lineHead) {
+              fail(`${HEAD_SHA} isn't one commit on top of ${BASE_REF}'s head ${lineHead}. Let Version Packages version the line's current head.`)
+            }
+            const fixed = fixedGroup(lineHead)
+            const before = packagesAt(lineHead)
+            const after = packagesAt(HEAD_SHA)
+            if (Object.keys(before).sort().join() !== Object.keys(after).sort().join()) fail('The set of workspace packages changed.')
+            const newVersion = after['@shopify/cli-kit'].version
+            for (const [name, {version}] of Object.entries(before)) {
+              if (fixed.has(name)) {
+                if (!isPatchOf(after[name].version, version) || after[name].version !== newVersion) {
+                  fail(`${name} goes from ${version} to ${after[name].version}; every package in the fixed group must move up one patch, to the same version.`)
+                }
+              } else if (after[name].version !== version) {
+                fail(`${name} isn't in the fixed group, and its version changed from ${version} to ${after[name].version}.`)
+              }
+            }
+            const pending = git('ls-tree', '--name-only', `${lineHead}:.changeset`)
+              .split('\n')
+              .map((name) => `.changeset/${name}`)
+              .filter(changesetPath)
+            if (pending.length === 0) fail(`${BASE_REF} has no pending changesets, so there's nothing to release.`)
+            const deleted = new Set()
+            for (const {status, path} of changedFiles(lineHead, HEAD_SHA)) {
+              const directory = /^packages\/([^/]+)\//.exec(path)?.[1]
+              const packageName = Object.keys(after).find((name) => after[name].directory === directory)
+              if (changesetPath(path) && status === 'D') {
+                deleted.add(path)
+              } else if (status !== 'M') {
+                fail(`${path} is ${status === 'A' ? 'added' : 'deleted'}; a version bump only edits files and deletes changesets.`)
+              } else if (packageName && path === `packages/${directory}/package.json`) {
+                checkPackageManifest(path, packageName, before, after)
+              } else if (packageName && path === `packages/${directory}/CHANGELOG.md`) {
+                checkChangelog(path, after[packageName].version)
+              } else if (packageName && path === `packages/${directory}/oclif.manifest.json`) {
+                checkOclifManifest(path, after[packageName].version)
+              } else if (path === VERSION_FILE) {
+                if (fileAt(HEAD_SHA, path) !== `export const CLI_KIT_VERSION = '${newVersion}'\n`) fail(`${path} must only set CLI_KIT_VERSION to ${newVersion}.`)
+              } else if (path === 'pnpm-lock.yaml') {
+                checkLockfile(before, after)
+              } else {
+                fail(`${path} changed, and a version bump doesn't change it.`)
+              }
+            }
+            const kept = pending.filter((path) => !deleted.has(path))
+            if (kept.length > 0) fail(`The bump leaves changesets pending: ${kept.join(', ')}.`)
+            pass(`#${PR_NUMBER} releases ${newVersion}: one commit on ${BASE_REF}'s head ${lineHead} that only versions the packages and consumes ${deleted.size} changeset(s).`)
+          }
+
+          // A package.json may change only its version and its exact dependencies on workspace packages,
+          // each moving from that package's old version to its new one.
+          function checkPackageManifest(path, packageName, before, after) {
+            const old = before[packageName].manifest
+            const next = after[packageName].manifest
+            const stripped = (manifest) => {
+              const copy = structuredClone(manifest)
+              delete copy.version
+              for (const field of DEPENDENCY_FIELDS) {
+                for (const name of Object.keys(copy[field] ?? {})) {
+                  if (before[name]) copy[field][name] = '<workspace>'
+                }
+              }
+              return JSON.stringify(copy)
+            }
+            if (stripped(old) !== stripped(next)) fail(`${path} changes more than versions.`)
+            for (const field of DEPENDENCY_FIELDS) {
+              for (const [name, value] of Object.entries(next[field] ?? {})) {
+                if (!before[name] || value === old[field][name]) continue
+                if (old[field][name] !== before[name].version || value !== after[name].version) {
+                  fail(`${path} moves ${name} from ${old[field][name]} to ${value}, not from ${before[name].version} to ${after[name].version}.`)
+                }
+              }
+            }
+          }
+
+          // A changelog only gains a section for the new version at the top.
+          function checkChangelog(path, version) {
+            const old = fileAt(lineHead, path)
+            const next = fileAt(HEAD_SHA, path)
+            const title = /^# [^\n]*\n\n/.exec(old)?.[0]
+            const rest = old.slice(title?.length ?? 0)
+            const added = next.slice(title?.length ?? 0, next.length - rest.length)
+            if (!title || !next.startsWith(title) || !next.endsWith(rest) || !added.startsWith(`## ${version}\n`) || /^## /m.test(added.slice(1))) {
+              fail(`${path} must only gain a "## ${version}" section at the top.`)
+            }
+          }
+
+          // An oclif manifest only changes its version.
+          function checkOclifManifest(path, version) {
+            const old = JSON.parse(fileAt(lineHead, path))
+            const next = JSON.parse(fileAt(HEAD_SHA, path))
+            if (next.version !== version || JSON.stringify({...old, version}) !== JSON.stringify(next)) fail(`${path} must only change its version to ${version}.`)
+          }
+
+          // The lockfile only changes the specifiers of links to workspace packages, each from that package's
+          // old version to its new one.
+          function checkLockfile(before, after) {
+            const old = fileAt(lineHead, 'pnpm-lock.yaml').split('\n')
+            const next = fileAt(HEAD_SHA, 'pnpm-lock.yaml').split('\n')
+            if (old.length !== next.length) fail('pnpm-lock.yaml gains or loses lines; a version bump only changes the specifiers of workspace links.')
+            for (let index = 0; index < old.length; index++) {
+              if (old[index] === next[index]) continue
+              const name = /^\s+'?([^'\s]+?)'?:$/.exec(old[index - 1] ?? '')?.[1]
+              const oldSpecifier = /^(\s+)specifier: (\S+)$/.exec(old[index])
+              const newSpecifier = /^(\s+)specifier: (\S+)$/.exec(next[index])
+              const link = /^\s+version: link:/.test(next[index + 1] ?? '') && next[index + 1] === old[index + 1]
+              if (
+                !name || !before[name] || old[index - 1] !== next[index - 1] || !oldSpecifier || !newSpecifier ||
+                oldSpecifier[1] !== newSpecifier[1] || !link ||
+                oldSpecifier[2] !== before[name].version || newSpecifier[2] !== after[name].version
+              ) {
+                fail(`pnpm-lock.yaml line ${index + 1} changes more than a workspace link's specifier.`)
+              }
+            }
+          }
+
+          // A backport: it carries only patch changesets for the fixed group, changes only paths that come
+          // from main's mirrored history, and everything it changes is already in the main commit that
+          // added its changesets.
+          function checkBackport() {
+            const mergeBase = git('merge-base', lineHead, HEAD_SHA)
+            const changes = changedFiles(mergeBase, HEAD_SHA)
+            if (changes.length === 0) fail('The pull request changes nothing.')
+            const kept = changes.filter(({path}) => KEPT_PATHS.some((prefix) => (prefix.endsWith('/') ? path.startsWith(prefix) : path === prefix)))
+            if (kept.length > 0) fail(`It changes files main's backports never change: ${kept.map(({path}) => path).join(', ')}.`)
+            const changesets = changes.filter(({path}) => changesetPath(path))
+            const otherChangesets = changesets.filter(({status}) => status !== 'A')
+            if (otherChangesets.length > 0) fail(`It edits or deletes changesets: ${otherChangesets.map(({path}) => path).join(', ')}.`)
+            if (changesets.length === 0) fail('It adds no changeset, so it isn\'t a backport of a fix.')
+            const fixed = fixedGroup(lineHead)
+            for (const {path} of changesets) {
+              if (!/^\.changeset\/[A-Za-z0-9._-]+\.md$/.test(path)) fail(`Unexpected changeset name: ${path}.`)
+              const bumps = changesetBumps(fileAt(HEAD_SHA, path))
+              if (!bumps || bumps.length === 0) fail(`${path} declares no package bumps.`)
+              for (const [name, bump] of bumps) {
+                if (bump !== 'patch' || !fixed.has(name)) fail(`${path} bumps ${name ?? 'an unreadable entry'} ${bump ?? ''}; a backport carries only patch changesets for the fixed group.`)
+              }
+            }
+            // The first commit on main that added each changeset. One backport brings one change, so they
+            // must all be the same commit.
+            const origins = new Set()
+            for (const {path} of changesets) {
+              const commits = run('gh', ['api', '--paginate', `repos/${repository}/commits?sha=main&path=${encodeURIComponent(path)}&per_page=100`, '--jq', '.[].sha'])
+                .split('\n')
+                .filter(Boolean)
+                .reverse()
+              const origin = commits.find((commit) => {
+                git('fetch', '--quiet', '--no-tags', '--depth=2', 'origin', commit)
+                return fileAt(commit, path) !== undefined && fileAt(`${commit}^1`, path) === undefined
+              })
+              if (!origin) fail(`main has never added ${path}, so this isn't a backport of a change main already has.`)
+              origins.add(origin)
+            }
+            if (origins.size !== 1) fail(`Its changesets came to main in different commits: ${[...origins].join(', ')}. Backport them one at a time.`)
+            const [origin] = origins
+            // Merging the backport into that main commit, from the backport's own base, must leave the
+            // commit unchanged: then every change the backport makes is already on main.
+            let mergedTree
+            try {
+              mergedTree = run('git', ['merge-tree', '--write-tree', '--no-messages', `--merge-base=${mergeBase}`, origin, HEAD_SHA]).split('\n')[0]
+            } catch {
+              fail(`Its changes conflict with main's ${origin}, so they aren't the same changes.`)
+            }
+            if (mergedTree !== git('rev-parse', `${origin}^{tree}`)) {
+              fail(`It changes things that main's ${origin} doesn't have.`)
+            }
+            pass(`#${PR_NUMBER} backports main's ${origin}: its ${changesets.length} changeset(s) are patch changesets for the fixed group, and everything it changes since ${mergeBase} is already in ${origin}.`)
+          }
+          SCRIPT
+          node check.mjs
