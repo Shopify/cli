@@ -190,9 +190,19 @@ jobs:
             pass(`#${PR_NUMBER} releases ${newVersion}: one commit on ${BASE_REF}'s head ${lineHead} that only versions the packages and consumes ${deleted.size} changeset(s).`)
           }
 
+          // The file keeps every line, and only lines matching `pattern` change. A JSON comparison alone
+          // would miss what JSON.parse normalizes away, such as a duplicated key.
+          function checkChangedLines(path, pattern) {
+            const old = fileAt(lineHead, path).split('\n')
+            const next = fileAt(HEAD_SHA, path).split('\n')
+            const changed = old.length === next.length && old.every((line, index) => line === next[index] || (pattern.test(line) && pattern.test(next[index])))
+            if (!changed) fail(`${path} changes lines other than versions.`)
+          }
+
           // A package.json may change only its version and its exact dependencies on workspace packages,
           // each moving from that package's old version to its new one.
           function checkPackageManifest(path, packageName, before, after) {
+            checkChangedLines(path, /^\s*"(version|@shopify\/[a-z0-9-]+)": "\d+\.\d+\.\d+",?$/)
             const old = before[packageName].manifest
             const next = after[packageName].manifest
             const stripped = (manifest) => {
@@ -230,6 +240,7 @@ jobs:
 
           // An oclif manifest only changes its version.
           function checkOclifManifest(path, version) {
+            checkChangedLines(path, /^\s*"version": "\d+\.\d+\.\d+",?$/)
             const old = JSON.parse(fileAt(lineHead, path))
             const next = JSON.parse(fileAt(HEAD_SHA, path))
             if (next.version !== version || JSON.stringify({...old, version}) !== JSON.stringify(next)) fail(`${path} must only change its version to ${version}.`)
