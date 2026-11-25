@@ -41,7 +41,7 @@ jobs:
           mkdir "$RUNNER_TEMP/provenance"
           cd "$RUNNER_TEMP/provenance"
           cat > check.mjs <<'SCRIPT'
-          import {execFileSync} from 'node:child_process'
+          import {execFileSync, spawnSync} from 'node:child_process'
           import {appendFileSync} from 'node:fs'
 
           const {GITHUB_REPOSITORY: repository, PR_NUMBER, BASE_REF, HEAD_REF, HEAD_SHA, HEAD_REPO} = process.env
@@ -88,12 +88,25 @@ jobs:
             }
           }
           const changesetPath = (path) => /^\.changeset\/[^/]+\.md$/.test(path) && path !== '.changeset/README.md'
-          // [{status, path}] for base..head, without rename detection, and with paths exactly as stored.
+          // [{status, path, oldMode, newMode}] for base..head, without rename detection, and with paths
+          // exactly as stored.
           function changedFiles(base, head) {
-            const fields = run('git', ['diff', '--name-status', '--no-renames', '-z', base, head]).split('\0')
+            const fields = run('git', ['diff', '--raw', '--no-renames', '--no-abbrev', '-z', base, head]).split('\0')
             const changes = []
-            for (let index = 0; index + 1 < fields.length; index += 2) changes.push({status: fields[index], path: fields[index + 1]})
+            for (let index = 0; index + 1 < fields.length; index += 2) {
+              const [oldMode, newMode, , , status] = fields[index].replace(/^:/, '').split(' ')
+              changes.push({status, path: fields[index + 1], oldMode, newMode})
+            }
             return changes
+          }
+          // "<mode> <type> <object>" for a path at a commit, or '' when it isn't there.
+          const entryAt = (commit, path) => git('ls-tree', '--full-tree', commit, '--', path).split('\t')[0]
+          function api(path) {
+            try {
+              return JSON.parse(run('gh', ['api', path]))
+            } catch (error) {
+              fail(`Reading ${path} from GitHub failed: ${error.stderr?.toString().trim() || error.message}`)
+            }
           }
           // {name: {directory, version, manifest}} for the workspace packages at a commit.
           function packagesAt(commit) {
@@ -123,6 +136,9 @@ jobs:
           }
 
           git('init', '--quiet', '.')
+          // Background maintenance after a fetch can hold the shallow lock while the next fetch starts.
+          git('config', 'maintenance.auto', 'false')
+          git('config', 'gc.auto', '0')
           git('remote', 'add', 'origin', `https://github.com/${repository}`)
           const lineHead = git('ls-remote', 'origin', `refs/heads/${BASE_REF}`).split('\t')[0]
           if (!/^[0-9a-f]{40}$/.test(lineHead)) fail(`Couldn't read the head of ${BASE_REF}.`)
@@ -164,17 +180,21 @@ jobs:
               .filter(changesetPath)
             if (pending.length === 0) fail(`${BASE_REF} has no pending changesets, so there's nothing to release.`)
             const deleted = new Set()
-            for (const {status, path} of changedFiles(lineHead, HEAD_SHA)) {
+            const changes = changedFiles(lineHead, HEAD_SHA)
+            const entries = changesetEntries(changes.filter(({status, path}) => changesetPath(path) && status === 'D').map(({path}) => path))
+            for (const {status, path, oldMode, newMode} of changes) {
               const directory = /^packages\/([^/]+)\//.exec(path)?.[1]
               const packageName = Object.keys(after).find((name) => after[name].directory === directory)
               if (changesetPath(path) && status === 'D') {
                 deleted.add(path)
               } else if (status !== 'M') {
                 fail(`${path} is ${status === 'A' ? 'added' : 'deleted'}; a version bump only edits files and deletes changesets.`)
+              } else if (oldMode !== '100644' || newMode !== '100644') {
+                fail(`${path} changes mode from ${oldMode} to ${newMode}; a version bump only edits regular files.`)
               } else if (packageName && path === `packages/${directory}/package.json`) {
                 checkPackageManifest(path, packageName, before, after)
               } else if (packageName && path === `packages/${directory}/CHANGELOG.md`) {
-                checkChangelog(path, after[packageName].version)
+                checkChangelog(path, after[packageName].version, entries, after)
               } else if (packageName && path === `packages/${directory}/oclif.manifest.json`) {
                 checkOclifManifest(path, after[packageName].version)
               } else if (path === VERSION_FILE) {
@@ -226,15 +246,37 @@ jobs:
             }
           }
 
-          // A changelog only gains a section for the new version at the top.
-          function checkChangelog(path, version) {
+          // The changelog lines .changeset/changelog.cjs writes for the consumed changesets.
+          function changesetEntries(paths) {
+            const lines = new Set()
+            for (const path of paths) {
+              const summary = (fileAt(lineHead, path) ?? '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').trim()
+              const [first, ...others] = summary.split('\n').map((line) => line.trimEnd())
+              lines.add(`- ${first}`)
+              for (const line of others) lines.add(`  ${line}`)
+            }
+            return lines
+          }
+
+          // A changelog only gains a section for the new version at the top, made of the consumed
+          // changesets' entries and the workspace dependencies at their new versions.
+          function checkChangelog(path, version, entries, after) {
             const old = fileAt(lineHead, path)
             const next = fileAt(HEAD_SHA, path)
             const title = /^# [^\n]*\n\n/.exec(old)?.[0]
             const rest = old.slice(title?.length ?? 0)
             const added = next.slice(title?.length ?? 0, next.length - rest.length)
-            if (!title || !next.startsWith(title) || !next.endsWith(rest) || !added.startsWith(`## ${version}\n`) || /^## /m.test(added.slice(1))) {
+            if (!title || !next.startsWith(title) || !next.endsWith(rest) || !added.startsWith(`## ${version}\n`)) {
               fail(`${path} must only gain a "## ${version}" section at the top.`)
+            }
+            const headings = new Set(['', '### Patch Changes', '- Updated dependencies'])
+            for (const line of added.split('\n').slice(1)) {
+              // `  - name@version` under "- Updated dependencies", or `- name@version` on older lines.
+              const dependency = /^(?:  )?- (@shopify\/[a-z0-9-]+)@(\S+)$/.exec(line)
+              // Older lines' changelogs prefix each entry with the commit that added its changeset.
+              const entry = line.replace(/^- [0-9a-f]{7,40}: /, '- ')
+              if (headings.has(line) || entries.has(entry) || (dependency && after[dependency[1]]?.version === dependency[2])) continue
+              fail(`${path}'s new section has a line that no consumed changeset or dependency update writes: ${JSON.stringify(line.slice(0, 120))}`)
             }
           }
 
@@ -268,26 +310,33 @@ jobs:
             }
           }
 
-          // A backport: it carries only patch changesets for the fixed group, changes only paths that come
-          // from main's mirrored history, and everything it changes is already in the main commit that
-          // added its changesets.
+          // A backport: it builds on the line's head, carries only patch changesets for the fixed group,
+          // and every file it changes is, whole, what the main commit that added its changesets does to
+          // that file when applied to the line's head. That commit must have reached main after the line
+          // was cut from it: an older one could carry files the line has since fixed.
           function checkBackport() {
-            const mergeBase = git('merge-base', lineHead, HEAD_SHA)
-            const changes = changedFiles(mergeBase, HEAD_SHA)
+            for (const depth of [50, 200, 1000, 5000]) {
+              if (gitSucceeds('merge-base', '--is-ancestor', lineHead, HEAD_SHA)) break
+              git('fetch', '--quiet', '--no-tags', `--depth=${depth}`, 'origin', HEAD_SHA)
+            }
+            if (!gitSucceeds('merge-base', '--is-ancestor', lineHead, HEAD_SHA)) {
+              fail(`${HEAD_SHA} doesn't build on ${BASE_REF}'s head ${lineHead}. Update the branch.`)
+            }
+            const changes = changedFiles(lineHead, HEAD_SHA)
             if (changes.length === 0) fail('The pull request changes nothing.')
             const kept = changes.filter(({path}) => KEPT_PATHS.some((prefix) => (prefix.endsWith('/') ? path.startsWith(prefix) : path === prefix)))
             if (kept.length > 0) fail(`It changes files main's backports never change: ${kept.map(({path}) => path).join(', ')}.`)
             const changesets = changes.filter(({path}) => changesetPath(path))
             const otherChangesets = changesets.filter(({status}) => status !== 'A')
             if (otherChangesets.length > 0) fail(`It edits or deletes changesets: ${otherChangesets.map(({path}) => path).join(', ')}.`)
-            if (changesets.length === 0) fail('It adds no changeset, so it isn\'t a backport of a fix.')
+            if (changesets.length === 0) fail("It adds no changeset, so it isn't a backport of a fix.")
             const fixed = fixedGroup(lineHead)
             for (const {path} of changesets) {
               if (!/^\.changeset\/[A-Za-z0-9._-]+\.md$/.test(path)) fail(`Unexpected changeset name: ${path}.`)
               const bumps = changesetBumps(fileAt(HEAD_SHA, path))
-              if (!bumps || bumps.length === 0) fail(`${path} declares no package bumps.`)
+              if (!bumps || bumps.length === 0 || bumps.some(([name]) => name === undefined)) fail(`${path} has front matter this check can't read.`)
               for (const [name, bump] of bumps) {
-                if (bump !== 'patch' || !fixed.has(name)) fail(`${path} bumps ${name ?? 'an unreadable entry'} ${bump ?? ''}; a backport carries only patch changesets for the fixed group.`)
+                if (bump !== 'patch' || !fixed.has(name)) fail(`${path} bumps ${name} ${bump}; a backport carries only patch changesets for the fixed group.`)
               }
             }
             // The first commit on main that added each changeset. One backport brings one change, so they
@@ -307,18 +356,22 @@ jobs:
             }
             if (origins.size !== 1) fail(`Its changesets came to main in different commits: ${[...origins].join(', ')}. Backport them one at a time.`)
             const [origin] = origins
-            // Merging the backport into that main commit, from the backport's own base, must leave the
-            // commit unchanged: then every change the backport makes is already on main.
-            let mergedTree
-            try {
-              mergedTree = run('git', ['merge-tree', '--write-tree', '--no-messages', `--merge-base=${mergeBase}`, origin, HEAD_SHA]).split('\n')[0]
-            } catch {
-              fail(`Its changes conflict with main's ${origin}, so they aren't the same changes.`)
+            if (git('rev-list', '--parents', '-n', '1', origin).split(' ').length !== 2) fail(`main's ${origin} isn't a single-parent commit.`)
+            const cut = api(`repos/${repository}/compare/main...${encodeURIComponent(BASE_REF)}`).merge_base_commit?.sha
+            if (!cut || api(`repos/${repository}/compare/${cut}...${origin}`).status !== 'ahead') {
+              fail(`main's ${origin} isn't newer than ${BASE_REF}'s cut from main ${cut}, so it can't be a fix the line lacks.`)
             }
-            if (mergedTree !== git('rev-parse', `${origin}^{tree}`)) {
-              fail(`It changes things that main's ${origin} doesn't have.`)
+            // main's commit applied to the line's head, and the files it changes.
+            const merged = spawnSync('git', ['merge-tree', '--write-tree', '--name-only', '--no-messages', `--merge-base=${origin}^1`, lineHead, origin], {encoding: 'utf8', maxBuffer: 64 * 1024 * 1024})
+            if (merged.status !== 0 && merged.status !== 1) fail(`Couldn't apply main's ${origin} to ${BASE_REF}: ${merged.stderr.trim()}`)
+            const [mergedTree, ...conflicted] = merged.stdout.trim().split('\n')
+            const changedByOrigin = new Set(changedFiles(`${origin}^1`, origin).map(({path}) => path))
+            for (const {path} of changes) {
+              if (!changedByOrigin.has(path)) fail(`It changes ${path}, which main's ${origin} doesn't change.`)
+              if (conflicted.includes(path)) fail(`main's ${origin} doesn't apply cleanly to ${path} on ${BASE_REF}.`)
+              if (entryAt(mergedTree, path) !== entryAt(HEAD_SHA, path)) fail(`Its ${path} isn't main's ${origin} applied to ${BASE_REF}.`)
             }
-            pass(`#${PR_NUMBER} backports main's ${origin}: its ${changesets.length} changeset(s) are patch changesets for the fixed group, and everything it changes since ${mergeBase} is already in ${origin}.`)
+            pass(`#${PR_NUMBER} backports main's ${origin}: its ${changesets.length} changeset(s) are patch changesets for the fixed group, and each of the ${changes.length} file(s) it changes is that commit's change applied to ${BASE_REF}'s head ${lineHead}.`)
           }
           SCRIPT
           node check.mjs
