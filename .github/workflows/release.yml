@@ -41,21 +41,43 @@ jobs:
     name: Version Packages
     if: github.event_name == 'push' && startsWith(github.ref_name, 'stable/')
     runs-on: ubuntu-latest
+    # The bump must version the line's newest commit. Push runs aren't serialized and don't always
+    # start in push order, so these jobs run one at a time per line, in order, and a job whose commit
+    # is no longer the line's head leaves the bump to the job for that head. None is cancelled, so
+    # every run still decides whether its own push publishes.
+    concurrency:
+      group: version-packages-${{ github.ref_name }}
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: write
       pull-requests: write
     outputs:
       has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
     steps:
+      - name: Check the push is the line's head
+        id: line-head
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY" "refs/heads/$GITHUB_REF_NAME" | cut -f 1)
+          if [ "$HEAD_SHA" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$GITHUB_REF_NAME is now at $HEAD_SHA, so the run for that push versions the line"
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v6
+        if: steps.line-head.outputs.current == 'true'
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 0
       - name: Setup deps
+        if: steps.line-head.outputs.current == 'true'
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 24.22.1
       - name: Create Release Pull Request
+        if: steps.line-head.outputs.current == 'true'
         id: changesets
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
         with:
@@ -67,7 +89,7 @@ jobs:
       # A line cut from a main that hasn't caught up with the last release would compute a version
       # npm already has, and its release would then publish nothing.
       - name: Refuse a version npm already has
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.line-head.outputs.current == 'true' }}
         run: |
           set -euo pipefail
           BRANCH="changeset-release/$GITHUB_REF_NAME"
