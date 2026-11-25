@@ -22,6 +22,8 @@ env:
   DEFAULT_NODE_VERSION: '26.12.1'
   PLAYWRIGHT_NODE_VERSION: '24.22.1'
 
+# Each job checks out the commit the event names, not the branch's current tip, so a check reported
+# on a commit always tested that commit, even if the branch moved while the job waited for a runner.
 jobs:
   type-check:
     name: 'Type check'
@@ -31,7 +33,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -48,7 +50,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -65,7 +67,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -84,7 +86,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -105,7 +107,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -128,7 +130,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -199,7 +201,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -232,7 +234,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -270,7 +272,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
@@ -359,7 +361,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           # Full history so `git merge-base origin/<base> HEAD` (used by
           # major-change-check.js) can reach the divergence point.
           fetch-depth: 0
