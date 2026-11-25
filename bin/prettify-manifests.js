@@ -4,7 +4,9 @@ import fs from 'fs'
 import {fileURLToPath} from 'url'
 import glob from 'fast-glob'
 import path from 'path'
-import stringify from 'json-stringify-deterministic'
+import {configure} from 'safe-stable-stringify'
+
+const stringify = configure({strict: true})
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(path.join(__dirname, '..'))
@@ -18,6 +20,6 @@ for (const file of manifestFiles) {
     // Runtime schemas belong to command classes, not cached metadata.
     delete command.jsonOutputSchema
   }
-  const prettyContent = stringify(manifest, {space: '  '}).replaceAll(root, '.')
+  const prettyContent = stringify(manifest, null, 2).replaceAll(root, '.')
   fs.writeFileSync(file, prettyContent)
 }
