@@ -297,7 +297,8 @@ ${outputToken.json(applications)}
 
 async function throwOnNoPrompt(noPrompt: boolean) {
   if (!noPrompt) return
-  await sessionStore.remove()
+  // Don't clear the session store here: it is shared with every other CLI process on the machine
+  // (e.g. other `theme dev` instances), and a non-interactive process failing must not log them out.
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 
