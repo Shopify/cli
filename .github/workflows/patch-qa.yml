@@ -1,0 +1,230 @@
+name: Patch QA
+
+# Tests every pull request into a stable line with the @shopify/cli tarball that a release of its
+# head would publish: installs it on each supported platform, runs the checks that need no Shopify
+# account, and compares its files with the line's last release. Nothing is published.
+on:
+  pull_request:
+    branches:
+      - 'stable/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: patch-qa-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PNPM_VERSION: '10.11.1'
+
+jobs:
+  package:
+    name: Build the release tarball
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      tarball: ${{ steps.pack.outputs.tarball }}
+      version: ${{ steps.pack.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Verify the checked-out commit
+        env:
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(git rev-parse HEAD)
+          if [ "$HEAD_SHA" != "$SHA" ]; then
+            echo "::error::Checked out $HEAD_SHA instead of $SHA."
+            exit 1
+          fi
+
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 24.22.1
+
+      # The same build the release runs, before it publishes.
+      - name: Bundle
+        run: pnpm bundle-for-release
+        env:
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
+
+      # The release's prepack also generates the manifest and copies the README. Its error-reporting
+      # source map upload is left out, and the tarball excludes source maps either way.
+      - name: Pack @shopify/cli
+        id: pack
+        working-directory: packages/cli
+        run: |
+          set -euo pipefail
+          pnpm oclif manifest
+          cp ../../README.md README.md
+          TARBALL=$(npm pack --ignore-scripts | tail -n 1)
+          VERSION=$(tar -xzOf "$TARBALL" package/package.json | node -p 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).version')
+          {
+            echo "tarball=$TARBALL"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload the tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: shopify-cli-${{ github.event.pull_request.head.sha }}
+          path: packages/cli/${{ steps.pack.outputs.tarball }}
+          if-no-files-found: error
+          # The tarball is already compressed.
+          compression-level: 0
+
+      # A patch release should ship the same files as the release before it. Bundle chunk names carry
+      # a content hash, which changes with any code change, so they're compared by count only.
+      - name: Compare the files with the line's last release
+        working-directory: packages/cli
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          VERSION: ${{ steps.pack.outputs.version }}
+        run: |
+          set -euo pipefail
+          # The highest release of this major.minor that isn't newer than this version. A pull
+          # request that doesn't change the version compares with the release of that version.
+          PREVIOUS=$(npm view @shopify/cli versions --json --registry=https://registry.npmjs.org/ | node -e '
+            const [major, minor, patch] = process.argv[1].split(".").map(Number)
+            const versions = JSON.parse(require("node:fs").readFileSync(0, "utf8"))
+            const previous = versions
+              .filter((version) => /^\d+\.\d+\.\d+$/.test(version))
+              .map((version) => version.split(".").map(Number))
+              .filter((parts) => parts[0] === major && parts[1] === minor && parts[2] <= patch)
+              .sort((a, b) => b[2] - a[2])[0]
+            console.log(previous ? previous.join(".") : "")
+          ' "$VERSION")
+          if [ -z "$PREVIOUS" ]; then
+            echo "::notice::No earlier ${VERSION%.*} release on npm, so there's nothing to compare $VERSION's files with."
+            {
+              echo "### @shopify/cli $VERSION files"
+              echo
+              echo "No earlier ${VERSION%.*} release to compare with."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          PREVIOUS_URL=$(npm view "@shopify/cli@$PREVIOUS" dist.tarball --registry=https://registry.npmjs.org/)
+          curl --fail --silent --show-error --location --retry 3 --output "$RUNNER_TEMP/previous.tgz" "$PREVIOUS_URL"
+
+          # esbuild names chunks like dist/chunk-2AW3KBTP.js: an 8-character hash before .js.
+          list_files() {
+            tar -tzf "$1" | sed -E 's/-[A-Z0-9]{8}\.js$/-[hash].js/' | LC_ALL=C sort
+          }
+          list_files "$TARBALL" > "$RUNNER_TEMP/current-files.txt"
+          list_files "$RUNNER_TEMP/previous.tgz" > "$RUNNER_TEMP/previous-files.txt"
+          CURRENT_COUNT=$(wc -l < "$RUNNER_TEMP/current-files.txt" | tr -d ' ')
+          PREVIOUS_COUNT=$(wc -l < "$RUNNER_TEMP/previous-files.txt" | tr -d ' ')
+          # comm on sorted lists pairs repeated lines one to one, so this compares them as multisets.
+          ADDED=$(LC_ALL=C comm -13 "$RUNNER_TEMP/previous-files.txt" "$RUNNER_TEMP/current-files.txt" | uniq -c)
+          REMOVED=$(LC_ALL=C comm -23 "$RUNNER_TEMP/previous-files.txt" "$RUNNER_TEMP/current-files.txt" | uniq -c)
+
+          if [ -z "$ADDED" ] && [ -z "$REMOVED" ]; then
+            RESULT="Same files"
+          else
+            RESULT="Different files"
+          fi
+          {
+            echo "### @shopify/cli $VERSION files"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Version | \`$VERSION\` |"
+            echo "| Compared with | \`$PREVIOUS\` |"
+            echo "| Files in $VERSION | $CURRENT_COUNT |"
+            echo "| Files in $PREVIOUS | $PREVIOUS_COUNT |"
+            echo "| Result | $RESULT |"
+            if [ "$RESULT" != "Same files" ]; then
+              echo
+              echo "Added (count, file):"
+              echo
+              echo '```'
+              echo "${ADDED:-none}"
+              echo '```'
+              echo
+              echo "Removed (count, file):"
+              echo
+              echo '```'
+              echo "${REMOVED:-none}"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$RESULT" = "Same files" ]; then
+            echo "$VERSION has the same $CURRENT_COUNT files as $PREVIOUS, apart from chunk hashes."
+            exit 0
+          fi
+          MESSAGE="$VERSION's files differ from $PREVIOUS's ($CURRENT_COUNT files, was $PREVIOUS_COUNT). A patch release should ship the same files.
+          Added (count, file):
+          ${ADDED:-none}
+          Removed (count, file):
+          ${REMOVED:-none}"
+          # Annotations are one line: escape % and encode newlines.
+          NEWLINE=$'\n'
+          PERCENT=%
+          MESSAGE=${MESSAGE//$PERCENT/%25}
+          MESSAGE=${MESSAGE//$NEWLINE/%0A}
+          echo "::error::$MESSAGE"
+          exit 1
+
+  install:
+    name: Patch QA on ${{ matrix.os }}
+    needs: package
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-latest]
+    steps:
+      # Only the smoke test script, so no project files affect the global install.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts/smoke-test-cli.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.22.1
+
+      - name: Download the tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: shopify-cli-${{ github.event.pull_request.head.sha }}
+          path: tarball
+
+      - name: Install @shopify/cli globally
+        shell: bash
+        env:
+          TARBALL: ${{ needs.package.outputs.tarball }}
+        run: |
+          set -euo pipefail
+          npm install -g "./tarball/$TARBALL" --registry=https://registry.npmjs.org/
+
+      - name: Run the smoke tests
+        shell: bash
+        env:
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          set -euo pipefail
+          bash .github/scripts/smoke-test-cli.sh "$VERSION"
+
+  gate:
+    name: Patch QA
+    needs: [package, install]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify the tarball and every platform passed
+        if: needs.package.result != 'success' || needs.install.result != 'success'
+        run: exit 1
