@@ -101,7 +101,7 @@ const SLO_QUERY = `
   query($id: ID!) {
     sloDefinition(id: $id) {
       id name objective summary message description alertType
-      useRecordingRules v2Enabled v2Summary v2Message escalatorEnabled
+      useRecordingRules v2Enabled v2Summary v2Message observeAiEnabled
       threshold { critical warning for aggregation lookback }
       urls { href displayText }
       labels { name value }
@@ -131,8 +131,8 @@ const RULE_QUERY = `
     ruleConfig(id: $id) {
       id name expression for sustainType interval summary message
       dataSourceType disabled noData offsetOverrideSeconds
-      v2Enabled v2Summary v2Message escalatorEnabled
-      errorAlertFlavor customErrorFilters includedVersionCount
+      v2Enabled v2Summary v2Message observeAiEnabled
+      errorAlertFlavor customErrorFilters includedVersionCount disableGrouping maxGroups
       threshold { critical warning operator type }
       urls { href displayText }
       labels { name value }
@@ -189,7 +189,7 @@ const buildSloInput = (live, resource) => {
     v2Enabled: live.v2Enabled,
     v2Summary: live.v2Summary || undefined,
     v2Message: live.v2Message || undefined,
-    escalatorEnabled: live.escalatorEnabled,
+    observeAiEnabled: live.observeAiEnabled,
     notificationPolicyId: live.notificationPolicy?.id,
     threshold: live.threshold
       ? stripUndefined({
@@ -267,12 +267,14 @@ const buildRuleInput = (live, resource) => {
     v2Enabled: live.v2Enabled,
     v2Summary: live.v2Summary || undefined,
     v2Message: live.v2Message || undefined,
-    escalatorEnabled: live.escalatorEnabled,
+    observeAiEnabled: live.observeAiEnabled,
     notificationPolicyId: live.notificationPolicy?.id,
     servicesDbServiceName: live.servicesDbService?.name,
     errorAlertFlavor: live.errorAlertFlavor,
     customErrorFilters: patchVersionInFilterJson(live.customErrorFilters, resource.versionFilterColumn),
     includedVersionCount: live.includedVersionCount,
+    disableGrouping: live.disableGrouping,
+    maxGroups: live.maxGroups,
     threshold: live.threshold
       ? stripUndefined({
           critical: live.threshold.critical,

@@ -53,7 +53,9 @@ test.each([
     expect(stderr()).toContain('Language server diagnostic')
     expect(stderr()).not.toContain('"type":"diagnostic"')
   })
-  expect(startServer).toHaveBeenCalledExactlyOnceWith()
+  expect(startServer).toHaveBeenCalledExactlyOnceWith(undefined, undefined, {
+    authorizeCustomChecks: expect.any(Function),
+  })
 })
 
 test.each([{argv: []}, {argv: ['--json']}, {argv: ['-j']}])(
@@ -142,4 +144,19 @@ test('documents the native protocol and JSON flag policy', () => {
   expect(LanguageServer.flags).toHaveProperty('json')
   expect(LanguageServer.descriptionForHelp()).toContain('Content-Length')
   expect(LanguageServer.flags.json.description).toContain('native LSP output')
+})
+
+test.each([
+  {argv: [], allowed: false},
+  {argv: ['--allow-custom-checks'], allowed: true},
+  {argv: [], environment: '1', allowed: true},
+  {argv: ['--no-allow-custom-checks'], environment: '1', allowed: false},
+])('forwards custom check permission to the language server with $argv', async ({argv, environment, allowed}) => {
+  vi.stubEnv('SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS', environment)
+  const instance = new TestLanguageServer(argv, await Config.load())
+  await instance.execute()
+  const options = vi.mocked(startServer).mock.calls[0]?.[2]
+  await expect(Promise.resolve(options?.authorizeCustomChecks?.({root: '/theme', candidates: []}))).resolves.toBe(
+    allowed,
+  )
 })

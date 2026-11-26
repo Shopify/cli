@@ -144,7 +144,7 @@ describe('push result', () => {
         renderThemePushResult(pushResult(), 'json')
       })
 
-      expect(runThemeCheck).toHaveBeenCalledWith('/theme', 'silent')
+      expect(runThemeCheck).toHaveBeenCalledWith('/theme', 'silent', undefined, undefined, {})
       expect(JSON.parse(stdout())).toEqual(themePushJsonResult(pushResult()))
       expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level, code: 'check'})
     })

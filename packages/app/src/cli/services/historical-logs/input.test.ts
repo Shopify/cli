@@ -11,9 +11,18 @@ function window(input: Pick<LogInput, 'since' | 'until'> = {}) {
   return resolveLogWindow(prepareLogInput(input).window)
 }
 
-test('defaults to both types and a bounded shared limit', () => {
+test('defaults to all supported types and a bounded shared limit', () => {
   expect(prepareLogInput({})).toMatchObject({
-    types: [{backend: 'WEBHOOK_DELIVERY'}, {backend: 'GRAPHQL_REQUEST'}],
+    types: [
+      {backend: 'WEBHOOK'},
+      {backend: 'GRAPHQL_REQUEST'},
+      {backend: 'FUNCTION_RUN'},
+      {backend: 'APP_EVENT'},
+      {backend: 'APP_BILLING_EVENT'},
+      {backend: 'REST_REQUEST'},
+      {backend: 'SIDEKICK_EVENT'},
+      {backend: 'UI_EXTENSION'},
+    ],
     limit: 20,
     filters: [],
   })
@@ -93,7 +102,12 @@ test('maps every GraphQL flag without assuming Admin API or parsing opaque value
 
 test.each([
   [{type: ['graphql,webhook']}, 'Supported log types'],
-  [{type: ['function']}, 'Supported log types'],
+  [{type: ['unsupported']}, 'Supported log types'],
+  [{method: ' '}, 'nonempty'],
+  [{'request-path': ' '}, 'nonempty'],
+  [{'function-handle': ' '}, 'nonempty'],
+  [{target: ' '}, 'nonempty'],
+  [{'event-handle': ' '}, 'nonempty'],
   [{type: []}, 'at least one'],
   [{'status-code': '5xx'}, 'exact code'],
   [{topic: 'orders/*'}, 'slash-form'],
@@ -111,6 +125,24 @@ test.each([
   expect(() => prepareLogInput(input)).toThrow(message)
 })
 
+test('unsupported types list the supported selections', () => {
+  expect(() => prepareLogInput({type: 'unsupported'})).toThrow(
+    'Supported log types are webhook, graphql, function, app-event, app-billing-event, rest, sidekick, and ui-extension.',
+  )
+})
+
+test('preserves exact REST filter values without normalizing methods or paths', () => {
+  expect(
+    prepareLogInput({type: 'rest', method: 'get', 'request-path': '/admin/api/products.json?ids=1,2'}),
+  ).toMatchObject({
+    types: [{name: 'rest', backend: 'REST_REQUEST'}],
+    filters: [
+      {field: 'METHOD', operator: 'EQUALS', value: 'get'},
+      {field: 'REQUEST_PATH', operator: 'EQUALS', value: '/admin/api/products.json?ids=1,2'},
+    ],
+  })
+})
+
 test('preserves all AND filters even when their types do not overlap', () => {
   expect(prepareLogInput({topic: 'orders/create', 'operation-name': 'MyQuery'}).filters).toEqual([
     {field: 'TOPIC', operator: 'EQUALS', value: 'orders/create'},
@@ -121,10 +153,13 @@ test('preserves all AND filters even when their types do not overlap', () => {
   ])
 })
 
-test('enforces the byte limit without truncating filter values', () => {
-  expect(prepareLogInput({'operation-name': 'é'.repeat(512)}).filters[0]?.value).toBe('é'.repeat(512))
-  expect(() => prepareLogInput({'operation-name': 'é'.repeat(513)})).toThrow('1024 UTF-8 bytes')
-})
+test.each(['operation-name', 'function-handle', 'target', 'event-handle', 'method', 'request-path'])(
+  'enforces the byte limit without truncating --%s',
+  (flag) => {
+    expect(prepareLogInput({[flag]: 'é'.repeat(512)}).filters[0]?.value).toBe('é'.repeat(512))
+    expect(() => prepareLogInput({[flag]: 'é'.repeat(513)})).toThrow('1024 UTF-8 bytes')
+  },
+)
 
 test('anchors the default hour to the local clock truncated to whole seconds', () => {
   vi.setSystemTime(new Date('2026-10-06T14:02:03.987Z'))
@@ -141,16 +176,34 @@ test('normalizes whole-second offset inputs to UTC and makes since relative to u
   })
 })
 
-test.each([
-  [{since: '8d'}, {since: '2026-09-28T14:00:00Z', until: '2026-10-06T14:00:00Z'}],
-  [
-    {since: '2026-09-01T14:00:00Z', until: '2026-09-09T14:00:00Z'},
-    {since: '2026-09-01T14:00:00Z', until: '2026-09-09T14:00:00Z'},
-  ],
-  [{until: '2026-10-06T14:02:00Z'}, {since: '2026-10-06T13:02:00Z', until: '2026-10-06T14:02:00Z'}],
-])('leaves time-policy eligibility to the server for %j', (input, expected) => {
-  expect(window(input)).toEqual(expected)
+test('accepts windows at the API limits', () => {
+  expect(window({since: '1d'})).toEqual({since: '2026-10-05T14:00:00Z', until: '2026-10-06T14:00:00Z'})
+  expect(window({since: '2026-09-29T14:00:00Z', until: '2026-09-29T15:00:00Z'})).toEqual({
+    since: '2026-09-29T14:00:00Z',
+    until: '2026-09-29T15:00:00Z',
+  })
+  expect(window({until: '2026-10-06T14:01:00Z'})).toEqual({
+    since: '2026-10-06T13:01:00Z',
+    until: '2026-10-06T14:01:00Z',
+  })
 })
+
+test.each([
+  [{since: '8d'}, '--since must be within the last 7 days.'],
+  [{since: '2026-09-29T13:59:59Z', until: '2026-09-29T14:30:00Z'}, '--since must be within the last 7 days.'],
+  [{until: '2026-09-28T14:00:00Z'}, '--since must be within the last 7 days.'],
+  [{since: '2d'}, '--since and --until must be at most 1 day apart (--until is the current time by default).'],
+  [
+    {since: '2026-10-04T14:00:00Z', until: '2026-10-05T14:00:01Z'},
+    '--since and --until must be at most 1 day apart (--until is the current time by default).',
+  ],
+  [{until: '2026-10-06T14:01:01Z'}, '--until must not be more than 1 minute in the future.'],
+] satisfies [LogInput, string][])(
+  'rejects windows outside the API limits for %j with the flag to change',
+  (input, message) => {
+    expect(() => window(input)).toThrow(expect.objectContaining({code: 'invalid-argument', message}))
+  },
+)
 
 test.each([
   {since: '0h'},

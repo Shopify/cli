@@ -25,10 +25,7 @@ declare global {
     }
 
     interface OutboundPersistEvents {
-      update: {
-        extensions?: ({uuid: string} & DeepPartial<ExtensionPayload>)[]
-        app?: DeepPartial<App>
-      }
+      update: UpdatePersistPayload
     }
 
     interface DispatchEvents {
@@ -65,8 +62,29 @@ declare global {
   }
 }
 
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>
+// `unknown` stays `unknown`: a mapped type would turn it into `{}`, which rejects full payloads.
+export type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>
+    }
+  : T
+
+type ExtensionPointUpdate = Pick<ExtensionPoint, 'target'> & DeepPartial<ExtensionPoint>
+
+type ExtensionUpdate = Pick<ExtensionPayload, 'uuid'> &
+  DeepPartial<Omit<ExtensionPayload, 'extensionPoints'>> & {
+    extensionPoints?: string[] | ExtensionPointUpdate[] | null
+  }
+
+/**
+ * The payload of the `update` event that a client persists to the extension server.
+ * The server merges it into its own payload, so a client sends only the fields that change.
+ * It finds what to change by the extension's `uuid`, the extension point's `target` and the app's `apiKey`.
+ * It ignores the whole message when one of them is missing, or when the `apiKey` is not its app's.
+ */
+export interface UpdatePersistPayload {
+  extensions?: ExtensionUpdate[]
+  app?: Pick<App, 'apiKey'> & DeepPartial<App>
 }
 
 interface ResourceURL {
@@ -177,6 +195,9 @@ export interface ExtensionSupportedFeatures {
 
 export enum Status {
   Success = 'success',
+  Error = 'error',
+  /** The server sends an empty status when it has nothing to build. */
+  None = '',
 }
 
 export interface App {

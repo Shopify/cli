@@ -46,7 +46,9 @@ export default defineConfig({
     },
   },
   plugins: [
-    react(),
+    // The classic runtime imports only `react`, which stays external. The automatic runtime
+    // bundles React's JSX runtime into `dist/node_modules`, which then breaks module resolution.
+    react({jsxRuntime: 'classic'}),
     createEntryFiles({
       files: {
         index: './dist/index',

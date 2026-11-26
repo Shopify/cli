@@ -1,5 +1,5 @@
 import {Surface} from './types.js'
-import {ExtensionPayload, ExtensionPoint, App} from '../types'
+import {ExtensionPayload, ExtensionPoint, App, UpdatePersistPayload} from '../types'
 import {FlattenedLocalization, LocalesOptions, Localization} from '../i18n'
 
 // Re-export and augment the global ExtensionServer namespace
@@ -46,10 +46,7 @@ export namespace ExtensionServer {
   }
 
   export interface OutboundPersistEvents {
-    update: {
-      extensions?: ExtensionPayload[]
-      app?: App
-    }
+    update: UpdatePersistPayload
   }
 
   export interface DispatchEvents {

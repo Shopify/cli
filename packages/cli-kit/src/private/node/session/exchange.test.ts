@@ -8,6 +8,7 @@ import {
   InvalidRequestError,
   refreshAccessToken,
   requestAppToken,
+  revokeRefreshToken,
 } from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
@@ -567,5 +568,54 @@ describe('exchangeAppAutomationTokenForBusinessPlatformAccessToken', () => {
 
     // Then
     expect(new URLSearchParams(capturedBody).get('scope')).toBe('')
+  })
+})
+
+describe('revokeRefreshToken', () => {
+  test('revokes the refresh token at Identity and returns true on 200', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response('', {status: 200}))
+
+    // When
+    const got = await revokeRefreshToken('refresh_token')
+
+    // Then
+    expect(got).toBe(true)
+    expect(shopifyFetch).toHaveBeenCalledOnce()
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://fqdn.com/oauth/revoke',
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'client_id=clientId&token=refresh_token',
+      },
+      {useNetworkLevelRetry: false, useAbortSignal: true, timeoutMs: 3000},
+    )
+  })
+
+  test.each([400, 401, 429, 500])('returns false when Identity responds %i', async (status) => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response('', {status}))
+
+    // When
+    const got = await revokeRefreshToken('refresh_token')
+
+    // Then
+    expect(got).toBe(false)
+    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining(String(status)))
+    const debugMessages = vi.mocked(outputDebug).mock.calls.map(([message]) => String(message))
+    expect(debugMessages.some((message) => message.includes('refresh_token'))).toBe(false)
+  })
+
+  test('returns false when the request fails', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockRejectedValue(new Error('getaddrinfo ENOTFOUND fqdn.com'))
+
+    // When
+    const got = await revokeRefreshToken('refresh_token')
+
+    // Then
+    expect(got).toBe(false)
+    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('ENOTFOUND'))
   })
 })

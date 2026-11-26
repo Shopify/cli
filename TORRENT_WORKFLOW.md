@@ -14,6 +14,15 @@ here. In a dispatched session, the ticket is the task statement. In a human-dire
 human's explicit request sets the scope and the ticket supplies context. This file governs _how_ to
 work. The task statement governs _what_ to build.
 
+**Where changes land.** This repository is published from Shopify's internal monorepo, and its
+`main` branch changes only through the mirror's pull requests. Code changes are made upstream and
+mirrored here, so don't open a PR into `main` for them. PRs into this repository are only for the
+files the mirror doesn't manage (`.github`, `.spin`, `dev.yml`, `TORRENT_WORKFLOW.md`, `AGENTS.md`,
+`.agents`, `.claude` and `.cursor`) and for patch backports into `stable/X.Y` release branches.
+Outside contributors still open PRs here. Minor and patch releases ship from `stable/X.Y`. While
+a release is open, only its release owner merges into that branch; anyone else, agents included,
+asks the release owner first.
+
 A dispatched session reads this file as its instructions say: the `<torrent-workflow>` block, or
 `torrent worker workflow <session>`. A human-directed session reads it with
 `torrent project resolve CLI --text`. Both print the file at a pinned commit of `main`.
@@ -108,7 +117,7 @@ the work is unfinished and only a human can unblock it (§8). Never swap the two
 - `Canceled` / `Duplicate`: terminal. Do nothing.
 
 **The gate.** You MUST NOT merge a PR or ask for a merge: no `gh pr merge`, no auto-merge, no merge
-button, and never move a ticket into `Merging`. Only a human merges, on GitHub.
+button, and never move a ticket into `Merging`. Only a human merges.
 
 If a state move fails with `422 unknown_state`, this file and the project's states disagree: record
 a `frustration` entry naming both, post a blocker comment, and move to `Blocked on Human`.
@@ -153,9 +162,10 @@ memory and the human's window into your progress. `torrent help` lists the `work
   (`torrent worker workspace lock <id>`) and release it when you finish
   (`torrent worker workspace unlock <id>`). A new worktree has no installed dependencies: install
   them as §10 says first. Read the documents that §10 names before your first edit.
-- **One branch, one PR.** A ticket has one branch and, by default, one PR into `main`. This
-  project does not stack branches. When your work needs code that exists only in another ticket's
-  open PR, treat it as a dependency on that ticket (§8).
+- **One branch, one PR.** A ticket has one branch and, by default, one PR, into `main` or a
+  `stable/*` branch as "Where changes land" allows. This project does not stack branches. When your
+  work needs code that exists only in another ticket's open PR, treat it as a dependency on that
+  ticket (§8).
 - **Sync.** Bring `main` in with a merge, never a rebase, because a push never forces:
   `git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main && git merge origin/main`.
   Sync before you start editing, and again when the PR conflicts or falls behind. Resolve conflicts
@@ -175,7 +185,8 @@ memory and the human's window into your progress. `torrent help` lists the `work
     and push again.
   - Open:
     `torrent github pr open --draft --base main --title "<title>" --body-file <file>`.
-    Always name the base: without `--base`, the command opens the PR into `main`.
+    Always name the base: without `--base`, the command opens the PR into `main`. Use `main` only
+    for the files the mirror doesn't manage, and `stable/X.Y` for a patch backport.
   - Link: `torrent link add <id> https://github.com/Shopify/cli/pull/<n>`. Torrent does not find
     or link a GitHub PR by itself.
   - This repository is public, so also set

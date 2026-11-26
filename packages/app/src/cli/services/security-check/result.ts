@@ -14,6 +14,7 @@ import {
   projectAppSecurityRelativePath,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
+  projectAppSecuritySuppressions,
 } from '../app-security/result.js'
 import {
   formatAppSecurityCommand,
@@ -123,6 +124,13 @@ export async function renderSecurityCheckResult(
   }
 
   await renderGatheringWarnings(check.execution)
+  if (check.codeExcerptsOmitted) {
+    renderWarning({
+      headline:
+        'deterministic-findings.json was written without code excerpts, because with them it would be larger than 5 MB.',
+      body: ['Use', {command: '--exclude'}, 'or scan fewer directories to keep them.'],
+    })
+  }
   if (format === 'json') {
     await renderScanAsJson(check, options, dependencies)
   } else {
@@ -230,6 +238,7 @@ function appSecurityCheckScanResult(
     scanDirectories: check.scanDirectories.map((directory) => projectAppSecurityScanDirectory(appDirectory, directory)),
     agentCheckCount: check.execution.agentChecks.checks.length,
     blocking: projectAppSecurityBlocking(check.blocking),
+    suppressions: projectAppSecuritySuppressions(appDirectory, check.suppressions, check.checks),
     ...(instructions === undefined ? {} : {instructions}),
   }
 }
@@ -259,6 +268,8 @@ function securityReportInput(check: ScannedSecurityCheck, verbose: boolean): Sec
     deterministicFindingsPath: artifacts.deterministicFindingsPath,
     agentChecksPath: artifacts.agentChecksPath,
     agentCheckCount: execution.agentChecks.checks.length,
+    checks: check.checks,
+    suppressions: check.suppressions,
   }
 }
 

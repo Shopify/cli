@@ -163,6 +163,23 @@ ${outputToken.json(error.response.errors)}
   }
 }
 
+/**
+ * Reads the `x-request-id` header of a failed GraphQL response.
+ *
+ * @param error - The error thrown by graphql-request.
+ * @returns The request ID, or undefined when the response has none.
+ */
+export function requestIdFromClientError(error: ClientError): string | undefined {
+  try {
+    // graphql-request types the response without headers, but it carries the fetch Response's headers.
+    const headers = (error.response as {headers?: {get?: (name: string) => string | null}}).headers
+    return headers?.get?.('x-request-id') ?? undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+}
+
 export function extractGraphQLErrors(error: unknown): NonNullable<ClientError['response']['errors']> {
   if (error instanceof ClientError) return Array.isArray(error.response.errors) ? error.response.errors : []
   if (error instanceof GraphQLClientError) return Array.isArray(error.errors) ? error.errors : []

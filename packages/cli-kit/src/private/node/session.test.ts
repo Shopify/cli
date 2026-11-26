@@ -12,6 +12,7 @@ import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
   refreshAccessToken,
+  revokeRefreshToken,
   InvalidGrantError,
 } from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
@@ -219,7 +220,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
   test('throws an error without clearing the stored sessions if there is no session and prompting is disabled,', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
-    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(fetchSessions).mockResolvedValue(invalidSessions)
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
 
     // When
@@ -229,6 +230,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 The CLI is currently unable to prompt for reauthentication.`,
     )
     expect(secureRemove).not.toHaveBeenCalled()
+    expect(revokeRefreshToken).not.toHaveBeenCalled()
 
     // Then
     await expect(getLastSeenAuthMethod()).resolves.toEqual('none')

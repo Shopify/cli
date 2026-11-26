@@ -1,8 +1,14 @@
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const logTypes = [
-  {name: 'webhook', backend: 'WEBHOOK_DELIVERY'},
+  {name: 'webhook', backend: 'WEBHOOK'},
   {name: 'graphql', backend: 'GRAPHQL_REQUEST'},
+  {name: 'function', backend: 'FUNCTION_RUN'},
+  {name: 'app-event', backend: 'APP_EVENT'},
+  {name: 'app-billing-event', backend: 'APP_BILLING_EVENT'},
+  {name: 'rest', backend: 'REST_REQUEST'},
+  {name: 'sidekick', backend: 'SIDEKICK_EVENT'},
+  {name: 'ui-extension', backend: 'UI_EXTENSION'},
 ] as const
 
 export const logFilters = [
@@ -13,12 +19,20 @@ export const logFilters = [
   {flag: 'operation-type', field: 'OPERATION_TYPE'},
   {flag: 'operation-name', field: 'OPERATION_NAME'},
   {flag: 'request-id', field: 'REQUEST_ID'},
+  {flag: 'function-handle', field: 'FUNCTION_HANDLE'},
+  {flag: 'target', field: 'TARGET'},
+  {flag: 'event-handle', field: 'EVENT_HANDLE'},
+  {flag: 'method', field: 'METHOD'},
+  {flag: 'request-path', field: 'REQUEST_PATH'},
 ] as const
 
 export const queryLimits = {
   defaultLimit: 20,
   defaultSince: '1h',
   maximumLimit: 1000,
+  maximumLookbackDays: 7,
+  maximumWindowDays: 1,
+  maximumFutureSkewMinutes: 1,
 }
 
 export function logError(code: string, message: string, requestId?: string | null): AbortError {
@@ -30,7 +44,11 @@ export function logError(code: string, message: string, requestId?: string | nul
 
 function selectedLogType(value?: string) {
   const type = logTypes.find(({name}) => name === value)
-  if (!type) throw logError('invalid-argument', 'Supported log types are webhook and graphql.')
+  if (!type)
+    throw logError(
+      'invalid-argument',
+      'Supported log types are webhook, graphql, function, app-event, app-billing-event, rest, sidekick, and ui-extension.',
+    )
   return type
 }
 

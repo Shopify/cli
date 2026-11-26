@@ -1,5 +1,5 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
-import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
+import {debugLogRequestInfo, errorHandler, requestIdFromClientError} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
@@ -25,6 +25,7 @@ import {
   ClientError,
 } from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {parse} from 'graphql'
 
 // to replace TVariable type when there graphql query has no variables
 export type Exact<T extends Record<string, unknown>> = {[K in keyof T]: T[K]}
@@ -216,9 +217,14 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     : undefined
 
   const handleErrors = responseOptions?.handleErrors !== false
+  // Retrying a transient server error is only safe when the request has no side effects.
+  const retryTransientServerErrors = Boolean(behaviour.retryTransientServerErrors) && isQueryOnly(queryAsString)
 
   const request = () =>
-    retryAwareRequest({request: rawGraphQLRequest, url, ...behaviour}, handleErrors ? errorHandler(api) : undefined)
+    retryAwareRequest(
+      {request: rawGraphQLRequest, url, ...behaviour, retryTransientServerErrors},
+      handleErrors ? errorHandler(api) : undefined,
+    )
 
   // `retryAwareRequest` hands a 401 back raw so the token can be refreshed and the request repeated. Once that is
   // settled, the error goes through the same handler as every other failed response: a raw graphql-request error
@@ -285,19 +291,26 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   return JSON.parse(result) as TResult
 }
 
-function requestIdFromClientError(error: ClientError): string | undefined {
-  try {
-    // graphql-request types the response without headers, but it carries the fetch Response's headers.
-    const headers = (error.response as {headers?: {get?: (name: string) => string | null}}).headers
-    return headers?.get?.('x-request-id') ?? undefined
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return undefined
-  }
-}
-
 function graphQLCachePrincipalHash(url: string, token: string | undefined): string {
   return sha256(JSON.stringify([url, token ?? ''])).toString('hex')
+}
+
+/**
+ * Whether a GraphQL document only contains query operations (no mutations or subscriptions).
+ *
+ * @param queryAsString - The GraphQL document as a string.
+ * @returns True when every operation in the document is a query. False if it can't be parsed.
+ */
+function isQueryOnly(queryAsString: string): boolean {
+  try {
+    const operations = parse(queryAsString).definitions.filter(
+      (definition) => definition.kind === 'OperationDefinition',
+    )
+    return operations.length > 0 && operations.every((operation) => operation.operation === 'query')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) {

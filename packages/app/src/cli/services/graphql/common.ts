@@ -1,6 +1,6 @@
-import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {OrganizationApp, OrganizationStore, appClientSecret} from '../../models/organization.js'
 import {ensureAuthenticatedAdminAsApp, AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {isMutation, validateSingleOperation, resolveApiVersion} from '@shopify/cli-kit/node/api/bulk-operations'
 
 // Generic GraphQL operation helpers live in the shared cli-kit bulk-operations engine; re-export
@@ -15,10 +15,7 @@ export {isMutation, validateSingleOperation, resolveApiVersion}
  * @returns Admin session for making authenticated API requests.
  */
 export async function createAdminSessionAsApp(remoteApp: OrganizationApp, storeFqdn: string): Promise<AdminSession> {
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
-  return ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
+  return ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, await appClientSecret(remoteApp))
 }
 
 /**

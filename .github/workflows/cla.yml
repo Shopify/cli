@@ -6,6 +6,13 @@ on:
   issue_comment:
     types: [ created ]
 
+# The CLA action comments on and labels the pull request, and re-runs its own check once the
+# author signs.
+permissions:
+  actions: write
+  issues: write
+  pull-requests: write
+
 jobs:
   cla:
     name: "[PR] CLA"
@@ -13,6 +20,7 @@ jobs:
     if: |
       github.actor != 'cursoragent'
       && github.actor != 'river'
+      && github.actor != 'shopify-build-cli[bot]'
       && (
         (github.event.issue.pull_request
           && !github.event.issue.pull_request.merged_at

@@ -1,6 +1,7 @@
+import {locateTomlValues, tomlKey} from '../scanners/toml-locations.js'
 import {relativePath} from '@shopify/cli-kit/node/path'
-import type {Issue} from '../types.js'
-import type {Rule, ScanContext} from './types.js'
+import type {Issue, Location} from '../types.js'
+import type {AppTomlContent, Rule, ScanContext} from './types.js'
 
 /** Parse a scopes string (comma or space separated) into individual scope names. */
 function parseScopes(scopes: string): string[] {
@@ -8,6 +9,19 @@ function parseScopes(scopes: string): string[] {
     .split(/[\s,]+/)
     .map((scope) => scope.trim())
     .filter(Boolean)
+}
+
+/** Locates a value of an app configuration by its TOML key. The location has no line when the key isn't found. */
+export function configurationLocator(
+  appRoot: string,
+  configuration: AppTomlContent,
+): (key: string | undefined) => Location {
+  const file = relativePath(appRoot, configuration.path).replace(/\\/g, '/')
+  const lines = locateTomlValues(configuration.content ?? '')
+  return (key) => {
+    const line = key === undefined ? undefined : lines.get(key)
+    return line === undefined ? {file} : {file, line}
+  }
 }
 
 /** Deprecated ScriptTag capability in parsed Shopify configuration. */
@@ -21,6 +35,7 @@ export const deprecatedScriptTagScope: Rule = {
       const deprecatedScopes = parseScopes(configuration.scopes ?? '').filter(
         (scope) => scope === 'write_script_tags' || scope === 'read_script_tags',
       )
+      const locate = configurationLocator(ctx.appRoot, configuration)
       return deprecatedScopes.map(
         (scope): Issue => ({
           id: this.id,
@@ -28,7 +43,7 @@ export const deprecatedScriptTagScope: Rule = {
           points: -10,
           title: this.title,
           message: `Scope "${scope}" is deprecated. Apps should use app embeds instead of the ScriptTag API.`,
-          location: {file: relativePath(ctx.appRoot, configuration.path).replace(/\\/g, '/')},
+          location: locate(configuration.scopeKeys.get(scope)),
           fix: {
             automated: false,
             description: `Remove "${scope}" from scopes and migrate to app embeds`,
@@ -49,19 +64,28 @@ export const insecureWebhookUrl: Rule = {
   check(ctx: ScanContext): Issue[] {
     const issues: Issue[] = []
     for (const configuration of ctx.appTomls) {
+      const locate = configurationLocator(ctx.appRoot, configuration)
       const values = [
-        ...configuration.webhooks.map((subscription) => ({kind: 'Webhook URI', value: subscription.uri})),
-        ...configuration.redirectUrls.map((value) => ({kind: 'OAuth redirect URI', value})),
+        ...configuration.webhooks.map((subscription) => ({
+          kind: 'Webhook URI',
+          key: subscription.uriKey,
+          value: subscription.uri,
+        })),
+        ...configuration.redirectUrls.map((value, index) => ({
+          kind: 'OAuth redirect URI',
+          key: tomlKey(['auth', 'redirect_urls', index]),
+          value,
+        })),
       ]
-      for (const {kind, value} of values) {
+      for (const {kind, key, value} of values) {
         if (isSafeConfiguredUrl(value, kind === 'Webhook URI')) continue
         issues.push({
           id: this.id,
           severity: this.severity,
           points: this.points,
           title: this.title,
-          message: `${kind} is not a conservative secure URL. Use a Shopify-relative path or an HTTPS URL with an exact host and path.`,
-          location: {file: relativePath(ctx.appRoot, configuration.path).replace(/\\/g, '/')},
+          message: `${kind} at ${key} is not a conservative secure URL. Use a Shopify-relative path or an HTTPS URL with an exact host and path.`,
+          location: locate(key),
           fix: {
             automated: false,
             description: 'Use an HTTPS URL with an exact host and path, or a Shopify-relative path where supported.',

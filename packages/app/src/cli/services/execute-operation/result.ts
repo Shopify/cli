@@ -1,4 +1,4 @@
-import {appExecuteJsonOutputSchema, ExecuteOperationResult} from './types.js'
+import {appExecuteJsonOutputSchema, AppExecuteResult, ExecuteOperationResult} from './types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -24,7 +24,7 @@ export async function renderExecuteOperationResult(
   }
 
   const resultString =
-    format === 'json' ? appExecuteJsonOutputSchema.encode(result.result) : JSON.stringify(result.result.data, null, 2)
+    format === 'json' ? encodeNativeGraphQLResult(result.result) : JSON.stringify(result.result.data, null, 2)
   if (outputFile) {
     await writeFile(outputFile, resultString)
     if (format === 'json') {
@@ -38,4 +38,11 @@ export async function renderExecuteOperationResult(
     renderSuccess({headline: 'Operation succeeded.'})
     outputResult(resultString)
   }
+}
+
+// Zod drops "__proto__" keys when it parses, and GraphQL aliases and extensions can use that key,
+// so the result is validated against the contract and then encoded as received.
+function encodeNativeGraphQLResult(result: AppExecuteResult): string {
+  appExecuteJsonOutputSchema.validate(result)
+  return JSON.stringify(result, null, 2)
 }

@@ -43,6 +43,8 @@ export class LocalStorage<T extends Record<string, any>> {
       this.config = new Config<T>({
         ...options,
         clearInvalidConfig: true,
+        // Local storage can hold session tokens, so only the current user may read or write the file.
+        configFileMode: 0o600,
         deserialize: deserializeJson<T>,
       })
     } catch (error) {

@@ -6,10 +6,12 @@ import {
   findSourceCandidates,
   configureRepositoryReader,
   getSkippedFiles,
+  isParseFailure,
   findManifests,
   findManifestPaths,
   findDependencyAutomationInputs,
   gatherPaths,
+  readRepositoryTextFile,
 } from './discover.js'
 import {createPathRules} from './path-rules.js'
 import {
@@ -26,6 +28,7 @@ import {
   scanRequestControlledAdminContext,
   scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
+  scanWeakShopValidation,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
@@ -37,8 +40,9 @@ import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../scan-artifact/index.js'
+import {createCodeExcerpts, withCodeExcerpts, type SourceTextReader} from '../results/code-excerpt.js'
 import {getEngineVersion} from '../version.js'
-import {normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
@@ -72,6 +76,11 @@ export interface DeterministicCheckDefinition {
   analysisMode: AnalysisMode
   target: CheckTarget
   requires?: keyof ScanContext['capabilities']
+  /**
+   * The check's app-source analysis needs React Router's structure, so it doesn't run without it. Checks that read
+   * any supported JavaScript/TypeScript source set no framework at all.
+   */
+  requiresReactRouter?: true
   extensions?: string[]
   runner?: Runner
 }
@@ -116,20 +125,23 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   },
   {
     id: 'EOL_API_VERSION',
-    version: 2,
+    version: 4,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'config_and_source',
+    requiresReactRouter: true,
     extensions: JAVASCRIPT_EXTENSIONS,
     runner: (context) => scanEolApiVersions(context),
   },
   {
-    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 2),
+    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 3),
+    requiresReactRouter: true,
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
   },
   {
     ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 3),
     requires: 'has_backend',
+    requiresReactRouter: true,
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
@@ -138,7 +150,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     4,
   ),
   {
-    ...configRule(deprecatedScriptTagScope, 2),
+    ...configRule(deprecatedScriptTagScope, 3),
     target: 'config_and_source',
     analysisMode: 'regex',
     extensions: JAVASCRIPT_EXTENSIONS,
@@ -147,7 +159,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       ...scanDeprecatedScriptTagApi(context.sourceFiles),
     ],
   },
-  configRule(insecureWebhookUrl, 2),
+  configRule(insecureWebhookUrl, 3),
   {
     id: 'COMMITTED_SECRET',
     version: 4,
@@ -157,7 +169,15 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
   },
   jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles), 'source', 3),
-  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles), 'source', 3),
+  {
+    ...jsCheck(
+      'CREDENTIAL_BROWSER_LEAKAGE',
+      (context) => scanCredentialBrowserLeakage(context.sourceFiles),
+      'source',
+      3,
+    ),
+    requiresReactRouter: true,
+  },
   {
     id: 'LIQUID_UNSAFE_RENDER',
     version: 2,
@@ -186,43 +206,26 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles), 'app_source', 2),
     requires: 'embedded_app',
   },
+  jsCheck('WEAK_SHOP_VALIDATION', (context) => scanWeakShopValidation(context.sourceFiles), 'source', 2),
 ]
 
 function unsafeInnerHtmlRunner(context: ScanContext): RunnerResult {
   const issues: Issue[] = []
   const implementations: RunnerImplementationResult[] = []
-  if (context.detection.framework === 'react_router') {
-    const files = reactRouterFiles(context).filter(
-      (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
-    )
-    const findings = scanUnsafeInnerHTML(files)
-    issues.push(...findings)
-    implementations.push({
-      id: 'react-router-js-regex',
-      analysisMode: 'regex',
-      status: 'executed',
-      inspectedFiles: files.map((file) => file.path),
-      findings: findings.length,
-    })
-  }
+  const sourceFiles = reactRouterFiles(context).filter(
+    (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
+  )
+  const sourceFindings = scanUnsafeInnerHTML(sourceFiles)
+  issues.push(...sourceFindings)
+  implementations.push({
+    id: 'app-source-js-regex',
+    analysisMode: 'regex',
+    status: 'executed',
+    inspectedFiles: sourceFiles.map((file) => file.path),
+    findings: sourceFindings.length,
+  })
   if (context.capabilities.theme_app_extension) {
     const themeSources = themeFiles(context)
-    const themePaths = new Set(themeSources.map((file) => file.path))
-    if (
-      context.detection.framework !== 'react_router' &&
-      context.sourceCandidates.some((candidate) => !themePaths.has(candidate.path))
-    )
-      implementations.push({
-        id: 'app-source-unsupported',
-        analysisMode: 'regex',
-        status: 'unsupported_framework',
-        inspectedFiles: [],
-        findings: 0,
-        reason: {
-          code: 'unsupported_framework',
-          message: 'The non-theme app source framework is not supported by deterministic analysis.',
-        },
-      })
     const javascriptFiles = themeSources.filter(
       (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
     )
@@ -385,6 +388,8 @@ function executionDisposition(
   const nonThemeCandidates = context.sourceCandidates.filter((candidate) => !themePaths.has(candidate.path))
   const reactRouterSupported = context.detection.framework === 'react_router'
   const hasTheme = context.capabilities.theme_app_extension
+  /** The check needs React Router's app structure, which this project doesn't have. */
+  const sourceFrameworkUnsupported = !reactRouterSupported && definition.requiresReactRouter === true
 
   if (definition.target === 'dependency_automation' && !context.manifests.some(manifestHasDependencies))
     return {
@@ -393,7 +398,7 @@ function executionDisposition(
       applicable: false,
       reason: {code: 'no_relevant_files', message: 'No supported package manifest declares dependencies.'},
     }
-  if (definition.target === 'source' && !reactRouterSupported) {
+  if (definition.target === 'source' && sourceFrameworkUnsupported) {
     if (nonThemeCandidates.length > 0)
       return {
         status: 'unsupported_framework',
@@ -411,7 +416,7 @@ function executionDisposition(
       reason: {code: 'no_relevant_files', message: 'No React Router app source applies to this check.'},
     }
   }
-  if (definition.target === 'source_and_theme' && !reactRouterSupported && !hasTheme) {
+  if (definition.target === 'source_and_theme' && sourceFrameworkUnsupported && !hasTheme) {
     if (nonThemeCandidates.length > 0)
       return {
         status: 'unsupported_framework',
@@ -429,7 +434,7 @@ function executionDisposition(
       reason: {code: 'no_relevant_files', message: 'No supported app or theme source applies to this check.'},
     }
   }
-  if (definition.target === 'source_and_theme' && !reactRouterSupported && nonThemeCandidates.length > 0)
+  if (definition.target === 'source_and_theme' && sourceFrameworkUnsupported && nonThemeCandidates.length > 0)
     return files.length > 0
       ? {
           status: 'unresolved',
@@ -458,7 +463,7 @@ function executionDisposition(
     }
   if (
     definition.target === 'config_and_source' &&
-    !reactRouterSupported &&
+    sourceFrameworkUnsupported &&
     nonThemeCandidates.length > 0 &&
     context.appTomls.length > 0
   )
@@ -485,6 +490,17 @@ function executionDisposition(
       applicable: true,
       reason: {code: 'parser_unavailable', message: 'No readable Shopify app configuration was available.'},
     }
+  const unreadableLanguages = unreadableAppSourceLanguages(definition, context, nonThemeCandidates)
+  if (unreadableLanguages.length > 0)
+    return {
+      status: 'unresolved',
+      required: true,
+      applicable: true,
+      reason: {
+        code: 'unsupported_language',
+        message: `${definition.id} could not inspect the app source because its languages are not supported by deterministic analysis: ${unreadableLanguages.join(', ')}.`,
+      },
+    }
   if (
     ['source', 'app_source', 'theme', 'secrets', 'source_and_theme'].includes(definition.target) &&
     files.length === 0
@@ -499,6 +515,30 @@ function executionDisposition(
       },
     }
   return {status: 'executed', required: true, applicable: true}
+}
+
+/** Whether the check analyses app source, as opposed to configuration, theme extensions, secrets, or manifests. */
+function appSourceAnalysis(definition: DeterministicCheckDefinition): boolean {
+  return ['source', 'source_and_theme', 'config_and_source'].includes(definition.target)
+}
+
+/**
+ * The unsupported languages of the app source when a check that reads any JavaScript/TypeScript app source has none to
+ * read. Supported files that the check doesn't read, such as a Rails app's `public/404.html`, don't make it
+ * inapplicable.
+ */
+function unreadableAppSourceLanguages(
+  definition: DeterministicCheckDefinition,
+  context: ScanContext,
+  nonThemeCandidates: ScanContext['sourceCandidates'],
+): string[] {
+  if (definition.requiresReactRouter === true || !appSourceAnalysis(definition)) return []
+  const hasJavaScriptAppSource = reactRouterFiles(context).some(
+    (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
+  )
+  if (hasJavaScriptAppSource) return []
+  const unsupported = nonThemeCandidates.filter((candidate) => !candidate.supported)
+  return [...new Set(unsupported.map((candidate) => candidate.language))].sort()
 }
 
 function manifestHasDependencies(manifest: ScanContext['manifests'][number]): boolean {
@@ -522,7 +562,7 @@ function skippedInputsForCheck(
   const isDependencyAutomationInput = (path: string) =>
     /(^|\/)package\.json$/.test(path) || context.dependencyAutomation.files.some((file) => file.path === path)
   const isSecretInput = (file: SkippedFile) =>
-    !file.detail?.includes('could not be parsed') &&
+    !isParseFailure(file) &&
     (context.sourceCandidates.some((candidate) => candidate.path === file.path) ||
       context.sensitiveFiles.some((sensitiveFile) => sensitiveFile.path === file.path) ||
       /(^|\/)(?:\.env(?:\.[^/]+)?|secrets\.json|credentials\.json)$/.test(file.path))
@@ -542,9 +582,7 @@ function skippedInputsForCheck(
 function skippedInputReason(definition: DeterministicCheckDefinition, files: SkippedFile[]): CheckExecutionReason {
   const parserFailure = files.some(
     (file) =>
-      Boolean(file.detail?.includes('could not be parsed')) ||
-      file.path.endsWith('shopify.extension.toml') ||
-      file.path.endsWith('package.json'),
+      isParseFailure(file) || file.path.endsWith('shopify.extension.toml') || file.path.endsWith('package.json'),
   )
   return {
     code: parserFailure ? 'parser_unavailable' : 'input_rejected',
@@ -559,6 +597,22 @@ function runnerContext(definition: DeterministicCheckDefinition, context: ScanCo
   return definition.target === 'source' || definition.target === 'config_and_source'
     ? {...context, sourceFiles: reactRouterFiles(context)}
     : context
+}
+
+/** The contents the checks inspected, by the project-relative path that their findings name. */
+function scannedFileContents(context: ScanContext): Map<string, string> {
+  const files: {path: string; content?: string}[] = [
+    ...context.appTomls.map(({path, content}) => ({
+      path: relativePath(context.appRoot, path).replace(/\\/g, '/'),
+      content,
+    })),
+    ...context.extensions.flatMap((extension) => [extension, ...extension.files]),
+    ...context.sourceFiles,
+    ...context.sensitiveFiles,
+    ...context.manifests,
+    ...context.dependencyAutomation.files,
+  ]
+  return new Map(files.flatMap(({path, content}) => (content === undefined ? [] : [[path, content] as const])))
 }
 
 function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
@@ -576,6 +630,28 @@ function gatherScanPaths(
     selectedAppConfigFilePath: appConfigFilePath,
     rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })
+}
+
+/**
+ * Reads the files that agent findings cite, for their code excerpts, with the scan's rules: a file is read only when
+ * `gatheredPaths` holds it, which are the paths relative to the app directory that `listGatheredPaths` returns for
+ * `directories` and the scope, so never when Git ignores it, it's excluded, or it's in `.git`. It's read only below
+ * one of `directories`, which are absolute real paths, never through a symbolic link that leaves it, within the size
+ * limit, and not when it's binary. Cited paths are relative to the app directory. Configures the repository reader, as
+ * a scan does.
+ */
+export function createCitedFileReader(
+  appDirectory: string,
+  directories: ReadonlyArray<string>,
+  gatheredPaths: ReadonlySet<string>,
+): SourceTextReader {
+  configureRepositoryReader({appDirectory, scanDirectories: directories, explicitInputs: new Set()})
+  // The repository reader is module state. The returned reader reads with this configuration only while nothing
+  // configures it again, such as a scan or `listGatheredPaths`, so create it after those and use it before any other.
+  return (file) => {
+    const path = resolvePath(appDirectory, file)
+    return gatheredPaths.has(normalizePath(relativePath(appDirectory, path))) ? readRepositoryTextFile(path) : undefined
+  }
 }
 
 /**
@@ -701,7 +777,13 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
   const versionById = new Map(
     [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
   )
-  issues = issues.map((issue) => redactIssue({...issue, rule_version: versionById.get(issue.id) ?? 1}))
+  const scannedContents = scannedFileContents(context)
+  const excerpts = createCodeExcerpts((file) =>
+    readRepositoryTextFile(resolvePath(input.appDirectory, file)) === undefined ? undefined : scannedContents.get(file),
+  )
+  issues = issues.map((issue) =>
+    redactIssue(withCodeExcerpts({...issue, rule_version: versionById.get(issue.id) ?? 1}, excerpts)),
+  )
   for (const execution of checksExecuted)
     execution.findings = issues.filter((issue) => issue.id === execution.id).length
 

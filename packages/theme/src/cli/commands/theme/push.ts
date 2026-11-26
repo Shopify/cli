@@ -1,6 +1,7 @@
 import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {customCheckOptions} from '../../utilities/custom-checks.js'
 import {executeThemePush} from '../../services/push.js'
 import {themePushJsonOutputSchema} from '../../services/push/types.js'
 import {
@@ -9,6 +10,7 @@ import {
   renderThemePushEnvironmentResults,
 } from '../../services/push/result.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -66,6 +68,11 @@ export default class Push extends ThemeCommand {
     ...themeFlags,
     ...globFlags('upload'),
     ...jsonFlag,
+    'allow-custom-checks': Flags.boolean({
+      ...themeFlags['allow-custom-checks'],
+      env: 'SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS',
+      description: `${themeFlags['allow-custom-checks'].description} Requires --strict.`,
+    }),
     theme: Flags.string({
       char: 't',
       description:
@@ -142,6 +149,8 @@ export default class Push extends ThemeCommand {
     ]
   }
 
+  private readonly inputArgv = [...this.argv]
+
   async command(
     flags: PushFlags,
     adminSession: AdminSession,
@@ -150,7 +159,7 @@ export default class Push extends ThemeCommand {
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     recordTiming('theme-command:push')
-    await checkThemeBeforePush(flags)
+    await checkThemeBeforePush(flags, false, await customCheckOptions(this.inputArgv))
     const result = await executeThemePush(
       {
         ...flags,
@@ -169,6 +178,12 @@ export default class Push extends ThemeCommand {
     }
     recordTiming('theme-command:push')
     return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
+  }
+
+  protected validateCommandFlags(flags: Partial<PushFlags>): void {
+    if (flags['allow-custom-checks'] && !flags.strict) {
+      throw new AbortError('The --allow-custom-checks flag requires --strict when using theme push.')
+    }
   }
 
   protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {

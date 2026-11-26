@@ -1,5 +1,10 @@
 import {loadChecks} from '../checks/index.js'
-import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
+import {
+  assertRegistryInvariants,
+  getAgentCheckCatalog,
+  getRegistry,
+  reportingSourcesByCheckId,
+} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, DETERMINISTIC_RULES} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {describe, expect, test} from 'vitest'
@@ -16,6 +21,7 @@ const PREFER_AGENT_CHECK_IDS = [
   'MISSING_COMPLIANCE_WEBHOOKS',
   'REQUEST_CONTROLLED_ADMIN_CONTEXT',
   'STATIC_FRAME_ANCESTORS',
+  'WEAK_SHOP_VALIDATION',
 ]
 
 const EXPLICIT_UNION_CHECK_IDS = [
@@ -50,6 +56,31 @@ describe('authoritative registry', () => {
     const catalogIds = new Set(RULE_CATALOG.map((entry) => entry.id))
     expect(DETERMINISTIC_RULES.filter((entry) => !catalogIds.has(entry.id))).toEqual([])
   })
+
+  test('reports every agent check with its precedence, which `review` needs for a check the agent has not run', () => {
+    const catalog = getAgentCheckCatalog()
+
+    expect(catalog.map(({id}) => id).sort()).toEqual([...loadChecks().keys()].sort())
+    expect(
+      catalog
+        .filter(({precedence}) => precedence === 'prefer-agent')
+        .map(({id}) => id)
+        .sort(),
+    ).toEqual([...PREFER_AGENT_CHECK_IDS].sort())
+    expect(catalog).toContainEqual({id: 'CREDENTIAL_LOG_LEAKAGE', precedence: 'prefer-agent'})
+    expect(catalog).toContainEqual({id: 'MISSING_TENANT_ISOLATION', precedence: 'union'})
+  })
+})
+
+describe('reportingSourcesByCheckId', () => {
+  test('maps every check ID in the registry to the sources that report it', () => {
+    const sources = reportingSourcesByCheckId()
+
+    expect(sources.get('COMMITTED_SECRET')).toEqual(new Set(['deterministic', 'agent']))
+    expect(sources.get('SQL_INJECTION')).toEqual(new Set(['agent']))
+    expect(sources.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')).toEqual(new Set(['deterministic']))
+    expect([...sources.keys()].sort()).toEqual([...new Set(getRegistry().map((entry) => entry.id))].sort())
+  })
 })
 
 describe('check versions', () => {
@@ -66,7 +97,7 @@ describe('check versions', () => {
 })
 
 describe('check precedence', () => {
-  test('sets the expected precedence on the 14 shared checks and defaults every other check to union', () => {
+  test('sets the expected precedence on the 15 shared checks and defaults every other check to union', () => {
     const checks = loadChecks()
     const precedenceById = new Map<string, CheckPrecedence>()
     for (const check of checks.values()) precedenceById.set(check.id, check.precedence)
@@ -75,7 +106,7 @@ describe('check precedence', () => {
       ...PREFER_AGENT_CHECK_IDS.map((id): [string, CheckPrecedence] => [id, 'prefer-agent']),
       ...EXPLICIT_UNION_CHECK_IDS.map((id): [string, CheckPrecedence] => [id, 'union']),
     ])
-    expect(expected.size).toBe(14)
+    expect(expected.size).toBe(15)
     for (const [id, precedence] of expected) expect(precedenceById.get(id), id).toBe(precedence)
 
     const others = [...checks.values()].filter((check) => !expected.has(check.id))

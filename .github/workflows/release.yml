@@ -1,18 +1,15 @@
 name: Release
 
 on:
-  # Trigger for snapit functionality
-  issue_comment:
-    types:
-      - created
-
-  # Trigger for changeset release functionality
+  # Releases ship from stable/*: a merged "Version Packages - stable/X.Y" pull request publishes the
+  # versions it changed. main doesn't publish releases; its check fails if a version on it isn't on
+  # npm.
   push:
     branches:
       - main
       - stable/*
 
-  # Trigger for manual/cron release functionality
+  # Trigger for nightly releases
   schedule:
     - cron: '0 6 * * *' # 6:00 AM UTC every day
 
@@ -24,15 +21,10 @@ on:
         type: choice
         options:
           - nightly
-          - latest
           - experimental
-          - snapshot
-      snapit_comment_id:
-        description: 'PR comment requesting a snapshot (set automatically by /snapit)'
-        type: string
-      snapit_sha:
-        description: 'PR commit to publish (set automatically by /snapit)'
-        type: string
+          # On stable/*: publishes the versions that the branch's head commit itself changed, for a
+          # release whose push started no run, or whose run can no longer be re-run.
+          - release
 
 concurrency:
   group: changeset-${{ github.head_ref || github.run_id }}
@@ -43,214 +35,17 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  # npm rejects issue_comment OIDC tokens, so comments only request a separate run.
-  snapit:
-    name: Request snapshot
-    if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      actions: write
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Request a snapshot release
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        with:
-          script: |
-            const {comment, issue, repository} = context.payload;
-            try {
-              const {data: collaborator} = await github.rest.repos.getCollaboratorPermissionLevel({
-                ...context.repo,
-                username: comment.user.login,
-              });
-              if (!['write', 'admin'].includes(collaborator.permission)) {
-                throw new Error('Only users with write permission to the repository can run /snapit.');
-              }
-
-              const {data: pullRequest} = await github.rest.pulls.get({
-                ...context.repo,
-                pull_number: issue.number,
-              });
-              if (pullRequest.state !== 'open') {
-                throw new Error('Snapshots can only be requested for open pull requests.');
-              }
-              if (pullRequest.head.repo?.full_name !== repository.full_name) {
-                throw new Error('/snapit is not supported on pull requests from forked repositories.');
-              }
-
-              await github.rest.actions.createWorkflowDispatch({
-                ...context.repo,
-                workflow_id: 'release.yml',
-                ref: repository.default_branch,
-                inputs: {
-                  tag: 'snapshot',
-                  snapit_comment_id: String(comment.id),
-                  snapit_sha: pullRequest.head.sha,
-                },
-              });
-              await github.rest.reactions.createForIssueComment({
-                ...context.repo,
-                comment_id: comment.id,
-                content: 'eyes',
-              }).catch((error) => core.warning(`Snapshot requested, but the reaction failed: ${error.message}`));
-              core.info(`Requested a snapshot for PR #${issue.number} at ${pullRequest.head.sha}.`);
-            } catch (error) {
-              core.setFailed(error.message);
-              await github.rest.issues.createComment({
-                ...context.repo,
-                issue_number: issue.number,
-                body: `Unable to request a snapshot: ${error.message}`,
-              });
-            }
-
-  snapshot-release:
-    name: Publish PR snapshot
-    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.snapit_comment_id != '' || inputs.snapit_sha != '') }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Validate snapshot request
-        id: request
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        with:
-          script: |
-            const {tag, snapit_comment_id: commentId, snapit_sha: sha} = context.payload.inputs;
-            if (
-              tag !== 'snapshot' ||
-              !/^[1-9]\d*$/.test(commentId) ||
-              !Number.isSafeInteger(Number(commentId)) ||
-              !/^[a-f0-9]{40}$/.test(sha)
-            ) {
-              throw new Error('A snapshot request requires a comment ID and a full PR commit SHA.');
-            }
-
-            // Recheck the original request before checking out or executing any PR code.
-            const {data: comment} = await github.rest.issues.getComment({
-              ...context.repo,
-              comment_id: Number(commentId),
-            });
-            if (comment.body !== '/snapit') {
-              throw new Error('The requesting comment must contain /snapit.');
-            }
-            const {data: collaborator} = await github.rest.repos.getCollaboratorPermissionLevel({
-              ...context.repo,
-              username: comment.user.login,
-            });
-            if (!['write', 'admin'].includes(collaborator.permission)) {
-              throw new Error('Only users with write permission to the repository can run /snapit.');
-            }
-
-            const issueUrlPrefix = `https://api.github.com/repos/${context.repo.owner}/${context.repo.repo}/issues/`;
-            const pullRequestNumber = Number(comment.issue_url.slice(issueUrlPrefix.length));
-            if (
-              !comment.issue_url.startsWith(issueUrlPrefix) ||
-              !Number.isSafeInteger(pullRequestNumber) ||
-              pullRequestNumber < 1
-            ) {
-              throw new Error('The requesting comment must belong to a PR in this repository.');
-            }
-            const {data: pullRequest} = await github.rest.pulls.get({
-              ...context.repo,
-              pull_number: pullRequestNumber,
-            });
-            // Keep enough context to report failures for an authorized request.
-            core.setOutput('pull_request', pullRequestNumber);
-            core.setOutput('comment_id', comment.id);
-            core.setOutput('requester', comment.user.login);
-            core.setOutput('sha', sha);
-            if (
-              pullRequest.state !== 'open' ||
-              pullRequest.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}`
-            ) {
-              throw new Error('Snapshots require an open PR from this repository.');
-            }
-            if (pullRequest.head.sha !== sha) {
-              throw new Error('The PR changed after the request. Post /snapit again to publish the current commit.');
-            }
-
-      - name: Checkout PR commit
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ steps.request.outputs.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: 24.22.1
-      - name: Publish snapshot
-        id: publish
-        run: |
-          pnpm release snapshot
-          VERSION=$(node -p "require('./packages/cli/package.json').version")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ''
-          NPM_CONFIG_PROVENANCE: true
-          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
-      - name: Report snapshot result
-        if: ${{ always() && steps.request.outputs.pull_request != '' }}
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        env:
-          SNAPSHOT_OUTCOME: ${{ steps.publish.outcome }}
-          SNAPSHOT_VERSION: ${{ steps.publish.outputs.version }}
-          SNAPSHOT_PR: ${{ steps.request.outputs.pull_request }}
-          SNAPSHOT_COMMENT: ${{ steps.request.outputs.comment_id }}
-          SNAPSHOT_REQUESTER: ${{ steps.request.outputs.requester }}
-          SNAPSHOT_SHA: ${{ steps.request.outputs.sha }}
-        with:
-          script: |
-            const {
-              SNAPSHOT_OUTCOME: outcome,
-              SNAPSHOT_VERSION: version,
-              SNAPSHOT_REQUESTER: requester,
-              SNAPSHOT_SHA: sha,
-            } = process.env;
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const published = outcome === 'success';
-            const body = published
-              ? [
-                  `🫰✨ **Thanks @${requester}! Your snapshot has been published to npm.**`,
-                  `Built from \`${sha}\`. [Workflow run](${runUrl}).`,
-                  'Test the snapshot by installing your package globally:',
-                  [
-                    '```bash',
-                    `pnpm i -g --@shopify:registry=https://registry.npmjs.org @shopify/cli@${version}`,
-                    '```',
-                  ].join('\n'),
-                  [
-                    '> [!CAUTION]',
-                    '> After installing, validate the version by running `shopify version` in your terminal.',
-                    "> If the versions don't match, you might have multiple global instances installed.",
-                    '> Use `which shopify` to find out which one you are running and uninstall it.',
-                  ].join('\n'),
-                ].join('\n\n')
-              : `The snapshot requested by @${requester} for \`${sha}\` could not be published. [View the workflow run](${runUrl}).`;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: Number(process.env.SNAPSHOT_PR),
-              body,
-            });
-            await github.rest.reactions.createForIssueComment({
-              ...context.repo,
-              comment_id: Number(process.env.SNAPSHOT_COMMENT),
-              content: published ? 'rocket' : 'confused',
-            });
-
-  # Changeset release job - runs on push to main or stable branches
-  changeset-release:
-    name: Changeset Release
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag == '' && inputs.snapit_comment_id == '' && inputs.snapit_sha == '') }}
+  # Opens or updates a stable line's Version Packages pull request. main gets the released versions
+  # back after each release, so it has no Version Packages pull request.
+  version-packages:
+    name: Version Packages
+    if: github.event_name == 'push' && startsWith(github.ref_name, 'stable/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-      id-token: write
+    outputs:
+      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
     steps:
       - uses: actions/checkout@v6
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
@@ -269,28 +64,250 @@ jobs:
           createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A line cut from a main that hasn't caught up with the last release would compute a version
+      # npm already has, and its release would then publish nothing.
+      - name: Refuse a version npm already has
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          BRANCH="changeset-release/$GITHUB_REF_NAME"
+          if ! git fetch --no-tags --depth=1 origin "$BRANCH"; then
+            echo "No $BRANCH branch, so there's no new version to check"
+            exit 0
+          fi
+          CURRENT=$(node -p "require('./packages/cli/package.json').version")
+          VERSION=$(git show FETCH_HEAD:packages/cli/package.json | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).version))')
+          if [ "$VERSION" = "$CURRENT" ]; then
+            echo "$BRANCH has this line's current version, $CURRENT"
+            exit 0
+          fi
+          if [ "$(npm view "@shopify/cli@$VERSION" version --registry=https://registry.npmjs.org/ 2>/dev/null || true)" = "$VERSION" ]; then
+            echo "::error::$BRANCH proposes @shopify/cli $VERSION, which npm already has. The line was cut before main got that release back: bring the release back to main, then into this line, so its next version is new."
+            exit 1
+          fi
+          echo "$BRANCH proposes $VERSION, which npm doesn't have yet"
+
+  # Decides, without an npm credential, whether a push has anything to publish. Only versions this
+  # push changed count, and the publish job publishes only those. A version that an earlier push
+  # brought, which npm still lacks, is finished by re-running that push's run, which builds the same
+  # commit, or by the `release` option of a manual run while that commit is still the branch's head.
+  # A later commit never publishes it from a newer tree that wasn't released under that version.
+  check:
+    name: Check for unpublished versions
+    needs: version-packages
+    # Like changesets/action before it, a stable line doesn't publish while changesets are pending.
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event.inputs.tag == 'release') && needs.version-packages.result != 'failure' && needs.version-packages.outputs.has-changesets != 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      unpublished: ${{ steps.npm.outputs.unpublished }}
+      version: ${{ steps.npm.outputs.version }}
+      packages: ${{ steps.npm.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compare the pushed versions with npm
+        id: npm
+        env:
+          BEFORE: ${{ github.event.before }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          if [ "$MANUAL" = true ] && [ "$GITHUB_REF_NAME" = main ]; then
+            echo "::error::main doesn't publish releases. Releases ship from stable/*."
+            exit 1
+          fi
+          if [ "$MANUAL" = true ]; then
+            # A manual release counts only the versions this commit changed against its first parent.
+            git fetch --no-tags --depth=2 origin "$GITHUB_SHA"
+            BEFORE=$(git rev-parse "$GITHUB_SHA^1")
+          elif [[ "$BEFORE" =~ ^0*$ ]]; then
+            # A push that creates the branch has no earlier commit, so it changes no version.
+            BEFORE=none
+          else
+            git fetch --no-tags --depth=1 origin "$BEFORE"
+          fi
+          VERSION=$(node -p "require('./packages/cli/package.json').version")
+          # One "pushed|carried name@version" line per public package. A package counts as pushed
+          # when this push changed its version or made it public. `shopify` is published from a
+          # copy of packages/cli (bin/create-cli-duplicate-package.js).
+          LINES=$(node -e '
+            const {execFileSync} = require("node:child_process")
+            const fs = require("node:fs")
+            const before = process.argv[1]
+            const manifestAt = (path) => {
+              try {
+                return JSON.parse(execFileSync("git", ["show", `${before}:${path}`], {encoding: "utf8", stdio: ["ignore", "pipe", "ignore"]}))
+              } catch {
+                return undefined
+              }
+            }
+            for (const directory of fs.readdirSync("packages")) {
+              const path = `packages/${directory}/package.json`
+              if (!fs.existsSync(path)) continue
+              const manifest = JSON.parse(fs.readFileSync(path, "utf8"))
+              if (manifest.private) continue
+              let pushed = false
+              if (before !== "none") {
+                const previous = manifestAt(path)
+                pushed = !previous || previous.private === true || previous.version !== manifest.version
+              }
+              const names = directory === "cli" ? [manifest.name, "shopify"] : [manifest.name]
+              for (const name of names) console.log(`${pushed ? "pushed" : "carried"} ${name}@${manifest.version}`)
+            }
+          ' "$BEFORE")
+          # npm view, retried, so a brief registry error doesn't read as a missing version.
+          on_npm() {
+            for attempt in 1 2 3; do
+              if [ "$(npm view "$1" version 2>/dev/null || true)" = "${1##*@}" ]; then return 0; fi
+              [ "$attempt" = 3 ] || sleep 5
+            done
+            return 1
+          }
+          UNPUBLISHED=false
+          MISSING=""
+          PUSHED=""
+          while read -r STATE PACKAGE; do
+            [ -n "$PACKAGE" ] || continue
+            if [ "$STATE" = pushed ]; then
+              PUSHED="$PUSHED ${PACKAGE%@*}"
+            fi
+            # An npm error counts as unpublished. `changeset publish` skips every version npm
+            # already has, so publishing a pushed version that npm does have is harmless.
+            if on_npm "$PACKAGE"; then
+              echo "$PACKAGE is on npm"
+              continue
+            fi
+            MISSING="$MISSING $PACKAGE"
+            if [ "$GITHUB_REF_NAME" = main ]; then
+              echo "$PACKAGE is not on npm"
+            elif [ "$STATE" = pushed ]; then
+              echo "$PACKAGE is not on npm, and this run publishes it"
+              UNPUBLISHED=true
+            else
+              echo "::warning::$PACKAGE is not on npm, but an earlier push brought that version, so this run doesn't publish it. If that push's Release run failed, re-run its failed jobs; if it can't be re-run and that commit is still the branch's head, start this workflow by hand with the release option."
+            fi
+          done <<< "$LINES"
+          echo "Version $VERSION, unpublished $UNPUBLISHED, packages:$PUSHED"
+          if [ "$GITHUB_REF_NAME" = main ] && [ -n "$MISSING" ]; then
+            # main only gets versions back after a stable line published them.
+            echo "::error::main has versions that npm doesn't:$MISSING. main doesn't publish them; releases ship from stable/*."
+            exit 1
+          fi
+          if [ "$MANUAL" = true ] && [ -z "$PUSHED" ]; then
+            echo "::error::$GITHUB_SHA didn't change any public package's version against its first parent, so a manual release has nothing it may publish. Re-run the failed jobs of the Release run for the commit that changed the version, or publish a new version."
+            exit 1
+          fi
+          {
+            echo "version=$VERSION"
+            echo "unpublished=$UNPUBLISHED"
+            echo "packages=${PUSHED# }"
+          } >> "$GITHUB_OUTPUT"
+
+  # The only job that publishes a release. The npm-release environment limits it to main and
+  # stable/*.
+  publish:
+    name: Publish to npm
+    needs: check
+    # check's own skipped dependency (version-packages, on main) would skip this job under the
+    # implicit success(), so the condition names check's result instead.
+    if: ${{ !cancelled() && needs.check.result == 'success' && needs.check.outputs.unpublished == 'true' && startsWith(github.ref_name, 'stable/') }}
+    runs-on: ubuntu-latest
+    environment: npm-release
+    # Approved runs on one branch publish one at a time, in order; none is cancelled.
+    concurrency:
+      group: npm-publish-${{ github.ref_name }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+      # The release is the merge of this line's Version Packages pull request, whose head was tested.
+      # A merge commit whose tree differs from that head means the line moved after the pull request
+      # was made, so the release would carry changes nobody tested with it.
+      - name: Check the release is the tested pull request head
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=2 origin "$GITHUB_SHA"
+          if [ "$(git rev-list --parents -n 1 "$GITHUB_SHA" | wc -w)" -ne 3 ]; then
+            echo "::error::$GITHUB_SHA isn't a merge commit. A release publishes only from merging its Version Packages pull request with a merge commit."
+            exit 1
+          fi
+          HEAD_SHA=$(git rev-parse "$GITHUB_SHA^2")
+          PULL=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq "[.[] | select(.merged_at != null and .merge_commit_sha == \"$GITHUB_SHA\" and .base.ref == \"$GITHUB_REF_NAME\" and .head.sha == \"$HEAD_SHA\" and .head.ref == \"changeset-release/$GITHUB_REF_NAME\")] | first | .number // empty")
+          if [ -z "$PULL" ]; then
+            echo "::error::$GITHUB_SHA isn't the merge of a Version Packages pull request from changeset-release/$GITHUB_REF_NAME into $GITHUB_REF_NAME, so nothing publishes from it."
+            exit 1
+          fi
+          if [ "$(git rev-parse "$GITHUB_SHA^{tree}")" != "$(git rev-parse "$HEAD_SHA^{tree}")" ]; then
+            echo "::error::The merge's files differ from the pull request head $HEAD_SHA, so the line moved after the pull request was made. Let the Version Packages pull request update, test its new head and merge that."
+            exit 1
+          fi
+          echo "Publishing the files of $HEAD_SHA, the head of #$PULL"
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 24.22.1
+
+      # Read when the job runs, so a release that published meanwhile counts.
+      - name: Choose the dist-tag
+        id: dist-tag
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          # A release older than npm's `latest`, such as an older line's patch, goes under stable-X.Y,
+          # so it doesn't move `latest` backwards.
+          DIST_TAG=latest
+          LATEST=$(npm view @shopify/cli dist-tags.latest)
+          if ! node -e '
+            const [version, latest] = process.argv.slice(1).map((v) => v.split(".").map(Number))
+            const difference = version.map((part, i) => part - latest[i]).find((d) => d !== 0) ?? 0
+            process.exit(difference >= 0 ? 0 : 1)
+          ' "$VERSION" "$LATEST"; then
+            DIST_TAG="stable-${VERSION%.*}"
+          fi
+          echo "Publishing $VERSION under $DIST_TAG"
+          echo "dist-tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+
+      # Leaves every other package out of this publish, so a version that an earlier push brought
+      # is never published from this commit's tree.
+      - name: Publish only the checked packages
+        env:
+          PACKAGES: ${{ needs.check.outputs.packages }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("node:fs")
+            const keep = new Set(process.argv[1].split(" ").filter(Boolean))
+            for (const directory of fs.readdirSync("packages")) {
+              const path = `packages/${directory}/package.json`
+              if (!fs.existsSync(path)) continue
+              const manifest = JSON.parse(fs.readFileSync(path, "utf8"))
+              if (manifest.private || keep.has(manifest.name)) continue
+              manifest.private = true
+              fs.writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`)
+              console.log(`Not publishing ${manifest.name}@${manifest.version} from this commit`)
+            }
+          ' "$PACKAGES"
 
       - name: Publish packages
-        if: steps.changesets.outputs.hasChangesets == 'false'
-        run: pnpm release latest
+        run: pnpm release "$DIST_TAG"
         env:
+          DIST_TAG: ${{ steps.dist-tag.outputs.dist-tag }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
 
-      - name: Get version
-        id: version
-        if: steps.changesets.outputs.hasChangesets == 'false'
-        run: |
-          VERSION=$(node -p "require('./packages/cli/package.json').version")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Version: $VERSION"
-
       - name: Create tag
-        if: steps.changesets.outputs.hasChangesets == 'false'
         env:
-          TAG: ${{ steps.version.outputs.version }}
+          TAG: ${{ needs.check.outputs.version }}
         run: |
           set -euo pipefail
           if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
@@ -301,25 +318,10 @@ jobs:
           git push origin "$TAG"
           echo "Created tag $TAG"
 
-      - name: Create stable branch
-        if: steps.changesets.outputs.hasChangesets == 'false' && github.ref_name == 'main' && endsWith(steps.version.outputs.version, '.0')
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          set -euo pipefail
-          MINOR=${VERSION%.0}
-          BRANCH="stable/$MINOR"
-          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-            echo "Branch $BRANCH already exists, skipping"
-            exit 0
-          fi
-          git push origin "HEAD:refs/heads/$BRANCH"
-          echo "Created branch $BRANCH"
-
       - name: Create GitHub release
-        if: steps.changesets.outputs.hasChangesets == 'false' && !endsWith(steps.version.outputs.version, '.0.0')
+        if: ${{ !endsWith(needs.check.outputs.version, '.0.0') }}
         env:
-          TAG: ${{ steps.version.outputs.version }}
+          TAG: ${{ needs.check.outputs.version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -335,6 +337,9 @@ jobs:
             echo "Release $TAG already exists; ensured make_latest=legacy"
             exit 0
           fi
+          # The notes come from the version's changelog entries. GitHub's generated notes would list
+          # only the Version Packages pull request.
+          node .github/scripts/release-notes.js "$TAG" > "$RUNNER_TEMP/release-notes.md"
           gh api \
             --method POST \
             -H "Accept: application/vnd.github+json" \
@@ -342,15 +347,42 @@ jobs:
             "repos/$GITHUB_REPOSITORY/releases" \
             -f tag_name="$TAG" \
             -f name="$TAG" \
-            -F generate_release_notes=true \
+            -F body=@"$RUNNER_TEMP/release-notes.md" \
             -f make_latest=legacy >/dev/null
           echo "Created release $TAG"
 
-  # Manual/Cron release job - runs on schedule or manual trigger with tag
+  # A scheduled nightly of an unchanged main would publish the same code again under a new version.
+  nightly-changes:
+    name: Check for changes since the last nightly
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+    steps:
+      - name: Compare main with the last successful nightly
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          LAST=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release.yml --event schedule --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          if [ "$LAST" = "$GITHUB_SHA" ]; then
+            echo "main hasn't changed since the last successful nightly ($LAST)"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Nightly on schedule, nightly or experimental by hand, from main only. A nightly runs in the
+  # npm-nightly environment; an experimental release, which is rare, runs in npm-release.
   manual-cron-release:
     name: Manual & Cron Release
-    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && inputs.snapit_comment_id == '' && inputs.snapit_sha == '') }}
+    needs: nightly-changes
+    if: ${{ !cancelled() && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != 'release')) && github.ref_name == 'main' && needs.nightly-changes.outputs.changed != 'false' }}
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.tag == 'experimental' && 'npm-release' || 'npm-nightly' }}
     permissions:
       contents: read
       pull-requests: write
@@ -365,8 +397,9 @@ jobs:
         with:
           node-version: 24.22.1
       - name: Release
-        run: pnpm release ${{ github.event.inputs.tag || 'nightly' }}
+        run: pnpm release "$TAG"
         env:
+          TAG: ${{ github.event.inputs.tag || 'nightly' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true

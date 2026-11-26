@@ -197,6 +197,11 @@ export default abstract class ThemeCommand extends Command {
     })
   }
 
+  protected filterEnvironmentFlags(environment: FlagOutput): FlagOutput {
+    // Theme configuration cannot control consent to execute custom JavaScript.
+    return Object.fromEntries(Object.entries(environment).filter(([name]) => name !== 'allow-custom-checks'))
+  }
+
   protected validateCommandFlags(_flags: FlagValues): void {}
 
   protected requiredFlagsForSingleEnvironment(
@@ -272,10 +277,11 @@ export default abstract class ThemeCommand extends Command {
       let environmentFlags
       try {
         // eslint-disable-next-line no-await-in-loop
-        environmentFlags = await loadEnvironment(environmentName, 'shopify.theme.toml', {
+        const configuredFlags = await loadEnvironment(environmentName, 'shopify.theme.toml', {
           from: flags.path as string,
           silent: true,
         })
+        environmentFlags = configuredFlags && this.filterEnvironmentFlags(configuredFlags)
       } catch (error) {
         if (!this.collectsEnvironmentResults(flags)) throw error
         environmentMap.set(environmentName, {

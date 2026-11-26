@@ -1,4 +1,5 @@
 import {renderSecurityReviewResult} from './result.js'
+import {appSecurityReviewSarif, type SarifLog} from './sarif.js'
 import {reviewAppSecurityResults, type ReviewedAppSecurityResults} from '../security-review.js'
 import {appSecurityArtifactPaths} from '../app-security-artifacts.js'
 import {resolveAppSecurityCommands} from '../app-security-commands.js'
@@ -7,17 +8,20 @@ import {
   agentFindingsDocument,
   deterministicFindingsDocument,
 } from '../app-security-engine/tests/fixtures/findings-documents.js'
+import {listSettleableCheckIds} from '../app-security-engine/index.js'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from '../app-security-api.js'
 import type {AppSecuritySelection} from '../app-security-selection.js'
+import type {AppSecurityReviewResult} from './types.js'
 import type {
   AgentFindingsDocument,
   DeterministicFindingsDocument,
   StoredCheck,
   StoredFinding,
+  SuppressionEntry,
 } from '../app-security-engine/index.js'
 
 const originalExitCode = process.exitCode
@@ -46,15 +50,22 @@ const selection: AppSecuritySelection = {
 interface ReviewOptions {
   checkIds?: string[]
   blocking?: AppSecurityBlockingLevel
+  failOnUnresolved?: boolean
+  /** The entries of shopify.app-security.json. */
+  entries?: SuppressionEntry[]
+  /** The entry paths whose files are gone. */
+  missingPaths?: string[]
 }
 
 function reviewed(sources: AppSecurityResultsSources, options: ReviewOptions = {}): ReviewedAppSecurityResults {
+  const results = appSecurityResultsFor(appDirectory, 'shopify.app', sources, options.entries, options.missingPaths)
   return {
     selection,
-    result: reviewAppSecurityResults(appSecurityResultsFor(appDirectory, 'shopify.app', sources), {
+    result: reviewAppSecurityResults(results, {
       resultsDirectory: appSecurityArtifactPaths(appDirectory, 'shopify.app').resultsDirectory,
       checkIds: options.checkIds ?? [],
       blocking: options.blocking ?? 'none',
+      failOnUnresolved: options.failOnUnresolved ?? false,
     }),
     commands: resolveAppSecurityCommands(selection, cwd()),
   }
@@ -69,6 +80,17 @@ async function jsonResult(
     renderSecurityReviewResult(reviewed(sources, options), {verbose: options.verbose ?? false}, 'json')
     expect(stderr()).toBe('')
     return JSON.parse(stdout())
+  })
+}
+
+/** Presents the review as SARIF and returns the parsed stdout with the stderr text, boxes flattened to one line. */
+async function sarifOutput(
+  sources: AppSecurityResultsSources,
+  options: ReviewOptions = {},
+): Promise<{sarif: SarifLog; stderr: string}> {
+  return withCapturedStandardStreams(({stdout, stderr}) => {
+    renderSecurityReviewResult(reviewed(sources, options), {verbose: false}, 'sarif')
+    return {sarif: JSON.parse(stdout()) as SarifLog, stderr: unstyled(stderr()).replace(/[│╭╮╰╯─\s]+/g, ' ')}
   })
 }
 
@@ -152,6 +174,7 @@ describe('renderSecurityReviewResult in the terminal', () => {
     const rendered = unstyled(output.output())
     expect(rendered).toContain('3 checks with findings. 1 check unresolved.')
     expect(rendered).toContain('Next steps')
+    expect(rendered).toContain('1 finding suppressed.')
     expect(rendered).not.toContain('Suppressed:')
     expect(process.exitCode).toBeUndefined()
   })
@@ -176,6 +199,16 @@ describe('renderSecurityReviewResult in the terminal', () => {
     expect(process.exitCode).toBe(1)
   })
 })
+
+/** The top-level suppressions of a result without shopify.app-security.json. */
+const noSuppressionsFile = {
+  filePath: appPath('shopify.app-security.json'),
+  entryCount: 0,
+  suppressedFindingCount: 0,
+  staleEntryCount: 0,
+  ambiguousEntryCount: 0,
+  entries: [],
+}
 
 describe('renderSecurityReviewResult as JSON', () => {
   test('writes one result with both sources, each finding with only its own fields', async () => {
@@ -337,6 +370,7 @@ describe('renderSecurityReviewResult as JSON', () => {
           findings: [
             {
               source: 'deterministic',
+              number: 1,
               disposition: 'superseded',
               location: {filePath: appPath('app/routes/orders.tsx'), line: 12, column: 5},
               message: 'accessToken flows into console.log.',
@@ -348,9 +382,11 @@ describe('renderSecurityReviewResult as JSON', () => {
                 },
               ],
               fix: {description: 'Remove credentials from logs.', guide: 'https://shopify.dev/logs', automated: false},
+              suppression: null,
             },
             {
               source: 'agent',
+              number: 2,
               disposition: 'active',
               location: {filePath: appPath('app/routes/orders.tsx'), line: 12, column: null},
               message: 'The session access token is written to the server log.',
@@ -385,6 +421,7 @@ describe('renderSecurityReviewResult as JSON', () => {
           findings: [
             {
               source: 'agent',
+              number: 3,
               disposition: 'suppressed',
               location: {filePath: appPath('app/routes/admin.settings.tsx'), line: 55, column: null},
               message: 'Settings are deleted by ID without checking the owning shop.',
@@ -392,12 +429,20 @@ describe('renderSecurityReviewResult as JSON', () => {
               evidence: [],
               confidence: null,
               reasoning: null,
-              suppression: {justification: 'An allowlist middleware restricts the route to the app owner.'},
+              suppression: {
+                justification: 'An allowlist middleware restricts the route to the app owner.',
+                origin: 'agent',
+              },
             },
           ],
         },
       ],
+      resultsDigest: expect.stringMatching(/^[0-9a-f]{12}$/),
       blocking: {level: 'none', blockedCheckCount: 0},
+      failOnUnresolved: false,
+      missingCheckIds: expect.arrayContaining(['SQL_INJECTION']),
+      suppressions: noSuppressionsFile,
+      savedSuppressions: null,
     })
   })
 
@@ -412,7 +457,12 @@ describe('renderSecurityReviewResult as JSON', () => {
       coverage: null,
       scopeDiffers: false,
       checks: [],
+      resultsDigest: null,
       blocking: {level: 'none', blockedCheckCount: 0},
+      failOnUnresolved: false,
+      missingCheckIds: listSettleableCheckIds(),
+      suppressions: noSuppressionsFile,
+      savedSuppressions: null,
     })
   })
 
@@ -792,5 +842,412 @@ describe('renderSecurityReviewResult as JSON', () => {
     const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
 
     await expect(jsonResult(both, {verbose: true})).resolves.toStrictEqual(await jsonResult(both, {verbose: false}))
+  })
+})
+
+describe('renderSecurityReviewResult as SARIF', () => {
+  const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
+
+  test('writes the log of the JSON result to stdout alone, and warns on stderr about the unsettled checks', async () => {
+    process.exitCode = undefined
+    const json = (await jsonResult(both)) as AppSecurityReviewResult
+
+    const {sarif, stderr} = await sarifOutput(both)
+
+    expect(sarif).toStrictEqual(appSecurityReviewSarif(json, {checkIds: []}))
+    expect(sarif.runs[0]!.results.length).toBeGreaterThan(0)
+    expect(json.missingCheckIds.length).toBeGreaterThan(1)
+    expect(stderr).toContain(
+      `The SARIF log has 1 unresolved check and ${json.missingCheckIds.length} checks without results, so code scanning could close their open alerts as fixed. Have your coding agent record its findings before you upload it. Pass --fail-on-unresolved to exit with code 1 while a check is unresolved or has no result.`,
+    )
+    expect(stderr).not.toContain('Blocking')
+    expect(process.exitCode).toBeUndefined()
+  })
+
+  test('lists the checks without results in the log, the same log with and without --fail-on-unresolved', async () => {
+    const {missingCheckIds} = (await jsonResult(both)) as AppSecurityReviewResult
+
+    const {sarif} = await sarifOutput(both)
+    const failing = await sarifOutput(both, {failOnUnresolved: true})
+    process.exitCode = undefined
+
+    const notifications = sarif.runs[0]!.invocations[0]!.toolExecutionNotifications
+    expect(
+      notifications
+        .filter((notification) => notification.descriptor.id === 'no-result')
+        .map((notification) => notification.message.text),
+    ).toStrictEqual(missingCheckIds.map((id) => `${id} has no result: neither results file has this check.`))
+    expect(sarif.runs[0]!.invocations[0]!.executionSuccessful).toBe(false)
+    expect(failing.sarif).toStrictEqual(sarif)
+  })
+
+  test('names the --blocking breach on stderr and sets exit code 1 after the log', async () => {
+    process.exitCode = undefined
+
+    const {sarif, stderr} = await sarifOutput(both, {blocking: 'high'})
+
+    expect(sarif.version).toBe('2.1.0')
+    expect(stderr).toContain('Blocking 2 checks at or above high (--blocking high).')
+    expect(process.exitCode).toBe(1)
+  })
+
+  test('names the --fail-on-unresolved failure on stderr and sets exit code 1 after the log', async () => {
+    const {missingCheckIds} = (await jsonResult(both, {failOnUnresolved: true})) as AppSecurityReviewResult
+    process.exitCode = undefined
+
+    const {sarif, stderr} = await sarifOutput(both, {failOnUnresolved: true})
+
+    expect(sarif.version).toBe('2.1.0')
+    expect(missingCheckIds.length).toBeGreaterThan(1)
+    expect(stderr).toContain(
+      `Blocking 1 check unresolved and ${missingCheckIds.length} checks without results (--fail-on-unresolved).`,
+    )
+    expect(stderr).not.toContain('Pass --fail-on-unresolved')
+    expect(process.exitCode).toBe(1)
+  })
+
+  test('writes a run narrowed by --check-id with its category', async () => {
+    const checkIds = ['MISSING_TENANT_ISOLATION', 'CREDENTIAL_LOG_LEAKAGE']
+    const json = (await jsonResult(both, {checkIds})) as AppSecurityReviewResult
+
+    const {sarif} = await sarifOutput(both, {checkIds})
+
+    expect(sarif).toStrictEqual(appSecurityReviewSarif(json, {checkIds}))
+    expect(sarif.runs[0]!.automationDetails).toStrictEqual({
+      id: 'shopify-app-security/check-id/CREDENTIAL_LOG_LEAKAGE,MISSING_TENANT_ISOLATION/client-id/toml-client-id/',
+    })
+    expect(sarif.runs[0]!.tool.driver.rules.map((rule) => rule.id).sort()).toStrictEqual([...checkIds].sort())
+  })
+
+  test('warns that a log without results would close every open alert, and still writes it', async () => {
+    const {sarif, stderr} = await sarifOutput({deterministic: null, agent: null})
+
+    expect(sarif.runs[0]!.invocations[0]!.executionSuccessful).toBe(false)
+    expect(stderr).toContain(
+      'The SARIF log has no results, so code scanning would close every open alert as fixed. Pass --fail-on-unresolved to exit with code 1 while a check is unresolved or has no result.',
+    )
+  })
+})
+
+describe('renderSecurityReviewResult as JSON with shopify.app-security.json', () => {
+  const finding = (file: string, line: number, message: string, overrides: Partial<StoredFinding> = {}) => ({
+    location: {file, line},
+    message,
+    evidence: [],
+    ...overrides,
+  })
+  const deterministic = deterministicDocument({
+    checks: [
+      deterministicCheck({findings: [finding('app/routes/orders.tsx', 12, 'accessToken flows into console.log.')]}),
+    ],
+  })
+  const agent = agentDocument({
+    checks: [
+      agentCheck({
+        findings: [
+          finding('app/routes/orders.tsx', 20, 'The session token is logged.', {
+            suppression: {justification: 'The agent saw a test-only route.'},
+          }),
+          finding('app/routes/admin.tsx', 5, 'The admin token is logged.', {
+            suppression: {justification: 'Only the agent suppresses this one.'},
+          }),
+        ],
+      }),
+      agentCheck({id: 'MISSING_TENANT_ISOLATION', snapshot: {...snapshot, precedence: 'union'}}),
+    ],
+  })
+  const entry = (overrides: Partial<SuppressionEntry>): SuppressionEntry => ({
+    source: 'deterministic',
+    check: 'CREDENTIAL_LOG_LEAKAGE',
+    kind: 'accepted-risk',
+    path: 'app/routes/orders.tsx',
+    reason: 'The logs stay on the developer machine.',
+    ...overrides,
+  })
+  const entries = [
+    entry({}),
+    entry({source: 'agent', kind: 'false-positive', reason: 'The token is a placeholder.'}),
+    entry({path: 'app/routes/deleted.tsx'}),
+    entry({check: 'UNAUTHENTICATED_ENDPOINT'}),
+  ]
+
+  test("fills each finding's suppression from what suppresses it, an entry first, for both sources", async () => {
+    const check = (await jsonResult({deterministic, agent}, {entries})) as {
+      checks: {findings: {source: string; disposition: string; suppression: unknown}[]}[]
+    }
+
+    expect(check.checks[0]!.findings).toMatchObject([
+      {
+        source: 'agent',
+        location: {filePath: appPath('app/routes/admin.tsx')},
+        disposition: 'suppressed',
+        suppression: {justification: 'Only the agent suppresses this one.', origin: 'agent'},
+      },
+      {
+        source: 'deterministic',
+        disposition: 'suppressed',
+        suppression: {
+          justification: 'The logs stay on the developer machine.',
+          origin: 'file',
+          entryIndex: 0,
+          kind: 'accepted-risk',
+        },
+      },
+      {
+        source: 'agent',
+        location: {filePath: appPath('app/routes/orders.tsx'), line: 20},
+        disposition: 'suppressed',
+        suppression: {
+          justification: 'The token is a placeholder.',
+          origin: 'file',
+          entryIndex: 1,
+          kind: 'false-positive',
+        },
+      },
+    ])
+    expect(check.checks[0]!.findings[0]!.suppression).toStrictEqual({
+      justification: 'Only the agent suppresses this one.',
+      origin: 'agent',
+    })
+  })
+
+  test('reports every entry with its status, whatever --check-id selects, and counts the findings that entries suppress', async () => {
+    const result = (await jsonResult({deterministic, agent}, {entries, checkIds: ['MISSING_TENANT_ISOLATION']})) as {
+      checks: unknown[]
+      suppressions: unknown
+    }
+
+    expect(result.checks).toHaveLength(1)
+    expect(result.suppressions).toStrictEqual({
+      filePath: appPath('shopify.app-security.json'),
+      entryCount: 4,
+      suppressedFindingCount: 2,
+      staleEntryCount: 1,
+      ambiguousEntryCount: 0,
+      entries: [
+        {
+          index: 0,
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'accepted-risk',
+          path: appPath('app/routes/orders.tsx'),
+          status: 'matched',
+          matchedFindingCount: 1,
+          likelyPath: null,
+          candidateFindingCount: null,
+          likelyFinding: null,
+        },
+        {
+          index: 1,
+          source: 'agent',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'false-positive',
+          path: appPath('app/routes/orders.tsx'),
+          status: 'matched',
+          matchedFindingCount: 1,
+          likelyPath: null,
+          candidateFindingCount: null,
+          likelyFinding: null,
+        },
+        {
+          index: 2,
+          source: 'deterministic',
+          check: 'CREDENTIAL_LOG_LEAKAGE',
+          kind: 'accepted-risk',
+          path: appPath('app/routes/deleted.tsx'),
+          status: 'stale',
+          matchedFindingCount: 0,
+          likelyPath: null,
+          candidateFindingCount: null,
+          likelyFinding: null,
+        },
+        {
+          index: 3,
+          source: 'deterministic',
+          check: 'UNAUTHENTICATED_ENDPOINT',
+          kind: 'accepted-risk',
+          path: appPath('app/routes/orders.tsx'),
+          status: 'not-evaluated',
+          matchedFindingCount: 0,
+          likelyPath: null,
+          candidateFindingCount: null,
+          likelyFinding: null,
+        },
+      ],
+    })
+  })
+
+  test('reports the likely new path of a stale entry whose file is gone, and the candidate count of an ambiguous entry', async () => {
+    const moved = deterministicDocument({
+      checks: [
+        deterministicCheck({
+          findings: [
+            finding('app/routes/orders.server.tsx', 12, 'accessToken flows into console.log.'),
+            finding('app/routes/admin.tsx', 3, 'accessToken flows into logger.info.'),
+            finding('app/routes/admin.tsx', 9, 'accessToken flows into logger.warn.'),
+          ],
+        }),
+      ],
+    })
+    const movedEntries = [
+      entry({code: 'accessToken flows into console.log'}),
+      entry({path: 'app/routes/admin.tsx', code: 'accessToken flows into logger'}),
+    ]
+
+    const result = (await jsonResult(
+      {deterministic: moved, agent: null},
+      {entries: movedEntries, missingPaths: ['app/routes/orders.tsx']},
+    )) as {checks: {findings: {disposition: string}[]}[]; suppressions: unknown}
+
+    expect(result.checks[0]!.findings.map(({disposition}) => disposition)).toEqual(['active', 'active', 'active'])
+    expect(result.suppressions).toMatchObject({
+      suppressedFindingCount: 0,
+      staleEntryCount: 1,
+      ambiguousEntryCount: 1,
+      entries: [
+        {
+          status: 'stale',
+          matchedFindingCount: 0,
+          likelyPath: appPath('app/routes/orders.server.tsx'),
+          candidateFindingCount: null,
+        },
+        {status: 'ambiguous', matchedFindingCount: 0, likelyPath: null, candidateFindingCount: 2},
+      ],
+    })
+  })
+
+  test('reports the likely finding of a stale entry after an edit of its code, with its path, line and number', async () => {
+    const renamed = deterministicDocument({
+      checks: [
+        deterministicCheck({
+          findings: [
+            finding('app/routes/orders.tsx', 12, 'accessToken flows into console.log.', {
+              code_excerpt: [{line: 12, text: '  console.log(currentSession.accessToken)'}],
+            }),
+          ],
+        }),
+      ],
+    })
+    const staleEntry = entry({code: 'console.log(session.accessToken)'})
+
+    const unchanged = (await jsonResult({deterministic: renamed, agent: null}, {entries: [entry({})]})) as {
+      suppressions: {entries: unknown[]}
+    }
+    const alone = (await jsonResult({deterministic: renamed, agent: null}, {entries: [staleEntry]})) as {
+      suppressions: {entries: unknown[]}
+    }
+    expect(alone.suppressions.entries).toStrictEqual([
+      {
+        index: 0,
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: appPath('app/routes/orders.tsx'),
+        status: 'stale',
+        matchedFindingCount: 0,
+        likelyPath: null,
+        candidateFindingCount: null,
+        likelyFinding: {filePath: appPath('app/routes/orders.tsx'), line: 12, findingNumber: 1},
+      },
+    ])
+    expect(unchanged.suppressions.entries).toMatchObject([{status: 'matched', likelyFinding: null}])
+  })
+
+  test('reports a re-attached entry with its previous code, kind and reason, and keeps the fields of the other entries', async () => {
+    const savedEntry = entry({code: 'console.log(currentSession.accessToken)'})
+    const review: ReviewedAppSecurityResults = {
+      ...reviewed({deterministic, agent: null}, {entries: [savedEntry]}),
+      savedSuppressions: {
+        path: `${appDirectory}/shopify.app-security.json`,
+        saved: [
+          {
+            index: 0,
+            change: 'code-replaced',
+            entry: savedEntry,
+            previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason: 'Old reason.'},
+            findingNumber: 1,
+            findingSuperseded: false,
+          },
+          {
+            index: 1,
+            change: 'added',
+            entry: entry({path: 'app/routes/admin.tsx'}),
+            findingNumber: 2,
+            findingSuperseded: false,
+          },
+        ],
+        companionNumbers: [],
+      },
+    }
+
+    const result = await withCapturedStandardStreams(({stdout}) => {
+      renderSecurityReviewResult(review, {verbose: false}, 'json')
+      return JSON.parse(stdout()) as {savedSuppressions: {entries: unknown[]}}
+    })
+
+    expect(result.savedSuppressions.entries).toStrictEqual([
+      {
+        index: 0,
+        change: 'code-replaced',
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: appPath('app/routes/orders.tsx'),
+        code: 'console.log(currentSession.accessToken)',
+        reason: 'The logs stay on the developer machine.',
+        previous: {code: 'console.log(session.accessToken)', kind: 'false-positive', reason: 'Old reason.'},
+        findingNumber: 1,
+      },
+      {
+        index: 1,
+        change: 'added',
+        source: 'deterministic',
+        check: 'CREDENTIAL_LOG_LEAKAGE',
+        kind: 'accepted-risk',
+        path: appPath('app/routes/admin.tsx'),
+        code: null,
+        reason: 'The logs stay on the developer machine.',
+        previous: null,
+        findingNumber: 2,
+      },
+    ])
+  })
+
+  test('sets suppression on a superseded deterministic finding that an entry matched, which is not counted as suppressed', async () => {
+    const preferAgent = agentDocument({
+      checks: [agentCheck({snapshot: {...snapshot, precedence: 'prefer-agent'}})],
+    })
+
+    const result = (await jsonResult({deterministic, agent: preferAgent}, {entries: [entry({})]})) as {
+      checks: {findings: unknown[]}[]
+      suppressions: {suppressedFindingCount: number; entries: unknown[]}
+    }
+
+    expect(result.checks[0]!.findings).toMatchObject([
+      {
+        source: 'deterministic',
+        disposition: 'superseded',
+        suppression: {origin: 'file', entryIndex: 0, kind: 'accepted-risk'},
+      },
+    ])
+    expect(result.suppressions).toMatchObject({
+      suppressedFindingCount: 0,
+      entries: [{status: 'matched', matchedFindingCount: 1}],
+    })
+  })
+
+  test('only adds fields without a suppressions file: a null deterministic suppression, the agent origin and the file', async () => {
+    const both = {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument}
+
+    const result = (await jsonResult(both)) as {suppressions: unknown; checks: {findings: Record<string, unknown>[]}[]}
+
+    const findings = result.checks.flatMap((check) => check.findings)
+    const suppressions = (source: string) =>
+      findings.filter((finding) => finding.source === source).map((finding) => finding.suppression)
+    expect(suppressions('deterministic').every((suppression) => suppression === null)).toBe(true)
+    expect(suppressions('agent').filter((suppression) => suppression !== null)).toStrictEqual([
+      {justification: 'The route is restricted to the app owner by an allowlist middleware.', origin: 'agent'},
+    ])
+    expect(result.suppressions).toStrictEqual(noSuppressionsFile)
   })
 })

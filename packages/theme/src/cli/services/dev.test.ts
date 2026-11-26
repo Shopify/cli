@@ -28,7 +28,8 @@ vi.mock('@shopify/cli-kit/node/colors', () => ({
     gray: (str: string) => str,
   },
 }))
-vi.mock('@shopify/cli-kit/node/system', () => ({
+vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
   openURL: vi.fn(),
   terminalSupportsPrompting: vi.fn(),
 }))

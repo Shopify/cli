@@ -3,6 +3,7 @@ import {
   inferPackageManagerForGlobalCLI,
   installGlobalCLIPrompt,
   installGlobalShopifyCLI,
+  getHomebrewCLIFormula,
 } from './is-global.js'
 import {findPathUpSync} from './fs.js'
 import {cwd} from './path.js'
@@ -67,6 +68,16 @@ beforeEach(() => {
 })
 
 afterEach(() => vi.unstubAllEnvs())
+
+describe('getHomebrewCLIFormula', () => {
+  test('keeps the versioned formula selected by the wrapper', () => {
+    expect(getHomebrewCLIFormula({SHOPIFY_HOMEBREW_FORMULA: 'shopify-cli@4'})).toBe('shopify-cli@4')
+  })
+
+  test('defaults older wrappers to the unversioned formula', () => {
+    expect(getHomebrewCLIFormula({})).toBe('shopify-cli')
+  })
+})
 
 describe('currentProcessIsGlobal', () => {
   test('returns true if argv point to the global npm path', () => {

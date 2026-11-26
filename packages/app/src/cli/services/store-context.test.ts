@@ -12,6 +12,7 @@ import {
 import metadata from '../metadata.js'
 import {appHiddenConfigPath, AppLinkedInterface} from '../models/app/app.js'
 import {vi, describe, test, expect} from 'vitest'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -20,6 +21,7 @@ import type {ActiveConfig} from '../models/project/active-config.js'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')
+vi.mock('@shopify/cli-kit/node/session')
 
 describe('storeContext', () => {
   const mockApp = testAppLinked({
@@ -268,6 +270,125 @@ describe('storeContext', () => {
       await storeContext({appContextResult, forceReselectStore: false})
 
       expect(mockDeveloperPlatformClient.ensureUserAccessToStore).toHaveBeenCalledWith(mockOrganization.id, mockStore)
+    })
+  })
+
+  test('builds the dev store from its domain without the organizations API when a service account token is set', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+      await prepareAppFolder(mockApp, dir)
+
+      const result = await storeContext({
+        appContextResult,
+        storeFqdn: 'https://Explicit-Store.myshopify.com',
+        forceReselectStore: false,
+        devSession: true,
+      })
+
+      expect(result).toEqual({
+        shopId: '',
+        link: '',
+        shopDomain: 'explicit-store.myshopify.com',
+        shopName: 'explicit-store.myshopify.com',
+        transferDisabled: true,
+        convertableToPartnerTest: false,
+        provisionable: false,
+      })
+      expect(fetchStore).not.toHaveBeenCalled()
+      expect(mockDeveloperPlatformClient.devStoresForOrg).not.toHaveBeenCalled()
+      expect(mockDeveloperPlatformClient.ensureUserAccessToStore).not.toHaveBeenCalled()
+    })
+  })
+
+  test('keeps the saved dev store when a service account passes a store that is not checked yet', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+      await prepareAppFolder(mockApp, dir)
+      await writeFile(
+        appHiddenConfigPath(dir),
+        JSON.stringify({client_id: {dev_store_url: 'cached-store.myshopify.com'}}),
+      )
+
+      await storeContext({
+        appContextResult,
+        storeFqdn: 'typoo.myshopify.com',
+        forceReselectStore: false,
+        devSession: true,
+      })
+
+      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
+      expect(hiddenConfig).toContain('"dev_store_url":"cached-store.myshopify.com"')
+      expect(hiddenConfig).not.toContain('typoo')
+    })
+  })
+
+  test('asks for a dev store when a service account token is set and no store is given', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    const appWithoutStore = testAppLinked({
+      configuration: {client_id: 'client_id', name: 'app-config-name'} as any,
+      hiddenConfig: {},
+    })
+
+    await expect(
+      storeContext({
+        appContextResult: {...appContextResult, app: appWithoutStore},
+        forceReselectStore: false,
+        devSession: true,
+      }),
+    ).rejects.toMatchObject({
+      message: 'A service account needs a dev store to run this command.',
+      tryMessage: expect.stringContaining('--store'),
+    })
+    expect(mockDeveloperPlatformClient.devStoresForOrg).not.toHaveBeenCalled()
+  })
+
+  test('uses the cached dev_store_url without the organizations API when a service account token is set', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+      await prepareAppFolder(mockApp, dir)
+
+      const result = await storeContext({appContextResult, forceReselectStore: false, devSession: true})
+
+      expect(result.shopDomain).toEqual('cached-store.myshopify.com')
+      expect(fetchStore).not.toHaveBeenCalled()
+      expect(mockDeveloperPlatformClient.ensureUserAccessToStore).not.toHaveBeenCalled()
+    })
+  })
+
+  test('looks up the store when a service account token is set outside a dev session', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+      await prepareAppFolder(mockApp, dir)
+
+      const result = await storeContext({
+        appContextResult,
+        storeFqdn: 'explicit-store.myshopify.com',
+        forceReselectStore: false,
+      })
+
+      expect(fetchStore).toHaveBeenCalled()
+      expect(ensureTransferDisabledStore).toHaveBeenCalledWith(mockStore)
+      expect(result).toEqual(mockStore)
+    })
+  })
+
+  test('looks up the store when a service account token is set and other store types are allowed', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+      await prepareAppFolder(mockApp, dir)
+
+      const result = await storeContext({
+        appContextResult,
+        storeFqdn: 'explicit-store.myshopify.com',
+        forceReselectStore: false,
+        storeTypes: ['APP_DEVELOPMENT', 'PRODUCTION'],
+        devSession: true,
+      })
+
+      expect(fetchStore).toHaveBeenCalled()
+      expect(result).toEqual(mockStore)
     })
   })
 })

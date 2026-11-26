@@ -1,0 +1,120 @@
+name: Release QA package
+
+# Builds the @shopify/cli tarball that a release of a commit would publish, so it can be tested
+# before that commit is merged and released. Nothing is published.
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Full commit SHA to build, normally the head of a "Version Packages - stable/X.Y" pull request'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-qa-package-${{ inputs.sha }}
+  cancel-in-progress: false
+
+env:
+  PNPM_VERSION: '10.11.1'
+
+jobs:
+  package:
+    name: Build the release tarball
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate the SHA
+        env:
+          SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          # A full SHA names one commit; a branch name or short SHA could resolve to a different one.
+          if [[ ! "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::sha must be a full commit SHA: 40 lowercase hexadecimal characters."
+            exit 1
+          fi
+          # Only the head of one of this repository's branches, such as a Version Packages pull
+          # request's branch, so the job never builds a fork's code with this repository's cache.
+          # Read the list first: under pipefail, grep -q exiting at its first match breaks the pipe.
+          HEADS=$(git ls-remote --heads "https://github.com/$GITHUB_REPOSITORY" | cut -f 1)
+          if ! grep -qx "$SHA" <<< "$HEADS"; then
+            echo "::error::$SHA isn't the head of a branch in $GITHUB_REPOSITORY."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+
+      - name: Verify the checked-out commit
+        env:
+          SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(git rev-parse HEAD)
+          if [ "$HEAD_SHA" != "$SHA" ]; then
+            echo "::error::Checked out $HEAD_SHA instead of $SHA."
+            exit 1
+          fi
+
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 24.22.1
+
+      # The same build the release runs, before it publishes.
+      - name: Bundle
+        run: pnpm bundle-for-release
+        env:
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
+
+      # The release's prepack also generates the manifest and copies the README. Its error-reporting
+      # source map upload is left out, and the tarball excludes source maps either way.
+      - name: Pack @shopify/cli
+        id: pack
+        working-directory: packages/cli
+        run: |
+          set -euo pipefail
+          pnpm oclif manifest
+          cp ../../README.md README.md
+          TARBALL=$(npm pack --ignore-scripts | tail -n 1)
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: shopify-cli-${{ inputs.sha }}
+          path: packages/cli/${{ steps.pack.outputs.tarball }}
+          if-no-files-found: error
+          # The tarball is already compressed.
+          compression-level: 0
+
+      - name: Summarize
+        working-directory: packages/cli
+        env:
+          SHA: ${{ inputs.sha }}
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          ARTIFACT: shopify-cli-${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          CHECKSUM=$(sha256sum "$TARBALL" | cut -d ' ' -f 1)
+          VERSION=$(tar -xzOf "$TARBALL" package/package.json | node -p 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).version')
+          {
+            echo "### @shopify/cli $VERSION"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Commit | \`$SHA\` |"
+            echo "| Tarball | \`$TARBALL\` |"
+            echo "| SHA-256 | \`$CHECKSUM\` |"
+            echo "| Version | \`$VERSION\` |"
+            echo
+            echo "Download it with:"
+            echo
+            echo '```sh'
+            echo "gh run download $GITHUB_RUN_ID -R $GITHUB_REPOSITORY -n $ARTIFACT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

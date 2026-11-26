@@ -3,15 +3,14 @@
 This guide is the canonical contract for new JSON flags in Shopify CLI and its plugins, including Hydrogen. It records the agreed JSON conventions.
 
 A finite command finishes its work, returns one final result, and exits, such as `shopify store list`. Commands that
-keep running and streaming updates, such as `shopify app dev`, are currently outside this contract.
+keep running and streaming updates, such as `shopify app dev`, use the streaming contracts described below.
 
 Finite commands expose their successful result as typed data independently from terminal presentation. The command's
 domain package owns this contract; CLI Kit only provides the shared schema and help infrastructure.
 
-New finite query and operation commands must include `jsonFlag` and expose a `jsonOutputSchema`. The repository lint
-check enforces both. Exceptions are recorded in
-`packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`. Its migration section tracks existing finite
-commands; remove each entry when converted, and never add new finite commands to it.
+All visible commands must include `jsonFlag` and expose a `jsonOutputSchema`. The repository lint check enforces
+both and does not accept path exceptions. Hidden commands, including removed command stubs such as `app logs`,
+are outside the rule's scope.
 
 ## Choose the public shape
 
@@ -240,7 +239,31 @@ When a JSON command prompts, stderr also contains human-readable UI and terminal
 interactive mode, stderr is not a pure JSONL stream. For automation, use `--json --no-input` to capture JSON side
 events from stderr; missing required input then produces a fatal error instead of a prompt.
 
-## Exempt only streaming commands
+## Streaming commands
+
+`shopify app function replay --json` writes `FunctionReplayRecord` records to stdout as JSONL in watch mode.
+Each record has `type` and a UTC whole-second `timestamp`. The three record types are:
+
+- `status`: `watching` after the initial file scan completes, and `cancelled` when replay stops after cancellation.
+- `build`: `success` or `failed` after a rebuild. A failed build includes its failure message in `error`.
+- `execution`: the native Function runner `result` and the `exitCode` of that Function run. Native fields, numeric
+  tokens, and strings are preserved. `result.success: false` reports a completed Function failure.
+
+Rebuild records and executions wait for `watching`. The first execution uses the latest successful startup rebuild,
+or the original extension if no rebuild occurred. A failed startup rebuild waits for a successful rebuild before execution.
+Build failures and completed Function failures are recoverable: replay keeps watching and does not set the process
+exit code from the Function run. Build output and runner diagnostics use command diagnostic events on stderr.
+The failed build message is also available in the stdout build record; it does not create a second stderr diagnostic.
+
+Fatal setup, watcher, or runner failures stop replay, write the standard `{error: {...}}` envelope to stdout, and exit
+nonzero. They do not emit `cancelled`. On `SIGINT`, `SIGTERM`, or `SIGQUIT`, replay emits `cancelled` and exits with
+code 130, 143, or 131, respectively. When stdout closes with `EPIPE`, replay cancels and stops writing records so a
+pipeline can finish. There is no final success result. With `--no-watch --json`, replay returns one native
+`FunctionRunResult` document and uses that run's exit code instead.
+
+Setup prompts use stderr. Use `--json --no-input` for unattended replay with JSON diagnostics on stderr.
+`app function replay --json-schema` describes finite results, stdout records, fatal errors, and stderr side events.
+The stdout record definition is `FunctionReplayRecord`; `Event` describes stderr side events.
 
 `shopify app dev --json` writes dev stream records as identical JSONL bytes to stdout and the session log. Each record
 has `timestamp`, `source`, and `message`, with `level` when available. The log contains process output, preview URLs,
@@ -264,18 +287,12 @@ stream's event and fatal error formats. This streaming contract does not change 
 messages belong to the same session. Setup diagnostics and fatal errors follow
 the same stream separation as `app dev`.
 
-Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
-`packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's
-repository-relative path:
+Long-lived commands that produce an open-ended event stream don't have one finite result. They must still include
+`jsonFlag` and expose a `jsonOutputSchema` that describes their stream records. A `jsonOutputSupport` property alone
+does not satisfy the lint rule.
 
-```js
-'packages/app/src/cli/commands/app/widgets/watch.ts',
-```
-
-The lint rule only exempts paths in that list; a `jsonOutputSupport` property alone does not exempt a new command.
-
-This exemption is only for commands whose lifetime or output is inherently streaming. A finite operation remains a
-finite command even when it emits progress events, writes a file, or has no interesting return value.
+A finite operation remains a finite command even when it emits progress events, writes a file, or has no interesting
+return value.
 
 ## Plugin authors
 
@@ -289,7 +306,6 @@ For example, Hydrogen can add this entry to its existing `eslint.config.js` arra
 
 ```js
 const cliPlugin = require('@shopify/eslint-plugin-cli')
-const {commandExceptions} = require('./json-output-command-exceptions.cjs')
 
 module.exports = [
   // Other existing configuration entries.
@@ -297,20 +313,15 @@ module.exports = [
     files: ['packages/cli/src/commands/**/*.ts'],
     plugins: {'@shopify/cli': cliPlugin},
     rules: {
-      '@shopify/cli/command-json-output': ['error', {exceptions: commandExceptions}],
+      '@shopify/cli/command-json-output': 'error',
     },
   },
 ]
 ```
 
-Create `json-output-command-exceptions.cjs` in that repository, exporting a `commandExceptions` array.
-Use exact repository-relative paths with forward slashes, such as `packages/cli/src/commands/hydrogen/dev.ts`.
-Paths are matched individually; exempting a command does not exempt its subcommands. The rule recognizes command
-files under both `packages/*/src/commands/` and `packages/*/src/cli/commands/`.
-
-The `exceptions` option replaces the built-in Shopify CLI list. An empty array disables all exemptions;
-omitting the option preserves the built-in list. Keep the local list limited to existing finite commands awaiting
-migration and streaming commands, and remove finite entries as they adopt the contract.
+The rule accepts no options or path exceptions. It recognizes command files under both `packages/*/src/commands/`
+and `packages/*/src/cli/commands/`. Commands with `static hidden = true` are outside its scope; this does not exempt
+their visible subcommands.
 
 ### Control plugin output
 

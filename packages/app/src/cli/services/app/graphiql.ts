@@ -1,5 +1,5 @@
 import {createClientCredentialsTokenProvider} from '../dev/processes/graphiql-token-provider.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, appClientSecret} from '../../models/organization.js'
 import {buildAppURLForAdmin} from '../../utilities/app/app-url.js'
 import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
@@ -20,7 +20,7 @@ interface OpenAppGraphiQLOptions {
 }
 
 export async function openAppGraphiQL(options: OpenAppGraphiQLOptions): Promise<void> {
-  const apiSecret = options.remoteApp.apiSecretKeys[0]?.secret ?? ''
+  const apiSecret = await appClientSecret(options.remoteApp)
   const key = resolveGraphiQLKey(undefined, apiSecret, options.store)
   const tokenProvider = createClientCredentialsTokenProvider({
     apiKey: options.remoteApp.apiKey,

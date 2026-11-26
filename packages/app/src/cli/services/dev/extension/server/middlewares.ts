@@ -1,6 +1,7 @@
 import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload, SOURCE_MAP_SUFFIX} from '../payload.js'
+import {getExtensionPointTargetSurface} from '../utilities.js'
 import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {resolveOutputDir} from '../../../build/steps/include-assets/generate-manifest.js'
@@ -8,6 +9,7 @@ import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
 import {joinPath, resolvePath, isSubpath, extname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 
 import type {H3Event} from 'h3'
 
@@ -207,10 +209,29 @@ export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExte
     if (!url) {
       return sendError(event, {
         statusCode: 404,
-        statusMessage: `Redirect url can't be constructed for extension with id ${extensionID} and extension target "${requestedTarget}"`,
+        statusMessage: missingRedirectUrlMessage(extensionID, requestedTarget, devOptions),
       })
     }
 
     return sendRedirect(event, url, 307)
   })
+}
+
+function missingRedirectUrlMessage(
+  extensionID: string | undefined,
+  requestedTarget: string,
+  devOptions: GetExtensionsMiddlewareOptions['devOptions'],
+) {
+  const target = `extension with id ${extensionID} and extension target "${requestedTarget}"`
+  const surface = getExtensionPointTargetSurface(requestedTarget)
+  if ((surface === 'checkout' || surface === 'post_purchase') && !devOptions.checkoutCartUrl) {
+    return `Can't preview ${target} without a cart. Restart dev with --checkout-cart-url, in the format "/cart/{productVariantID}:{productQuantity}"`
+  }
+  if (surface === 'customer-accounts' && !devOptions.storeId) {
+    const reason = isServiceAccountTokenSet()
+      ? ", which dev can't look up with SHOPIFY_SERVICE_ACCOUNT_TOKEN"
+      : ', which dev could not find'
+    return `Can't preview ${target}: customer account previews need the store's ID${reason}`
+  }
+  return `Redirect url can't be constructed for ${target}`
 }

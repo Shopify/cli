@@ -13,6 +13,11 @@ export interface LogInput {
   'operation-type'?: string
   'operation-name'?: string
   'request-id'?: string
+  'function-handle'?: string
+  target?: string
+  'event-handle'?: string
+  method?: string
+  'request-path'?: string
   since?: string
   until?: string
   limit?: number
@@ -109,10 +114,30 @@ export function resolveLogWindow(window: ReturnType<typeof prepareLogWindow>) {
     throw logError('invalid-argument', '--since produces a timestamp outside the supported date range.')
   if (start >= end)
     throw logError('invalid-argument', '--since must be earlier than --until (the current time by default).')
+  const dayMilliseconds = 86_400_000
+  if (start < anchor - queryLimits.maximumLookbackDays * dayMilliseconds)
+    throw logError(
+      'invalid-argument',
+      `--since must be within the last ${plural(queryLimits.maximumLookbackDays, 'day')}.`,
+    )
+  if (end - start > queryLimits.maximumWindowDays * dayMilliseconds)
+    throw logError(
+      'invalid-argument',
+      `--since and --until must be at most ${plural(queryLimits.maximumWindowDays, 'day')} apart (--until is the current time by default).`,
+    )
+  if (end > anchor + queryLimits.maximumFutureSkewMinutes * 60_000)
+    throw logError(
+      'invalid-argument',
+      `--until must not be more than ${plural(queryLimits.maximumFutureSkewMinutes, 'minute')} in the future.`,
+    )
   return {
     since: formatJsonOutputTimestamp(new Date(start)),
     until: formatJsonOutputTimestamp(new Date(end)),
   }
+}
+
+function plural(count: number, unit: string): string {
+  return `${count} ${count === 1 ? unit : `${unit}s`}`
 }
 
 function parseTimestamp(value: string, flag: string): number {

@@ -10,7 +10,13 @@ export function encodeThemeCheckResult(result: unknown): string {
 }
 
 export function renderThemeCheckResult(
-  {result, offenses, theme, valid}: {result: ThemeCheckResult; offenses: Offense[]; theme: Theme; valid?: boolean},
+  {
+    result,
+    offenses,
+    theme,
+    valid,
+    customChecksDisabled = false,
+  }: {result: ThemeCheckResult; offenses: Offense[]; theme: Theme; valid?: boolean; customChecksDisabled?: boolean},
   outputFormat: string,
   path: string,
   environment?: string,
@@ -25,7 +31,7 @@ export function renderThemeCheckResult(
 
     render({
       headline: environment ? `[${environment}] Theme Check Summary.` : 'Theme Check Summary.',
-      body: formatSummary(offenses, offensesByFile, theme),
+      body: formatSummary(offenses, offensesByFile, theme, customChecksDisabled),
     })
   }
 

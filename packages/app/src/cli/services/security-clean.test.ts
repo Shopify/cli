@@ -1,6 +1,11 @@
 import securityClean from './security-clean.js'
-import {appSecurityArtifactPaths, cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
-import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  appSecurityArtifactPaths,
+  appSecuritySuppressionsPath,
+  cleanAllResultsDirectories,
+  cleanResultsDirectory,
+} from './app-security-artifacts.js'
+import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -77,6 +82,25 @@ describe('securityClean', () => {
       await expect(Promise.all([first, second].map(fileExists))).resolves.toEqual([false, false])
       expect(dependencies.cleanAllResults).toHaveBeenCalledWith(appDirectory)
       expect(dependencies.cleanResults).not.toHaveBeenCalled()
+    })
+  })
+
+  test('never removes shopify.app-security.json, with or without all', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const selection = await createApp(directory)
+      const suppressionsPath = appSecuritySuppressionsPath(selection.appDirectory)
+      const suppressions = '{"schema_version": 1, "suppressions": []}\n'
+      await writeFile(suppressionsPath, suppressions)
+
+      const selectedDirectory = await writeResults(selection.appDirectory, 'shopify.app')
+      await expect(securityClean({all: false, selection})).resolves.toStrictEqual({removed: [selectedDirectory]})
+      await expect(readFile(suppressionsPath)).resolves.toBe(suppressions)
+
+      const otherDirectory = await writeResults(selection.appDirectory, 'shopify.app.production')
+      await expect(securityClean({all: true, appDirectory: selection.appDirectory})).resolves.toStrictEqual({
+        removed: [otherDirectory],
+      })
+      await expect(readFile(suppressionsPath)).resolves.toBe(suppressions)
     })
   })
 

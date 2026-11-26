@@ -2,9 +2,17 @@ import {EMBEDDED_APP_SECURITY_INSTRUCTIONS} from './checks/embedded.js'
 import {buildAgentChecks, type AgentChecks} from './checks/index.js'
 import {scan} from './scanners/index.js'
 import {buildDeterministicFindings} from './scan-artifact/index.js'
+import {createPathRules} from './scanners/path-rules.js'
 import {getEngineVersion} from './version.js'
 import {normalizePath, relativePath} from '@shopify/cli-kit/node/path'
-import type {CoverageScanDirectory, DeterministicFindingsDocument, ScanInput, ScanOptions, ScanResult} from './types.js'
+import type {
+  CoverageExclusions,
+  CoverageScanDirectory,
+  DeterministicFindingsDocument,
+  ScanInput,
+  ScanOptions,
+  ScanResult,
+} from './types.js'
 
 export {getEngineVersion}
 
@@ -40,6 +48,19 @@ function coverageScanDirectories({
   }))
 }
 
+/** The scan matches `--exclude` globs with the same rules, so a results file can tell which of its paths they matched. */
+function coverageExclusions({appDirectory}: ScanInput, options: ScanOptions): CoverageExclusions {
+  const {excludePatterns, workingDirectory} = createPathRules({
+    excludePatterns: options.excludePatterns ?? [],
+    noGitIgnore: options.noGitIgnore ?? false,
+  })
+  return {
+    patterns: [...excludePatterns],
+    working_directory: normalizePath(relativePath(appDirectory, workingDirectory)) || '.',
+    app_directory: normalizePath(relativePath(workingDirectory, appDirectory)) || '.',
+  }
+}
+
 /** A scan directory equal to the app directory is the app directory itself, however it was requested. */
 function coverageOrigin(
   directory: string,
@@ -61,6 +82,10 @@ export async function scanApp(input: ScanInput, options: ScanOptions = {}): Prom
       no_git_ignore: options.noGitIgnore ?? false,
     },
     scanDirectories: coverageScanDirectories(input),
+    exclusions: coverageExclusions(input, options),
+    ...(input.appConfigFilePath
+      ? {appConfigFile: normalizePath(relativePath(input.appDirectory, input.appConfigFilePath))}
+      : {}),
   })
   return {
     scan: result,

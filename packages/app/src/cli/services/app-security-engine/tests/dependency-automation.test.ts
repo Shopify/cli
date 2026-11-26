@@ -6,6 +6,7 @@ import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan as scanInput} from '../scanners/index.js'
 import {translateFindingsDocument} from '../results/translate.js'
+import {combineFindings} from '../results/combine.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
@@ -115,9 +116,10 @@ describe('dependency automation scanner integration', () => {
           findings: [expect.objectContaining({location: {file: 'package.json'}})],
         }),
       )
-      expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'low')).toBe(1)
-      expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'medium')).toBe(0)
-      expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'none')).toBe(0)
+      const {checks} = combineFindings({deterministic: execution.deterministicFindings, agent: null})
+      expect(blockedCheckCount(checks, 'low')).toBe(1)
+      expect(blockedCheckCount(checks, 'medium')).toBe(0)
+      expect(blockedCheckCount(checks, 'none')).toBe(0)
     })
   })
 
@@ -140,7 +142,8 @@ describe('dependency automation scanner integration', () => {
           findings: 0,
           inspected_files: expectedFiles,
         })
-        expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
+        const {checks} = combineFindings({deterministic: execution.deterministicFindings, agent: null})
+        expect(blockedCheckCount(checks, 'low')).toBe(0)
         expect(JSON.stringify(execution.deterministicFindings)).not.toContain('local>org/renovate-config')
         // Outside any repository, gathering stops after asking whether the directory is ignored and probing for a repository.
         const untrusted = ['-c', 'core.fsmonitor=', '-c', 'safe.bareRepository=explicit', '-c', 'alias.remote-=']

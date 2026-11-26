@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 5.1.0
+
+### Patch Changes
+
+- Show an actionable error when Theme Check extends an unknown or missing config
+- Fix 401 errors in `shopify theme dev` from the localization form and from cart and account requests under a locale or market subfolder, such as `/fr/cart/add.js`
+- Updated dependencies
+  - @shopify/cli-kit@5.1.0
+
 ## 5.0.0
 
 ### Major Changes

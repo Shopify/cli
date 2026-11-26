@@ -4,7 +4,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 export const nativeLogRecord = zod
   .object({
     timestamp: zod.string().datetime().describe('Native API timestamp; fractional seconds are preserved.'),
-    type: zod.string().describe('Native API enum, such as WEBHOOK_DELIVERY or GRAPHQL_REQUEST.'),
+    type: zod.string().describe('Native API enum, such as WEBHOOK or GRAPHQL_REQUEST.'),
     resultStatus: zod.string().nullable().optional(),
     shopMyshopifyDomain: zod.string().nullable(),
   })

@@ -507,6 +507,74 @@ describe('buildUIDFromStrategy', async () => {
     // Then
     expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
   })
+
+  test('resolves a relative webhook subscription uri against the application url, like the server does', async () => {
+    // Given
+    const extensionInstance = await testSingleWebhookSubscriptionExtension({
+      config: {topic: 'orders/create', uri: '/webhooks/orders'},
+    })
+
+    // When
+    extensionInstance.resolveUIDWithApplicationUrl('https://my-app.com/')
+
+    // Then
+    expect(extensionInstance.uid).toBe('orders/create::::https://my-app.com/webhooks/orders')
+  })
+
+  test('keeps an absolute webhook subscription uri when resolving against the application url', async () => {
+    // Given
+    const extensionInstance = await testSingleWebhookSubscriptionExtension({
+      config: {topic: 'orders/create', uri: 'https://other.com/webhooks/orders'},
+    })
+
+    // When
+    extensionInstance.resolveUIDWithApplicationUrl('https://my-app.com')
+
+    // Then
+    expect(extensionInstance.uid).toBe('orders/create::::https://other.com/webhooks/orders')
+  })
+
+  test('cuts only the webhook subscription uri to 250 characters, like the server does', async () => {
+    // Given
+    const longPath = `/webhooks/${'a'.repeat(300)}`
+    const extensionInstance = await testSingleWebhookSubscriptionExtension({
+      config: {topic: 'orders/create', uri: longPath, filter: 'id:1'},
+    })
+
+    // When
+    extensionInstance.resolveUIDWithApplicationUrl('https://my-app.com')
+
+    // Then
+    expect(extensionInstance.uid).toBe(`orders/create::id:1::${`https://my-app.com${longPath}`.substring(0, 250)}`)
+  })
+
+  test('uses the dev application url for webhook subscription uids when app dev urls are patched', async () => {
+    // Given
+    const extensionInstance = await testSingleWebhookSubscriptionExtension({
+      config: {topic: 'orders/create', uri: '/webhooks/orders'},
+    })
+    extensionInstance.resolveUIDWithApplicationUrl('https://my-app.com')
+
+    // When
+    extensionInstance.patchWithAppDevURLs({
+      applicationUrl: 'https://tunnel.trycloudflare.com',
+      redirectUrlWhitelist: [],
+    })
+
+    // Then
+    expect(extensionInstance.uid).toBe('orders/create::::https://tunnel.trycloudflare.com/webhooks/orders')
+  })
+
+  test('does not change the uid of other extensions when resolving against the application url', async () => {
+    // Given
+    const extensionInstance = await testAppConfigExtensions()
+
+    // When
+    extensionInstance.resolveUIDWithApplicationUrl('https://my-app.com')
+
+    // Then
+    expect(extensionInstance.uid).toBe(extensionInstance.specification.identifier)
+  })
 })
 
 describe('outputPath for function extensions', async () => {

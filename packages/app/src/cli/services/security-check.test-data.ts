@@ -87,3 +87,32 @@ export const committedSecretIssue: Issue = {
   location: {file: 'app/routes/index.ts'},
   fix: {automated: false, description: 'remove it'},
 }
+
+/** The deterministic findings that a scan reporting `committedSecretIssue` writes. */
+const committedSecretFindings: DeterministicFindingsDocument = {
+  ...deterministicFindings,
+  checks: [
+    {
+      id: 'COMMITTED_SECRET',
+      version: 4,
+      status: 'executed',
+      analysis_mode: 'regex',
+      snapshot: {title: 'Secret', severity: 'high', description: 'Detects committed secrets.', current_version: 4},
+      findings: [
+        {
+          location: {file: 'app/routes/index.ts'},
+          message: 'secret',
+          evidence: [],
+          fix: {automated: false, description: 'remove it'},
+        },
+      ],
+    },
+  ],
+}
+
+/** A scan that reports `committedSecretIssue`, as `executeAppSecurity` returns it. */
+export const committedSecretExecution: AppSecurityExecution = {
+  ...scanExecution,
+  scan: {...scan, issues: [committedSecretIssue]},
+  deterministicFindings: committedSecretFindings,
+}

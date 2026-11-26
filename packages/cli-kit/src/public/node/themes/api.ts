@@ -27,15 +27,16 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
-import {extractGraphQLErrors} from '../../../private/node/api/graphql.js'
+import {errorHandler, extractGraphQLErrors, requestIdFromClientError} from '../../../private/node/api/graphql.js'
 import {TrustChallengeError, withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
+import {adminRequestDoc, AdminServerError, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
 import {recordTiming, recordEvent, recordError} from '../analytics.js'
-import {type Variables} from 'graphql-request'
+import {isTransientServerError} from '../../../private/node/api.js'
+import {ClientError, type Variables} from 'graphql-request'
 import type {InlineToken, TokenItem} from '../ui.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
@@ -46,6 +47,7 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
   recordCommandRetries: true,
+  retryTransientServerErrors: true,
 }
 const DEFAULT_THEME_ACCESS_REQUIREMENT = 'the required theme access scope'
 
@@ -74,6 +76,8 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    // A server error does not mean that the theme is missing. Callers remove their stored theme ID on `undefined`.
+    abortIfServerError(error, session)
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -583,7 +587,7 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
   let after: string | null = null
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const {metafieldDefinitions}: MetafieldDefinitionsByOwnerTypeQuery = await adminRequestDoc({
+    const {metafieldDefinitions}: MetafieldDefinitionsByOwnerTypeQuery = await requestThemeReadDoc({
       query: MetafieldDefinitionsByOwnerType,
       session,
       variables: {ownerType: type, after},
@@ -609,7 +613,7 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
 
 export async function passwordProtected(session: AdminSession): Promise<boolean> {
   recordEvent('theme-api:check-password-protection')
-  const {onlineStore} = await adminRequestDoc({
+  const {onlineStore} = await requestThemeReadDoc({
     query: OnlineStorePasswordProtection,
     session,
   })
@@ -646,8 +650,60 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    abortIfServerError(error, options.session)
     throw error
   }
+}
+
+/**
+ * Requests a theme read with transient retries. A server error gets the Shopify-side theme error;
+ * any other API failure gets the default Admin API error mapping.
+ *
+ * @param options - The Admin API request, without response options or request behaviour.
+ * @returns The response data.
+ */
+async function requestThemeReadDoc<TResult, TVariables extends Variables>(
+  options: Omit<AdminRequestOptions<TResult, TVariables>, 'responseOptions' | 'preferredBehaviour'>,
+): Promise<TResult> {
+  try {
+    return await requestThemeAdminDoc({
+      ...options,
+      responseOptions: {handleErrors: false},
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    })
+  } catch (error) {
+    throw error instanceof ClientError ? errorHandler('Admin')(error, clientErrorRequestId(error)) : error
+  }
+}
+
+/**
+ * Turns a Shopify-side failure of a theme request into an `AbortError`, so it does not reach the
+ * error reporter as a CLI bug. It covers every HTTP 5xx, and a transient server error that still
+ * fails after its retries. Theme requests set `handleErrors: false`, so the GraphQL error handler
+ * does not map these errors for them.
+ *
+ * @param error - The error thrown by the Admin API request.
+ * @param session - The session of the request, for the store name in the message.
+ */
+function abortIfServerError(error: unknown, session: AdminSession): void {
+  if (!(error instanceof ClientError)) return
+  const {status} = error.response
+  if (status < 500 && !isTransientServerError(error)) return
+
+  throw recordError(
+    new AdminServerError(session.storeFqdn, status >= 500 ? status : undefined, clientErrorRequestId(error)),
+  )
+}
+
+function clientErrorRequestId(error: ClientError): string | undefined {
+  const errors: unknown = error.response.errors
+  if (Array.isArray(errors)) {
+    for (const entry of errors) {
+      const requestId = (entry as {extensions?: {requestId?: unknown}} | undefined)?.extensions?.requestId
+      if (typeof requestId === 'string') return requestId
+    }
+  }
+  return requestIdFromClientError(error)
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {

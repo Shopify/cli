@@ -1,5 +1,5 @@
 import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from './json-output-schema.js'
-import {z} from 'zod'
+import {z} from 'zod/v3'
 
 /** Schema for a diagnostic emitted while a command executes. */
 export const commandDiagnosticEventSchema = z

@@ -19,7 +19,7 @@ When fewer than --limit records are returned, all matching records available at 
 
 Different filters combine with AND; each accepts one exact value. Type-specific filters exclude records without that field; combining --topic and --operation-name returns no records.
 
-Defaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Time inputs accept whole seconds only.
+Defaults: preceding hour, 20 records. Maximum: 1-day window within the last 7 days, 1000 records. Time inputs accept whole seconds only.
 
 --json preserves native record JSON in logs[], including fractional timestamps, diagnostic fields, bodies, and producer truncation flags.`
   static jsonOutputSchema = logsOutput

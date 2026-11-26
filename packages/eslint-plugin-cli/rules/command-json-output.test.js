@@ -1,4 +1,4 @@
-const {RuleTester} = require('eslint')
+const {Linter, RuleTester} = require('eslint')
 const typescriptParser = require('@typescript-eslint/parser')
 
 const rule = require('./command-json-output')
@@ -16,7 +16,6 @@ ruleTester.run('command-json-output', rule, {
     {
       name: 'hidden command without JSON support',
       filename: '/repo/packages/app/src/cli/commands/app/widgets/hidden.ts',
-      options: [{exceptions: []}],
       code: 'export default class Hidden extends Command { static hidden = true }',
     },
     {
@@ -40,27 +39,14 @@ ruleTester.run('command-json-output', rule, {
       `,
     },
     {
-      name: 'allow-listed streaming command',
+      name: 'removed app logs command is hidden',
       filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
-      code: 'export default class Dev extends Command {}',
-    },
-    {
-      name: 'omitted exceptions preserve the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
-      options: [{}],
-      code: 'export default class Dev extends Command {}',
-    },
-    {
-      name: 'custom exception in another repository',
-      filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev.ts',
-      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class Dev extends Command {}',
-    },
-    {
-      name: 'custom exception matches a Windows filename',
-      filename: String.raw`C:\hydrogen\packages\cli\src\commands\hydrogen\dev.ts`,
-      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class Dev extends Command {}',
+      code: `
+        export default class Logs extends Command {
+          static hidden = true
+          static flags = {...globalFlags, ...jsonFlag}
+        }
+      `,
     },
     {
       name: 'non-command module',
@@ -82,34 +68,25 @@ ruleTester.run('command-json-output', rule, {
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
-      name: 'custom exceptions do not exempt new subcommands',
-      filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev/status.ts',
-      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class DevStatus extends Command {}',
-      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
-    },
-    {
-      name: 'custom exceptions replace the default baseline',
+      name: 'visible app logs command has no path exemption',
       filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
-      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class Dev extends Command {}',
+      code: 'export default class Logs extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
-      name: 'empty exceptions remove the streaming command exemption',
-      filename: '/repo/packages/app/src/cli/commands/app/logs.ts',
-      options: [{exceptions: []}],
-      code: 'export default class Dev extends Command {}',
-      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
-    },
-    {
-      name: 'custom exceptions do not leak into other configurations',
+      name: 'command in another repository without JSON support',
       filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev.ts',
       code: 'export default class Dev extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
-      name: 'streaming marker without an allow-list entry',
+      name: 'Windows command without JSON support',
+      filename: String.raw`C:\hydrogen\packages\cli\src\commands\hydrogen\dev.ts`,
+      code: 'export default class Dev extends Command {}',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
+    {
+      name: 'streaming marker does not exempt a command',
       filename: '/repo/packages/app/src/cli/commands/app/widgets/watch.ts',
       code: `
         export default class WidgetWatch extends Command {
@@ -119,7 +96,7 @@ ruleTester.run('command-json-output', rule, {
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
-      name: 'new subcommand of an allow-listed streaming command',
+      name: 'subcommand of a hidden command still requires JSON support',
       filename: '/repo/packages/app/src/cli/commands/app/logs/status.ts',
       code: 'export default class DevStatus extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
@@ -130,10 +107,10 @@ ruleTester.run('command-json-output', rule, {
       code: 'export default class WidgetCreate extends Command {}',
       errors: [
         {
-          message: 'New finite commands must declare a static jsonOutputSchema. See docs/cli/json-output.md.',
+          message: 'Visible commands must declare a static jsonOutputSchema. See docs/cli/json-output.md.',
         },
         {
-          message: 'New finite commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
+          message: 'Visible commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
         },
       ],
     },
@@ -143,7 +120,7 @@ ruleTester.run('command-json-output', rule, {
       code: 'export default class WidgetSearch extends Command { static flags = {...jsonFlag} }',
       errors: [
         {
-          message: 'New finite commands must declare a static jsonOutputSchema. See docs/cli/json-output.md.',
+          message: 'Visible commands must declare a static jsonOutputSchema. See docs/cli/json-output.md.',
         },
       ],
     },
@@ -157,9 +134,24 @@ ruleTester.run('command-json-output', rule, {
       `,
       errors: [
         {
-          message: 'New finite commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
+          message: 'Visible commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
         },
       ],
     },
   ],
+})
+
+test('rejects path exceptions in the rule configuration', () => {
+  const linter = new Linter()
+
+  expect(() =>
+    linter.verify('export default class Logs extends Command {}', [
+      {
+        plugins: {'@shopify/cli': {rules: {'command-json-output': rule}}},
+        rules: {
+          '@shopify/cli/command-json-output': ['error', {exceptions: ['packages/app/src/cli/commands/app/logs.ts']}],
+        },
+      },
+    ]),
+  ).toThrow('should NOT have more than 0 items')
 })

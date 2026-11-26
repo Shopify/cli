@@ -10,6 +10,8 @@ import {
   repositoryIgnoredPaths,
 } from './path-rules.js'
 import {findRepositoryMarker} from './repository-marker.js'
+import {tomlKey} from './toml-locations.js'
+import {isExcerptBlockedFile} from '../rules/secret-rules.js'
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
@@ -91,7 +93,7 @@ export function parseAppToml(
   content?: string,
   appRoot?: string,
 ): AppTomlContent {
-  const scopes = projectAccessScopes(raw.access_scopes, path, appRoot)
+  const accessScopes = projectAccessScopes(raw.access_scopes, path, appRoot)
   const redirectUrls = projectRedirectUrls(raw.auth, path, appRoot)
   const webhooks = projectWebhooks(raw.webhooks, path, appRoot)
 
@@ -99,23 +101,36 @@ export function parseAppToml(
     raw,
     path,
     content,
-    scopes,
+    scopes: accessScopes.scopes,
+    scopeKeys: accessScopes.scopeKeys,
     apiVersion: webhooks.apiVersion,
     redirectUrls,
     webhooks: webhooks.subscriptions,
   }
 }
 
-function projectAccessScopes(value: unknown, path: string, appRoot?: string): string | undefined {
-  if (value === undefined) return undefined
+function projectAccessScopes(
+  value: unknown,
+  path: string,
+  appRoot?: string,
+): {scopes: string | undefined; scopeKeys: Map<string, string>} {
+  const scopeKeys = new Map<string, string>()
+  if (value === undefined) return {scopes: undefined, scopeKeys}
   const parsed = AppAccessScopesSchema.safeParse(value)
   if (!parsed.success) {
     recordSectionGap(appRoot, path, 'access_scopes section could not be parsed')
-    return undefined
+    return {scopes: undefined, scopeKeys}
   }
   const legacyScopes = parsed.data.scopes?.split(/[\s,]+/).filter(Boolean) ?? []
-  const scopes = [...new Set([...legacyScopes, ...(parsed.data.required_scopes ?? [])])]
-  return scopes.length > 0 ? scopes.join(',') : undefined
+  const declarations = [
+    ...legacyScopes.map((scope) => ({scope, key: tomlKey(['access_scopes', 'scopes'])})),
+    ...(parsed.data.required_scopes ?? []).map((scope, index) => ({
+      scope,
+      key: tomlKey(['access_scopes', 'required_scopes', index]),
+    })),
+  ]
+  for (const {scope, key} of declarations) if (!scopeKeys.has(scope)) scopeKeys.set(scope, key)
+  return {scopes: scopeKeys.size > 0 ? [...scopeKeys.keys()].join(',') : undefined, scopeKeys}
 }
 
 function projectRedirectUrls(value: unknown, path: string, appRoot?: string): string[] {
@@ -140,15 +155,21 @@ function projectWebhooks(
     return {subscriptions: []}
   }
 
-  const webhookSubscriptions = (parsed.data.subscriptions ?? []).flatMap((subscription) =>
-    projectWebhookSubscription(subscription, path, appRoot),
+  const webhookSubscriptions = (parsed.data.subscriptions ?? []).flatMap((subscription, index) =>
+    projectWebhookSubscription(subscription, tomlKey(['webhooks', 'subscriptions', index, 'uri']), path, appRoot),
   )
   const privacyCompliance = parsed.data.privacy_compliance
   const privacyComplianceWebhooks = [
-    {topic: 'customers/redact', uri: privacyCompliance?.customer_deletion_url},
-    {topic: 'customers/data_request', uri: privacyCompliance?.customer_data_request_url},
-    {topic: 'shop/redact', uri: privacyCompliance?.shop_deletion_url},
-  ].flatMap(({topic, uri}): WebhookSubscription[] => (uri ? [{topics: [topic], uri}] : []))
+    {topic: 'customers/redact', field: 'customer_deletion_url', uri: privacyCompliance?.customer_deletion_url},
+    {
+      topic: 'customers/data_request',
+      field: 'customer_data_request_url',
+      uri: privacyCompliance?.customer_data_request_url,
+    },
+    {topic: 'shop/redact', field: 'shop_deletion_url', uri: privacyCompliance?.shop_deletion_url},
+  ].flatMap(({topic, field, uri}): WebhookSubscription[] =>
+    uri ? [{topics: [topic], uri, uriKey: tomlKey(['webhooks', 'privacy_compliance', field])}] : [],
+  )
 
   return {
     apiVersion: parsed.data.api_version,
@@ -163,13 +184,19 @@ const WebhookUriOnlySchema = zod.object({
   ),
 })
 
-function projectWebhookSubscription(value: unknown, path: string, appRoot?: string): WebhookSubscription[] {
+function projectWebhookSubscription(
+  value: unknown,
+  uriKey: string,
+  path: string,
+  appRoot?: string,
+): WebhookSubscription[] {
   const parsed = SecurityWebhookSubscriptionSchema.safeParse(value)
   if (parsed.success) {
     return [
       {
         topics: [...(parsed.data.topics ?? []), ...(parsed.data.compliance_topics ?? [])],
         uri: parsed.data.uri,
+        uriKey,
       },
     ]
   }
@@ -177,7 +204,7 @@ function projectWebhookSubscription(value: unknown, path: string, appRoot?: stri
   recordSectionGap(appRoot, path, 'webhook subscription could not be parsed')
   const uriOnly = WebhookUriOnlySchema.safeParse(value)
   if (!uriOnly.success) return []
-  return [{topics: [], uri: uriOnly.data.uri}]
+  return [{topics: [], uri: uriOnly.data.uri, uriKey}]
 }
 
 function recordSectionGap(appRoot: string | undefined, path: string, detail: string): void {
@@ -426,6 +453,8 @@ const MAX_REPOSITORY_FILE_SIZE_BYTES = 500_000
 
 interface RepositoryReadSuccess {
   ok: true
+  /** The canonical path used for the read, including when the requested path is a symlink. */
+  path: string
   content: Buffer
 }
 
@@ -482,6 +511,14 @@ export function getSkippedFiles(): SkippedFile[] {
   return [...skippedFiles]
 }
 
+/**
+ * A file that was read, but whose structured content (TOML, a manifest, a configuration section) couldn't be parsed.
+ * Checks that read its raw text, such as the secret check, still inspect it.
+ */
+export function isParseFailure(file: Pick<SkippedFile, 'detail'>): boolean {
+  return Boolean(file.detail?.includes('could not be parsed'))
+}
+
 function recordSkippedFile(path: string, failure: RepositoryReadFailure): void {
   const repositoryPath = relativePath(configuredReader().appDirectory, path).replace(/\\/g, '/')
   skippedFiles.push({
@@ -496,7 +533,7 @@ function readBoundedFile(path: string): RepositoryReadResult {
   try {
     const size = fileSizeSync(path)
     if (size > MAX_REPOSITORY_FILE_SIZE_BYTES) return {ok: false, reason: 'too_large', sizeBytes: size}
-    return {ok: true, content: readFileSync(path)}
+    return {ok: true, path, content: readFileSync(path)}
     // Discovery records unreadable files as scan coverage gaps.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -666,6 +703,18 @@ function readRepositoryText(absolutePath: string): string | undefined {
   return result.ok ? result.content.toString() : undefined
 }
 
+/** Reads excerpt text, excluding binary files and secret files under either their cited or resolved name. */
+export function readRepositoryTextFile(absolutePath: string): string | undefined {
+  const result = readRepositoryFile(absolutePath)
+  if (
+    !result.ok ||
+    isExcerptBlockedFile(normalizeCliPath(absolutePath)) ||
+    isExcerptBlockedFile(normalizeCliPath(result.path))
+  )
+    return undefined
+  return isProbablyBinary(result.content) ? undefined : result.content.toString()
+}
+
 const SOURCE_LANGUAGES = {
   '.js': {name: 'javascript', supported: true},
   '.jsx': {name: 'javascript', supported: true},
@@ -776,6 +825,16 @@ function isSensitiveFile(path: string): boolean {
     fileName.startsWith('Dockerfile.') ||
     fileName.startsWith('Containerfile.')
   )
+}
+
+/** Source code, by its extension in any case. A value assigned in it is an expression unless it's quoted. */
+export function isSourceCodeFile(path: string): boolean {
+  return extname(path).toLowerCase() in SOURCE_LANGUAGES
+}
+
+/** A file that the secret scan reads and that isn't source code, such as configuration, where any line can hold one. */
+export function isSensitiveConfigFile(path: string): boolean {
+  return !isSourceCodeFile(path) && (isSensitiveFile(path) || SECRET_TEXT_EXTENSIONS.has(extname(path).toLowerCase()))
 }
 
 function isProbablyBinary(content: Buffer): boolean {

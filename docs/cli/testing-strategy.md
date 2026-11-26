@@ -97,8 +97,8 @@ End-to-end tests live under `packages/e2e` and are implemented using [Playwright
 
 See the [E2E setup guide](../../packages/e2e/README.md) for persistent store configuration, CI isolation, and cleanup.
 
-## GitHub Actions
+## CI
 
-Use [the PR workflow](../../.github/workflows/tests-pr.yml) and [CLI pre-submit CI guide](../../.agents/skills/cli-pre-submit-ci/SKILL.md) to choose local checks and generated files.
+In World, the zone's Shopify Build pipeline gates a merge: `ci-checks.yml` registers it, and `.shopify-build/areas-platforms-shopify-cli-ci.yml` defines its steps. The public repository's [PR workflow](../../.github/workflows/tests-pr.yml) runs the Windows and macOS tests. Use them and the [CLI pre-submit CI guide](../../.agents/skills/cli-pre-submit-ci/SKILL.md) to choose local checks and generated files.
 
-Repository settings determine which checks block a merge. A passing job proves only what that job checked. Jobs with `continue-on-error` can fail without failing the workflow.
+A passing job proves only what that job checked. Jobs with `continue-on-error` can fail without failing the workflow.

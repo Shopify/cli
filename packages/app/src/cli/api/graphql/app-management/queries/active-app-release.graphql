@@ -9,11 +9,6 @@ fragment AppVersionInfo on App {
   key
   organizationId
   activeRoot {
-    clientCredentials {
-      secrets {
-        key
-      }
-    }
     grantedShopifyApprovalScopes
   }
   activeRelease {

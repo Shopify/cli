@@ -1,5 +1,7 @@
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {languageServerJsonOutputSchema} from '../../services/language-server/types.js'
+import {themeFlags} from '../../flags.js'
+import {customCheckOptions} from '../../utilities/custom-checks.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {FlagOutput} from '@shopify/cli-kit/node/base-command'
 import {renderCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
@@ -19,6 +21,7 @@ Communicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and
 
   static flags = {
     ...globalFlags,
+    'allow-custom-checks': themeFlags['allow-custom-checks'],
     ...jsonFlag,
     json: Flags.boolean({
       ...jsonFlag.json,
@@ -29,8 +32,10 @@ Communicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and
 
   static multiEnvironmentsFlags: RequiredFlags = null
 
+  private readonly inputArgv = [...this.argv]
+
   async command() {
-    startServer()
+    startServer(undefined, undefined, await customCheckOptions(this.inputArgv))
   }
 
   protected runWithParsedOutput<T>(_flags: FlagOutput, execute: () => T): T {

@@ -1,6 +1,8 @@
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 
 import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 
 /**
  * To prepare UI Extensions targeting Checkout for dev'ing we need to retrieve a valid product variant ID
@@ -8,9 +10,17 @@ import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-v
  * @param store - The store FQDN
  */
 export async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
+  // Keep a supplied cart URL even without a checkout extension, for checkout extensions added while dev runs.
+  if (checkoutCartUrl) return checkoutCartUrl
   const hasUIExtension = extensions.filter((extension) => extension.shouldFetchCartUrl()).length > 0
   if (!hasUIExtension) return undefined
-  if (checkoutCartUrl) return checkoutCartUrl
+  // Finding a product variant calls the store's Admin API, which a service account token can't do.
+  if (isServiceAccountTokenSet()) {
+    throw new AbortError(
+      "A service account can't look up a product to preview checkout UI extensions.",
+      'Pass a cart with --checkout-cart-url, in the format "/cart/{productVariantID}:{productQuantity}".',
+    )
+  }
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
 }

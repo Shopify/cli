@@ -1,5 +1,5 @@
 import {zodToJsonSchema} from 'zod-to-json-schema'
-import type {ZodTypeAny, z} from 'zod'
+import type {ZodTypeAny, z} from 'zod/v3'
 
 export {
   formatJsonOutputTimestamp,

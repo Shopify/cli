@@ -7,12 +7,13 @@ import {
   testThemeExtensions,
 } from '../../../models/app/app.test-data.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedAdmin, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {ensureValidPassword, isStorefrontPasswordProtected, fetchOrCreateCrawlerSignatureHeaders} from '@shopify/theme'
 
@@ -76,6 +77,26 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
 
     // Then
     expect(result).toBeUndefined()
+  })
+
+  test('Returns undefined and warns when a service account token is set', async () => {
+    // Given
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    const localApp = testApp({allExtensions: [await testThemeExtensions()]})
+    const remoteApp = testOrganizationApp()
+    const storeFqdn = 'test.myshopify.com'
+
+    // When
+    const result = await setupPreviewThemeAppExtensionsProcess({
+      localApp,
+      remoteApp,
+      storeFqdn,
+    })
+
+    // Then
+    expect(result).toBeUndefined()
+    expect(ensureAuthenticatedAdmin).not.toHaveBeenCalled()
+    expect(outputWarn).toHaveBeenCalledWith(expect.stringContaining('SHOPIFY_SERVICE_ACCOUNT_TOKEN'))
   })
 
   test('Returns PreviewThemeAppExtensionsOptions if theme extensions are present - Partners API app', async () => {

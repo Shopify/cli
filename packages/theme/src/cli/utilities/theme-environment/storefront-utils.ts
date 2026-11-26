@@ -1,6 +1,14 @@
 import {DevServerRenderContext} from './types.js'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
+/**
+ * Regular expression source for the optional locale or market subfolder that
+ * storefront paths can start with, such as `/fr`, `/en-us`, or `/zh-hans-cn`.
+ * It follows the storefront's own subfolder format, which accepts the Chinese
+ * script locales in addition to two- and three-letter language codes.
+ */
+export const LOCALE_PREFIX_PATTERN = String.raw`(?:/(?:zh-hans|zh-hant|[a-z]{2,3})(?:-[a-zA-Z0-9]{2,})?)?`
+
 export function storefrontReplaceTemplatesParams(context: DevServerRenderContext): URLSearchParams {
   /**
    * Theme access proxy doesn't support FormData encoding.

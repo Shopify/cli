@@ -11,7 +11,7 @@ import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
-import {OrganizationApp} from '../../../models/organization.js'
+import {OrganizationApp, appClientSecret} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
 import {LocalhostCert, getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
 import {buildAppURLForAdmin} from '../../../utilities/app/app-url.js'
@@ -23,7 +23,7 @@ import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess extends BaseProcess<{
@@ -62,12 +62,21 @@ export interface DevConfig {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
-  storeId: string
+  storeId?: string
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
+  /** The app's client secret, or undefined when dev doesn't need it or the App Management API didn't return it. */
+  apiSecret: string | undefined
+}
+
+function warnAppLogsUnavailable(app: AppLinkedInterface): undefined {
+  if (app.allExtensions.some((extension) => extension.isFunctionExtension)) {
+    outputWarn("Function logs aren't streamed, because dev doesn't know the store's ID.")
+  }
+  return undefined
 }
 
 export async function setupDevProcesses({
@@ -81,6 +90,7 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
+  apiSecret: resolvedApiSecret,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -88,22 +98,27 @@ export async function setupDevProcesses({
   devSessionStatusManager: DevSessionStatusManager
 }> {
   const apiKey = remoteApp.apiKey
-  const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
   const env = getEnvironmentVariables()
-  const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
+  const graphiqlEnabled = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
 
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
+
+  // The reload can pick up webs that weren't there when dev resolved the secret, and they can't run without it.
+  const apiSecret = resolvedApiSecret ?? (reloadedApp.webs.length > 0 ? await appClientSecret(remoteApp) : undefined)
+  const shouldRenderGraphiQL = graphiqlEnabled && apiSecret !== undefined
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   const adminDomain = await adminFqdn()
   const appPreviewUrl = buildAppURLForAdmin(storeFqdn, apiKey, adminDomain)
   const previewURL = appPreviewUrl
 
-  const resolvedGraphiqlKey = resolveGraphiQLKey(graphiqlKey, apiSecret, storeFqdn)
-  const graphiqlURL = shouldRenderGraphiQL
-    ? `http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(resolvedGraphiqlKey)}`
-    : undefined
+  const resolvedGraphiqlKey =
+    apiSecret === undefined ? undefined : resolveGraphiQLKey(graphiqlKey, apiSecret, storeFqdn)
+  const graphiqlURL =
+    shouldRenderGraphiQL && resolvedGraphiqlKey
+      ? `http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(resolvedGraphiqlKey)}`
+      : undefined
 
   const appEmbedded = reloadedApp.configuration.embedded
   const hasExtensions = reloadedApp.nonConfigExtensions.length > 0
@@ -116,16 +131,18 @@ export async function setupDevProcesses({
   })
 
   const processes = [
-    ...(await setupWebProcesses({
-      webs: reloadedApp.webs,
-      proxyUrl: network.proxyUrl,
-      frontendPort: network.frontendPort,
-      backendPort: network.backendPort,
-      apiKey,
-      apiSecret,
-      scopes: getAppScopes(reloadedApp.configuration),
-    })),
-    shouldRenderGraphiQL
+    ...(apiSecret === undefined
+      ? []
+      : await setupWebProcesses({
+          webs: reloadedApp.webs,
+          proxyUrl: network.proxyUrl,
+          frontendPort: network.frontendPort,
+          backendPort: network.backendPort,
+          apiKey,
+          apiSecret,
+          scopes: getAppScopes(reloadedApp.configuration),
+        })),
+    shouldRenderGraphiQL && apiSecret !== undefined
       ? await setupGraphiQLServerProcess({
           appName: remoteApp.title,
           appUrl: appPreviewUrl,
@@ -172,27 +189,31 @@ export async function setupDevProcesses({
       themeExtensionPort: commandOptions.themeExtensionPort,
       storePassword: commandOptions.storePassword,
     }),
-    setupSendUninstallWebhookProcess({
-      webs: reloadedApp.webs,
-      backendPort: network.backendPort,
-      frontendPort: network.frontendPort,
-      organizationId: remoteApp.organizationId,
-      developerPlatformClient,
-      storeFqdn,
-      apiSecret,
-      remoteAppUpdated,
-    }),
-    await setupAppLogsPollingProcess({
-      developerPlatformClient,
-      subscription: {
-        shopIds: [Number(storeId)],
-        apiKey,
-      },
-      storeName: storeFqdn,
-      organizationId: remoteApp.organizationId,
-      localApp,
-      appWatcher,
-    }),
+    apiSecret === undefined
+      ? undefined
+      : setupSendUninstallWebhookProcess({
+          webs: reloadedApp.webs,
+          backendPort: network.backendPort,
+          frontendPort: network.frontendPort,
+          organizationId: remoteApp.organizationId,
+          developerPlatformClient,
+          storeFqdn,
+          apiSecret,
+          remoteAppUpdated,
+        }),
+    storeId === undefined
+      ? warnAppLogsUnavailable(reloadedApp)
+      : await setupAppLogsPollingProcess({
+          developerPlatformClient,
+          subscription: {
+            shopIds: [Number(storeId)],
+            apiKey,
+          },
+          storeName: storeFqdn,
+          organizationId: remoteApp.organizationId,
+          localApp,
+          appWatcher,
+        }),
     await setupAppWatcherProcess({
       appWatcher,
     }),

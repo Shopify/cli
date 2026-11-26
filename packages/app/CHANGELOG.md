@@ -1,5 +1,36 @@
 # @shopify/app
 
+## 5.1.0
+
+### Minor Changes
+
+- Run `shopify app dev --store` on a dev store with `SHOPIFY_SERVICE_ACCOUNT_TOKEN`.
+- Add `--fail-on-unresolved` to `shopify app security review`, so an unresolved check or one with no result fails the gate.
+- Run the deterministic `app security check` source rules that don't need React Router on any JavaScript or TypeScript app, and add a `WEAK_SHOP_VALIDATION` rule for shop-domain checks that aren't anchored.
+- Add `--sarif` to `shopify app security review` to print the reviewed checks as SARIF 2.1.0 for GitHub code scanning and other scanning tools.
+- Add support for suppressing app security findings.
+- `shopify app init --template node` and `--template remix` are deprecated and now show a warning. They will be removed in the next major release. Use `--template reactRouter` or a GitHub template URL instead.
+
+### Patch Changes
+
+- Stop `app security review` from calling deterministic-only checks passed, say how many checks still need the coding agent and how to run them, and print suggested commands' `--path` as an absolute path when the app is outside the working directory.
+- Report configuration lines for callback URL, ScriptTag scope, and API version findings in `app security check`, with distinct keys for insecure URLs.
+- Fix four `shopify app security check` agent prompts that could skip real issues: `MISSING_EMBEDDED_CSP` now detects embedded apps from `embedded = true`, `SSRF_REQUEST_FORGERY` and `SCRIPT_TAG_URL_INJECTION` no longer treat an https-only URL as safe, and `THEME_EXTENSION_XSS` no longer exempts `escape` in executable contexts or `textContent` on `<script>` elements
+- Report the correct source lines for API version and offline token findings after line comments in `app security check`.
+- Show a clear error instead of ENOENT when `app deploy --no-build` finds no built web pixel bundle.
+- Show `Extension initialized` instead of `Configuration accepted` when config-only extensions start in a new `app dev` session.
+- Explain the managed-install requirement before deploying Events subscriptions with legacy install flow enabled.
+- `app dev` no longer crashes when a client of the `/extensions` WebSocket sends a malformed frame.
+- Stop `app dev` from exiting when an `/extensions` WebSocket client sends invalid JSON or an invalid message shape
+- Fix `spawn ETXTBSY` errors when several CLI processes download and run the same function binary at once
+- Stop `app build` and `app function build` from crashing with `Unable to update lock within the stale threshold` when the function build lock is reported as compromised, for example on FUSE filesystems.
+- Keep app-specific webhook subscriptions with relative URIs when an extension hot reloads during `app dev`.
+- Updated dependencies
+  - @shopify/cli-kit@5.1.0
+  - @shopify/theme@5.1.0
+  - @shopify/organizations@5.1.0
+  - @shopify/plugin-cloudflare@5.1.0
+
 ## 5.0.0
 
 ### Major Changes

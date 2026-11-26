@@ -1,6 +1,6 @@
 ---
 id: DEPRECATED_SCRIPT_TAG_SCOPE
-version: 2
+version: 3
 severity: medium
 precedence: prefer-agent
 ---

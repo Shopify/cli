@@ -1,6 +1,6 @@
 ---
 id: SCRIPT_TAG_URL_INJECTION
-version: 2
+version: 3
 severity: high
 ---
 
@@ -37,9 +37,14 @@ injection vector, not just a deprecation issue.
 
 3. **Check for URL validation.** Even if the URL comes from user input,
    it may be safe if:
-   - The URL is validated against an allowlist of domains
-   - The URL scheme is restricted to https
-   - The URL is a relative path on the app's own domain
+   - The URL is parsed and its host is validated against an allowlist of
+     domains the app controls
+   - The input only selects one of a fixed set of trusted, versioned assets
+
+   Restricting the scheme to https is not a protection: an attacker's own
+   server serves https. A path on the app's own domain is safe only if no
+   user-controlled content can be served from it, such as uploads or App
+   Proxy responses.
 
 4. **Check for event handler payloads.** ScriptTags can also include
    `event` and `cache` parameters. If these come from user input, they

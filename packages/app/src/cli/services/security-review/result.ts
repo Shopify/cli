@@ -1,33 +1,45 @@
 import {appSecurityReviewJsonOutputSchema, type AppSecurityReviewResult} from './types.js'
+import {appSecurityReviewSarif} from './sarif.js'
+import {getAgentCheckCatalog} from '../app-security-engine/index.js'
 import {
   projectAppSecurityApp,
   projectAppSecurityBlocking,
   projectAppSecurityPath,
   projectAppSecurityRelativePath,
+  projectAppSecuritySavedSuppression,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
+  projectAppSecuritySuppressions,
 } from '../app-security/result.js'
-import {renderSecurityReview} from '../security-review-output.js'
+import {renderSecurityReview, renderSecurityReviewSarifWarning} from '../security-review-output.js'
+import {
+  reviewFailed,
+  type ReviewedAppSecurityResults,
+  type SavedReviewSuppressions,
+  type SecurityReviewResult,
+} from '../security-review.js'
 import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import type {
   CombinedCheck,
   CombinedFinding,
   DeterministicFindingsDocument,
+  FindingSuppression,
   SourceCheckResult,
   StoredCheckStatus,
   StoredEvidence,
   StoredFinding,
 } from '../app-security-engine/index.js'
-import type {ReviewedAppSecurityResults, SecurityReviewResult} from '../security-review.js'
 
 type AppSecurityCheck = AppSecurityReviewResult['checks'][number]
 type AppSecurityFinding = AppSecurityCheck['findings'][number]
 type AppSecuritySourceResult = NonNullable<AppSecurityCheck['bySource']['deterministic']>
 type AppSecurityLocation = AppSecurityFinding['location']
+type AppSecurityFindingSuppression = AppSecurityFinding['suppression']
 type AppSecurityDetection = NonNullable<AppSecurityReviewResult['detection']>
 type AppSecurityCoverage = NonNullable<AppSecurityReviewResult['coverage']>
 type AppSecurityResultsFiles = AppSecurityReviewResult['resultsFiles']
+type AppSecuritySavedSuppressions = NonNullable<AppSecurityReviewResult['savedSuppressions']>
 
 type StoredDetection = DeterministicFindingsDocument['detection']
 type StoredCoverage = DeterministicFindingsDocument['coverage']
@@ -71,37 +83,80 @@ const GAP_CODES: Record<StoredCoverage['gaps'][number]['code'], AppSecurityCover
 }
 
 /**
- * Presents reviewed results as JSON, or in the terminal. Either way, sets exit code 1 after the output when they
- * breach `--blocking`.
+ * Presents reviewed results as JSON, as a SARIF log, or in the terminal. JSON and SARIF go to stdout alone, so a
+ * SARIF warning goes to stderr. Either way, sets exit code 1 after the output when they fail `--blocking` or
+ * `--fail-on-unresolved`.
  */
 export function renderSecurityReviewResult(
   review: ReviewedAppSecurityResults,
   options: {verbose: boolean},
-  format: 'json' | 'text',
+  format: 'json' | 'sarif' | 'text',
 ): void {
   if (format === 'json') {
     outputResult(appSecurityReviewJsonOutputSchema.encode(appSecurityReviewResult(review)))
+  } else if (format === 'sarif') {
+    const sarif = appSecurityReviewSarif(appSecurityReviewResult(review), {
+      checkIds: review.result.filter?.checkIds ?? [],
+    })
+    outputResult(JSON.stringify(sarif, null, 2))
+    renderSecurityReviewSarifWarning(review.result)
   } else {
-    renderSecurityReview({result: review.result, verbose: options.verbose, now: new Date(), commands: review.commands})
+    renderSecurityReview({
+      result: review.result,
+      verbose: options.verbose,
+      now: new Date(),
+      commands: review.commands,
+      agentChecks: getAgentCheckCatalog(),
+      ...(review.savedSuppressions ? {savedSuppressions: review.savedSuppressions} : {}),
+      ...(review.interactiveReview ? {interactiveReview: review.interactiveReview} : {}),
+    })
   }
 
-  if (review.result.blocking.blockedChecks > 0) process.exitCode = 1
+  if (reviewFailed(review.result)) process.exitCode = 1
 }
 
-function appSecurityReviewResult({selection, result}: ReviewedAppSecurityResults): AppSecurityReviewResult {
+function appSecurityReviewResult({
+  selection,
+  result,
+  savedSuppressions,
+}: ReviewedAppSecurityResults): AppSecurityReviewResult {
   const {appDirectory} = selection
   const deterministic = result.sources.deterministic?.document
   return {
     status: 'success',
-    valid: result.blocking.blockedChecks === 0,
+    valid: !reviewFailed(result),
     app: projectAppSecurityApp(selection),
     resultsDirectory: projectAppSecurityPath(result.resultsDirectory),
     resultsFiles: projectResultsFiles(result.sources),
     detection: deterministic ? projectDetection(deterministic.detection, appDirectory) : null,
     coverage: deterministic ? projectCoverage(deterministic.coverage, appDirectory) : null,
     scopeDiffers: result.scopeDiffers,
-    checks: result.checks.map((check) => projectCheck(check, appDirectory)),
+    checks: result.checks.map((check) => projectCheck(check, appDirectory, result.findingNumbers)),
+    resultsDigest: result.resultsDigest,
     blocking: projectAppSecurityBlocking(result.blocking),
+    failOnUnresolved: result.failOnUnresolved,
+    missingCheckIds: result.missingCheckIds,
+    suppressions: projectAppSecuritySuppressions(
+      appDirectory,
+      result.suppressions,
+      result.allChecks,
+      result.likelyFindingNumbers,
+    ),
+    savedSuppressions: savedSuppressions ? projectSavedSuppressions(savedSuppressions, appDirectory) : null,
+  }
+}
+
+function projectSavedSuppressions(
+  {path, saved, companionNumbers}: SavedReviewSuppressions,
+  appDirectory: string,
+): AppSecuritySavedSuppressions {
+  return {
+    filePath: projectAppSecurityPath(path),
+    entries: saved.map((savedSuppression) => ({
+      ...projectAppSecuritySavedSuppression(appDirectory, savedSuppression),
+      findingNumber: savedSuppression.findingNumber,
+    })),
+    companionFindingNumbers: companionNumbers,
   }
 }
 
@@ -192,7 +247,11 @@ function projectCoverage(coverage: StoredCoverage, appDirectory: string): AppSec
   }
 }
 
-function projectCheck(check: CombinedCheck, appDirectory: string): AppSecurityCheck {
+function projectCheck(
+  check: CombinedCheck,
+  appDirectory: string,
+  findingNumbers: SecurityReviewResult['findingNumbers'],
+): AppSecurityCheck {
   return {
     id: check.id,
     title: check.title,
@@ -207,7 +266,7 @@ function projectCheck(check: CombinedCheck, appDirectory: string): AppSecurityCh
       deterministic: check.by_source.deterministic ? projectSourceResult(check.by_source.deterministic) : null,
       agent: check.by_source.agent ? projectSourceResult(check.by_source.agent) : null,
     },
-    findings: check.findings.map((finding) => projectFinding(finding, appDirectory)),
+    findings: check.findings.map((finding) => projectFinding(finding, findingNumbers.get(finding)!, appDirectory)),
   }
 }
 
@@ -222,13 +281,15 @@ function projectSourceResult(result: SourceCheckResult): AppSecuritySourceResult
 }
 
 /** Each source's finding has only its own fields: the stored format allows the other source's too. */
-function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecurityFinding {
+function projectFinding(finding: CombinedFinding, number: number, appDirectory: string): AppSecurityFinding {
   const common = {
+    number,
     disposition: finding.disposition,
     location: projectLocation(finding.location, appDirectory),
     message: finding.message,
     snippet: projectOptionalText(finding.snippet),
     evidence: finding.evidence.map((evidence) => projectEvidence(evidence, appDirectory)),
+    suppression: projectFindingSuppression(finding.suppressed_by),
   }
   if (finding.source === 'deterministic') {
     return {
@@ -248,7 +309,21 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
     ...common,
     confidence: finding.confidence ?? null,
     reasoning: projectOptionalText(finding.reasoning),
-    suppression: finding.suppression ? {justification: finding.suppression.justification} : null,
+  }
+}
+
+/**
+ * What suppresses a finding: `suppressed_by`, which the combination sets only for an entry that matched the finding or
+ * for the agent's own suppression of an agent finding. A hand-edited `suppression` on a deterministic finding has none.
+ */
+function projectFindingSuppression(suppression: FindingSuppression | undefined): AppSecurityFindingSuppression {
+  if (suppression === undefined) return null
+  if (suppression.origin === 'agent') return {justification: suppression.reason, origin: 'agent'}
+  return {
+    justification: suppression.reason,
+    origin: 'file',
+    entryIndex: suppression.entry_index,
+    kind: suppression.kind,
   }
 }
 

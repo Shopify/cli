@@ -9,6 +9,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
  * are shared across all the theme commands.
  */
 export const themeFlags = {
+  'allow-custom-checks': Flags.boolean({
+    description:
+      'Allow custom Theme Check JavaScript to run with your user permissions. Only enable this for trusted themes and checks. Only command-line arguments or the process environment can enable this.',
+    env: 'SHOPIFY_FLAG_ALLOW_CUSTOM_CHECKS',
+    allowNo: true,
+  }),
   path: Flags.string({
     description: 'The path where you want to run the command. Defaults to the current working directory.',
     env: 'SHOPIFY_FLAG_PATH',

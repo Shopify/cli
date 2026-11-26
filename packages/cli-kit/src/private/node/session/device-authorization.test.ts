@@ -263,7 +263,7 @@ describe('requestDeviceAuthorization', () => {
     expect(sleep).toHaveBeenNthCalledWith(2, 4)
   })
 
-  test.each([502, 503, 504])(
+  test.each([502, 503, 504, 520, 521, 522, 523, 524])(
     'when HTTP %i gateway responses persist, throw an expected error after two retries',
     async (status) => {
       // Given

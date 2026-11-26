@@ -19,6 +19,13 @@ const RATE_LIMIT_CODES = new Set(['THROTTLED', '429'])
 const PERMISSION_CODES = new Set(['ACCESS_DENIED', 'access_denied'])
 
 /**
+ * GraphQL `extensions.code` values we treat as a transient server-side failure: the request was
+ * valid, but the server failed to process it (for example, a database briefly running out of
+ * connections). Shopify APIs return these on an HTTP 200, so the status alone doesn't reveal them.
+ */
+const TRANSIENT_SERVER_CODES = new Set(['INTERNAL_SERVER_ERROR'])
+
+/**
  * Collects every routing-relevant code from a GraphQL `errors` value.
  *
  * Scans *all* errors (not just the first), reading both the top-level `extensions.code` and the
@@ -68,6 +75,13 @@ export function isPermissionCode(code: string | undefined): boolean {
 }
 
 /**
+ * Whether a single code is a transient server-side failure signal (`INTERNAL_SERVER_ERROR`).
+ */
+function isTransientServerCode(code: string | undefined): boolean {
+  return code !== undefined && TRANSIENT_SERVER_CODES.has(code)
+}
+
+/**
  * Whether any GraphQL error carries a rate-limit code. Convenience for suppression logic that only
  * needs a boolean over the raw `errors` value.
  *
@@ -76,4 +90,14 @@ export function isPermissionCode(code: string | undefined): boolean {
  */
 export function hasRateLimitCode(errors: unknown): boolean {
   return graphQLErrorCodes(errors).some(isRateLimitCode)
+}
+
+/**
+ * Whether any GraphQL error carries a transient server-side failure code.
+ *
+ * @param errors - The `errors` value from a GraphQL response.
+ * @returns True when a transient server code is present in any error.
+ */
+export function hasTransientServerCode(errors: unknown): boolean {
+  return graphQLErrorCodes(errors).some(isTransientServerCode)
 }

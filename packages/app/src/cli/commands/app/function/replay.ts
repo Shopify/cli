@@ -1,24 +1,27 @@
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {replay} from '../../../services/function/replay.js'
-import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
+import {functionReplayJsonOutputSchema} from '../../../services/function/replay/types.js'
 import {presentFunctionExecution} from '../../../services/function/runner/result.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class FunctionReplay extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
     return true
   }
 
-  static jsonOutputSchema = functionRunJsonOutputSchema
+  static jsonOutputSchema = functionReplayJsonOutputSchema
 
   static summary = 'Replays a function run from an app log.'
 
-  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
+  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).
+
+Watches for changes by default. Use --no-watch to run once.
+
+Use --json for JSONL output while watching, or --no-watch --json for a single JSON result.`
 
   static description = this.descriptionForHelp()
 
@@ -47,9 +50,6 @@ export default class FunctionReplay extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(FunctionReplay)
-    if (flags.json && flags.watch) {
-      throw new AbortError('JSON output requires a finite replay. Use --no-watch with --json.')
-    }
 
     const {app} = await linkedAppContext({
       directory: flags.path,
