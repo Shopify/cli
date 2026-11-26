@@ -9,14 +9,17 @@ import {
   ensureNoServiceAccountToken,
   isServiceAccountTokenSet,
   findSessionIdByAlias,
+  logout,
   setCurrentSessionAlias,
   setLastSeenUserId,
 } from './session.js'
 
 import {nonRandomUUID} from './crypto.js'
 import {AbortError, shouldReportErrorAsUnexpected} from './error.js'
-import {getAppAutomationToken} from './environment.js'
+import {getAppAutomationToken, getIdentityTokenInformation} from './environment.js'
 import {shopifyFetch} from './http.js'
+import * as fqdnModule from './context/fqdn.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {
   ensureAuthenticated,
   setCommandSessionId,
@@ -25,15 +28,16 @@ import {
 } from '../../private/node/session.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {automationTokenVariable} from '../../private/node/session/automation-token.js'
-import {ApplicationToken} from '../../private/node/session/schema.js'
+import {ApplicationToken, Session} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
+  revokeRefreshToken,
 } from '../../private/node/session/exchange.js'
 import {resolvePermanentStoreFqdn} from '../../private/node/session/permanent-store-domain.js'
 
-import {vi, describe, expect, test} from 'vitest'
+import {vi, describe, expect, test, afterEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -586,4 +590,121 @@ describe('ensureAuthenticatedAdminAsApp', () => {
       expect(shopifyFetch).not.toHaveBeenCalled()
     },
   )
+})
+
+describe('logout', () => {
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
+  })
+
+  function sessionWithRefreshToken(refreshToken: string, userId: string): Session {
+    return {
+      identity: {accessToken: `access-${userId}`, refreshToken, expiresAt: futureDate, scopes: [], userId},
+      applications: {},
+    }
+  }
+
+  test('revokes every stored refresh token for the current Identity host before removing local data', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue({
+      'fqdn.com': {
+        'user-1': sessionWithRefreshToken('refresh-1', 'user-1'),
+        'user-2': sessionWithRefreshToken('refresh-2', 'user-2'),
+      },
+      'other.fqdn.com': {
+        'user-other': sessionWithRefreshToken('refresh-other', 'user-other'),
+      },
+    })
+    vi.mocked(revokeRefreshToken).mockResolvedValue(true)
+    const output = mockAndCaptureOutput()
+
+    // When
+    await logout()
+
+    // Then
+    expect(revokeRefreshToken).toHaveBeenCalledTimes(2)
+    expect(revokeRefreshToken).toHaveBeenCalledWith('refresh-1')
+    expect(revokeRefreshToken).toHaveBeenCalledWith('refresh-2')
+    expect(revokeRefreshToken).not.toHaveBeenCalledWith('refresh-other')
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+    const removeOrder = vi.mocked(sessionStore.remove).mock.invocationCallOrder[0]!
+    for (const revokeOrder of vi.mocked(revokeRefreshToken).mock.invocationCallOrder) {
+      expect(removeOrder).toBeGreaterThan(revokeOrder)
+    }
+    expect(output.debug()).not.toContain("Couldn't revoke your CLI tokens at Shopify")
+    expect(output.warn()).toBe('')
+  })
+
+  test('removes local data and logs the failure once at debug level when revocation fails', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue({
+      'fqdn.com': {
+        'user-1': sessionWithRefreshToken('refresh-1', 'user-1'),
+        'user-2': sessionWithRefreshToken('refresh-2', 'user-2'),
+      },
+    })
+    vi.mocked(revokeRefreshToken).mockResolvedValue(false)
+    const output = mockAndCaptureOutput()
+
+    // When
+    await logout()
+
+    // Then
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+    expect(output.debug().split("Couldn't revoke your CLI tokens at Shopify").length - 1).toBe(1)
+    expect(output.debug()).not.toContain('refresh-')
+    expect(output.warn()).toBe('')
+  })
+
+  test('removes local data when reading sessions throws', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockRejectedValue(new Error('boom'))
+
+    // When
+    const got = logout()
+
+    // Then
+    await expect(got).rejects.toThrow('boom')
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+  })
+
+  test('does not revoke the refresh token supplied through the environment', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue({
+      'fqdn.com': {
+        'user-env': sessionWithRefreshToken('refresh-env', 'user-env'),
+        'user-1': sessionWithRefreshToken('refresh-1', 'user-1'),
+      },
+    })
+    vi.mocked(getIdentityTokenInformation).mockReturnValue({accessToken: 'a', refreshToken: 'refresh-env', userId: 'u'})
+    vi.mocked(revokeRefreshToken).mockResolvedValue(true)
+
+    // When
+    await logout()
+
+    // Then
+    expect(revokeRefreshToken).toHaveBeenCalledOnce()
+    expect(revokeRefreshToken).toHaveBeenCalledWith('refresh-1')
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+  })
+
+  test('makes no revocation request when there are no stored sessions', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
+    const output = mockAndCaptureOutput()
+
+    // When
+    await logout()
+
+    // Then
+    expect(revokeRefreshToken).not.toHaveBeenCalled()
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+    expect(output.debug()).not.toContain("Couldn't revoke your CLI tokens at Shopify")
+    expect(output.warn()).toBe('')
+  })
 })

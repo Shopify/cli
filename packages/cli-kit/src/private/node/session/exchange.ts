@@ -15,6 +15,9 @@ import {outputDebug} from '../../../public/node/output.js'
 
 import * as jose from 'jose'
 
+/** How long to wait for Identity to revoke a token on logout before giving up. */
+const REVOKE_TOKEN_TIMEOUT_MS = 3000
+
 export class InvalidGrantError extends Error {}
 export class InvalidRequestError extends Error {
   /** Identity's `error_description`, when it sent one. Says what about the request was invalid. */
@@ -390,6 +393,34 @@ async function tokenRequest(params: Record<string, string>): Promise<Result<Toke
       )
     }
     throw error
+  }
+}
+
+/**
+ * Revokes a refresh token at Identity, which also revokes every access token minted from it.
+ * Best effort: never throws.
+ *
+ * @param refreshToken - The refresh token to revoke.
+ * @returns Whether Identity confirmed the revocation.
+ */
+export async function revokeRefreshToken(refreshToken: string): Promise<boolean> {
+  try {
+    const url = `https://${await identityFqdn()}/oauth/revoke`
+    const body = new URLSearchParams({client_id: getIdentityClientId(), token: refreshToken}).toString()
+    const res = await shopifyFetch(
+      url,
+      {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body},
+      {useNetworkLevelRetry: false, useAbortSignal: true, timeoutMs: REVOKE_TOKEN_TIMEOUT_MS},
+    )
+    if (!res.ok) {
+      outputDebug(`Token revocation at Identity failed with status ${res.status}`)
+      return false
+    }
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(`Token revocation at Identity failed: ${error instanceof Error ? error.message : String(error)}`)
+    return false
   }
 }
 

@@ -9,11 +9,15 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {expect, test, vi} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
 
 vi.mock('../../context.js')
 
 const organization = {id: '123', businessName: 'test', source: OrganizationSource.BusinessPlatform}
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 test('returns the environment facts and records analytics metadata', async () => {
   const app = mockApp()
@@ -58,6 +62,17 @@ test('marks SHOPIFY_API_SECRET as unavailable and warns when the App Management 
     ],
   })
   expect(output.warn()).toContain("SHOPIFY_API_SECRET isn't included")
+  output.clear()
+})
+
+test('never shows the secret from SHOPIFY_CLI_APP_CLIENT_SECRET', async () => {
+  vi.stubEnv('SHOPIFY_CLI_APP_CLIENT_SECRET', 'environment-secret')
+  const output = mockAndCaptureOutput()
+
+  const result = await getAppEnv(mockApp(), testOrganizationAppWithoutClientSecret(), organization)
+
+  expect(result.variables).toContainEqual({name: 'SHOPIFY_API_SECRET', isSecret: true})
+  expect(JSON.stringify(result)).not.toContain('environment-secret')
   output.clear()
 })
 

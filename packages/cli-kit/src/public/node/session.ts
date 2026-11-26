@@ -1,8 +1,8 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
+import {getAppAutomationToken, getIdentityTokenInformation} from './environment.js'
 import {AbortError, BugError} from './error.js'
-import {normalizeStoreFqdn} from './context/fqdn.js'
+import {identityFqdn, normalizeStoreFqdn} from './context/fqdn.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {automationTokenVariable} from '../../private/node/session/automation-token.js'
@@ -11,6 +11,7 @@ import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
+  revokeRefreshToken,
 } from '../../private/node/session/exchange.js'
 import {
   AdminAPIScope,
@@ -404,12 +405,25 @@ export function ensureNoServiceAccountToken(): void {
 }
 
 /**
- * Logout from Shopify.
+ * Logout from Shopify. Revokes the stored tokens at Identity, best effort, then removes local session data.
  *
  * @returns A promise that resolves when the logout is complete.
  */
-export function logout(): Promise<void> {
-  return sessionStore.remove()
+export async function logout(): Promise<void> {
+  let revokeFailed = false
+  try {
+    const sessions = await sessionStore.fetch()
+    const envRefreshToken = getIdentityTokenInformation()?.refreshToken
+    const refreshTokens = Object.values(sessions?.[await identityFqdn()] ?? {})
+      .map((session) => session.identity.refreshToken)
+      .filter((token) => token !== envRefreshToken)
+    const results = await Promise.all(refreshTokens.map((token) => revokeRefreshToken(token)))
+    revokeFailed = results.includes(false)
+  } finally {
+    await sessionStore.remove()
+  }
+  if (revokeFailed)
+    outputDebug("Couldn't revoke your CLI tokens at Shopify. They were still removed from this machine.")
 }
 
 /**

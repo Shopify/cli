@@ -2,6 +2,8 @@ import {expect} from 'vitest'
 import {z} from 'zod/v3'
 
 process.env.SHOPIFY_UNIT_TEST = '1'
+// Tests that expect no client secret must not pick one up from the shell running them.
+delete process.env.SHOPIFY_CLI_APP_CLIENT_SECRET
 process.removeAllListeners('warning')
 
 // This is a workaround for the issue with zod not supporting vitest's custom equality tester

@@ -3,7 +3,7 @@ import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {
   Organization,
   OrganizationApp,
-  fetchAppClientSecret,
+  fetchRemoteAppClientSecret,
   warnClientSecretOmitted,
 } from '../../../models/organization.js'
 import {logMetadataForLoadedContext} from '../../context.js'
@@ -15,7 +15,7 @@ export async function getAppEnv(
 ): Promise<AppEnvShowResult> {
   // Deliberate side effect: records analytics metadata for the loaded app.
   await logMetadataForLoadedContext(remoteApp, organization.source)
-  const apiSecret = await fetchAppClientSecret(remoteApp)
+  const apiSecret = await fetchRemoteAppClientSecret(remoteApp)
   if (!apiSecret) warnClientSecretOmitted()
   return {
     variables: [

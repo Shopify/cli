@@ -56,6 +56,7 @@ describe('devClientSecret', () => {
     // Then
     expect(secret).toBeUndefined()
     expect(output.warn()).toContain("GraphiQL isn't available")
+    expect(output.warn()).toContain('SHOPIFY_CLI_APP_CLIENT_SECRET')
   })
 
   test("doesn't ask for the secret for an extension-only app with GraphiQL disabled", async () => {
@@ -67,6 +68,19 @@ describe('devClientSecret', () => {
 
     // Then
     expect(secret).toBeUndefined()
+    expect(appClientSecrets).not.toHaveBeenCalled()
+  })
+
+  test('uses SHOPIFY_CLI_APP_CLIENT_SECRET for GraphiQL without asking the App Management API', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_CLI_APP_CLIENT_SECRET', 'environment-secret')
+    const {remoteApp, appClientSecrets} = appWithRemoteSecrets([])
+
+    // When
+    const secret = await devClientSecret({remoteApp, hasWebs: false, graphiqlEnabled: true})
+
+    // Then
+    expect(secret).toEqual('environment-secret')
     expect(appClientSecrets).not.toHaveBeenCalled()
   })
 })

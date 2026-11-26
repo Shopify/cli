@@ -1,7 +1,8 @@
 import {
   OrganizationApp,
   appClientSecret,
-  fetchAppClientSecret,
+  clientSecretVariableHint,
+  findAppClientSecret,
   missingClientSecretTryMessage,
 } from '../../models/organization.js'
 import {outputWarn} from '@shopify/cli-kit/node/output'
@@ -26,10 +27,10 @@ export async function devClientSecret({
   if (hasWebs) return appClientSecret(remoteApp)
   if (!graphiqlEnabled) return undefined
 
-  const secret = await fetchAppClientSecret(remoteApp)
+  const secret = await findAppClientSecret(remoteApp)
   if (!secret) {
     outputWarn(
-      `GraphiQL isn't available because the App Management API didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()}`,
+      `GraphiQL isn't available because the App Management API didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()} ${clientSecretVariableHint()}`,
     )
   }
   return secret
