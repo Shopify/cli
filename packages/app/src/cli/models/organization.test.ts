@@ -1,7 +1,13 @@
-import {appClientSecret, fetchAppClientSecret, missingClientSecretTryMessage} from './organization.js'
+import {
+  appClientSecret,
+  clientSecretVariableHint,
+  fetchRemoteAppClientSecret,
+  missingClientSecretTryMessage,
+} from './organization.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from './app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 function appWithRemoteSecrets(secrets: {secret: string}[]) {
   const appClientSecrets = vi.fn().mockResolvedValue(secrets)
@@ -13,7 +19,7 @@ function appWithRemoteSecrets(secrets: {secret: string}[]) {
   return {remoteApp, appClientSecrets}
 }
 
-describe('fetchAppClientSecret', () => {
+describe('fetchRemoteAppClientSecret', () => {
   test('returns an already loaded secret without asking the App Management API', async () => {
     // Given
     const appClientSecrets = vi.fn()
@@ -23,7 +29,7 @@ describe('fetchAppClientSecret', () => {
     })
 
     // When
-    const secret = await fetchAppClientSecret(remoteApp)
+    const secret = await fetchRemoteAppClientSecret(remoteApp)
 
     // Then
     expect(secret).toEqual('secret-1')
@@ -35,7 +41,7 @@ describe('fetchAppClientSecret', () => {
     const {remoteApp, appClientSecrets} = appWithRemoteSecrets([{secret: 'secret-1'}, {secret: 'secret-2'}])
 
     // When
-    const secret = await fetchAppClientSecret(remoteApp)
+    const secret = await fetchRemoteAppClientSecret(remoteApp)
 
     // Then
     expect(secret).toEqual('secret-1')
@@ -47,7 +53,7 @@ describe('fetchAppClientSecret', () => {
     const {remoteApp} = appWithRemoteSecrets([])
 
     // When / Then
-    await expect(fetchAppClientSecret(remoteApp)).resolves.toBeUndefined()
+    await expect(fetchRemoteAppClientSecret(remoteApp)).resolves.toBeUndefined()
   })
 })
 
@@ -130,7 +136,75 @@ describe('appClientSecret', () => {
 
     // When / Then
     await expect(appClientSecret(remoteApp, 'Pass the secret with a flag.')).rejects.toMatchObject({
-      tryMessage: 'Pass the secret with a flag.',
+      tryMessage: `Pass the secret with a flag. ${clientSecretVariableHint()}`,
     })
+  })
+
+  test('uses the secret in SHOPIFY_CLI_APP_CLIENT_SECRET without asking the App Management API', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+    vi.stubEnv('SHOPIFY_CLI_APP_CLIENT_SECRET', 'environment-secret')
+    const {remoteApp, appClientSecrets} = appWithRemoteSecrets([{secret: 'remote-secret'}])
+
+    // When
+    const secret = await appClientSecret(remoteApp)
+
+    // Then
+    expect(secret).toEqual('environment-secret')
+    expect(appClientSecrets).not.toHaveBeenCalled()
+  })
+
+  test('logs that it uses SHOPIFY_CLI_APP_CLIENT_SECRET without logging its value', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_CLI_APP_CLIENT_SECRET', 'environment-secret')
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const {remoteApp} = appWithRemoteSecrets([])
+
+    // When
+    await appClientSecret(remoteApp)
+
+    // Then
+    expect(output.debug()).toContain("Using the app's client secret from SHOPIFY_CLI_APP_CLIENT_SECRET.")
+    expect(output.debug()).not.toContain('environment-secret')
+    output.clear()
+  })
+
+  test('asks the App Management API when SHOPIFY_CLI_APP_CLIENT_SECRET is empty', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_CLI_APP_CLIENT_SECRET', '')
+    const {remoteApp, appClientSecrets} = appWithRemoteSecrets([{secret: 'remote-secret'}])
+
+    // When
+    const secret = await appClientSecret(remoteApp)
+
+    // Then
+    expect(secret).toEqual('remote-secret')
+    expect(appClientSecrets).toHaveBeenCalledWith(remoteApp)
+  })
+
+  test('names SHOPIFY_CLI_APP_CLIENT_SECRET when there is no secret', async () => {
+    // Given
+    const {remoteApp} = appWithRemoteSecrets([])
+
+    // When / Then
+    await expect(appClientSecret(remoteApp)).rejects.toMatchObject({
+      tryMessage: expect.stringContaining('set SHOPIFY_CLI_APP_CLIENT_SECRET'),
+    })
+  })
+})
+
+describe('fetchRemoteAppClientSecret with SHOPIFY_CLI_APP_CLIENT_SECRET', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('ignores the variable, so commands that show the secret never echo it', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_CLI_APP_CLIENT_SECRET', 'environment-secret')
+    const {remoteApp} = appWithRemoteSecrets([])
+
+    // When / Then
+    await expect(fetchRemoteAppClientSecret(remoteApp)).resolves.toBeUndefined()
   })
 })

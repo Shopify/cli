@@ -2,7 +2,12 @@ import {appInfoJsonOutputSchema, remoteAppInfoSchema, type AppInfoResult} from '
 import {logMetadataForLoadedContext} from './context.js'
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
-import {Organization, OrganizationApp, fetchAppClientSecret, warnClientSecretOmitted} from '../models/organization.js'
+import {
+  Organization,
+  OrganizationApp,
+  fetchRemoteAppClientSecret,
+  warnClientSecretOmitted,
+} from '../models/organization.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
@@ -18,7 +23,7 @@ export async function info(
 ): Promise<AppInfoResult> {
   if (options.webEnv) {
     await logMetadataForLoadedContext(remoteApp, organization.source)
-    const apiSecret = await fetchAppClientSecret(remoteApp)
+    const apiSecret = await fetchRemoteAppClientSecret(remoteApp)
     if (!apiSecret) warnClientSecretOmitted()
     return {
       SHOPIFY_API_KEY: remoteApp.apiKey,

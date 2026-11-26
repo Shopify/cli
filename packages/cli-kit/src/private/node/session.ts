@@ -21,7 +21,7 @@ import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
-import {AdminSession, ensureNoServiceAccountToken, logout} from '../../public/node/session.js'
+import {AdminSession, ensureNoServiceAccountToken} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -297,7 +297,7 @@ ${outputToken.json(applications)}
 
 async function throwOnNoPrompt(noPrompt: boolean) {
   if (!noPrompt) return
-  await logout()
+  await sessionStore.remove()
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 

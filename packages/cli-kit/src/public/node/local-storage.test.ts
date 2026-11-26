@@ -5,6 +5,7 @@ import {joinPath} from './path.js'
 import * as fs from './fs.js'
 import Config from 'conf'
 import {describe, expect, test, vi} from 'vitest'
+import {statSync} from 'node:fs'
 
 interface TestSchema {
   testValue: string
@@ -92,6 +93,23 @@ describe('storage', () => {
       // Then
       expect(valueBeforeRecovery).toBeUndefined()
       expect(JSON.parse(await readFile(configPath))).toEqual({testValue: 'recovered'})
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('writes the file so only the current user can read it', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const configPath = joinPath(cwd, 'config.json')
+      await writeFile(configPath, '{"testValue":"test"}')
+      await chmod(configPath, 0o644)
+      const storage = new LocalStorage<TestSchema>({cwd})
+
+      // When
+      storage.set('testValue', 'updated')
+
+      // Then
+      expect(statSync(configPath).mode & 0o777).toBe(0o600)
+      expect(storage.get('testValue')).toEqual('updated')
     })
   })
 })
