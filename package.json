@@ -57,7 +57,6 @@
     "@vitest/coverage-istanbul": "^3.2.7",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
-    "esbuild": "0.28.1",
     "eslint": "^9.39.5",
     "eslint-plugin-jsdoc": "50.8.0",
     "execa": "^7.2.0",
@@ -218,8 +217,7 @@
         "ignoreDependencies": [
           "@nx/workspace",
           "graphql-tag",
-          "pin-github-action",
-          "esbuild"
+          "pin-github-action"
         ],
         "ignore": [
           "configurations/vite.config.ts"
@@ -310,9 +308,6 @@
           "**/src/*.ts!"
         ],
         "project": "**/*.ts!",
-        "ignoreDependencies": [
-          "@oclif/core"
-        ],
         "vite": {
           "config": [
             "vite.config.ts"
