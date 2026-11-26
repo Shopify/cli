@@ -16,7 +16,7 @@ import {getWebSocketUrl} from '../../extension.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, MfaRequiredError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {readdir} from '@shopify/cli-kit/node/fs'
@@ -334,6 +334,7 @@ export class DevSession {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      if (error instanceof MfaRequiredError) throw error
       // cli-kit reports a 401 that survives the token refresh with its `statusCode`; a raw graphql-request error
       // carries the status on its response.
       if (error.statusCode === 401) {

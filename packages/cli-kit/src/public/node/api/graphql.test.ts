@@ -10,12 +10,13 @@ import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js
 import {nonRandomUUID, sha256} from '../crypto.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import * as system from '../system.js'
+import {AbortError} from '../error.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {parse} from 'graphql'
 import {setupServer} from 'msw/node'
-import {graphql, HttpResponse} from 'msw'
+import {graphql, http, HttpResponse} from 'msw'
 
 let mockedRequestId = 'request-id-123'
 
@@ -397,6 +398,38 @@ describe('graphqlRequest', () => {
 
     await expect(res).rejects.toThrow('not authorized')
     expect(requestCount).toBe(2)
+  })
+
+  test('Fails without refreshing the token when the API requires multi-factor authentication', async () => {
+    // Business Platform answers with a plain string in `errors`, which msw's typed GraphQL handlers don't allow.
+    server.use(
+      http.post(mockedAddress, () =>
+        HttpResponse.json(
+          {errors: '[TFA] Unauthorized Access. This store requires two-factor authentication.'},
+          {status: 401, headers: {'x-request-id': 'mfa-request-id'}},
+        ),
+      ),
+    )
+    const tokenRefresh = vi.fn(async () => ({token: 'refreshed-token'}))
+    const res = graphqlRequest({
+      query: 'query RequiresMfa { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      unauthorizedHandler: {type: 'token_refresh', handler: tokenRefresh},
+    })
+
+    let requestCount = 0
+    server.events.on('request:start', () => {
+      requestCount++
+    })
+
+    await expect(res).rejects.toThrow(AbortError)
+    await expect(res).rejects.toThrow(
+      'This action requires you to log in with a secure method, like a passkey or two-step authentication.\n\nRequest ID: mfa-request-id',
+    )
+    expect(tokenRefresh).not.toHaveBeenCalled()
+    expect(requestCount).toBe(1)
   })
 
   describe('a 401 that survives the token refresh', () => {

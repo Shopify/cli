@@ -1,5 +1,10 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
-import {debugLogRequestInfo, errorHandler, requestIdFromClientError} from '../../../private/node/api/graphql.js'
+import {
+  debugLogRequestInfo,
+  errorHandler,
+  isMfaRequiredError,
+  requestIdFromClientError,
+} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
@@ -240,7 +245,12 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       try {
         response = await request()
       } catch (error) {
-        if (error instanceof ClientError && error.response.status === 401 && tokenRefreshUnauthorizedHandlerFunction) {
+        if (
+          error instanceof ClientError &&
+          error.response.status === 401 &&
+          !isMfaRequiredError(error) &&
+          tokenRefreshUnauthorizedHandlerFunction
+        ) {
           if (await tokenRefreshUnauthorizedHandlerFunction()) {
             try {
               response = await request()

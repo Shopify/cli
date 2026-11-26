@@ -7,7 +7,7 @@ import {
 } from './graphql.js'
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../output.js'
-import {AbortError, BugError} from '../error.js'
+import {AbortError, BugError, MfaRequiredError} from '../error.js'
 import {
   restRequestBody,
   restRequestHeaders,
@@ -15,7 +15,7 @@ import {
   isThemeAccessSession,
 } from '../../../private/node/api/rest.js'
 import {isAbortedFetchError, isNetworkError} from '../../../private/node/api.js'
-import {requestIdFromClientError} from '../../../private/node/api/graphql.js'
+import {isMfaRequiredError, requestIdFromClientError} from '../../../private/node/api/graphql.js'
 import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
@@ -201,6 +201,9 @@ export async function fetchApiVersions(
     })
     return response.publicApiVersions
   } catch (error) {
+    if (error instanceof ClientError && isMfaRequiredError(error)) {
+      throw new MfaRequiredError(requestIdFromClientError(error))
+    }
     if (error instanceof ClientError && error.response.status === 403) {
       const storeName = session.storeFqdn.replace('.myshopify.com', '')
       throw new AbortError(

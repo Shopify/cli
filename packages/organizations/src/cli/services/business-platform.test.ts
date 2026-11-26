@@ -7,7 +7,7 @@ import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, MfaRequiredError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
@@ -40,6 +40,10 @@ describe('isOrganizationAccessError', () => {
 
   test('recognises a raw graphql-request 401', () => {
     expect(isOrganizationAccessError(rawClientError(401))).toBe(true)
+  })
+
+  test('does not classify an MFA requirement as missing organization access', () => {
+    expect(isOrganizationAccessError(new MfaRequiredError())).toBe(false)
   })
 
   test('ignores other statuses and other errors', () => {
@@ -114,6 +118,13 @@ describe('organizationStoresRequestDoc', () => {
     await expect(organizationStoresRequestDoc(organization, request)).rejects.toThrow(
       "This service account can't manage dev stores in A Better Looking Shop.",
     )
+  })
+
+  test('preserves MFA guidance instead of relabelling it as missing organization access', async () => {
+    const error = new MfaRequiredError('mfa-request-id')
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(error)
+
+    await expect(organizationStoresRequestDoc(organization, request)).rejects.toBe(error)
   })
 
   test('rethrows every other error unchanged', async () => {
