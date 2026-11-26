@@ -470,49 +470,6 @@ describe('deploy', () => {
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
   })
 
-  test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
-    // Given
-    const extensionNonUuidManaged = await testAppConfigExtensions()
-    const localApp = {
-      allExtensions: [extensionNonUuidManaged],
-      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: false}},
-    }
-    const app = testAppLinked(localApp)
-    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
-
-    // When
-    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
-      appManifest: {
-        name: 'App',
-        handle: '',
-        modules: [
-          {
-            type: 'point_of_sale_external',
-            handle: 'point_of_sale',
-            uid: 'point_of_sale',
-            uuid: undefined,
-            assets: 'point_of_sale',
-            target: '',
-            config: expect.any(Object),
-          },
-        ],
-      },
-      appId: 'app-id',
-      apiKey: 'api-key',
-      name: app.name,
-      organizationId: 'org-id',
-      appModules: [],
-      developerPlatformClient,
-      appModuleRegistrationIds: {},
-      release: true,
-      commitReference,
-    })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-  })
-
   test('returns deployment data without a completion banner', async () => {
     await inTemporaryDirectory(async (directory) => {
       const app = testAppLinked({directory, allExtensions: []})

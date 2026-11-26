@@ -232,7 +232,6 @@ export interface AppInterface<
   nonConfigExtensions: ExtensionInstance[]
   errors: AppErrors
   hiddenConfig: AppHiddenConfig
-  includeConfigOnDeploy: boolean | undefined
   readonly devApplicationURLs?: ApplicationURLs
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
@@ -324,7 +323,6 @@ export class App<
   }
 
   get allExtensions() {
-    if (this.includeConfigOnDeploy === false) return this.nonConfigExtensions
     return this.realExtensions
   }
 
@@ -468,10 +466,6 @@ export class App<
       }
       writeFileSync(typeFilePath, typeContent)
     })
-  }
-
-  get includeConfigOnDeploy() {
-    return this.configuration.build?.include_config_on_deploy
   }
 
   private patchAppConfiguration(devApplicationURLs: ApplicationURLs) {

@@ -4,6 +4,7 @@ import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-
 import {AppLinkedInterface} from '../../../../models/app/app.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {
+  DEFAULT_CONFIG,
   testAppAccessConfigExtension,
   testAppLinked,
   testDeveloperPlatformClient,
@@ -510,6 +511,30 @@ describe('pushUpdatesForDevSession', () => {
       inheritedModuleUids: [unaffectedExtension.uid],
       unsafeValidation: false,
     })
+  })
+
+  test('inherits app configuration modules on an extension-only update when include_config_on_deploy is false', async () => {
+    vi.mocked(readdir).mockResolvedValue([])
+    const updatedExtension = await testUIExtension()
+    updatedExtension.deployConfig = vi.fn().mockResolvedValue({})
+    const appAccess = await testAppAccessConfigExtension()
+    const appWithDeprecatedFlag = testAppLinked({
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: false}},
+      allExtensions: [updatedExtension, appAccess],
+    })
+
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {
+      app: appWithDeprecatedFlag,
+      extensionEvents: [{type: 'updated', extension: updatedExtension}],
+    })
+    await flushPromises()
+
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({inheritedModuleUids: [appAccess.uid]}),
+    )
   })
 
   test('writes full manifest to bundle on session update, not just create', async () => {

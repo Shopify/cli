@@ -2692,22 +2692,6 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
       await expect(app.preDeployValidation()).resolves.toBeUndefined()
     })
 
-    test('does not validate Events subscriptions excluded from deployment', async () => {
-      await writeConfig(
-        buildAppConfiguration({
-          build: {include_config_on_deploy: false},
-          extra: `[access_scopes]\nuse_legacy_install_flow = true\n${eventsConfiguration}`,
-        }),
-      )
-
-      const app = await loadTestingApp()
-
-      expect(app.errors.getErrors()).toEqual([])
-      expect(app.realExtensions.filter((extension) => extension.type === 'events')).toHaveLength(2)
-      expect(app.allExtensions).toEqual([])
-      await expect(app.preDeployValidation()).resolves.toBeUndefined()
-    })
-
     test('creates no events modules for an empty subscription list', async () => {
       await writeConfig(buildAppConfiguration({extra: '[events]\napi_version = "2024-01"\nsubscription = []'}))
 
