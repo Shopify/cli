@@ -1,7 +1,7 @@
 import * as admin from './admin.js'
 import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {AdminSession} from '../session.js'
-import {AbortError, BugError, shouldReportErrorAsUnexpected} from '../error.js'
+import {AbortError, BugError, MfaRequiredError, shouldReportErrorAsUnexpected} from '../error.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../http.js'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
@@ -207,6 +207,26 @@ describe('fetchApiVersions error classification', () => {
       } as any,
     )
   }
+
+  test('preserves MFA guidance for a raw 401 instead of reporting a store connection error', async () => {
+    const response = {
+      status: 401,
+      errors: '[TFA] Unauthorized Access.',
+      headers: new Map([['x-request-id', 'mfa-request-id']]),
+    } as unknown as ClientError['response']
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(new ClientError(response, {query: 'query {}'}))
+
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    expect(error).toBeInstanceOf(MfaRequiredError)
+    expect(error).toMatchObject({
+      code: 'MFA_REQUIRED',
+      message:
+        'This action requires you to log in with a secure method, like a passkey or two-step authentication.\n\nRequest ID: mfa-request-id',
+    })
+    expect(error).not.toHaveProperty('statusCode')
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+  })
 
   test('reports a 402 Unavailable Shop as an expected store-state failure, not a CLI bug', async () => {
     // Given

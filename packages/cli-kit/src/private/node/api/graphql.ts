@@ -1,7 +1,7 @@
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {sanitizeURL} from './urls.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
-import {AbortError} from '../../../public/node/error.js'
+import {AbortError, MfaRequiredError} from '../../../public/node/error.js'
 
 import {ClientError, Variables} from 'graphql-request'
 
@@ -122,8 +122,29 @@ function friendlyAppErrorMessage(appError: any): string | undefined {
   return undefined
 }
 
+const MFA_REQUIRED_MARKER = '[TFA]'
+
+/**
+ * Whether a request was refused because the session didn't use multi-factor authentication.
+ *
+ * Business Platform and the Admin API answer such a request with HTTP 401 and a `[TFA]` marker in the body.
+ * A refreshed token keeps the session's authentication methods, so refreshing it can't satisfy the requirement.
+ *
+ * @param error - The error thrown by graphql-request.
+ * @returns True when the response is a 401 that carries the `[TFA]` marker.
+ */
+export function isMfaRequiredError(error: unknown): boolean {
+  if (!(error instanceof ClientError) || error.response.status !== 401) return false
+
+  const {errors, error: bodyError} = error.response as {errors?: unknown; error?: unknown}
+  return [errors, bodyError].some((value) => JSON.stringify(value ?? '').includes(MFA_REQUIRED_MARKER))
+}
+
 export function errorHandler(api: string): (error: unknown, requestId?: string) => unknown {
   return (error: unknown, requestId?: string) => {
+    if (isMfaRequiredError(error)) {
+      return new MfaRequiredError(requestId)
+    }
     if (error instanceof ClientError) {
       const {status} = error.response
 

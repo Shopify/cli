@@ -1,6 +1,13 @@
-import {debugLogRequestInfo, extractGraphQLErrorMessages, errorHandler, extractGraphQLErrors} from './graphql.js'
+import {
+  debugLogRequestInfo,
+  extractGraphQLErrorMessages,
+  errorHandler,
+  extractGraphQLErrors,
+  isMfaRequiredError,
+} from './graphql.js'
 import {GraphQLClientError} from './headers.js'
-import {AbortError} from '../../../public/node/error.js'
+import {AbortError, MfaRequiredError} from '../../../public/node/error.js'
+import {NEW_LOGIN_LABEL} from '../../../public/node/session-prompt.js'
 import {runWithCommandEventsForCommand} from '../../../public/node/command-events.js'
 import {withCapturedStandardStreams} from '../../../public/node/testing/output.js'
 import * as localContext from '../../../public/node/context/local.js'
@@ -149,6 +156,40 @@ describe('extractGraphQLErrorMessages', () => {
   })
 })
 
+describe('isMfaRequiredError', () => {
+  function clientErrorWithBody(body: Record<string, unknown>, status: number): ClientError {
+    const response = {status, headers: new Map(), ...body} as unknown as ClientError['response']
+    return new ClientError(response, {query: 'query {}'})
+  }
+
+  test('is true for a 401 whose errors carry the [TFA] marker', () => {
+    const error = clientErrorWithBody(
+      {errors: '[TFA] Unauthorized Access. This store requires two-factor authentication.'},
+      401,
+    )
+    expect(isMfaRequiredError(error)).toBe(true)
+  })
+
+  test('is true for a 401 whose error text carries the [TFA] marker', () => {
+    const error = clientErrorWithBody({error: '[TFA] Unauthorized Access.'}, 401)
+    expect(isMfaRequiredError(error)).toBe(true)
+  })
+
+  test('is false for a 401 without the marker', () => {
+    const error = clientErrorWithBody({errors: [{message: 'not authorized'}]}, 401)
+    expect(isMfaRequiredError(error)).toBe(false)
+  })
+
+  test('is false for the marker on another status', () => {
+    const error = clientErrorWithBody({errors: '[TFA] Unauthorized Access.'}, 403)
+    expect(isMfaRequiredError(error)).toBe(false)
+  })
+
+  test('is false for an error that is not a ClientError', () => {
+    expect(isMfaRequiredError(new Error('[TFA]'))).toBe(false)
+  })
+})
+
 describe('errorHandler', () => {
   function createClientError(errors: unknown[], status = 200): ClientError {
     const response = {
@@ -185,6 +226,31 @@ describe('errorHandler', () => {
     const result = handler(clientError) as GraphQLClientError
     expect(result).toBeInstanceOf(GraphQLClientError)
     expect(result.message).toContain('App Management GraphQL API responded unsuccessfully')
+  })
+
+  test('asks for a login with multi-factor authentication when the API requires it', () => {
+    const handler = errorHandler('Business Platform Organizations')
+    const response = {
+      status: 401,
+      headers: new Map(),
+      errors: '[TFA] Unauthorized Access. This store requires two-factor authentication.',
+    } as unknown as ClientError['response']
+
+    const result = handler(new ClientError(response, {query: 'query {}'}), 'req-123') as MfaRequiredError
+
+    expect(result).toBeInstanceOf(MfaRequiredError)
+    expect(result).toBeInstanceOf(AbortError)
+    expect(result.code).toBe('MFA_REQUIRED')
+    expect(result.tryMessage).toContain(NEW_LOGIN_LABEL)
+    expect(result).not.toHaveProperty('statusCode')
+    expect(result.message).toBe(
+      'This action requires you to log in with a secure method, like a passkey or two-step authentication.\n\nRequest ID: req-123',
+    )
+    expect(result.tryMessage).toBe(
+      "Set up a passkey or two-step authentication for your Shopify account if you haven't already, sign out of Shopify in your browser, then run `shopify auth login` and select 'Log in with a different account'.",
+    )
+    expect(JSON.stringify(result)).not.toContain('Business Platform')
+    expect(JSON.stringify(result)).not.toContain('shopify auth logout')
   })
 
   test('appends request ID when provided', () => {

@@ -3,6 +3,7 @@ import {flushStdout, OutputMessage, stringifyMessage, TokenizedString} from '../
 import {tokenItemToString, type InlineToken, type TokenItem} from '../../../private/node/ui/components/token-item.js'
 import {hasRateLimitCode} from '../../../private/node/analytics/graphql-error-codes.js'
 import {isGatewayErrorStatus} from '../../../private/node/api/status-checks.js'
+import {NEW_LOGIN_LABEL} from '../../../private/node/session/constants.js'
 
 import {Errors} from '@oclif/core'
 
@@ -86,6 +87,19 @@ export class AbortError extends FatalError {
     customSections?: AlertCustomSection[],
   ) {
     super(message, FatalErrorType.Abort, tryMessage, nextSteps, customSections)
+  }
+}
+
+/** An API refused a session that didn't use multi-factor authentication. */
+export class MfaRequiredError extends AbortError {
+  constructor(requestId?: string) {
+    const message =
+      'This action requires you to log in with a secure method, like a passkey or two-step authentication.'
+    super(
+      requestId ? `${message}\n\nRequest ID: ${requestId}` : message,
+      `Set up a passkey or two-step authentication for your Shopify account if you haven't already, sign out of Shopify in your browser, then run \`shopify auth login\` and select '${NEW_LOGIN_LABEL}'.`,
+    )
+    this.code = 'MFA_REQUIRED'
   }
 }
 

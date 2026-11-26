@@ -3,8 +3,10 @@ import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {setCurrentSessionId} from '../../private/node/conf-store.js'
+import {NEW_LOGIN_LABEL} from '../../private/node/session/constants.js'
 import type {Sessions} from '../../private/node/session/schema.js'
 
+export {NEW_LOGIN_LABEL}
 const NEW_LOGIN_VALUE = 'NEW_LOGIN'
 
 interface SessionChoice {
@@ -72,7 +74,7 @@ async function getAllChoices(): Promise<SessionChoice[]> {
 
   if (choices.length > 0) {
     choices.push({
-      label: 'Log in with a different account',
+      label: NEW_LOGIN_LABEL,
       value: NEW_LOGIN_VALUE,
     })
   }
