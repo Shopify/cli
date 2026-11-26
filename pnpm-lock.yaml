@@ -91,7 +91,7 @@ importers:
         version: 22.0.1
       '@shopify/eslint-plugin-cli':
         specifier: file:packages/eslint-plugin-cli
-        version: file:packages/eslint-plugin-cli(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)(typescript@5.9.3)(vitest@4.1.11)
+        version: file:packages/eslint-plugin-cli(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.11)
       '@shopify/generate-docs':
         specifier: 1.2.3
         version: 1.2.3
@@ -110,9 +110,6 @@ importers:
       commander:
         specifier: ^9.4.0
         version: 9.5.0
-      esbuild:
-        specifier: 0.28.1
-        version: 0.28.1
       eslint:
         specifier: ^9.39.5
         version: 9.39.5(jiti@2.6.1)
@@ -624,24 +621,12 @@ importers:
       eslint-plugin-no-catch-all:
         specifier: 1.1.0
         version: 1.1.0(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-prettier:
-        specifier: 5.5.6
-        version: 5.5.6(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)
-      eslint-plugin-react:
-        specifier: 7.37.5
-        version: 7.37.5(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-react-hooks:
-        specifier: 5.2.0
-        version: 5.2.0(eslint@9.39.5(jiti@2.6.1))
       eslint-plugin-tsdoc:
         specifier: 0.5.2
         version: 0.5.2(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
       eslint-plugin-unused-imports:
         specifier: 4.4.1
         version: 4.4.1(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))
-      execa:
-        specifier: 7.2.0
-        version: 7.2.0
       globals:
         specifier: 16.5.0
         version: 16.5.0
@@ -665,9 +650,6 @@ importers:
 
   packages/plugin-cloudflare:
     dependencies:
-      '@oclif/core':
-        specifier: 4.8.3
-        version: 4.8.3
       '@shopify/cli-kit':
         specifier: 5.1.0
         version: link:../cli-kit
@@ -12390,7 +12372,7 @@ snapshots:
       - react
       - react-dom
 
-  '@shopify/eslint-plugin-cli@file:packages/eslint-plugin-cli(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)(typescript@5.9.3)(vitest@4.1.11)':
+  '@shopify/eslint-plugin-cli@file:packages/eslint-plugin-cli(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.11)':
     dependencies:
       '@shopify/eslint-plugin': 50.0.0(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)(typescript@5.9.3)
       '@typescript-eslint/eslint-plugin': 8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
@@ -12399,12 +12381,8 @@ snapshots:
       eslint: 9.39.5(jiti@2.6.1)
       eslint-config-prettier: 10.1.8(eslint@9.39.5(jiti@2.6.1))
       eslint-plugin-no-catch-all: 1.1.0(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-prettier: 5.5.6(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)
-      eslint-plugin-react: 7.37.5(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-react-hooks: 5.2.0(eslint@9.39.5(jiti@2.6.1))
       eslint-plugin-tsdoc: 0.5.2(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
       eslint-plugin-unused-imports: 4.4.1(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))
-      execa: 7.2.0
       globals: 16.5.0
     transitivePeerDependencies:
       - '@types/eslint'
@@ -14514,15 +14492,6 @@ snapshots:
   eslint-plugin-no-catch-all@1.1.0(eslint@9.39.5(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.5(jiti@2.6.1)
-
-  eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4):
-    dependencies:
-      eslint: 9.39.5(jiti@2.6.1)
-      prettier: 3.8.4
-      prettier-linter-helpers: 1.0.1
-      synckit: 0.11.13
-    optionalDependencies:
-      eslint-config-prettier: 10.1.8(eslint@9.39.5(jiti@2.6.1))
 
   eslint-plugin-prettier@5.5.6(eslint-config-prettier@9.1.2(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4):
     dependencies:
