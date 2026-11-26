@@ -1,6 +1,6 @@
 ---
 id: THEME_EXTENSION_XSS
-version: 2
+version: 4
 severity: high
 ---
 
@@ -30,7 +30,7 @@ template, not a JavaScript file.
 
 3. **Trace Liquid data sources.** For each `{{ }}` output, determine
    where the data comes from:
-   - `{{ product.metafield.custom.field }}` — merchant-writable, user-controlled
+   - `{{ product.metafield.custom.field }}` — merchant- and other-app-writable, user-controlled
    - `{{ customer.metafield.app.value }}` — customer-editable in some apps
    - `{{ variant.metafield.custom.html }}` — could contain malicious HTML
    - `{{ request.params.x }}` — URL parameter, user-controlled
@@ -38,6 +38,15 @@ template, not a JavaScript file.
    - `{{ block.settings.text }}` — theme settings, merchant-configurable
    - `{{ app.metafield.namespace.key }}` — app metafield, could be
      merchant-writable depending on permissions
+
+   Metafields and metaobjects outside the app-owned namespace (`$app`,
+   `$app:<sub-namespace>`, `app--…`, or `app.metafields`; in Liquid, for
+   example `product.metafields["$app:custom"]`) can be written by the
+   merchant and by any other app installed on the shop with write access to
+   that resource. A compromised or malicious app is a lower-trust writer. HTML
+   or script the app stores in a shared namespace such as `custom` or
+   `reviews` is not trusted author content, even if this app is the usual
+   writer.
 
 4. **Check Liquid rendering context.** `{{ }}` and `echo` emit the rendered value; safety depends on its type, filters, and destination context. Follow rendered snippets and require HTML escaping, URL validation, or JSON serialization as appropriate.
 
@@ -81,6 +90,12 @@ Do not report:
 
 - Output whose value and destination are both proven safe
 - Apparent Liquid output inside `{% raw %}...{% endraw %}`, because the raw tag suppresses Liquid parsing and leaves those delimiters as literal text
-- `{{ variable | escape }}` or `{{ variable | escape_once }}` (escaped)
-- JavaScript `textContent` assignments (safe)
+- `{{ variable | escape }}` or `{{ variable | escape_once }}` in HTML text
+  or a quoted ordinary attribute. This does not cover event handler
+  attributes (`onclick` and other `on*`), `srcdoc`, `style`, URL attributes
+  such as `href` and `src`, or output inside `<script>`: browsers decode HTML
+  entities before running a handler, and `escape` does not stop a
+  `javascript:` URL. Step 2 decides those contexts.
+- JavaScript `textContent` assignments on elements other than `<script>`.
+  Setting `textContent` on a `<script>` element sets the code it runs.
 - Test files

@@ -16,6 +16,8 @@ export default class StoreBulkStatus extends StoreCommand {
 
   Use [\`store bulk execute\`](https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk operation.`
 
+  static jsonOutputSchema = bulkOperationStatusJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -28,10 +30,6 @@ export default class StoreBulkStatus extends StoreCommand {
     ...jsonFlag,
     store: storeFlags.store,
     id: bulkOperationIdFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return bulkOperationStatusJsonOutputSchema
   }
 
   async run(): Promise<void> {

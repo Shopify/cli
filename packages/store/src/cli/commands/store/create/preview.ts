@@ -16,6 +16,8 @@ export default class StoreCreatePreview extends StoreCommand {
 
   static descriptionWithMarkdown = `Creates a new Shopify store, with no need for an existing account.`
 
+  static jsonOutputSchema = createPreviewStoreJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -33,10 +35,6 @@ export default class StoreCreatePreview extends StoreCommand {
       required: false,
     }),
     country: countryFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return createPreviewStoreJsonOutputSchema
   }
 
   public async run(): Promise<void> {

@@ -1,6 +1,8 @@
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {parseAppToml} from '../scanners/discover.js'
+import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
+import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
@@ -10,8 +12,9 @@ import {
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
+import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {describe, expect, test} from 'vitest'
-import type {SourceFile} from '../rules/types.js'
+import type {ScanContext, SourceFile} from '../rules/types.js'
 
 const ACTIVE_IDS = [
   'MISSING_COMPLIANCE_WEBHOOKS',
@@ -29,6 +32,7 @@ const ACTIVE_IDS = [
   'UNSAFE_INNERHTML',
   'APP_PROXY_LIQUID_INJECTION',
   'STATIC_FRAME_ANCESTORS',
+  'WEAK_SHOP_VALIDATION',
 ].sort()
 
 const source = (content: string, path = 'app/routes/example.tsx'): SourceFile => ({
@@ -37,6 +41,39 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
   ext: path.endsWith('.liquid') ? '.liquid' : '.tsx',
   content,
 })
+
+function configContext(configurations: {[fileName: string]: string}): ScanContext {
+  const appTomls = Object.entries(configurations).map(([fileName, content]) =>
+    parseAppToml(decodeToml(content), `/app/${fileName}`, content),
+  )
+  return {
+    appRoot: '/app',
+    appToml: appTomls[0] ?? null,
+    appTomls,
+    extensions: [],
+    sourceFiles: [],
+    manifests: [],
+    dependencyAutomation: {files: []},
+    sensitiveFiles: [],
+    capabilities: {
+      theme_app_extension: false,
+      app_embed: false,
+      embedded_app: false,
+      script_tags: false,
+      webhooks: false,
+      app_proxy: false,
+      storefront_metafield_writes: false,
+      has_backend: false,
+      declared_ip_allowlist: false,
+      checkout_extension: false,
+    },
+    detection: {framework: 'none', surface: 'config_only', languages: []},
+    reactRouterRoots: [],
+    otherAppDirectories: [],
+    sourceCandidates: [],
+    gitIgnoreListing: 'listed',
+  }
+}
 
 describe('deterministic rules product contract', () => {
   test('registers every active executable deterministic identity with a runnable definition', () => {
@@ -49,17 +86,19 @@ describe('deterministic rules product contract', () => {
   test('bumps deterministic versions when scanner behavior changes', () => {
     expect(DETERMINISTIC_CHECKS.get('REQUEST_CONTROLLED_ADMIN_CONTEXT')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('APP_PROXY_LIQUID_INJECTION')?.version).toBe(3)
-    expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('COMMITTED_SECRET')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('UNAUTHENTICATED_ENDPOINT')?.version).toBe(3)
-    expect(DETERMINISTIC_CHECKS.get('EOL_API_VERSION')?.version).toBe(2)
-    expect(DETERMINISTIC_CHECKS.get('EXPIRING_OFFLINE_TOKEN')?.version).toBe(2)
-    expect(DETERMINISTIC_CHECKS.get('DEPRECATED_SCRIPT_TAG_SCOPE')?.version).toBe(2)
-    expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_LOG_LEAKAGE')?.version).toBe(2)
-    expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_BROWSER_LEAKAGE')?.version).toBe(2)
-    expect(DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('EOL_API_VERSION')?.version).toBe(4)
+    expect(DETERMINISTIC_CHECKS.get('EXPIRING_OFFLINE_TOKEN')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('DEPRECATED_SCRIPT_TAG_SCOPE')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_LOG_LEAKAGE')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_BROWSER_LEAKAGE')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')?.version).toBe(4)
+    expect(DETERMINISTIC_CHECKS.get('LIQUID_UNSAFE_RENDER')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('STATIC_FRAME_ANCESTORS')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('WEAK_SHOP_VALIDATION')?.version).toBe(2)
   })
 
   test('extracts security fields from parsed TOML without source regexes', () => {
@@ -84,12 +123,24 @@ describe('deterministic rules product contract', () => {
     )
     expect(parsed).toMatchObject({
       scopes: 'read_products,write_script_tags',
+      scopeKeys: new Map([
+        ['read_products', 'access_scopes.scopes'],
+        ['write_script_tags', 'access_scopes.required_scopes[0]'],
+      ]),
       apiVersion: '2023-07',
       redirectUrls: ['https://app.example/callback'],
       webhooks: [
-        {topics: ['shop/redact'], uri: 'pubsub://project:topic'},
-        {topics: ['customers/redact'], uri: 'https://app.example/customers/redact'},
-        {topics: ['customers/data_request'], uri: 'https://app.example/customers/data-request'},
+        {topics: ['shop/redact'], uri: 'pubsub://project:topic', uriKey: 'webhooks.subscriptions[0].uri'},
+        {
+          topics: ['customers/redact'],
+          uri: 'https://app.example/customers/redact',
+          uriKey: 'webhooks.privacy_compliance.customer_deletion_url',
+        },
+        {
+          topics: ['customers/data_request'],
+          uri: 'https://app.example/customers/data-request',
+          uriKey: 'webhooks.privacy_compliance.customer_data_request_url',
+        },
       ],
     })
   })
@@ -119,7 +170,9 @@ describe('deterministic rules product contract', () => {
       },
       '/app/shopify.app.toml',
     )
-    expect(parsed.webhooks).toEqual([{topics: ['orders/create'], uri: 'http://insecure.example/webhooks'}])
+    expect(parsed.webhooks).toEqual([
+      {topics: ['orders/create'], uri: 'http://insecure.example/webhooks', uriKey: 'webhooks.subscriptions[0].uri'},
+    ])
   })
 
   test('drops webhook subscriptions that are not CLI-shaped', () => {
@@ -145,7 +198,166 @@ describe('deterministic rules product contract', () => {
       },
       '/app/shopify.app.toml',
     )
-    expect(parsed.webhooks).toEqual([{topics: [], uri: 'http://insecure.example/webhooks'}])
+    expect(parsed.webhooks).toEqual([
+      {topics: [], uri: 'http://insecure.example/webhooks', uriKey: 'webhooks.subscriptions[0].uri'},
+    ])
+  })
+})
+
+describe('config finding locations', () => {
+  const insecureMessageEnd =
+    ' is not a conservative secure URL. Use a Shopify-relative path or an HTTPS URL with an exact host and path.'
+  const afterEndOfLife = new Date('2026-11-05T00:00:00.000Z')
+
+  test('gives each insecure callback URL its own line and a message that names its key', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Callbacks"
+
+[auth]
+redirect_urls = ["http://app.example/callback", "https://app.example/safe", "http://app.example/other"]
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  topics = ["orders/create"]
+  uri = "http://app.example/webhooks"
+
+  [[webhooks.subscriptions]]
+  topics = ["orders/update"]
+  uri = "http://app.example/webhooks"
+
+[webhooks.privacy_compliance]
+shop_deletion_url = "http://app.example/shop/redact"
+`,
+    })
+
+    const findings = insecureWebhookUrl.check(context)
+
+    expect(findings.map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml', line: 11},
+      {file: 'shopify.app.toml', line: 15},
+      {file: 'shopify.app.toml', line: 18},
+      {file: 'shopify.app.toml', line: 4},
+      {file: 'shopify.app.toml', line: 4},
+    ])
+    expect(findings.map(({message}) => message)).toEqual(
+      [
+        'Webhook URI at webhooks.subscriptions[0].uri',
+        'Webhook URI at webhooks.subscriptions[1].uri',
+        'Webhook URI at webhooks.privacy_compliance.shop_deletion_url',
+        'OAuth redirect URI at auth.redirect_urls[0]',
+        'OAuth redirect URI at auth.redirect_urls[2]',
+      ].map((start) => `${start}${insecureMessageEnd}`),
+    )
+  })
+
+  test('points the deprecated ScriptTag scope finding at the line that declares the scope', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Legacy scopes"
+# scopes = "write_script_tags"
+
+[access_scopes]
+scopes = "read_products,write_script_tags"
+`,
+      'shopify.app.staging.toml': `name = "Managed scopes"
+
+[access_scopes]
+required_scopes = [
+  "read_products",
+  "read_script_tags",
+  "write_script_tags",
+]
+`,
+    })
+
+    expect(
+      deprecatedScriptTagScope.check(context).map(({location, message}) => ({location, scope: message.split('"')[1]})),
+    ).toEqual([
+      {location: {file: 'shopify.app.toml', line: 5}, scope: 'write_script_tags'},
+      {location: {file: 'shopify.app.staging.toml', line: 6}, scope: 'read_script_tags'},
+      {location: {file: 'shopify.app.staging.toml', line: 7}, scope: 'write_script_tags'},
+    ])
+  })
+
+  test('points the end-of-life API version finding at the line of webhooks.api_version', () => {
+    const context = configContext({
+      'shopify.app.toml': `name = "Old version"
+# api_version = "2024-01"
+
+[webhooks]
+api_version = "2024-01"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app/uninstalled"
+`,
+      'shopify.app.staging.toml': `name = "Dotted version"
+webhooks.api_version = "2023-10"
+`,
+      'shopify.app.production.toml': `name = "Supported version"
+
+[webhooks]
+api_version = "2026-10"
+`,
+    })
+
+    expect(
+      scanEolApiVersions(context, afterEndOfLife).map(({location, message}) => ({
+        location,
+        version: message.split(' ')[2],
+      })),
+    ).toEqual([
+      {location: {file: 'shopify.app.toml', line: 5}, version: '2024-01'},
+      {location: {file: 'shopify.app.staging.toml', line: 2}, version: '2023-10'},
+    ])
+  })
+
+  test('keeps a file-level end-of-life API version finding when the locator stops before the version', () => {
+    const context = configContext({
+      'shopify.app.toml': `"escaped\\u0020key" = "the locator stops here"
+
+[webhooks]
+api_version = "2024-01"
+`,
+    })
+
+    expect(scanEolApiVersions(context, afterEndOfLife).map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml'},
+    ])
+  })
+
+  test('keeps a file-level location when the configuration text is not available', () => {
+    const context = configContext({})
+    context.appTomls = [
+      parseAppToml(
+        {
+          access_scopes: {scopes: 'write_script_tags'},
+          auth: {redirect_urls: ['http://app.example/callback']},
+          webhooks: {api_version: '2024-01'},
+        },
+        '/app/shopify.app.toml',
+      ),
+    ]
+
+    expect(deprecatedScriptTagScope.check(context).map(({location}) => location)).toEqual([{file: 'shopify.app.toml'}])
+    expect(scanEolApiVersions(context, afterEndOfLife).map(({location}) => location)).toEqual([
+      {file: 'shopify.app.toml'},
+    ])
+    expect(insecureWebhookUrl.check(context).map(({location, message}) => ({location, message}))).toEqual([
+      {
+        location: {file: 'shopify.app.toml'},
+        message: `OAuth redirect URI at auth.redirect_urls[0]${insecureMessageEnd}`,
+      },
+    ])
+  })
+
+  test('keeps missing compliance webhooks at the file level', () => {
+    const context = configContext({
+      'shopify.app.toml': 'name = "No compliance"\n\n[webhooks]\napi_version = "2026-07"\n',
+    })
+
+    expect(missingComplianceWebhooks.check(context).map(({location}) => location)).toEqual([{file: 'shopify.app.toml'}])
   })
 })
 
@@ -332,5 +544,211 @@ describe('Liquid AST mode', () => {
     expect(scanLiquidSecurity([source('{% if', 'extensions/theme/blocks/a.liquid')]).parserFailures).toEqual([
       'extensions/theme/blocks/a.liquid',
     ])
+  })
+
+  test('exempts schema-defined inert settings only in HTML text and non-URL attributes', () => {
+    const schema = (settings: string) => `{% schema %}{"settings":[${settings}]}{% endschema %}`
+    const select = schema('{"type":"select","id":"layout","options":[{"value":"left"},{"value":"right"}]}')
+    const liquid = (content: string) =>
+      scanLiquidSecurity([source(content, 'extensions/theme/blocks/a.liquid')]).issues.map((finding) => finding.id)
+    // Inert select clean in text and non-URL attribute; escaped variants stay clean.
+    expect(liquid(`{{ block.settings.layout }}${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div class="{{ block.settings.layout }}"></div>${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.layout | escape }}${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    // Checkbox and range clean.
+    expect(liquid(`{{ block.settings.show }}${schema('{"type":"checkbox","id":"show"}')}`)).not.toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid(`{{ block.settings.size }}${schema('{"type":"range","id":"size"}')}`)).not.toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    // Bad option, free-text types, property access, JS/executable and URL contexts still flagged.
+    expect(
+      liquid(`{{ block.settings.layout }}${schema('{"type":"select","id":"layout","options":[{"value":"a<b"}]}')}`),
+    ).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.title }}${schema('{"type":"text","id":"title"}')}`)).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid(`{{ block.settings.body }}${schema('{"type":"richtext","id":"body"}')}`)).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid(`{{ block.settings.layout.title }}${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<script>const v = {{ block.settings.layout }};</script>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div onclick="{{ block.settings.layout }}"></div>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<a href="{{ block.settings.layout }}">x</a>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    // Missing or unparseable schema stays flagged.
+    expect(liquid('{{ block.settings.layout }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout }}{% schema %}not-json{% endschema %}')).toContain('LIQUID_UNSAFE_RENDER')
+    // Duplicate schema blocks, duplicate setting ids, and empty options stay flagged.
+    expect(liquid(`{{ block.settings.layout }}${select}${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(
+      liquid(`{{ block.settings.layout }}${schema('{"type":"text","id":"layout"},{"type":"checkbox","id":"layout"}')}`),
+    ).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.layout }}${schema('{"type":"select","id":"layout","options":[]}')}`)).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    // Inert radio is clean.
+    expect(
+      liquid(
+        `{{ block.settings.layout }}${schema('{"type":"radio","id":"layout","options":[{"value":"a"},{"value":"b"}]}')}`,
+      ),
+    ).not.toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('exempts only block settings in app block files, never the host section settings', () => {
+    const schema = (settings: string) => `{% schema %}{"settings":[${settings}]}{% endschema %}`
+    const range = schema('{"type":"range","id":"size"}')
+    const select = schema('{"type":"select","id":"layout","options":[{"value":"left"},{"value":"right"}]}')
+    const liquid = (content: string, path = 'extensions/theme/blocks/a.liquid') =>
+      scanLiquidSecurity([source(content, path)]).issues.map((finding) => finding.id)
+
+    expect(liquid(`{{ block.settings.layout }}${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.size }}${range}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    // `section.settings` in an app block is the host section's, which this file's schema doesn't describe.
+    expect(liquid(`{{ section.settings.size }}${range}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div class="{{ section.settings.layout }}"></div>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    // Outside app blocks, no setting is exempt.
+    expect(liquid(`{{ block.settings.layout }}${select}`, 'extensions/theme/snippets/a.liquid')).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+  })
+
+  test('exempts filtered inert settings only through inert filters with inert literal arguments', () => {
+    const schema = `{% schema %}{"settings":[{"type":"checkbox","id":"show"},{"type":"text","id":"title"}]}{% endschema %}`
+    const liquid = (output: string) =>
+      scanLiquidSecurity([source(`${output}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+
+    expect(liquid('{{ block.settings.show | downcase }}')).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | strip | upcase | handleize | capitalize }}')).not.toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid("{{ block.settings.show | default: 'x' }}")).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'x', allow_false: true }}")).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | default: 3 }}')).not.toContain('LIQUID_UNSAFE_RENDER')
+    // Filters that are not proven inert keep the finding, even with literal or no arguments.
+    for (const filter of [
+      'url_decode',
+      'base64_decode',
+      't',
+      'script_tag',
+      'stylesheet_tag',
+      'img_tag',
+      "link_to: 'x'",
+      "replace: 'true', 'on'",
+      "append: 'x'",
+      'prepend: nil',
+      "downcase: 'x'",
+    ]) {
+      expect(liquid(`{{ block.settings.show | ${filter} }}`)).toContain('LIQUID_UNSAFE_RENDER')
+    }
+    // A `default` fallback is rendered, so it must be an inert literal.
+    expect(liquid("{{ block.settings.show | default: '<b>' }}")).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'a b' }}")).toContain('LIQUID_UNSAFE_RENDER')
+    // A setting or variable in any filter argument can render a free-text value.
+    expect(liquid('{{ block.settings.show | default: block.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | append: block.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | prepend: section.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | replace: 'true', block.settings.title }}")).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid('{{ block.settings.show | default: product.metafields.app.title }}')).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid('{{ block.settings.show | downcase | append: title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'x', allow_false: title }}")).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('keeps decoding and markup filters flagged for percent-encoded select values', () => {
+    const schema = `{% schema %}{"settings":[{"type":"select","id":"layout","options":[{"value":"%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E"},{"value":"left"}]}]}{% endschema %}`
+    const liquid = (output: string) =>
+      scanLiquidSecurity([source(`${output}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+
+    // Percent-encoded text is inert until something decodes it.
+    expect(liquid('{{ block.settings.layout }}')).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout | url_decode }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout | t }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout | script_tag }}')).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('exempts inert settings only in quoted values of statically named inert attributes', () => {
+    const schema =
+      '{% schema %}{"settings":[{"type":"select","id":"layout","options":[{"value":"left"},{"value":"onclick"}]}]}{% endschema %}'
+    const liquid = (content: string) =>
+      scanLiquidSecurity([source(`${content}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+    const output = '{{ block.settings.layout }}'
+
+    for (const attribute of ['class', 'id', 'title', 'alt', 'role', 'width', 'height', 'lang', 'dir', 'aria-label']) {
+      expect(liquid(`<div ${attribute}="${output}"></div>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    }
+    expect(liquid(`<img alt='x ${output}'>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<p>{% if true %}${output}{% endif %}</p>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div {% if true %}class="${output}"{% endif %}></div>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+
+    // URL, script, style, data-*, and unknown attributes keep the finding.
+    for (const markup of [
+      `<object data="${output}"></object>`,
+      `<img srcset="${output}">`,
+      `<link imagesrcset="${output}">`,
+      `<img src="${output}">`,
+      `<a href="${output}">x</a>`,
+      `<button formaction="${output}"></button>`,
+      `<form action="${output}"></form>`,
+      `<video poster="${output}"></video>`,
+      `<table background="${output}"></table>`,
+      `<a ping="${output}">x</a>`,
+      `<blockquote cite="${output}"></blockquote>`,
+      `<svg><a xlink:href="${output}"></a></svg>`,
+      `<object codebase="${output}"></object>`,
+      `<html manifest="${output}"></html>`,
+      `<iframe srcdoc="${output}"></iframe>`,
+      `<div style="${output}"></div>`,
+      `<div onclick="${output}"></div>`,
+      `<div data-layout="${output}"></div>`,
+      `<div x-layout="${output}"></div>`,
+    ]) {
+      expect(liquid(markup)).toContain('LIQUID_UNSAFE_RENDER')
+    }
+
+    // Output that can supply an attribute or tag name, unquoted values, and raw-text elements keep the finding.
+    expect(liquid(`<button ${output}="alert(1)"></button>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div ${output}></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div {% if true %}${output}{% endif %}></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div data-${output}="1"></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div class=${output}></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<${output}>x</${output}>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<style>.a { color: ${output}; }</style>`)).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('disables the exemption in files that rebind block', () => {
+    const schema = '{% schema %}{"settings":[{"type":"range","id":"size"}]}{% endschema %}'
+    const liquid = (content: string) =>
+      scanLiquidSecurity([source(`${content}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+    const output = '{{ block.settings.size }}'
+
+    expect(liquid(`{% assign item = section %}${output}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{% for item in section.blocks %}{% endfor %}${output}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+
+    for (const binding of [
+      '{% assign block = section %}',
+      '{% for block in section.blocks %}{% endfor %}',
+      '{% tablerow block in section.blocks %}{% endtablerow %}',
+      '{% capture block %}x{% endcapture %}',
+      '{% increment block %}',
+      '{% decrement block %}',
+      '{% liquid\n  assign block = section\n%}',
+    ]) {
+      expect(liquid(`${binding}${output}`)).toContain('LIQUID_UNSAFE_RENDER')
+      // The binding disables the exemption for the whole file, including output before it.
+      expect(liquid(`${output}${binding}`)).toContain('LIQUID_UNSAFE_RENDER')
+    }
+    expect(liquid(`{% for block in section.blocks %}${output}{% endfor %}`)).toContain('LIQUID_UNSAFE_RENDER')
   })
 })

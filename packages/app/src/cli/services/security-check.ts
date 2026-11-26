@@ -1,13 +1,7 @@
-import {securityExitCode, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
-import {writeCheckArtifacts} from './app-security-artifacts.js'
-import deliverAppSecurityInstructions from './app-security-instructions.js'
-import {
-  formatAppSecurityCommand,
-  quoteShellArgument,
-  resolveAppSecurityCommands,
-  shellForPlatform,
-  type AppSecurityCommands,
-} from './app-security-commands.js'
+import {blockedCheckCount, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
+import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeCheckArtifacts} from './app-security-artifacts.js'
+import {combineFindings, withoutCodeExcerpts} from './app-security-engine/index.js'
+import {resolveAppSecurityCommands, type AppSecurityCommands} from './app-security-commands.js'
 import {
   effectiveClientId,
   mergeScanDirectories,
@@ -17,40 +11,41 @@ import {
   type AppSecurityScanDirectory,
   type AppSecuritySelection,
   type AppSecuritySelectionOptions,
+  type DeclinedAppSecuritySelection,
 } from './app-security-selection.js'
-import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {fileRealPath} from '@shopify/cli-kit/node/fs'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {missingSuppressionPaths, readAppSecuritySuppressions} from './app-security-suppressions.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {cwd, relativePath} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderSelectPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
 import type {
   AgentChecks,
   AppSecurityScope,
+  CombinedCheck,
   DeterministicFindingsDocument,
   ScanInput,
   ScanOptions,
+  SuppressionEntry,
+  SuppressionEntryResult,
 } from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
-import type {SecurityReportInput} from './security-output.js'
-import type {RenderAlertOptions, RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 interface SecurityOptions {
   directory: string
   configName?: string
   clientId?: string
   withoutAppConfig: boolean
-  verbose: boolean
   blocking: AppSecurityBlockingLevel
-  printInstructions: boolean
-  skipInstructions: boolean
   includeDirs: ReadonlyArray<string>
   excludePatterns: ReadonlyArray<string>
   noGitIgnore: boolean
-  /** Only resolve and gather: print the gathered paths and stop. */
+  /** Only resolve and gather: return the gathered paths and stop. */
   listFiles: boolean
+  /**
+   * Called when resolving the selection prompted, before anything is gathered, with the commands that repeat the run
+   * without prompts.
+   */
+  onSelectionPrompted?: (commands: AppSecurityCommands) => void
 }
 
 /** What a run resolved, whether it scanned or only listed files. */
@@ -59,50 +54,59 @@ interface SecurityCheckResolution {
   resultsKey: string
   /** The commands that repeat this run, including its scope. */
   commands: AppSecurityCommands
+  /** The scope flags, as typed. */
+  scope: AppSecurityScope
+  scanDirectories: AppSecurityScanDirectory[]
 }
 
-export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
+/** The directories that gathering warns about. Both lists hold absolute paths. */
+interface AppSecurityGatheringNotices {
+  ignoredScanDirectories: string[]
+  otherAppDirectories: string[]
+}
+
+/** The files a scan would gather, which `--list-files` lists. */
+type ListedSecurityCheck = {kind: 'listed'; paths: string[]} & SecurityCheckResolution & AppSecurityGatheringNotices
+
+/**
+ * A finished scan, with the results files it replaced, its findings with shopify.app-security.json applied, and the
+ * `--blocking` outcome.
+ */
+type ScannedSecurityCheck = {
+  kind: 'scanned'
+  execution: AppSecurityExecution
+  artifacts: CheckArtifactPaths
+  /** The scan's checks, each deterministic finding active or suppressed. `check` reads no agent results. */
+  checks: CombinedCheck[]
+  /** One result per entry of shopify.app-security.json, in file order. Agent entries are never evaluated. */
+  suppressions: SuppressionEntryResult[]
+  blocking: {
+    level: AppSecurityBlockingLevel
+    /** Checks with an active deterministic finding at or above the level. Zero for `none`. */
+    blockedChecks: number
+  }
+  /** True when deterministic-findings.json was written without code excerpts, which would have made it too large. */
+  codeExcerptsOmitted?: boolean
+} & SecurityCheckResolution
+
+/**
+ * What `securityCheck` returns: the listed files, the finished scan, or a cancellation, when the user declined to scan
+ * without app configuration.
+ */
+export type SecurityCheckOutcome = ListedSecurityCheck | ScannedSecurityCheck | {kind: 'cancelled'}
 
 interface SecurityDependencies {
-  resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
+  resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection | DeclinedAppSecuritySelection>
   execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
-  listFiles(
-    options: ScanInput & Required<ScanOptions>,
-  ): Promise<{paths: string[]; ignoredScanDirectories: string[]; otherAppDirectories: string[]}>
+  listFiles(options: ScanInput & Required<ScanOptions>): Promise<{paths: string[]} & AppSecurityGatheringNotices>
   writeArtifacts(
     appDirectory: string,
     resultsKey: string,
     artifacts: {deterministicFindings: DeterministicFindingsDocument; agentChecks: AgentChecks},
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
-  selectInstructionsDestination(agentCheckCount: number): Promise<AppSecurityInstructionsDestination>
-  deliverInstructions(options: {
-    appDirectory: string
-    resultsKey: string
-    copy: boolean
-    scanScope: AppSecurityScope
-    commands: AppSecurityCommands
-  }): Promise<void>
-  output(content: string): void
-  renderInfo(options: RenderAlertOptions): void
-  renderWarning(options: RenderAlertOptions): void
-  renderReport(input: SecurityReportInput): void
-  setExitCode(exitCode: number): void
   recordMetadata(fields: AppSecurityMetadata): Promise<void>
-}
-
-export function appSecurityInstructionsPrompt(
-  agentCheckCount: number,
-): RenderSelectPromptOptions<AppSecurityInstructionsDestination> {
-  return {
-    message: `${agentCheckCount} recommended agent ${agentCheckCount === 1 ? 'check' : 'checks'} available to complete your scan. How do you want to pass that prompt to your agent?`,
-    choices: [
-      {label: 'Copy instructions to the clipboard', value: 'copy'},
-      {label: 'Print instructions to the terminal', value: 'print'},
-      {label: 'Nothing', value: 'nothing'},
-    ],
-    defaultValue: 'copy',
-  }
+  readSuppressions(appDirectory: string): Promise<SuppressionEntry[]>
 }
 
 const defaultDependencies: SecurityDependencies = {
@@ -111,108 +115,35 @@ const defaultDependencies: SecurityDependencies = {
   listFiles: listAppSecurityFiles,
   writeArtifacts: writeCheckArtifacts,
   canPrompt: terminalSupportsPrompting,
-  selectInstructionsDestination: (agentCheckCount) =>
-    renderSelectPrompt(appSecurityInstructionsPrompt(agentCheckCount)),
-  deliverInstructions: deliverAppSecurityInstructions,
-  output: outputResult,
-  renderInfo,
-  renderWarning,
-  renderReport: renderSecurityReport,
-  setExitCode: (exitCode) => {
-    process.exitCode = exitCode
-  },
   recordMetadata: recordAppSecurityMetadata,
-}
-
-async function instructionsDestination(
-  options: SecurityOptions,
-  dependencies: SecurityDependencies,
-  canPrompt: boolean,
-  agentCheckCount: number,
-): Promise<AppSecurityInstructionsDestination> {
-  if (options.skipInstructions) return 'nothing'
-  if (options.printInstructions) return 'print'
-  if (!canPrompt) return 'nothing'
-  return dependencies.selectInstructionsDestination(agentCheckCount)
-}
-
-function securityReportInput(
-  execution: AppSecurityExecution,
-  artifacts: CheckArtifactPaths,
-  verbose: boolean,
-  commands: AppSecurityCommands,
-  selection: AppSecuritySelection,
-  scanDirectories: AppSecurityScanDirectory[],
-): SecurityReportInput {
-  return {
-    scan: execution.scan,
-    selection,
-    scanDirectories,
-    engine: execution.engine,
-    verbose,
-    elapsedMilliseconds: execution.elapsedMilliseconds,
-    commands,
-    deterministicFindingsPath: artifacts.deterministicFindingsPath,
-    agentChecksPath: artifacts.agentChecksPath,
-    agentCheckCount: execution.agentChecks.checks.length,
-  }
-}
-
-/** `--exclude` takes globs, so a directory name is escaped to match only that directory. */
-export function literalGlobPattern(path: string): string {
-  return path.replace(/[?*()[\]{}!#\\]/g, '\\$&')
-}
-
-async function renderGatheringWarnings(
-  gathered: {ignoredScanDirectories: string[]; otherAppDirectories: string[]},
-  dependencies: SecurityDependencies,
-) {
-  if (gathered.ignoredScanDirectories.length === 0 && gathered.otherAppDirectories.length === 0) return
-  // `--exclude` globs are matched from the real working directory, so paths are shown relative to it too.
-  const workingDirectory = await fileRealPath(cwd())
-  const displayPath = (directory: string) => relativePath(workingDirectory, directory) || '.'
-  for (const directory of gathered.ignoredScanDirectories) {
-    dependencies.renderWarning({
-      headline: `${displayPath(directory)} is ignored by Git, so only the files Git tracks in it are scanned.`,
-      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-    })
-  }
-  for (const directory of gathered.otherAppDirectories) {
-    const path = displayPath(directory)
-    dependencies.renderWarning({
-      headline: `${path} holds another app's configuration, so its files are scanned as part of this app.`,
-      // The directory name comes from the repository, so it's quoted before the user can paste it into a shell.
-      body: [
-        'Use',
-        {command: `--exclude ${quoteShellArgument(literalGlobPattern(path), shellForPlatform())}`},
-        'to leave it out.',
-      ],
-    })
-  }
+  readSuppressions: readAppSecuritySuppressions,
 }
 
 /**
  * Scans the app and replaces deterministic-findings.json and agent-checks.json. Scanning never reads or
- * changes the agent's recorded findings, so it's always safe to run again.
+ * changes the agent's recorded findings, so it's always safe to run again. The entries of shopify.app-security.json
+ * suppress the scan's findings, so a suppressed finding doesn't fail `--blocking`. Prints nothing: the command presents
+ * the outcome.
  *
- * With `listFiles`, it only resolves and gathers: it prints the gathered paths and writes nothing.
+ * With `listFiles`, it only resolves and gathers: it returns the gathered paths and writes nothing.
  * `directory` is the `--path` value, an absolute path.
  */
 export default async function securityCheck(
   options: SecurityOptions,
   dependencies: SecurityDependencies = defaultDependencies,
-): Promise<SecurityCheckResolution> {
+): Promise<SecurityCheckOutcome> {
   // Resolved first so a mistyped directory fails before any prompt.
   const includeDirectories = await resolveIncludeDirectories(options.includeDirs)
-  const canPrompt = !options.listFiles && dependencies.canPrompt()
   const selection = await dependencies.resolveSelection({
     path: options.directory,
     config: options.configName,
     clientId: options.clientId,
     withoutAppConfig: options.withoutAppConfig,
-    allowPrompts: canPrompt,
+    allowPrompts: !options.listFiles && dependencies.canPrompt(),
     validateClientIdFlag: true,
   })
+  if (selection.kind === 'declined') return {kind: 'cancelled'}
+
   const {appDirectory} = selection
   const scope: AppSecurityScope = {
     include_dirs: [...options.includeDirs],
@@ -220,22 +151,17 @@ export default async function securityCheck(
     no_git_ignore: options.noGitIgnore,
   }
   const commands = resolveAppSecurityCommands(selection, options.directory, scope)
-  const resolution = {selection, resultsKey: resultsKey(selection), commands}
   // Prompts are shown when no TOML was found and `--without-app-config` wasn't passed, or when `check` asked which TOML
   // to scan.
   const prompted = selection.kind === 'no-config' ? !options.withoutAppConfig : selection.appConfigFilePicked === true
-  if (prompted) {
-    dependencies.renderInfo({
-      headline: 'To skip these prompts next time, run:',
-      body: [{command: formatAppSecurityCommand(commands.scan)}],
-    })
-  }
+  if (prompted) options.onSelectionPrompted?.(commands)
   const appConfigDirectories = selection.kind === 'config' ? (selection.appConfigDirectories ?? []) : []
   const {scanDirectories, requestedScanDirectories} = mergeScanDirectories(
     appDirectory,
     includeDirectories,
     appConfigDirectories,
   )
+  const resolution = {selection, resultsKey: resultsKey(selection), commands, scope, scanDirectories}
 
   const scanOptions = {
     appDirectory,
@@ -252,41 +178,68 @@ export default async function securityCheck(
   }
 
   if (options.listFiles) {
-    const {paths, ...gathered} = await dependencies.listFiles(scanOptions)
-    await renderGatheringWarnings(gathered, dependencies)
-    if (paths.length > 0) dependencies.output(paths.join('\n'))
-    return resolution
+    const listing = await dependencies.listFiles(scanOptions)
+    return {kind: 'listed', ...resolution, ...listing}
   }
 
-  const execution = await dependencies.execute(scanOptions)
-  await renderGatheringWarnings(execution, dependencies)
+  // Read before the scan, so an invalid file fails the command before it replaces any results file.
+  const suppressionEntries = await dependencies.readSuppressions(appDirectory)
+  const {execution, codeExcerptsOmitted} = withReadableFindings(await dependencies.execute(scanOptions))
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
-  const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
+  const artifacts = await dependencies.writeArtifacts(appDirectory, resolution.resultsKey, {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
   })
+  const {checks, suppressions} = combineFindings({
+    deterministic: execution.deterministicFindings,
+    agent: null,
+    suppressions: {
+      entries: suppressionEntries,
+      missingPaths: await missingSuppressionPaths(appDirectory, suppressionEntries),
+    },
+  })
 
-  dependencies.renderReport(
-    securityReportInput(execution, artifacts, options.verbose, commands, selection, scanDirectories),
-  )
-
-  const destination = await instructionsDestination(
-    options,
-    dependencies,
-    canPrompt,
-    execution.agentChecks.checks.length,
-  )
-  if (destination !== 'nothing') {
-    await dependencies.deliverInstructions({
-      appDirectory,
-      resultsKey: resultsKey(selection),
-      copy: destination === 'copy',
-      scanScope: scope,
-      commands,
-    })
+  return {
+    kind: 'scanned',
+    ...resolution,
+    execution,
+    artifacts,
+    checks,
+    suppressions,
+    blocking: {level: options.blocking, blockedChecks: blockedCheckCount(checks, options.blocking)},
+    ...(codeExcerptsOmitted ? {codeExcerptsOmitted} : {}),
   }
+}
 
-  const exitCode = securityExitCode(execution, options.blocking)
-  if (exitCode !== 0) dependencies.setExitCode(exitCode)
-  return resolution
+/** Excerpts must not prevent a result from being read, or make live and stored results differ. */
+function withReadableFindings(execution: AppSecurityExecution): {
+  execution: AppSecurityExecution
+  codeExcerptsOmitted: boolean
+} {
+  if (encodedArtifactSize(execution.deterministicFindings) <= MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    return {execution, codeExcerptsOmitted: false}
+  }
+  const deterministicFindings = withoutCodeExcerpts(execution.deterministicFindings)
+  if (encodedArtifactSize(deterministicFindings) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    throw new AbortError(
+      'The deterministic findings are larger than 5 MB, so the results were not changed.',
+      'Use --exclude or scan fewer directories, then run the command again.',
+    )
+  }
+  return {
+    execution: {
+      ...execution,
+      deterministicFindings,
+      scan: {
+        ...execution.scan,
+        issues: execution.scan.issues.map(({code_excerpt: _excerpt, evidence, ...issue}) => ({
+          ...issue,
+          ...(evidence === undefined
+            ? {}
+            : {evidence: evidence.map(({code_excerpt: _evidenceExcerpt, ...item}) => item)}),
+        })),
+      },
+    },
+    codeExcerptsOmitted: true,
+  }
 }

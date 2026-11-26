@@ -1,7 +1,7 @@
 import * as admin from './admin.js'
 import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {AdminSession} from '../session.js'
-import {AbortError, BugError, shouldReportErrorAsUnexpected} from '../error.js'
+import {AbortError, BugError, MfaRequiredError, shouldReportErrorAsUnexpected} from '../error.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../http.js'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
@@ -208,6 +208,26 @@ describe('fetchApiVersions error classification', () => {
     )
   }
 
+  test('preserves MFA guidance for a raw 401 instead of reporting a store connection error', async () => {
+    const response = {
+      status: 401,
+      errors: '[TFA] Unauthorized Access.',
+      headers: new Map([['x-request-id', 'mfa-request-id']]),
+    } as unknown as ClientError['response']
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(new ClientError(response, {query: 'query {}'}))
+
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    expect(error).toBeInstanceOf(MfaRequiredError)
+    expect(error).toMatchObject({
+      code: 'MFA_REQUIRED',
+      message:
+        'This action requires you to log in with a secure method, like a passkey or two-step authentication.\n\nRequest ID: mfa-request-id',
+    })
+    expect(error).not.toHaveProperty('statusCode')
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+  })
+
   test('reports a 402 Unavailable Shop as an expected store-state failure, not a CLI bug', async () => {
     // Given
     vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(402, 'Unavailable Shop'))
@@ -224,6 +244,36 @@ describe('fetchApiVersions error classification', () => {
     expect((error as AbortError).message).not.toContain('Unknown error')
   })
 
+  test('reports a 423 locked store as an expected store-state failure, not a CLI bug', async () => {
+    // Given
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(423, 'This store is unavailable'))
+
+    // When
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).not.toBeInstanceOf(BugError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(`The store ${Session.storeFqdn} is temporarily locked.`)
+    expect(String((error as AbortError).tryMessage)).toContain('Wait a few minutes and try again.')
+  })
+
+  test('reports a 422 Unavailable Shop as an expected store-state failure, not a CLI bug', async () => {
+    // Given
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(422, 'Unavailable Shop'))
+
+    // When
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).not.toBeInstanceOf(BugError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(`The store ${Session.storeFqdn} can't accept requests yet.`)
+    expect(String((error as AbortError).tryMessage)).toContain("setup isn't complete")
+  })
+
   test('reports an Admin API 5xx as an expected server-side failure, not a CLI bug', async () => {
     // Given
     vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(500, 'Internal Server Error'))
@@ -237,6 +287,25 @@ describe('fetchApiVersions error classification', () => {
     expect(shouldReportErrorAsUnexpected(error)).toBe(false)
     expect((error as AbortError).message).toBe(
       `The Admin API for ${Session.storeFqdn} returned a server error (HTTP 500).`,
+    )
+  })
+
+  test('includes the request ID of an Admin API 5xx in the server error', async () => {
+    // Given
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(
+      new ClientError({status: 503, headers: new Headers({'x-request-id': 'request-id'})} as any, {query: ''}),
+    )
+
+    // When
+    const error = await admin.fetchApiVersions(Session).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect((error as AbortError).message).toBe(
+      `The Admin API for ${Session.storeFqdn} returned a server error (HTTP 503).`,
+    )
+    expect(String((error as AbortError).tryMessage)).toBe(
+      'This is a problem on the Shopify side, not with your command. Wait a moment and try again. If the problem continues, contact Shopify support and include this request ID: request-id',
     )
   })
 

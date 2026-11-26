@@ -9,6 +9,7 @@ import {
 import {jsonOutputEnabled} from '../environment.js'
 import {renderFatalError} from '../ui.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
+import {runWithCommandEvents} from '../command-events.js'
 import {ClientError} from 'graphql-request'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -90,6 +91,15 @@ describe('handler', () => {
     expect(renderFatalError).not.toHaveBeenCalled()
   })
 
+  test('renders JSON when the command selects JSON output without a global flag', async () => {
+    const output = mockAndCaptureOutput()
+
+    await runWithCommandEvents({outputMode: 'json', sink: () => {}}, () => handler(new AbortError('Expected failure')))
+
+    expect(JSON.parse(output.info())).toStrictEqual({error: {type: 'abort', message: 'Expected failure'}})
+    expect(renderFatalError).not.toHaveBeenCalled()
+  })
+
   test('keeps JSON silent aborts silent', async () => {
     vi.mocked(jsonOutputEnabled).mockReturnValue(true)
 
@@ -97,6 +107,16 @@ describe('handler', () => {
 
     expect(mockAndCaptureOutput().output()).toBe('')
     expect(renderFatalError).not.toHaveBeenCalled()
+  })
+
+  test('respects an explicit text context when JSON is enabled globally', async () => {
+    vi.mocked(jsonOutputEnabled).mockReturnValue(true)
+    const error = new AbortError('Protocol startup failed')
+
+    await runWithCommandEvents({outputMode: 'text', sink: () => {}}, () => handler(error))
+
+    expect(renderFatalError).toHaveBeenCalledWith(error)
+    expect(mockAndCaptureOutput().info()).toBe('')
   })
 })
 
@@ -165,9 +185,12 @@ describe('shouldReportErrorAsUnexpected helper', () => {
     expect(shouldReportErrorAsUnexpected(error)).toBe(false)
   })
 
-  test.each([502, 503, 504])('returns false for a raw ClientError from the gateway (HTTP %i)', (status) => {
-    expect(shouldReportErrorAsUnexpected(clientError(status))).toBe(false)
-  })
+  test.each([502, 503, 504, 520, 521, 522, 523, 524])(
+    'returns false for a raw ClientError from the gateway (HTTP %i)',
+    (status) => {
+      expect(shouldReportErrorAsUnexpected(clientError(status))).toBe(false)
+    },
+  )
 
   test('returns true for a raw ClientError that is a genuine failure (HTTP 500)', () => {
     expect(shouldReportErrorAsUnexpected(clientError(500))).toBe(true)

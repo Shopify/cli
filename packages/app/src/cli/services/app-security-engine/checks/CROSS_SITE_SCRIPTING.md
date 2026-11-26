@@ -1,6 +1,6 @@
 ---
 id: CROSS_SITE_SCRIPTING
-version: 1
+version: 2
 severity: high
 ---
 
@@ -23,6 +23,12 @@ not a finding.
    and `postMessage` data after examining sender/origin validation. A database
    read, authenticated route, or Shopify API response does not by itself make
    the contained user-authored data trusted.
+   Metafields and metaobjects outside the app-owned namespace (`$app`,
+   `$app:<sub-namespace>`, `app--…`, or `app.metafields`; in Liquid, for
+   example `product.metafields["$app:custom"]`) can be written by the
+   merchant and by any other installed app with write access to that
+   resource. A compromised or malicious app is a lower-trust writer, so their
+   values are lower-trust input even when this app is the usual writer.
 
 2. **Inspect server-rendered escape hatches.** Follow response builders, layouts,
    partials, and component wrappers into final HTML, including:
@@ -74,6 +80,14 @@ not a finding.
    their own permitted storefront code are not automatically privilege
    escalation. Show a lower-trust writer reaching a more privileged reader,
    another user/tenant, or a surface where executable content is not authorized.
+   HTML or script that the app stores in a shared-namespace metafield or
+   metaobject is not author-controlled content, even if this app is the usual
+   writer: any other installed app with write access to that resource can
+   overwrite it, and a compromised app is a lower-trust writer that reaches
+   every viewer of the output. Only the app-owned namespace (`$app`,
+   `$app:<sub-namespace>`, `app--…`, or `app.metafields`; in Liquid, for
+   example `product.metafields["$app:custom"]`) keeps other apps out, and the
+   merchant can still edit it when its definition allows.
 
 ## Coordinate with existing checks
 
@@ -88,6 +102,10 @@ source-to-sink vulnerability only once, under the most specific owning check:
 - `SCRIPT_TAG_URL_INJECTION`: Shopify ScriptTag source URLs.
 - `ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS`: uploaded/imported active files and
   their privileged previews.
+
+`SHARED_NAMESPACE_METAFIELD_RENDER` separately reports that a rendered value
+lives in a shared metafield namespace. It doesn't own the XSS: still report an
+unsafe sink here or under the specialized check that owns it.
 
 Delegate only when the specialized check covers the complete source-to-sink
 path, not merely the response surface, and use that check's own provenance.

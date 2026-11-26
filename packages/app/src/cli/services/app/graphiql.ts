@@ -1,5 +1,5 @@
 import {createClientCredentialsTokenProvider} from '../dev/processes/graphiql-token-provider.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, appClientSecret} from '../../models/organization.js'
 import {buildAppURLForAdmin} from '../../utilities/app/app-url.js'
 import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
@@ -12,15 +12,15 @@ interface OpenAppGraphiQLOptions {
   port?: number
   variables?: string
   apiVersion?: string
+  outputFormat?: 'text' | 'json'
   /**
-   * Test-only seam: aborts the server-running loop without requiring a real SIGINT.
-   * In production, the command itself listens for SIGINT and exits.
+   * Stops the session and closes its server when aborted.
    */
   abortSignal?: AbortSignal
 }
 
 export async function openAppGraphiQL(options: OpenAppGraphiQLOptions): Promise<void> {
-  const apiSecret = options.remoteApp.apiSecretKeys[0]?.secret ?? ''
+  const apiSecret = await appClientSecret(options.remoteApp)
   const key = resolveGraphiQLKey(undefined, apiSecret, options.store)
   const tokenProvider = createClientCredentialsTokenProvider({
     apiKey: options.remoteApp.apiKey,
@@ -43,6 +43,7 @@ export async function openAppGraphiQL(options: OpenAppGraphiQLOptions): Promise<
     },
     variables: options.variables,
     apiVersion: options.apiVersion,
+    outputFormat: options.outputFormat,
     abortSignal: options.abortSignal,
   })
 }

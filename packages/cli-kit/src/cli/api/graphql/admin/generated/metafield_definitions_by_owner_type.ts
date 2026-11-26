@@ -5,10 +5,12 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type MetafieldDefinitionsByOwnerTypeQueryVariables = Types.Exact<{
   ownerType: Types.MetafieldOwnerType
+  after?: Types.InputMaybe<Types.Scalars['String']['input']>
 }>
 
 export type MetafieldDefinitionsByOwnerTypeQuery = {
   metafieldDefinitions: {
+    pageInfo: {hasNextPage: boolean; endCursor?: string | null}
     nodes: {
       key: string
       name: string
@@ -32,6 +34,11 @@ export const MetafieldDefinitionsByOwnerType = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'ownerType'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'MetafieldOwnerType'}}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'after'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -46,10 +53,27 @@ export const MetafieldDefinitionsByOwnerType = {
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'ownerType'}},
               },
               {kind: 'Argument', name: {kind: 'Name', value: 'first'}, value: {kind: 'IntValue', value: '250'}},
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'after'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'after'}},
+              },
             ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'pageInfo'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'hasNextPage'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'endCursor'}},
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'nodes'},

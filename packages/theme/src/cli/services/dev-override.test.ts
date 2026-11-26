@@ -1,16 +1,13 @@
 import {devWithOverrideFile} from './dev-override.js'
-import {openURLSafely} from './dev.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {createThemePreview, updateThemePreview} from '../utilities/theme-previews/preview.js'
 import {describe, expect, test, vi} from 'vitest'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {collectedLogs, clearCollectedLogs} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../utilities/theme-environment/dev-server-session.js')
 vi.mock('../utilities/theme-previews/preview.js')
-vi.mock('./dev.js', () => ({openURLSafely: vi.fn()}))
 vi.mock('@shopify/cli-kit/node/ui')
 
 const adminSession = {token: 'token', storeFqdn: 'store.myshopify.com'}
@@ -30,7 +27,7 @@ describe('devWithOverrideFile', () => {
       const overrideJson = joinPath(tmpDir, 'missing.json')
 
       // When/Then
-      await expect(devWithOverrideFile({adminSession, overrideJson, themeId: '123', open: false})).rejects.toThrow(
+      await expect(devWithOverrideFile({adminSession, overrideJson, themeId: '123'})).rejects.toThrow(
         `Override file not found: ${overrideJson}`,
       )
     })
@@ -46,7 +43,7 @@ describe('devWithOverrideFile', () => {
       const expectedThemeId = '789'
 
       // When
-      await devWithOverrideFile({adminSession, overrideJson, themeId: expectedThemeId, open: false})
+      const result = await devWithOverrideFile({adminSession, overrideJson, themeId: expectedThemeId})
 
       // Then
       expect(fetchDevServerSession).toHaveBeenCalledWith(expectedThemeId, adminSession, undefined)
@@ -56,21 +53,12 @@ describe('devWithOverrideFile', () => {
         expect.objectContaining({
           session: mockSession,
           themeId: expectedThemeId,
+          overridesContent: JSON.stringify({templates: {}}),
         }),
       )
       expect(updateThemePreview).not.toHaveBeenCalled()
-      expect(renderSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: [
-            {
-              list: {
-                title: 'Preview is ready',
-                items: [{link: {url: expectedPreviewUrl}}, `Preview ID: ${expectedPreviewId}`],
-              },
-            },
-          ],
-        }),
-      )
+      expect(result).toEqual({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
+      expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
 
@@ -84,13 +72,11 @@ describe('devWithOverrideFile', () => {
       const expectedThemeId = '789'
 
       // When
-      await devWithOverrideFile({
+      const result = await devWithOverrideFile({
         adminSession,
         overrideJson,
         themeId: expectedThemeId,
         previewIdentifier: expectedPreviewId,
-        open: false,
-        json: false,
       })
 
       // Then
@@ -98,22 +84,13 @@ describe('devWithOverrideFile', () => {
         expect.objectContaining({
           session: mockSession,
           themeId: expectedThemeId,
+          overridesContent: JSON.stringify({templates: {}}),
           previewIdentifier: expectedPreviewId,
         }),
       )
       expect(createThemePreview).not.toHaveBeenCalled()
-      expect(renderSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: [
-            {
-              list: {
-                title: 'Preview updated',
-                items: [{link: {url: expectedPreviewUrl}}, `Preview ID: ${expectedPreviewId}`],
-              },
-            },
-          ],
-        }),
-      )
+      expect(result).toEqual({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
+      expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
 
@@ -128,43 +105,9 @@ describe('devWithOverrideFile', () => {
         adminSession,
         overrideJson,
         themeId: '123',
-        open: false,
-        json: false,
       }).catch((err) => err)
       expect(error.message).toBe(`Failed to parse override file: ${overrideJson}`)
       expect(error.tryMessage).toMatch(/not valid json/i)
-    })
-  })
-
-  test('opens the preview URL when open is true', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const overrideJson = joinPath(tmpDir, 'overrides.json')
-      await writeFile(overrideJson, JSON.stringify({templates: {}}))
-      vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
-      vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
-
-      // When
-      await devWithOverrideFile({adminSession, overrideJson, themeId: '789', open: true})
-
-      // Then
-      expect(openURLSafely).toHaveBeenCalledWith(expectedPreviewUrl, 'theme preview')
-    })
-  })
-
-  test('does not open the preview URL when open is false', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const overrideJson = joinPath(tmpDir, 'overrides.json')
-      await writeFile(overrideJson, JSON.stringify({templates: {}}))
-      vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
-      vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
-
-      // When
-      await devWithOverrideFile({adminSession, overrideJson, themeId: '789', open: false})
-
-      // Then
-      expect(openURLSafely).not.toHaveBeenCalled()
     })
   })
 
@@ -181,8 +124,6 @@ describe('devWithOverrideFile', () => {
         adminSession,
         overrideJson,
         themeId: '789',
-        open: false,
-        json: false,
         password: 'shptka_abc123',
       })
 
@@ -191,39 +132,19 @@ describe('devWithOverrideFile', () => {
     })
   })
 
-  test('outputs JSON when json flag is true', async () => {
+  test.each([undefined, 'existing-preview'])('propagates API failures for preview %s', async (previewIdentifier) => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
       const overrideJson = joinPath(tmpDir, 'overrides.json')
-      await writeFile(overrideJson, JSON.stringify({templates: {}}))
+      await writeFile(overrideJson, '{}')
       vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
-      vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
-      clearCollectedLogs()
+      const error = new Error('Theme preview request failed')
+      vi.mocked(createThemePreview).mockRejectedValue(error)
+      vi.mocked(updateThemePreview).mockRejectedValue(error)
 
-      // When
-      await devWithOverrideFile({adminSession, overrideJson, themeId: '789', open: false, json: true})
-
-      // Then
-      const expectedJson = JSON.stringify({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
-      expect(collectedLogs.info).toContainEqual(expectedJson)
+      await expect(devWithOverrideFile({adminSession, overrideJson, themeId: '123', previewIdentifier})).rejects.toBe(
+        error,
+      )
       expect(renderSuccess).not.toHaveBeenCalled()
-    })
-  })
-
-  test('renders success body by default when json flag is omitted', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const overrideJson = joinPath(tmpDir, 'overrides.json')
-      await writeFile(overrideJson, JSON.stringify({templates: {}}))
-      vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
-      vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
-      clearCollectedLogs()
-
-      // When
-      await devWithOverrideFile({adminSession, overrideJson, themeId: '789', open: false})
-
-      // Then
-      expect(renderSuccess).toHaveBeenCalled()
     })
   })
 })

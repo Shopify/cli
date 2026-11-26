@@ -1,7 +1,9 @@
 import {agentFindingsDocument, deterministicFindingsDocument} from './fixtures/findings-documents.js'
+import {combineFindings} from '../results/combine.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {STORED_TYPES_MATCH_SCHEMA_V1} from '../results/schema.js'
 import {describe, expect, test} from 'vitest'
+import type {AgentFindingsDocument, DeterministicFindingsDocument} from '../types.js'
 
 /** A JSON round trip, so the input is a plain value with no shared references to the fixture. */
 const asJson = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
@@ -123,6 +125,135 @@ describe('translateFindingsDocument', () => {
       expect.stringMatching(/^checks\[0\]\.findings\[0\]\.location\.file: /),
       expect.stringMatching(/^checks\[0\]\.findings\[0\]\.evidence: /),
     ])
+  })
+
+  test.each([
+    ['a zero finding line', 'deterministic', 'checks.0.findings.0.location.line', 0, 'Number must be greater than 0'],
+    [
+      'a fractional finding line',
+      'agent',
+      'checks.0.findings.0.location.line',
+      1.5,
+      'Expected integer, received float',
+    ],
+    [
+      'a zero finding column',
+      'deterministic',
+      'checks.0.findings.0.location.column',
+      0,
+      'Number must be greater than 0',
+    ],
+    [
+      'a negative evidence line',
+      'agent',
+      'checks.0.findings.0.evidence.0.location.line',
+      -3,
+      'Number must be greater than 0',
+    ],
+    [
+      'a fractional evidence column',
+      'deterministic',
+      'checks.0.findings.0.evidence.0.location.column',
+      2.5,
+      'Expected integer, received float',
+    ],
+    ['a docs_url that is not a URL', 'agent', 'checks.0.snapshot.docs_url', 'credential-log-leakage', 'Invalid url'],
+    ['a zero check version', 'agent', 'checks.0.version', 0, 'Number must be greater than 0'],
+    ['a fractional check version', 'deterministic', 'checks.0.version', 1.5, 'Expected integer, received float'],
+    [
+      'a negative scanned file count',
+      'deterministic',
+      'coverage.files_scanned',
+      -1,
+      'Number must be greater than or equal to 0',
+    ],
+    [
+      'a fractional scanned file count',
+      'deterministic',
+      'coverage.files_scanned',
+      2.5,
+      'Expected integer, received float',
+    ],
+    [
+      'a negative skipped file size',
+      'deterministic',
+      'coverage.files_skipped.0.size_bytes',
+      -1,
+      'Number must be greater than or equal to 0',
+    ],
+    [
+      'a fractional skipped file size',
+      'deterministic',
+      'coverage.files_skipped.0.size_bytes',
+      0.5,
+      'Expected integer, received float',
+    ],
+  ] as const)('rejects %s (%s document) with its path', (_description, source, path, value, message) => {
+    const document = asJson(source === 'deterministic' ? deterministicFindingsDocument : agentFindingsDocument)
+    const keys = path.split('.')
+    const parent = keys.slice(0, -1).reduce<any>((node, key) => node[key], document)
+    parent[keys.at(-1)!] = value
+
+    const errorPath = path.replace(/\.(\d+)/g, '[$1]')
+    expect(translateInvalid(document)).toEqual([`${errorPath}: ${message}`])
+  })
+
+  test('accepts the smallest line, column, version, count and size that the CLI writes', () => {
+    const document = asJson(deterministicFindingsDocument) as Record<string, any>
+    document.checks[0].version = 1
+    document.checks[0].findings[0].location = {file: 'app/routes/orders.tsx', line: 1, column: 1}
+    document.checks[0].findings[0].evidence[0].location = {file: 'app/routes/orders.tsx', line: 1, column: 1}
+    document.coverage.files_scanned = 0
+    document.coverage.files_skipped[0].size_bytes = 0
+
+    expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+  })
+
+  test('accepts code excerpts on findings and evidence', () => {
+    const document = asJson(agentFindingsDocument) as Record<string, any>
+    document.checks[0].findings[0].code_excerpt = [
+      {line: 11, text: 'const orders = await db.order.findMany()'},
+      {line: 12, text: ''},
+    ]
+    document.checks[0].findings[0].evidence[0].code_excerpt = [{line: 12, text: ''}]
+
+    expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+  })
+
+  test.each([
+    ['a zero excerpt line', 0, 'Number must be greater than 0'],
+    ['a fractional excerpt line', 1.5, 'Expected integer, received float'],
+  ])('rejects %s', (_description, line, message) => {
+    const document = asJson(deterministicFindingsDocument) as Record<string, any>
+    document.checks[0].findings[0].code_excerpt = [{line, text: 'console.log(session.accessToken)'}]
+    document.checks[0].findings[0].evidence[0].code_excerpt = [{line: 12}]
+
+    expect(translateInvalid(document)).toEqual([
+      `checks[0].findings[0].evidence[0].code_excerpt[0].text: Required`,
+      `checks[0].findings[0].code_excerpt[0].line: ${message}`,
+    ])
+  })
+
+  test('parses and combines files without code excerpts, as the current CLI writes them, as before', () => {
+    const documents = {
+      deterministic: asJson(deterministicFindingsDocument) as DeterministicFindingsDocument,
+      agent: asJson(agentFindingsDocument) as AgentFindingsDocument,
+    }
+    const combined = combineFindings(documents).checks
+    for (const document of Object.values(documents)) {
+      expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+      for (const finding of document.checks.flatMap((check) => check.findings)) {
+        finding.code_excerpt = [{line: finding.location.line ?? 1, text: 'an excerpt'}]
+      }
+      expect(translateFindingsDocument(document)).toEqual({ok: true, document})
+    }
+
+    expect(
+      combineFindings(documents).checks.map((check) => ({
+        ...check,
+        findings: check.findings.map(({code_excerpt: _excerpt, ...finding}) => finding),
+      })),
+    ).toEqual(combined)
   })
 
   test('rejects a document that records the same check id twice', () => {

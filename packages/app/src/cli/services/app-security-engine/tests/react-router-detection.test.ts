@@ -10,14 +10,9 @@ import type {ScanResult, SourceCandidate} from '../types.js'
 /** Every deterministic check that React Router detection gates, fully or for its app-source part. */
 const REACT_ROUTER_GATED_CHECKS = [
   'UNAUTHENTICATED_ENDPOINT',
-  'REQUEST_CONTROLLED_ADMIN_CONTEXT',
-  'CREDENTIAL_LOG_LEAKAGE',
   'CREDENTIAL_BROWSER_LEAKAGE',
-  'APP_PROXY_LIQUID_INJECTION',
-  'DEPRECATED_SCRIPT_TAG_SCOPE',
-  'UNSAFE_INNERHTML',
-  'EOL_API_VERSION',
   'EXPIRING_OFFLINE_TOKEN',
+  'EOL_API_VERSION',
 ]
 
 const appConfiguration = `name = "React Router detection"

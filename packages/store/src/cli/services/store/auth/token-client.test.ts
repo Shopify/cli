@@ -68,6 +68,7 @@ describe('token client', () => {
   })
 
   test('refreshStoreAccessToken sends refresh params and returns normalized payload', async () => {
+    const signal = new AbortController().signal
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(
@@ -81,7 +82,7 @@ describe('token client', () => {
     } as any)
 
     await expect(
-      refreshStoreAccessToken({store: 'shop.myshopify.com', refreshToken: 'refresh-token'}),
+      refreshStoreAccessToken({store: 'shop.myshopify.com', refreshToken: 'refresh-token', signal}),
     ).resolves.toEqual({
       accessToken: 'fresh-token',
       refreshToken: 'fresh-refresh-token',
@@ -93,6 +94,7 @@ describe('token client', () => {
       'https://shop.myshopify.com/admin/oauth/access_token',
       expect.objectContaining({
         method: 'POST',
+        signal,
         body: JSON.stringify({
           client_id: STORE_AUTH_APP_CLIENT_ID,
           grant_type: 'refresh_token',

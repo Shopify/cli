@@ -5,7 +5,8 @@ import {globalFlags, jsonFlag, requiredIfNonInteractive} from './cli.js'
 import {emitCommandEvent, runWithCommandEvents} from './command-events.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
-import {mockAndCaptureOutput} from './testing/output.js'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
+import {AbortError} from './error.js'
 import {unstyled} from './output.js'
 import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
@@ -96,6 +97,59 @@ class MockCommandWithRequiredFlagInNonTTY extends MockCommand {
     this.failMissingNonTTYFlags(flags, ['nonTTYRequiredFlag'])
   }
 }
+
+test.each(['argv', 'default', 'named'].flatMap((source) => [false, true].map((json) => ({source, json}))))(
+  'keeps an output path named json separate from JSON mode: $source, json=$json',
+  async ({source, json}) => {
+    class OutputPathCommand extends Command {
+      static flags = {...MockCommand.flags, ...jsonFlag, output: Flags.string({env: 'SHOPIFY_FLAG_OUTPUT'})}
+
+      environmentsFilename() {
+        return 'shopify.environments.toml'
+      }
+
+      async run() {
+        await this.parse(OutputPathCommand)
+        throw new AbortError('Unable to fetch document')
+      }
+
+      execute() {
+        return this._run()
+      }
+    }
+
+    await inTemporaryDirectory(async (directory) => {
+      if (source !== 'argv') {
+        await writeFile(
+          joinPath(directory, 'shopify.environments.toml'),
+          `[environments.${source}]\noutput = "json"\n${json ? 'json = true' : ''}\n`,
+        )
+      }
+      const config = new Config({root: __dirname})
+      await config.load()
+      vi.spyOn(OutputPathCommand.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(
+        undefined,
+      )
+      vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+      const argv = [
+        '--path',
+        directory,
+        ...(source === 'argv' ? ['--output', 'json', ...(json ? ['--json'] : [])] : []),
+        ...(source === 'named' ? ['--environment', 'named'] : []),
+      ]
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await new OutputPathCommand(argv, config).execute()
+        if (json) {
+          expect(JSON.parse(stdout())).toEqual({error: expect.objectContaining({message: 'Unable to fetch document'})})
+        } else {
+          expect(stdout()).toBe('')
+          expect(stderr()).toContain('Unable to fetch document')
+        }
+      })
+      expect(process.exit).toHaveBeenCalledWith(1)
+    })
+  },
+)
 
 class MockCommandWithDeclarativeNonTTYRequirements extends MockCommand {
   /* eslint-disable @shopify/cli/command-flags-with-env */
@@ -326,9 +380,7 @@ describe('command events', () => {
 describe('command descriptions', () => {
   test('preserves schema patterns that resemble Markdown links', () => {
     class CommandWithPattern extends Command {
-      static get jsonOutputSchema() {
-        return defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
-      }
+      static jsonOutputSchema = defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
 
       public async run(): Promise<void> {}
     }
@@ -340,12 +392,10 @@ describe('command descriptions', () => {
 
   test('includes a JSON output schema without mutating the Markdown description', () => {
     class CommandWithJsonOutput extends Command {
-      static get jsonOutputSchema() {
-        return defineJsonOutputSchema({
-          name: 'CommandResult',
-          schema: zod.object({value: zod.string()}),
-        })
-      }
+      static jsonOutputSchema = defineJsonOutputSchema({
+        name: 'CommandResult',
+        schema: zod.object({value: zod.string()}),
+      })
 
       static descriptionWithMarkdown = 'Returns a value. [Learn more](https://shopify.dev).'
 
@@ -594,6 +644,53 @@ describe('applying environments', async () => {
       someStringWithDefault: 'default stringy',
     })
   })
+
+  test.each(
+    [
+      {supportsOutput: false, jsonSetting: '', json: false},
+      {supportsOutput: false, jsonSetting: 'json = true', json: true},
+      {supportsOutput: true, jsonSetting: '', json: true},
+      {supportsOutput: true, jsonSetting: 'json = true', json: true},
+      {supportsOutput: true, jsonSetting: 'json = false', error: 'to false'},
+      {supportsOutput: true, jsonSetting: 'json = "nope"', error: 'must be a boolean'},
+    ].flatMap((options) => ['default', 'dev'].map((environment) => ({...options, environment}))),
+  )(
+    'validates environment output=json with supportsOutput=$supportsOutput, $jsonSetting, $environment',
+    async ({supportsOutput, jsonSetting, json, error, environment}) => {
+      class JsonEnvironmentCommand extends MockCommand {
+        static flags = {
+          ...MockCommand.flags,
+          ...jsonFlag,
+          ...(supportsOutput ? {output: Flags.string({env: 'SHOPIFY_FLAG_OUTPUT', options: ['text', 'json']})} : {}),
+        }
+
+        async parsedFlags() {
+          return (await this.parse(JsonEnvironmentCommand)).flags
+        }
+      }
+
+      await inTemporaryDirectory(async (directory) => {
+        await writeFile(
+          joinPath(directory, 'shopify.environments.toml'),
+          `[environments.${environment}]\noutput = "json"\n${jsonSetting}\n`,
+        )
+        const config = new Config({root: __dirname})
+        await config.load()
+        const command = new JsonEnvironmentCommand(
+          ['--path', directory, ...(environment === 'default' ? [] : ['--environment', environment])],
+          config,
+        )
+
+        if (error) {
+          await expect(command.parsedFlags()).rejects.toThrow(error)
+        } else {
+          const flags = await command.parsedFlags()
+          expect(flags.json).toBe(json)
+          expect(flags.output).toBe(supportsOutput ? 'json' : undefined)
+        }
+      })
+    },
+  )
 
   runTestInTmpDir('throws when an argument of the incorrect type is provided', async (tmpDir: string) => {
     // When

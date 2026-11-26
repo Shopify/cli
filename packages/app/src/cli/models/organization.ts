@@ -1,9 +1,13 @@
 import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
 import {Flag, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {environmentVariableNames} from '../constants.js'
 import {
   Organization as BaseOrganization,
   type OrganizationWithDetails as BaseOrganizationWithDetails,
 } from '@shopify/organizations'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 
 export enum OrganizationSource {
   Partners = 'Partners',
@@ -58,6 +62,113 @@ export type OrganizationApp = MinimalOrganizationApp & {
   configuration?: AppConfigurationUsedByCli
   flags: Flag[]
   developerPlatformClient: DeveloperPlatformClient
+}
+
+type AppWithClientSecrets = Pick<OrganizationApp, 'apiKey' | 'apiSecretKeys' | 'developerPlatformClient'>
+
+const developerDashboardUrl = 'https://dev.shopify.com'
+
+const automationTokenVariables = [
+  'SHOPIFY_SERVICE_ACCOUNT_TOKEN',
+  'SHOPIFY_APP_AUTOMATION_TOKEN',
+  'SHOPIFY_CLI_PARTNERS_TOKEN',
+]
+
+const clientSecretVariable = environmentVariableNames.appClientSecret
+
+/**
+ * Fetches the app's client secret from the App Management API, for commands that show the secret or write it to a file.
+ *
+ * It ignores SHOPIFY_CLI_APP_CLIENT_SECRET on purpose, so those commands never echo the variable's value. Commands
+ * that authenticate as the app use `findAppClientSecret` or `appClientSecret` instead.
+ *
+ * App lookups don't include the secret, so this asks the App Management API for it, which decides whether the current
+ * credentials may read it.
+ *
+ * @param remoteApp - The app whose secret to fetch.
+ * @returns The first client secret, or undefined when the App Management API returns none.
+ */
+export async function fetchRemoteAppClientSecret(remoteApp: AppWithClientSecrets): Promise<string | undefined> {
+  const loadedSecret = firstClientSecret(remoteApp.apiSecretKeys)
+  if (loadedSecret) return loadedSecret
+
+  return firstClientSecret(await remoteApp.developerPlatformClient.appClientSecrets(remoteApp))
+}
+
+/**
+ * Gets the app's client secret for commands that authenticate as the app.
+ *
+ * A secret in SHOPIFY_CLI_APP_CLIENT_SECRET comes first and skips the request, so CI can authenticate as the app with
+ * credentials that can't read the secret. The CLI can't check that the secret belongs to the app.
+ *
+ * @param remoteApp - The app whose secret to get.
+ * @returns The client secret, or undefined when neither the variable nor the App Management API provides one.
+ */
+export async function findAppClientSecret(remoteApp: AppWithClientSecrets): Promise<string | undefined> {
+  const environmentSecret = getEnvironmentVariables()[clientSecretVariable]
+  if (environmentSecret) {
+    outputDebug(`Using the app's client secret from ${clientSecretVariable}.`)
+    return environmentSecret
+  }
+
+  return fetchRemoteAppClientSecret(remoteApp)
+}
+
+/**
+ * Gets the app's client secret, and fails with an actionable error when there's none.
+ *
+ * @param remoteApp - The app whose secret to get.
+ * @param tryMessage - What the user can do instead, when there's a way to provide the secret directly.
+ * @returns The client secret of the app.
+ */
+export async function appClientSecret(remoteApp: AppWithClientSecrets, tryMessage?: string): Promise<string> {
+  const secret = await findAppClientSecret(remoteApp)
+  if (secret) return secret
+
+  throw new AbortError(
+    "This command needs the app's client secret, and the App Management API didn't return one for your credentials.",
+    `${tryMessage ?? missingClientSecretTryMessage()} ${clientSecretVariableHint()}`,
+  )
+}
+
+/**
+ * Tells the user how to give the client secret to commands that authenticate as the app.
+ *
+ * @returns The hint.
+ */
+export function clientSecretVariableHint(): string {
+  return `To give the CLI the app's client secret directly, for example in CI, set ${clientSecretVariable} to it.`
+}
+
+/**
+ * Explains why the client secret may be missing and what to do, for errors and warnings.
+ *
+ * The CLI keeps using an automation token while its variable is set, even after `shopify auth login`, so the message
+ * names the variables to unset. It never reads or shows their values.
+ *
+ * @returns The explanation.
+ */
+export function missingClientSecretTryMessage(): string {
+  const environment = getEnvironmentVariables()
+  const setTokenVariables = automationTokenVariables.filter((name) => environment[name] !== undefined)
+  if (setTokenVariables.length > 0) {
+    return `The token in ${setTokenVariables[0]} might not have access to the app's client secret. To use your own account, unset ${setTokenVariables.join(' and ')}, log in with \`shopify auth login\`, and run the command again.`
+  }
+
+  return `Check that your account can view the app's client credentials in the Developer Dashboard: ${developerDashboardUrl}`
+}
+
+/**
+ * Warns that a command's output leaves out SHOPIFY_API_SECRET. In JSON mode the warning is a diagnostic event.
+ */
+export function warnClientSecretOmitted(): void {
+  outputWarn(
+    `SHOPIFY_API_SECRET isn't included because the App Management API didn't return the app's client secret for your credentials. ${missingClientSecretTryMessage()}`,
+  )
+}
+
+function firstClientSecret(apiSecretKeys: OrganizationApp['apiSecretKeys']): string | undefined {
+  return apiSecretKeys.find((key) => key.secret)?.secret
 }
 
 export interface OrganizationStore {

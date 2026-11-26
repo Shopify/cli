@@ -28,10 +28,15 @@ process.on('uncaughtException', async (err) => {
   await renderUncaughtError(err)
   process.exit(1)
 })
+const processEvents: NodeJS.EventEmitter = process
+let shutdownRequested = false
 const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']
 signals.forEach((signal) => {
   process.on(signal, () => {
-    process.exit(1)
+    // A repeated signal must not interrupt a command that is flushing its output.
+    if (shutdownRequested) return
+    shutdownRequested = processEvents.emit('shopify:signal', signal)
+    if (!shutdownRequested) process.exit(1)
   })
 })
 

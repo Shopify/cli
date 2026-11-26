@@ -1,3 +1,14 @@
+export const E2E_STORES = {
+  devServer: 'no-delete-e2e-reusable-store-1.myshopify.com',
+  configReload: 'no-delete-e2e-reusable-store-2.myshopify.com',
+  extensionCreation: 'no-delete-e2e-reusable-store-3.myshopify.com',
+  extensionDeletion: 'no-delete-e2e-reusable-store-4.myshopify.com',
+  namedConfig: 'no-delete-e2e-reusable-store-5.myshopify.com',
+  defaultConfig: 'no-delete-e2e-reusable-store-6.myshopify.com',
+  fullConfig: 'no-delete-e2e-reusable-store-7.myshopify.com',
+  spare: 'no-delete-e2e-reusable-store-8.myshopify.com',
+} as const
+
 // ---------------------------------------------------------------------------
 // Shared timeout constants for E2E tests
 // ---------------------------------------------------------------------------

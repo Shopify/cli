@@ -8,6 +8,7 @@ import {
   renderTomlStringWithFormatting,
   renderImportDeclarativeDefinitionsResult,
 } from './declarative-definitions/result.js'
+import {testOrganizationAppWithoutClientSecret} from '../../../models/app/app.test-data.js'
 import {
   MetaobjectDefinitions,
   MetaobjectDefinitionsQuery,
@@ -1154,17 +1155,14 @@ describe('importDeclarativeDefinitions', () => {
     outputMock.clear()
   })
 
-  test('throws BugError when app has no API secret keys', async () => {
+  test('throws an AbortError when the App Management API returns no client secret', async () => {
     const importPromised = importDeclarativeDefinitions({
-      remoteApp: {
-        apiKey: 'test-api-key',
-        apiSecretKeys: [],
-      },
+      remoteApp: testOrganizationAppWithoutClientSecret(),
       store: {
         shopDomain: 'test-shop.myshopify.com',
       },
     } as any)
-    await expect(importPromised).rejects.toThrow('No API secret keys found for app')
+    await expect(importPromised).rejects.toThrow("didn't return one for your credentials")
   })
 
   test('existing definitions are not included in the output', async () => {

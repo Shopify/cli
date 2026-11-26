@@ -621,7 +621,7 @@ describe('allExtensions', () => {
     expect(app.allExtensions).toContain(configExtension)
   })
 
-  test('does not include configuration extensions when include_config_on_deploy is disabled', async () => {
+  test('includes configuration extensions when the deprecated include_config_on_deploy is disabled', async () => {
     const configuration = {
       ...CORRECT_CURRENT_APP_SCHEMA,
       build: {
@@ -636,7 +636,7 @@ describe('allExtensions', () => {
       allExtensions: [configExtension],
     })
 
-    expect(app.allExtensions).toHaveLength(0)
+    expect(app.allExtensions).toContain(configExtension)
   })
 })
 

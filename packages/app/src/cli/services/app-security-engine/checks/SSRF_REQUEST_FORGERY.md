@@ -1,6 +1,6 @@
 ---
 id: SSRF_REQUEST_FORGERY
-version: 1
+version: 2
 severity: high
 ---
 
@@ -35,12 +35,20 @@ A related pattern is command injection — where user input flows into
    - A config constant — safe
    - A variable — trace it back to its assignment
 
-3. **Check for SSRF protections.** The call may be safe even with user
-   input if:
-   - The URL is validated against an allowlist of domains
-   - The URL is parsed and internal IPs are blocked (169.254.169.254,
-     localhost, 10.x.x.x, 192.168.x.x, etc.)
-   - The URL scheme is restricted to https only
+3. **Check for SSRF protections.** A call with user input is safe only
+   when the destination is restricted:
+   - The URL is parsed and its host is validated against an allowlist of
+     expected hosts, with the scheme checked along with the host
+   - Redirects are disabled, or every redirect target is validated the same
+     way, because a redirect can send an allowed request to an internal
+     address
+
+   Blocking internal addresses (169.254.169.254, localhost, 10.x.x.x,
+   192.168.x.x, and other private, loopback, and link-local ranges) is
+   defense in depth, not a replacement for the allowlist. Restricting the
+   scheme to https does not restrict the destination: `https://` URLs can
+   still point at internal hosts. Neither one makes the call safe on its
+   own.
 
 4. **Find command injection.** Search for:
    - Ruby: `system(cmd)`, `exec(cmd)`, `Open3.capture3(cmd)`,
@@ -88,6 +96,7 @@ validation:
 Do not report:
 
 - HTTP calls to hardcoded URLs (`fetch("https://api.shopify.com/...")`)
-- HTTP calls where the URL is validated against an allowlist
+- HTTP calls where the host is validated against an allowlist and
+  redirects are disabled or validated
 - `exec()` with literal strings (no user input)
 - Shell calls with properly escaped arguments

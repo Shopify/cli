@@ -25,7 +25,7 @@ interface AdminApiUninstallCtx {
  *      works here because the E2E org owns both the app and the dev store.
  *   3. Run the `appUninstall` mutation, which uninstalls the calling app.
  *
- * Throws on any failure so teardown surfaces the error instead of leaking.
+ * Throws on failure so teardown can report the app that needs cleanup.
  */
 export async function uninstallAppWithAdminApi(ctx: AdminApiUninstallCtx): Promise<void> {
   const clientId = extractClientId(ctx.appDir)
@@ -55,7 +55,10 @@ async function mintAppAccessTokenWithRetry(storeFqdn: string, clientId: string, 
 }
 
 async function fetchClientSecret(ctx: AdminApiUninstallCtx): Promise<string> {
-  const result = await ctx.cli.exec(['app', 'env', 'show', '--path', ctx.appDir], {timeout: CLI_TIMEOUT.short})
+  const result = await ctx.cli.exec(['app', 'env', 'show', '--path', ctx.appDir], {
+    timeout: CLI_TIMEOUT.short,
+    quiet: true,
+  })
   if (result.exitCode !== 0) {
     throw new Error(`app env show failed (exit ${result.exitCode}): ${result.stderr}`)
   }
@@ -69,6 +72,7 @@ async function fetchClientSecret(ctx: AdminApiUninstallCtx): Promise<string> {
 async function mintAppAccessToken(storeFqdn: string, clientId: string, clientSecret: string): Promise<string> {
   const response = await fetch(`https://${storeFqdn}/admin/oauth/access_token`, {
     method: 'POST',
+    signal: AbortSignal.timeout(CLI_TIMEOUT.short),
     headers: {'Content-Type': 'application/x-www-form-urlencoded', ...loadtestHeaderRecord()},
     body: new URLSearchParams({
       grant_type: 'client_credentials',
@@ -92,6 +96,7 @@ async function mintAppAccessToken(storeFqdn: string, clientId: string, clientSec
 async function runAppUninstall(storeFqdn: string, accessToken: string): Promise<void> {
   const response = await fetch(`https://${storeFqdn}/admin/api/${ADMIN_API_VERSION}/graphql.json`, {
     method: 'POST',
+    signal: AbortSignal.timeout(CLI_TIMEOUT.short),
     headers: {
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': accessToken,
@@ -111,7 +116,10 @@ async function runAppUninstall(storeFqdn: string, accessToken: string): Promise<
   if (payload.errors) {
     throw new Error(`appUninstall returned errors: ${JSON.stringify(payload.errors)}`)
   }
-  const userErrors = payload.data?.appUninstall?.userErrors ?? []
+  const userErrors = payload.data?.appUninstall?.userErrors
+  if (!Array.isArray(userErrors)) {
+    throw new Error('appUninstall returned an invalid response; uninstall was not confirmed')
+  }
   if (userErrors.length > 0) {
     throw new Error(`appUninstall returned user errors: ${userErrors.map((error) => error.message).join(', ')}`)
   }

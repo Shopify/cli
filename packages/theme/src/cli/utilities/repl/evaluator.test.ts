@@ -6,7 +6,11 @@ import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/outp
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../theme-environment/storefront-renderer')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputInfo: vi.fn(),
+  outputDebug: vi.fn(),
+}))
 
 describe('evaluate', () => {
   let mockConfig: EvaluationConfig
@@ -31,6 +35,37 @@ describe('evaluate', () => {
     const result = await evaluate({...mockConfig, snippet: 'shop.id'})
 
     expect(result).toBe(123123)
+  })
+
+  test.each([null, false, 0, '', ['a', 1], {product_id: 1, tags: ['a']}])(
+    'preserves a native Liquid value without evaluating it as a context: %j',
+    async (value) => {
+      vi.mocked(render).mockResolvedValue(
+        createMockResponse({
+          status: 200,
+          text: `<div>\n${JSON.stringify([{type: 'display', value}])}\n</div>`,
+        }) as any,
+      )
+      await expect(evaluate({...mockConfig, snippet: 'value', mode: 'batch'})).resolves.toEqual(value)
+      expect(render).toHaveBeenCalledOnce()
+      expect(mockConfig.replSession).toEqual([])
+    },
+  )
+
+  test('throws a Liquid syntax error in batch mode without printing text', async () => {
+    vi.mocked(render).mockResolvedValue(
+      createMockResponse({status: 200, text: "<div>\nLiquid syntax error: Unknown tag 'invalid'\n</div>"}) as any,
+    )
+    await expect(evaluate({...mockConfig, snippet: 'invalid', mode: 'batch'})).rejects.toThrow(
+      "Unknown object, property, tag, or filter: 'invalid'",
+    )
+    expect(outputInfo).not.toHaveBeenCalled()
+  })
+
+  test('throws for unsuccessful HTTP responses in batch mode', async () => {
+    vi.mocked(render).mockResolvedValue(createMockResponse({status: 500, text: 'Internal server error'}) as any)
+    await expect(evaluate({...mockConfig, snippet: 'shop.name', mode: 'batch'})).rejects.toThrow('HTTP 500')
+    expect(render).toHaveBeenCalledOnce()
   })
 
   describe('when the URL is not prefixed with a forward slash', () => {
@@ -130,7 +165,7 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     expect(result).toBeUndefined()
     expect(outputInfo).toHaveBeenCalledOnce()
     expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText("Liquid error: undefined method 'unknown_object' for nil:NilClass")}`,
+      outputContent`${outputToken.errorText("Liquid syntax error: Liquid error: undefined method 'unknown_object' for nil:NilClass")}`,
     )
   })
 
@@ -207,7 +242,7 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
     await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
-      new AbortError('Page not found. Please provide a valid --url value.'),
+      new AbortError('Page not found. Please provide a valid --url value!'),
     )
   })
 })

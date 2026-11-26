@@ -1,7 +1,13 @@
 import {fetchDestinationsContext} from './destinations.js'
-import {selectOrg, type Organization} from '@shopify/organizations'
+import {
+  fetchOrganizationsWithAccessInfo,
+  selectOrg,
+  selectOrganizationPrompt,
+  type Organization,
+} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
@@ -49,6 +55,20 @@ export async function resolveOrganizationForStore(store: string, organizationId?
     return owningOrganization
   }
 
+  // The destinations lookup only sees stores the account itself can open. A service account can open
+  // only the stores it created, and a person may belong to the organization without a seat on the
+  // store, so the lookup can miss a store the account is still allowed to manage. When the account
+  // belongs to one organization, that's the one, the same way `store list` picks it.
+  const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: !canPrompt, allowAutomationToken: true})
+  const {organizations} = await fetchOrganizationsWithAccessInfo(token)
+  if (organizations.length === 1) {
+    outputDebug(`Using ${organizations[0]!.businessName}, the only organization the account belongs to, for ${store}.`)
+    return organizations[0]!
+  }
+  if (organizations.length === 0) {
+    throw new AbortError('No organizations found.', 'Make sure you have access to a Shopify organization.')
+  }
+
   if (!canPrompt) {
     throw new AbortError(
       `Could not determine which organization owns ${store}.`,
@@ -63,5 +83,5 @@ export async function resolveOrganizationForStore(store: string, organizationId?
     body: ['Select one below, or specify it with', {command: '--organization-id'}, {char: '.'}],
   })
 
-  return selectOrg()
+  return selectOrganizationPrompt(organizations)
 }

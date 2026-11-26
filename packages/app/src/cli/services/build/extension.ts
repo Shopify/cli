@@ -1,4 +1,5 @@
 import {formatBundleSize} from './bundle-size.js'
+import {MissingBuildOutputError} from './errors.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
@@ -12,7 +13,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'node:path'
@@ -135,6 +136,11 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     }
   }
 
+  // Validations such as the web pixel size check read the output file.
+  if (options.skipBuild && !(await fileExists(localOutputPath))) {
+    throw new MissingBuildOutputError(localOutputPath)
+  }
+
   await extension.buildValidation({outputPath: localOutputPath})
 
   const duration = Math.round(performance.now() - startTime)
@@ -157,7 +163,13 @@ export async function buildFunctionExtension(
   const lockfilePath = joinPath(extension.directory, '.build-lock')
   let releaseLock
   try {
-    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
+    releaseLock = await lockfile.lock(extension.directory, {
+      retries: 20,
+      lockfilePath,
+      // The default handler throws from a timer and crashes the CLI. A lock can be reported as compromised while
+      // this build still holds it, for example on filesystems that don't keep a directory's mtime.
+      onCompromised: (error: Error) => outputDebug(`The function build lock was compromised: ${error.message}`),
+    })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
@@ -235,7 +247,10 @@ export async function buildFunctionExtension(
     newError.errors = error.errors
     throw newError
   } finally {
-    await releaseLock()
+    // A compromised lock is already released, so releasing it again rejects.
+    await releaseLock().catch((error: Error) =>
+      outputDebug(`Failed to release the function build lock: ${error.message}`),
+    )
   }
 }
 

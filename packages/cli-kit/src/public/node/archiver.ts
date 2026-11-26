@@ -46,11 +46,17 @@ export async function zip(options: ZipOptions): Promise<void> {
     const archive = archiver('zip')
 
     const output = createWriteStream(outputZipPath)
+    let outputError: Error | undefined
+    output.on('error', (error) => {
+      outputError = error
+      archive.abort()
+    })
     output.on('close', () => {
-      resolve()
+      if (outputError) reject(outputError)
+      else resolve()
     })
     archive.on('error', (error) => {
-      reject(error)
+      output.destroy(error)
     })
     archive.pipe(output)
 
@@ -75,12 +81,10 @@ export async function zip(options: ZipOptions): Promise<void> {
     // Wait for all files to be read and added before finalizing
     Promise.all(addFilesPromises)
       .then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        archive.finalize()
+        if (!output.destroyed) return archive.finalize()
       })
       .catch((error) => {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-        reject(error)
+        output.destroy(error instanceof Error ? error : new Error(String(error)))
       })
   })
 }

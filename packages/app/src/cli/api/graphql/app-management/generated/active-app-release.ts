@@ -13,7 +13,7 @@ export type ActiveAppReleaseQuery = {
     id: string
     key: string
     organizationId: string
-    activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
+    activeRoot: {grantedShopifyApprovalScopes: string[]}
     activeRelease: {
       id: string
       version: {
@@ -41,7 +41,7 @@ export type AppVersionInfoFragment = {
   id: string
   key: string
   organizationId: string
-  activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
+  activeRoot: {grantedShopifyApprovalScopes: string[]}
   activeRelease: {
     id: string
     version: {
@@ -131,26 +131,7 @@ export const AppVersionInfoFragmentDoc = {
             name: {kind: 'Name', value: 'activeRoot'},
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: {kind: 'Name', value: 'clientCredentials'},
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: {kind: 'Name', value: 'secrets'},
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{kind: 'Field', name: {kind: 'Name', value: 'key'}}],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}},
-              ],
+              selections: [{kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}}],
             },
           },
           {
@@ -297,26 +278,7 @@ export const ActiveAppRelease = {
             name: {kind: 'Name', value: 'activeRoot'},
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: {kind: 'Name', value: 'clientCredentials'},
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: {kind: 'Name', value: 'secrets'},
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{kind: 'Field', name: {kind: 'Name', value: 'key'}}],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}},
-              ],
+              selections: [{kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}}],
             },
           },
           {

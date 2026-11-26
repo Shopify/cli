@@ -4,6 +4,7 @@ import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-
 import {AppLinkedInterface} from '../../../../models/app/app.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {
+  DEFAULT_CONFIG,
   testAppAccessConfigExtension,
   testAppLinked,
   testDeveloperPlatformClient,
@@ -16,6 +17,7 @@ import {getUploadURL, writeManifestToBundle} from '../../../bundle.js'
 import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
 import {readdir} from '@shopify/cli-kit/node/fs'
@@ -166,6 +168,27 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Test error'))
+  })
+
+  test('asks to restart app dev when the upload URL request is still unauthorized after a token refresh', async () => {
+    // Given: cli-kit reports a 401 that survives the token refresh with its status code.
+    vi.mocked(getUploadURL).mockRejectedValue(
+      Object.assign(
+        new AbortError('The App Management GraphQL API responded unsuccessfully with the HTTP status 401.'),
+        {
+          statusCode: 401,
+        },
+      ),
+    )
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    const [onStart] = appWatcher.listeners('ready') as ((event: unknown) => Promise<void>)[]
+
+    // Then
+    await expect(onStart!({app, extensionEvents: []})).rejects.toThrow(
+      new AbortError('Auth session expired. Please run `shopify app dev` again.'),
+    )
   })
 
   test('handles receiving an event before session is ready', async () => {
@@ -488,6 +511,30 @@ describe('pushUpdatesForDevSession', () => {
       inheritedModuleUids: [unaffectedExtension.uid],
       unsafeValidation: false,
     })
+  })
+
+  test('inherits app configuration modules on an extension-only update when include_config_on_deploy is false', async () => {
+    vi.mocked(readdir).mockResolvedValue([])
+    const updatedExtension = await testUIExtension()
+    updatedExtension.deployConfig = vi.fn().mockResolvedValue({})
+    const appAccess = await testAppAccessConfigExtension()
+    const appWithDeprecatedFlag = testAppLinked({
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: false}},
+      allExtensions: [updatedExtension, appAccess],
+    })
+
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {
+      app: appWithDeprecatedFlag,
+      extensionEvents: [{type: 'updated', extension: updatedExtension}],
+    })
+    await flushPromises()
+
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({inheritedModuleUids: [appAccess.uid]}),
+    )
   })
 
   test('writes full manifest to bundle on session update, not just create', async () => {

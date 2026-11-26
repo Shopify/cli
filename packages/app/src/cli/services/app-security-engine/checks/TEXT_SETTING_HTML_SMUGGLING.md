@@ -1,6 +1,6 @@
 ---
 id: TEXT_SETTING_HTML_SMUGGLING
-version: 2
+version: 3
 severity: high
 ---
 
@@ -45,11 +45,20 @@ because the HTML is rendered server-side or in Liquid, not via
 
 3. **Check whether the setting is merchant-configurable.** The key
    question is: can the merchant (or an attacker who compromised the
-   merchant account) control this value?
-   - If the value is set by the app developer in code — not user-controlled
+   merchant account), or another app installed on the shop, control this value?
+   - If the value is set by the app developer in code and stored only where
+     other writers can't reach it — not user-controlled
    - If the value is set by the merchant through a settings UI — user-controlled
    - If the value is stored in a metafield that the merchant can edit — user-controlled
    - If the value comes from a product/customer metafield — user-controlled
+   - If the value is stored in a metafield or metaobject outside the app-owned
+     namespace (`$app`, `$app:<sub-namespace>`, `app--…`, or
+     `app.metafields`; in Liquid, for example
+     `product.metafields["$app:custom"]`) —
+     user-controlled. The merchant and any other installed app with write
+     access to that resource can overwrite it, and a compromised app is a
+     lower-trust writer. HTML or script stored there is not trusted author
+     content, even if this app is the usual writer.
 
 4. **Check for sanitisation.** Is the setting value sanitised before
    rendering?

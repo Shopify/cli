@@ -1,18 +1,21 @@
 import {renderThrownError} from '../errors.js'
-import {batchedRequests} from '../batching.js'
+import {batchedRequests, waitForAll} from '../batching.js'
 import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {setTimeout} from 'node:timers/promises'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
 export interface PollingOptions {
   noDelete: boolean
+  signal?: AbortSignal
 }
 
 export function pollThemeEditorChanges(
@@ -33,7 +36,8 @@ export function pollThemeEditorChanges(
   const poll = async () => {
     // Asynchronously wait for the polling interval, similar to a setInterval
     // but ensure the polling work is done before starting the next interval.
-    await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
+    await setTimeout(POLLING_INTERVAL, undefined, {signal: options.signal})
+    if (options.signal?.aborted) return
 
     // eslint-disable-next-line require-atomic-updates
     latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
@@ -44,6 +48,7 @@ export function pollThemeEditorChanges(
         return checksums
       })
       .catch((error: Error) => {
+        if (options.signal?.aborted) return latestChecksums
         failedPollingAttempts++
 
         if (error.message !== lastError) {
@@ -64,12 +69,15 @@ export function pollThemeEditorChanges(
       })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  setTimeout(async () => {
-    while (true) {
+  const run = async () => {
+    while (!options.signal?.aborted) {
       // eslint-disable-next-line no-await-in-loop
       await poll()
+      if (failedPollingAttempts >= maxPollingAttempts) break
     }
+  }
+  return run().catch((error: unknown) => {
+    if (!options.signal?.aborted) rejectBackgroundJob(error)
   })
 }
 
@@ -80,6 +88,7 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
 ): Promise<Checksum[]> {
+  options.signal?.throwIfAborted()
   /*
    * Capture the current set of unsynced file keys to ensure
    * consistent filtering between previousChecksums and
@@ -96,13 +105,15 @@ export async function pollRemoteJsonChanges(
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
     applyFileFilters(checksums, localFileSystem, currentUnsyncedKeys),
   )
+  options.signal?.throwIfAborted()
 
   const changedAssets = getAssetsChangedOnRemote(previousChecksums, latestChecksums)
   const deletedAssets = getAssetsDeletedFromRemote(latestChecksums, previousChecksums)
 
   await abortIfMultipleSourcesChange(localFileSystem, changedAssets)
+  options.signal?.throwIfAborted()
 
-  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets)
+  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets, options.signal)
   await deleteRemovedAssets(localFileSystem, deletedAssets, options)
 
   return latestChecksums
@@ -132,6 +143,7 @@ async function syncChangedAssets(
   currentSession: AdminSession,
   localFileSystem: ThemeFileSystem,
   assetsChangedOnRemote: Checksum[],
+  signal?: AbortSignal,
 ) {
   const filesToGet = assetsChangedOnRemote.filter(
     (file) => localFileSystem.files.get(file.key)?.checksum !== file.checksum,
@@ -143,14 +155,17 @@ async function syncChangedAssets(
       chunk.map((file) => file.key),
       currentSession,
     ).then((assets) => {
-      return Promise.all(
+      signal?.throwIfAborted()
+      return waitForAll(
         assets.map(async (asset) => {
           if (asset) {
             await localFileSystem.write(asset)
             outputInfo(
-              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
-                '»',
-              )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
+              commandEventOutputMode() === 'json'
+                ? `Synced download ${asset.key} from remote theme`
+                : outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                    '»',
+                  )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
             )
           }
         }),
@@ -158,26 +173,30 @@ async function syncChangedAssets(
     })
   })
 
-  await Promise.all(chunks)
+  await waitForAll(chunks)
 }
 
 export async function deleteRemovedAssets(
   localFileSystem: ThemeFileSystem,
   assetsDeletedFromRemote: Checksum[],
-  options: {noDelete: boolean},
+  options: PollingOptions,
 ) {
+  options.signal?.throwIfAborted()
   if (!options.noDelete) {
-    return Promise.all(
+    return waitForAll(
       assetsDeletedFromRemote.map((file) => {
         if (localFileSystem.files.get(file.key)) {
           return localFileSystem.delete(file.key).then(() => {
             outputInfo(
-              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
-                '»',
-              )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+              commandEventOutputMode() === 'json'
+                ? `Synced remove ${file.key} from local theme`
+                : outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                    '»',
+                  )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
             )
           })
         }
+        return Promise.resolve()
       }),
     )
   }

@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {createApp, devDashboardAppUrl, injectFixtureToml} from '../setup/app.js'
+import {appTestFixture as test, createApp, devDashboardAppUrl, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
-import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
+import {E2E_STORES, CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
-import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -14,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('TOML config regression', () => {
-  test('deploy succeeds with fully populated toml', async ({cli, env, browserPage}) => {
+  test('deploy succeeds with fully populated toml', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -29,7 +28,7 @@ test.describe('TOML config regression', () => {
 
       // Overwrite with fully populated TOML fixture (injects the real client_id)
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       const result = await cli.exec(['app', 'deploy', '--path', appDir, '--allow-updates', '--allow-deletes'], {
         timeout: CLI_TIMEOUT.long,
@@ -41,7 +40,7 @@ test.describe('TOML config regression', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,
@@ -51,7 +50,8 @@ test.describe('TOML config regression', () => {
     }
   })
 
-  test('dev starts with fully populated toml', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev starts with fully populated toml', async ({cli, env, dashboard}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.fullConfig
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -66,7 +66,7 @@ test.describe('TOML config regression', () => {
       appDir = initResult.appDir
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}})
 
@@ -87,7 +87,7 @@ test.describe('TOML config regression', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,

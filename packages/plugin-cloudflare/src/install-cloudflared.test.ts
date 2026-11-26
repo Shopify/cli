@@ -59,7 +59,7 @@ describe('install-cloudflare', () => {
 
       // Then
       expect(http.fetch).toHaveBeenCalledWith(
-        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-amd64.tgz',
+        'https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-darwin-amd64.tgz',
         expect.anything(),
         'slow-request',
       )
@@ -102,7 +102,7 @@ describe('install-cloudflare', () => {
 
       // Then
       expect(http.fetch).toHaveBeenCalledWith(
-        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-arm64.tgz',
+        'https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-darwin-arm64.tgz',
         expect.anything(),
         'slow-request',
       )
@@ -122,7 +122,7 @@ describe('install-cloudflare', () => {
 
       // Then
       expect(http.fetch).toHaveBeenCalledWith(
-        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-linux-amd64',
+        'https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-linux-amd64',
         expect.anything(),
         'slow-request',
       )
@@ -143,7 +143,7 @@ describe('install-cloudflare', () => {
 
       // Then
       expect(http.fetch).toHaveBeenCalledWith(
-        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-windows-amd64.exe',
+        'https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-windows-amd64.exe',
         expect.anything(),
         'slow-request',
       )

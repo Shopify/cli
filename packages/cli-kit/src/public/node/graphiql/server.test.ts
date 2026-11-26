@@ -1,5 +1,6 @@
 import {deriveGraphiQLKey, resolveGraphiQLKey, setupGraphiQLServer, TokenProvider} from './server.js'
 import {getAvailableTCPPort} from '../tcp.js'
+import {supportedApiVersions} from '../api/admin.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {Server} from 'http'
 import {Writable} from 'stream'
@@ -90,6 +91,22 @@ describe('setupGraphiQLServer', () => {
     await new Promise<void>((resolve) => server.on('listening', () => resolve()))
     return {url: `http://localhost:${port}`}
   }
+
+  test('refreshes credentials and retries API-version loading while the server is running', async () => {
+    vi.mocked(supportedApiVersions).mockRejectedValueOnce(new Error('Token expired'))
+    const tokenProvider = {
+      getToken: vi.fn(async () => 'access-token'),
+      refreshToken: vi.fn(async () => 'refreshed-token'),
+    }
+    const {url} = await startServer({tokenProvider})
+
+    const response = await fetch(`${url}/graphiql/status`)
+
+    await expect(response.json()).resolves.toMatchObject({status: 'OK'})
+    expect(tokenProvider.refreshToken).toHaveBeenCalledTimes(1)
+    expect(tokenProvider.getToken).toHaveBeenCalledTimes(2)
+    expect(supportedApiVersions).toHaveBeenCalledTimes(2)
+  })
 
   test('rejects mutations with HTTP 400 when protectMutations is true', async () => {
     const tokenProvider: TokenProvider = {getToken: vi.fn(async () => 'access-token')}

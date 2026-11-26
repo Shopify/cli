@@ -1051,6 +1051,17 @@ describe('ExtensionServerClient', () => {
       })
     })
 
+    test('persists a partial app update, which the server merges into its payload', async () => {
+      const client = new ExtensionServerClient(defaultOptions)
+      mockSocketServer.connect(mockSocket)
+
+      client.persist('update', {app: {apiKey: 'api-key'}})
+
+      expect(mockSocketServer.messages).toStrictEqual([
+        JSON.stringify({event: 'update', data: {app: {apiKey: 'api-key'}}}),
+      ])
+    })
+
     test('warns if trying to "persist" a dispatch event', async () => {
       // Spy on console.warn
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)

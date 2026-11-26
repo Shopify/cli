@@ -1,4 +1,10 @@
-import {graphQLErrorCodes, hasRateLimitCode, isPermissionCode, isRateLimitCode} from './graphql-error-codes.js'
+import {
+  graphQLErrorCodes,
+  hasRateLimitCode,
+  hasTransientServerCode,
+  isPermissionCode,
+  isRateLimitCode,
+} from './graphql-error-codes.js'
 import {describe, expect, test} from 'vitest'
 
 describe('graphQLErrorCodes', () => {
@@ -37,5 +43,11 @@ describe('code predicates', () => {
   test('hasRateLimitCode scans all errors, not just the first', () => {
     expect(hasRateLimitCode([{message: 'a'}, {extensions: {code: '429'}}])).toBe(true)
     expect(hasRateLimitCode([{extensions: {code: 'OTHER'}}])).toBe(false)
+  })
+
+  test('hasTransientServerCode scans all errors, not just the first', () => {
+    expect(hasTransientServerCode([{message: 'a'}, {extensions: {code: 'INTERNAL_SERVER_ERROR'}}])).toBe(true)
+    expect(hasTransientServerCode([{extensions: {code: 'ACCESS_DENIED'}}])).toBe(false)
+    expect(hasTransientServerCode('Internal error')).toBe(false)
   })
 })

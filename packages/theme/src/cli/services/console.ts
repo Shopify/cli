@@ -1,11 +1,17 @@
+import {ConsoleResult} from './console/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {REPLThemeManager} from '../utilities/repl/repl-theme-manager.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
-import {replLoop} from '../utilities/repl/repl.js'
-import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {DELIMITER_WARNING, hasDelimiter, replLoop} from '../utilities/repl/repl.js'
+import {evaluate, SessionItem} from '../utilities/repl/evaluator.js'
+import {hasJsonError, JSON_ERROR_MESSAGE} from '../utilities/repl/presenter.js'
+import {fetchDevServerSession, initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {extractFetchErrorInfo} from '../utilities/errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
+import {isError as isH3Error} from 'h3'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
@@ -36,6 +42,53 @@ export async function initializeRepl(
 ) {
   outputInfo('Welcome to Shopify Liquid console\n(press Ctrl + C to exit)')
 
+  validateThemeAccessPassword(themeAccessPassword)
+  const session = await initializeDevServerSession(themeId, adminSession, themeAccessPassword, storefrontPassword)
+
+  return replLoop(session, themeId, url)
+}
+
+export async function evaluateConsoleInputs(options: {
+  inputs: string[]
+  adminSession: AdminSession
+  themeId: string
+  url: string
+  themeAccessPassword?: string
+  storefrontPassword?: string
+}): Promise<ConsoleResult> {
+  const {inputs, adminSession, themeId, url, themeAccessPassword, storefrontPassword} = options
+  validateThemeAccessPassword(themeAccessPassword)
+  const session = await fetchDevServerSession(themeId, adminSession, themeAccessPassword, storefrontPassword)
+  const replSession: SessionItem[] = []
+  const results: ConsoleResult['results'] = []
+  let failed = false
+
+  for (const input of inputs) {
+    if (failed) {
+      results.push({input, status: 'skipped', reason: 'previous-input-failed'})
+      continue
+    }
+    try {
+      if (hasDelimiter(input)) throw new AbortError(DELIMITER_WARNING)
+      // Assignments must finish before the next expression reads the shared Liquid context.
+      // eslint-disable-next-line no-await-in-loop
+      const value = await evaluate({snippet: input, themeSession: session, themeId, url, replSession, mode: 'batch'})
+      if (hasJsonError(value)) throw new AbortError(JSON_ERROR_MESSAGE)
+      results.push({input, status: 'success', value: value ?? null})
+    } catch (error) {
+      if (!(error instanceof AbortError) && !isH3Error(error)) throw error
+      const evaluationError = isH3Error(error)
+        ? new AbortError(extractFetchErrorInfo(error, 'Liquid evaluation failed').headline)
+        : error
+      failed = true
+      results.push({input, status: 'failed', error: errorToJson(evaluationError)})
+    }
+  }
+
+  return {status: failed ? 'partial' : 'success', results}
+}
+
+function validateThemeAccessPassword(themeAccessPassword?: string): void {
   if (themeAccessPassword?.startsWith('shpat_')) {
     throw new AbortError(
       'Unable to use Admin API tokens with the console command',
@@ -49,8 +102,4 @@ Alternatively, you can authenticate normally by not passing the --password flag.
 Learn more: https://shopify.dev/docs/storefronts/themes/tools/theme-access`,
     )
   }
-
-  const session = await initializeDevServerSession(themeId, adminSession, themeAccessPassword, storefrontPassword)
-
-  return replLoop(session, themeId, url)
 }

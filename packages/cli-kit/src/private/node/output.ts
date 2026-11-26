@@ -1,3 +1,4 @@
+import {getConcurrentOutputContext} from './output-context.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {
   OutputMessage,
@@ -39,6 +40,11 @@ export function consoleLog(message: string): void {
  * @param message - The message to print.
  */
 export function consoleWarn(message: string): void {
+  const writer = getConcurrentOutputContext()?.consoleWarn
+  if (writer) {
+    writer(withOrWithoutStyle(message))
+    return
+  }
   // Ink intercepts console calls to preserve its active UI around log messages.
   // eslint-disable-next-line no-console
   console.warn(withOrWithoutStyle(message))

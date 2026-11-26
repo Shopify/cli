@@ -54,6 +54,7 @@ export default class DevClean extends AppLinkedCommand {
       appContextResult,
       storeFqdn: flags.store,
       forceReselectStore: flags.reset,
+      devSession: true,
     })
 
     const result = await devClean({appContextResult, store})

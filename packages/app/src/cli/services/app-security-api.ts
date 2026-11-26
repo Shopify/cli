@@ -3,6 +3,7 @@ import {
   scanApp,
   SEVERITY_RANK,
   type AppSecurityScan,
+  type CombinedCheck,
   type ScanInput,
   type ScanOptions,
   type Severity,
@@ -12,10 +13,18 @@ export type AppSecurityBlockingLevel = Severity | 'none'
 
 export type AppSecurityExecution = AppSecurityScan & {elapsedMilliseconds: number}
 
-export function securityExitCode(execution: AppSecurityExecution, blocking: AppSecurityBlockingLevel): number {
+/**
+ * The number of combined checks that fail `--blocking`, for `check` and `review` alike: the checks with an active
+ * finding whose severity is at or above the level, whatever their status. Suppressed and superseded findings don't
+ * count, and an unresolved check without active findings passes. Always 0 for `none`.
+ */
+export function blockedCheckCount(checks: CombinedCheck[], blocking: AppSecurityBlockingLevel): number {
   if (blocking === 'none') return 0
-  const blocks = execution.scan.issues.some((issue) => SEVERITY_RANK[issue.severity] >= SEVERITY_RANK[blocking])
-  return blocks ? 1 : 0
+  return checks.filter(
+    (check) =>
+      SEVERITY_RANK[check.severity] >= SEVERITY_RANK[blocking] &&
+      check.findings.some((finding) => finding.disposition === 'active'),
+  ).length
 }
 
 export async function executeAppSecurity({

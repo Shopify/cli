@@ -15,6 +15,8 @@ export default class StoreStripeAuth extends StoreCommand {
 
   static descriptionWithMarkdown = `Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup or stdin.`
 
+  static jsonOutputSchema = storeAuthJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -37,10 +39,6 @@ export default class StoreStripeAuth extends StoreCommand {
       env: 'SHOPIFY_FLAG_SIGNUP',
       required: false,
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return storeAuthJsonOutputSchema
   }
 
   public async run(): Promise<void> {

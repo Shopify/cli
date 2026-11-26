@@ -1,5 +1,58 @@
 # @shopify/cli
 
+## 5.1.0
+
+### Minor Changes
+
+- Run the deterministic `app security check` source rules that don't need React Router on any JavaScript or TypeScript app, and add a `WEAK_SHOP_VALIDATION` rule for shop-domain checks that aren't anchored.
+- Add `--sarif` to `shopify app security review` to print the reviewed checks as SARIF 2.1.0 for GitHub code scanning and other scanning tools.
+- Add support for suppressing app security findings.
+- Require explicit operator permission for custom Theme Checks on `theme check`, `theme language-server`, and `theme push --strict`; ignore consent settings in theme TOML.
+- Stream structured execution and rebuild records from app function replay --json in watch mode.
+- Add JSON lifecycle streaming to app and store GraphiQL commands.
+- Support `theme language-server --json` and `--json-schema` while preserving native LSP output and stderr diagnostics.
+- Add finite Liquid console execution with repeated scripts, script files, and JSON output.
+
+### Patch Changes
+
+- Stop `app security review` from calling deterministic-only checks passed, say how many checks still need the coding agent and how to run them, and print suggested commands' `--path` as an absolute path when the app is outside the working directory.
+- Report configuration lines for callback URL, ScriptTag scope, and API version findings in `app security check`, with distinct keys for insecure URLs.
+- Fix four `shopify app security check` agent prompts that could skip real issues: `MISSING_EMBEDDED_CSP` now detects embedded apps from `embedded = true`, `SSRF_REQUEST_FORGERY` and `SCRIPT_TAG_URL_INJECTION` no longer treat an https-only URL as safe, and `THEME_EXTENSION_XSS` no longer exempts `escape` in executable contexts or `textContent` on `<script>` elements
+- Keep npm-based auto-upgrades on the newest non-deprecated stable release in the installed major, including maintenance fixes after a newer major is released.
+- Show a daily new-major upgrade notice while automatic updates continue within the current major.
+- Auto-upgrade installs the exact version it checked instead of `@shopify/cli@latest`, so a stale version cache can no longer upgrade you to a new major version.
+- Retry temporary Windows file locks when updating dev session metadata.
+- Stop `app build` and `app function build` from crashing with `Unable to update lock within the stale threshold` when the function build lock is reported as compromised, for example on FUSE filesystems.
+- Treat HTTP 520 to 524 edge responses as gateway errors, like 502, 503 and 504
+- Keep Homebrew auto-upgrades on the installed formula and refresh its metadata to find same-major fixes.
+- Fix the HTTP 401 that `app execute`, `app bulk execute` and other app commands that look up a store get with a service account token that has Dev store management access.
+- Keep every character of table cells, such as in `shopify app logs` and `shopify app versions list`, when the terminal is narrower than the table. The table keeps one line per row, and the terminal wraps the long lines.
+- Explain theme passwords with characters that can't be sent, and locked or not yet set up stores, instead of reporting an unknown error.
+
+## 5.0.0
+
+### Major Changes
+
+- 62d961a: Add typed JSON output across CLI commands; update scripts for the new schemas with `--json-schema`, read `store execute` query results from `.data`, and use `--no-watch` with `app function replay --json`.
+
+### Minor Changes
+
+- 62d961a: Improve `app security check` accuracy and safely scan untrusted repositories; add `--print-instructions`, deprecate `--yes`, and require Git 2.38.0 or later for Git operations.
+- e71ac0e: Add typed JSON output to `app security` commands.
+- 6ef6660: Add `app dev --json` streaming and expose session-file schemas with `--json-schema`.
+- 604a2ce: Update cli-hydrogen 13.1.0, adding typed JSON output to Hydrogen commands
+
+### Patch Changes
+
+- 62d961a: Fix lost Shop scopes in `app config link`, legacy Checkout and POS extension migration detection, and UI extension builds with multiple `should_render` targets.
+- adb6a43: Have coding agents run `app security` commands with `--json --no-input` and read their results instead of parsing terminal output.
+- 12cc647: Exit 0 instead of failing when you decline to scan without app configuration in `app security check`.
+- 525289f: Report clipboard failures in `app security instructions --copy` as errors, and in `app security check` as warnings, instead of crashing.
+- e3d8ebb: Report app security results files with out-of-range values as invalid.
+- 62d961a: Protect webhook secrets in debug output, prevent GraphQL cache reuse across tokens, and harden GraphiQL and local command execution.
+- bcbaec8: Explain which access is missing when a token can't manage dev stores, instead of printing a raw GraphQL 401 with the query and a stack trace.
+- 349478a: Preserve graceful shutdown and child-process cleanup on Windows.
+
 ## 4.9.0
 
 ### Minor Changes

@@ -6,7 +6,7 @@ import type {
   JsonExternalErrorSchema,
   jsonErrorOutputSchema,
 } from './schema.js'
-import type {z} from 'zod'
+import type {z} from 'zod/v3'
 
 export type JsonErrorCustomSection = z.infer<typeof JsonErrorCustomSectionSchema>
 export type JsonAbortError = z.infer<typeof JsonAbortErrorSchema>

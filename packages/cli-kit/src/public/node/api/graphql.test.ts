@@ -10,11 +10,13 @@ import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js
 import {nonRandomUUID, sha256} from '../crypto.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import * as system from '../system.js'
+import {AbortError} from '../error.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {parse} from 'graphql'
 import {setupServer} from 'msw/node'
-import {graphql, HttpResponse} from 'msw'
+import {graphql, http, HttpResponse} from 'msw'
 
 let mockedRequestId = 'request-id-123'
 
@@ -89,6 +91,15 @@ const handlers = [
       },
     )
   }),
+  mockApi.query('FailsWithUnauthorizedAndNoBody', () => {
+    // A gateway's 401 has no GraphQL body, so the typed `HttpResponse.json` doesn't fit here.
+    return new HttpResponse(null, {
+      status: 401,
+      headers: {
+        'x-request-id': 'unauthorized-request-id',
+      },
+    })
+  }),
   mockApi.query('FailsWithBadRequest', () => {
     return HttpResponse.json(
       {
@@ -131,6 +142,87 @@ afterEach(() => {
 })
 
 describe('graphqlRequest', () => {
+  test.each([false, true])('retries a throttled nullable query (typed document: %s)', async (useTypedDocument) => {
+    const receivedVariables: unknown[] = []
+    const data = {appsConnection: {edges: [{node: {id: 'app-123'}}]}}
+    server.use(
+      mockApi.query('ListApps', ({variables}) => {
+        receivedVariables.push(variables)
+        if (receivedVariables.length === 1) {
+          return HttpResponse.json(
+            {
+              data: {appsConnection: null},
+              errors: [{message: 'Throttled', path: ['appsConnection'], extensions: {code: 'THROTTLED'}}],
+            },
+            {headers: {'Retry-After': '0'}},
+          )
+        }
+        return HttpResponse.json({data})
+      }),
+    )
+    const query =
+      'query ListApps($query: String) { appsConnection(query: $query, first: 50) { edges { node { id } } } }'
+    const variables = {query: 'title:example'}
+    const options = {api: 'mockApi', url: mockedAddress, variables}
+    const result = useTypedDocument
+      ? await graphqlRequestDoc({...options, query: parse(query)})
+      : await graphqlRequest({...options, query})
+
+    expect(result).toEqual(data)
+    expect(receivedVariables).toEqual([variables, variables])
+  })
+
+  test('retries only the throttled mutation request with its original variables', async () => {
+    const receivedVariables: unknown[] = []
+    server.use(
+      mockApi.mutation('CreateAppVersion', ({variables}) => {
+        receivedVariables.push(variables)
+        if (receivedVariables.length === 1) {
+          return HttpResponse.json(
+            {errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}]},
+            {headers: {'Retry-After': '0'}},
+          )
+        }
+        return HttpResponse.json({data: {appVersionCreate: {version: {id: 'created-version'}}}})
+      }),
+    )
+    const variables = {appId: 'test-app'}
+    const result = await graphqlRequest({
+      api: 'mockApi',
+      url: mockedAddress,
+      query: 'mutation CreateAppVersion($appId: ID!) { appVersionCreate(appId: $appId) { version { id } } }',
+      variables,
+    })
+
+    expect(result).toEqual({appVersionCreate: {version: {id: 'created-version'}}})
+    expect(receivedVariables).toEqual([variables, variables])
+  })
+
+  test('does not repeat a mutation when a throttled response contains partial data', async () => {
+    let requestCount = 0
+    server.use(
+      mockApi.mutation('CreateAppVersion', () => {
+        requestCount++
+        return HttpResponse.json(
+          {
+            data: {appVersionCreate: {version: {id: 'created-version'}}},
+            errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}],
+          },
+          {headers: {'Retry-After': '0'}},
+        )
+      }),
+    )
+    await expect(
+      graphqlRequest({
+        api: 'mockApi',
+        url: mockedAddress,
+        query: 'mutation CreateAppVersion { appVersionCreate { version { id } } }',
+      }),
+    ).rejects.toThrow('Throttled')
+
+    expect(requestCount).toBe(1)
+  })
+
   test('calls debugLogRequestInfo once', async () => {
     let headers: any
     server.events.on('request:start', ({request}) => {
@@ -306,6 +398,102 @@ describe('graphqlRequest', () => {
 
     await expect(res).rejects.toThrow('not authorized')
     expect(requestCount).toBe(2)
+  })
+
+  test('Fails without refreshing the token when the API requires multi-factor authentication', async () => {
+    // Business Platform answers with a plain string in `errors`, which msw's typed GraphQL handlers don't allow.
+    server.use(
+      http.post(mockedAddress, () =>
+        HttpResponse.json(
+          {errors: '[TFA] Unauthorized Access. This store requires two-factor authentication.'},
+          {status: 401, headers: {'x-request-id': 'mfa-request-id'}},
+        ),
+      ),
+    )
+    const tokenRefresh = vi.fn(async () => ({token: 'refreshed-token'}))
+    const res = graphqlRequest({
+      query: 'query RequiresMfa { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      unauthorizedHandler: {type: 'token_refresh', handler: tokenRefresh},
+    })
+
+    let requestCount = 0
+    server.events.on('request:start', () => {
+      requestCount++
+    })
+
+    await expect(res).rejects.toThrow(AbortError)
+    await expect(res).rejects.toThrow(
+      'This action requires you to log in with a secure method, like a passkey or two-step authentication.\n\nRequest ID: mfa-request-id',
+    )
+    expect(tokenRefresh).not.toHaveBeenCalled()
+    expect(requestCount).toBe(1)
+  })
+
+  describe('a 401 that survives the token refresh', () => {
+    const query = 'query FailsWithUnauthorizedAndNoBody { example(secret: $secret) }'
+    const variables = {secret: 'do-not-print-me'}
+
+    test('reports the status without the request when no token refresh function is provided', async () => {
+      const res = graphqlRequest({query, api: 'mockApi', url: mockedAddress, token: mockToken, variables})
+
+      await expect(res).rejects.toMatchObject({
+        statusCode: 401,
+        message:
+          'The mockApi GraphQL API responded unsuccessfully with the HTTP status 401.\n\nRequest ID: unauthorized-request-id',
+      })
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+    })
+
+    test('reports the status without the request when the token cannot be refreshed', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: undefined})},
+      })
+
+      await expect(res).rejects.toMatchObject({statusCode: 401})
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+    })
+
+    test('reports the status without the request when the refreshed token is rejected too', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+      })
+
+      let requestCount = 0
+      server.events.on('request:start', () => {
+        requestCount++
+      })
+
+      await expect(res).rejects.toMatchObject({statusCode: 401})
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+      expect(requestCount).toBe(2)
+    })
+
+    test('keeps the raw error when the caller handles errors itself', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        responseOptions: {handleErrors: false},
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+      })
+
+      await expect(res).rejects.toMatchObject({response: {status: 401}})
+    })
   })
 
   test('Fails without retry when bad request when unauthorized handler is provided', async () => {
@@ -736,5 +924,87 @@ describe('graphqlRequest with caching', () => {
     // Then
     expect(cacheRetrieveSpy).not.toHaveBeenCalled()
     expect(retryAwareSpy).toHaveBeenCalled()
+  })
+})
+
+describe('graphqlRequest with transient server errors', () => {
+  const internalServerError = () =>
+    HttpResponse.json<{errors: {message: string; extensions: {code: string}}[]}>({
+      errors: [
+        {
+          message: 'Internal error. Looks like something went wrong on our end.',
+          extensions: {code: 'INTERNAL_SERVER_ERROR'},
+        },
+      ],
+    })
+  const retryBehaviour = {
+    useNetworkLevelRetry: false,
+    useAbortSignal: false,
+    retryTransientServerErrors: true,
+  } as const
+
+  test('retries a query that fails with INTERNAL_SERVER_ERROR when the behaviour enables it', async () => {
+    let attempts = 0
+    server.use(
+      mockApi.query('Flaky', () => {
+        attempts += 1
+        if (attempts === 1) return internalServerError()
+        return HttpResponse.json({data: {Flaky: {example: 'hello'}}})
+      }),
+    )
+
+    const res = await graphqlRequest({
+      query: 'query Flaky { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      preferredBehaviour: retryBehaviour,
+    })
+
+    expect(res).toEqual({Flaky: {example: 'hello'}})
+    expect(attempts).toEqual(2)
+  })
+
+  test('does not retry a mutation that fails with INTERNAL_SERVER_ERROR, even when the behaviour enables it', async () => {
+    let attempts = 0
+    server.use(
+      mockApi.mutation('FlakyMutation', () => {
+        attempts += 1
+        return internalServerError()
+      }),
+    )
+
+    await expect(
+      graphqlRequest({
+        query: 'mutation FlakyMutation { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        preferredBehaviour: retryBehaviour,
+        responseOptions: {handleErrors: false},
+      }),
+    ).rejects.toThrow()
+    expect(attempts).toEqual(1)
+  })
+
+  test('does not retry INTERNAL_SERVER_ERROR by default', async () => {
+    let attempts = 0
+    server.use(
+      mockApi.query('Flaky', () => {
+        attempts += 1
+        return internalServerError()
+      }),
+    )
+
+    await expect(
+      graphqlRequest({
+        query: 'query Flaky { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        responseOptions: {handleErrors: false},
+      }),
+    ).rejects.toThrow()
+    expect(attempts).toEqual(1)
   })
 })

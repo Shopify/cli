@@ -22,7 +22,7 @@ export function createClientCredentialsTokenProvider({
 }: ClientCredentialsTokenProviderOptions): TokenProvider {
   let cachedToken: string | undefined
 
-  const mint = async (): Promise<string> => {
+  const mint = async (signal?: AbortSignal): Promise<string> => {
     const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -31,6 +31,7 @@ export function createClientCredentialsTokenProvider({
         client_secret: apiSecret,
         grant_type: 'client_credentials',
       }),
+      signal,
     })
 
     const tokenJson = (await tokenResponse.json()) as {access_token?: string}
@@ -43,10 +44,10 @@ export function createClientCredentialsTokenProvider({
   }
 
   return {
-    getToken: async () => cachedToken ?? mint(),
-    refreshToken: async () => {
+    getToken: async (signal) => cachedToken ?? mint(signal),
+    refreshToken: async (signal) => {
       cachedToken = undefined
-      return mint()
+      return mint(signal)
     },
   }
 }

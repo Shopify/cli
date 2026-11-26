@@ -35,6 +35,7 @@ Adhere to the following guidelines in your code:
 
 ### PR creation
 
+- This repository is published from Shopify's internal monorepo, and its `main` branch changes only through the mirror's pull requests. Shopify staff make code changes upstream, not in pull requests here. Pull requests into this repository are for the files the mirror doesn't manage (`.github`, `.spin`, `dev.yml`, `TORRENT_WORKFLOW.md`, `AGENTS.md`, `.agents`, `.claude` and `.cursor`) and for `stable/*` patch branches. Outside contributors still open pull requests here.
 - Use GitHub stacks for multiple dependant PRs.
 - Follow the template from .github/PULL_REQUEST_TEMPLATE.md.
 - Write a concise description, explaining the problem and the high-level approach. Include implementation details only when they help reviewers understand a decision or tradeoff. Avoid repeating what is clear from the diff. Example for the WHAT section: "Refresh expired credentials before retrying the requests, so users can continue without signing in again".
@@ -53,6 +54,16 @@ Keep changeset summaries short: one line maximum.
 Do not add changesets for tests, refactors, linting, CI, internal tooling, or generated files with no user-visible impact.
 
 If the change is not ready to be public, do not add a changeset.
+
+## Releases
+
+- Minor and patch releases ship from `stable/X.Y` branches. `main` never publishes a release: its version bump is made upstream, in Shopify's internal monorepo, after npm has the release, and the mirror carries it here. Nightlies still publish from `main`.
+- Never merge "Version Packages - main" here. It would put commits on `main` that the mirror didn't make, and the mirror would refuse every later publish.
+- Before a minor release, a Dev Experience member creates `stable/X.Y` at a green `main` commit with `git push origin <commit>:refs/heads/stable/X.Y`. Only Dev Experience members can create `stable/*` branches or push to them without a pull request. Force-pushes and deletions stay blocked.
+- Every release, minor or patch, is a "Version Packages - stable/X.Y" pull request. `release.yml`'s Version Packages job pushes the version bump to `changeset-release/stable/X.Y`, but GitHub Actions can't open pull requests here, so a Dev Experience member opens it by hand, closes and reopens it so its checks run, and tests its head commit `H` with the Release QA package workflow (`release-qa-package.yml`).
+- The release owner merges it once `stable/X.Y`'s head is `H`'s parent, with `gh pr merge <number> -R Shopify/cli --merge --admin --match-head-commit <H>`. Use a merge commit (`--merge`): a squash merge publishes nothing. That merge publishes the versions it changed, and nothing else.
+- While a release is open, only its release owner merges into `stable/X.Y`. Anyone else, people and agents alike, asks the release owner first.
+- A patch starts with a backport pull request into `stable/X.Y` with the fix and the same changeset file as on `main`. A Dev Experience member merges it with the branch rules' bypass (`gh pr merge <number> -R Shopify/cli --merge --admin`), with no review; then the same Version Packages steps follow.
 
 ## Further reading
 
@@ -88,5 +99,3 @@ Read the guides that apply to your task.
 - [Contributing to UI Kit](docs/cli-kit/ui-kit/contributing.md): follow component design and testing patterns when changing UI Kit.
 - [Content and UI guidelines](docs/cli-kit/ui-kit/guidelines.md): keep prompts, banners, progress, and logs consistent, and use semantic styling.
 - [Using UI Kit](docs/cli-kit/ui-kit/readme.md): use existing prompt and output APIs for consistent terminal UI.
-
-Follow the check requirements of the active automation task.

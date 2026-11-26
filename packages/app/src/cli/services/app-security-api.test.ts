@@ -1,16 +1,12 @@
-import {
-  securityExitCode,
-  executeAppSecurity,
-  type AppSecurityBlockingLevel,
-  type AppSecurityExecution,
-} from './app-security-api.js'
+import {blockedCheckCount, executeAppSecurity, type AppSecurityBlockingLevel} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
+import {combineFindings} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
-import type {Issue} from './app-security-engine/index.js'
+import type {CombinedCheck, CombinedFinding, Severity, StoredCheckStatus} from './app-security-engine/index.js'
 
 function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-security', 'shopify.app', name)
@@ -32,7 +28,8 @@ afterEach(() => {
 async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
   const execution = await executeAppSecurity(scanInputFor(options.directory))
   const artifacts = await writeCheckArtifacts(options.directory, 'shopify.app', execution)
-  return {execution, artifacts, exitCode: securityExitCode(execution, options.blocking)}
+  const {checks} = combineFindings({deterministic: execution.deterministicFindings, agent: null})
+  return {execution, artifacts, blockedChecks: blockedCheckCount(checks, options.blocking)}
 }
 
 async function createApp(directory: string, source = 'export const loader = () => ({ok: true})'): Promise<string> {
@@ -49,19 +46,69 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
-function executionWithIssues(severities: Issue['severity'][]): AppSecurityExecution {
+function combinedCheck(
+  id: string,
+  severity: Severity,
+  dispositions: CombinedFinding['disposition'][] = ['active'],
+  status: StoredCheckStatus = 'executed',
+): CombinedCheck {
   return {
-    scan: {issues: severities.map((severity) => ({severity}))},
-  } as unknown as AppSecurityExecution
+    id,
+    title: id,
+    severity,
+    description: `Describes ${id}.`,
+    precedence: 'union',
+    applied_precedence: 'union',
+    status,
+    by_source: {deterministic: null, agent: null},
+    findings: dispositions.map((disposition, index) => ({
+      source: 'deterministic',
+      disposition,
+      location: {file: 'app/routes/index.ts', line: index + 1},
+      message: `Finding ${index + 1} of ${id}.`,
+      evidence: [],
+    })),
+  }
 }
 
-describe('securityExitCode', () => {
-  test('returns 1 only when an issue meets the blocking severity', () => {
-    expect(securityExitCode(executionWithIssues(['medium']), 'high')).toBe(0)
-    expect(securityExitCode(executionWithIssues(['medium']), 'medium')).toBe(1)
-    expect(securityExitCode(executionWithIssues(['medium']), 'low')).toBe(1)
-    expect(securityExitCode(executionWithIssues(['high']), 'none')).toBe(0)
-    expect(securityExitCode(executionWithIssues([]), 'low')).toBe(0)
+describe('blockedCheckCount', () => {
+  test('counts the checks with an active finding that meets the blocking severity', () => {
+    const medium = [combinedCheck('OPEN_REDIRECT', 'medium')]
+    expect(blockedCheckCount(medium, 'high')).toBe(0)
+    expect(blockedCheckCount(medium, 'medium')).toBe(1)
+    expect(blockedCheckCount(medium, 'low')).toBe(1)
+    expect(blockedCheckCount([combinedCheck('COMMITTED_SECRET', 'high')], 'none')).toBe(0)
+    expect(blockedCheckCount([combinedCheck('OPEN_REDIRECT', 'high', [])], 'low')).toBe(0)
+  })
+
+  test('counts a check once, however many of its findings meet the blocking severity', () => {
+    const checks = [
+      combinedCheck('COMMITTED_SECRET', 'high', ['active', 'active']),
+      combinedCheck('OPEN_REDIRECT', 'medium'),
+      combinedCheck('EOL_API_VERSION', 'low'),
+    ]
+
+    expect(blockedCheckCount(checks, 'high')).toBe(1)
+    expect(blockedCheckCount(checks, 'medium')).toBe(2)
+    expect(blockedCheckCount(checks, 'low')).toBe(3)
+  })
+
+  test.each<CombinedFinding['disposition']>(['suppressed', 'superseded'])(
+    'excludes %s findings but still counts active findings',
+    (disposition) => {
+      const checks = [
+        combinedCheck('COMMITTED_SECRET', 'high', [disposition, disposition]),
+        combinedCheck('OPEN_REDIRECT', 'medium', [disposition, 'active']),
+      ]
+
+      expect(blockedCheckCount(checks, 'high')).toBe(0)
+      expect(blockedCheckCount(checks, 'low')).toBe(1)
+    },
+  )
+
+  test('counts an active finding of an unresolved check, but not an unresolved check without one', () => {
+    expect(blockedCheckCount([combinedCheck('UNSAFE_INNERHTML', 'high', ['active'], 'unresolved')], 'high')).toBe(1)
+    expect(blockedCheckCount([combinedCheck('UNSAFE_INNERHTML', 'high', [], 'unresolved')], 'high')).toBe(0)
   })
 })
 
@@ -86,7 +133,7 @@ describe('app security CLI integration', () => {
         deterministicFindingsPath: artifactPath(directory, 'deterministic-findings.json'),
         agentChecksPath: artifactPath(directory, 'agent-checks.json'),
       })
-      expect(result.exitCode).toBe(0)
+      expect(result.blockedChecks).toBe(0)
     })
   })
 
@@ -116,7 +163,7 @@ describe('app security CLI integration', () => {
 
       expect(JSON.stringify(result.execution.deterministicFindings)).not.toContain(testToken)
       await expect(readFile(artifactPath(directory, 'deterministic-findings.json'))).resolves.not.toContain(testToken)
-      expect(result.exitCode).toBe(1)
+      expect(result.blockedChecks).toBe(1)
     })
   })
 

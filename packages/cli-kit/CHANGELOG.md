@@ -1,5 +1,39 @@
 # @shopify/cli-kit
 
+## 5.1.0
+
+### Patch Changes
+
+- Keep npm-based auto-upgrades on the newest non-deprecated stable release in the installed major, including maintenance fixes after a newer major is released.
+- Show a daily new-major upgrade notice while automatic updates continue within the current major.
+- Auto-upgrade installs the exact version it checked instead of `@shopify/cli@latest`, so a stale version cache can no longer upgrade you to a new major version.
+- Retry temporary Windows file locks when updating dev session metadata.
+- Treat HTTP 520 to 524 edge responses as gateway errors, like 502, 503 and 504
+- Keep Homebrew auto-upgrades on the installed formula and refresh its metadata to find same-major fixes.
+- Support `theme language-server --json` and `--json-schema` while preserving native LSP output and stderr diagnostics.
+- Also treat `DO_NOT_TRACK=1` as an analytics opt-out, in addition to `SHOPIFY_CLI_NO_ANALYTICS=1` and `OPT_OUT_INSTRUMENTATION=true`.
+- Fix the HTTP 401 that `app execute`, `app bulk execute` and other app commands that look up a store get with a service account token that has Dev store management access.
+- Keep every character of table cells, such as in `shopify app logs` and `shopify app versions list`, when the terminal is narrower than the table. The table keeps one line per row, and the terminal wraps the long lines.
+- Theme commands and the Admin API version check report an HTTP 5xx as a Shopify-side error with its request ID, and theme commands no longer forget the stored theme on one.
+- Explain theme passwords with characters that can't be sent, and locked or not yet set up stores, instead of reporting an unknown error.
+- Retry theme reads that fail with temporary Admin API errors, and show a friendly error with the request ID if they keep failing
+
+## 5.0.0
+
+### Minor Changes
+
+- 62d961a: Improve `app security check` accuracy and safely scan untrusted repositories; add `--print-instructions`, deprecate `--yes`, and require Git 2.38.0 or later for Git operations.
+- 730d051: Add `SHOPIFY_SERVICE_ACCOUNT_TOKEN` for app, store, and organization automation; it replaces the deprecated `SHOPIFY_APP_AUTOMATION_TOKEN` and `SHOPIFY_CLI_PARTNERS_TOKEN`, which remain supported.
+- 62d961a: Fix development theme previews on stores with market subfolders when using account authentication, improve Theme Access authentication, keep pulled files inside the theme directory, and support browser identity verification.
+- 62d961a: Add typed JSON output across CLI commands; update scripts for the new schemas with `--json-schema`, read `store execute` query results from `.data`, and use `--no-watch` with `app function replay --json`.
+
+### Patch Changes
+
+- 62d961a: Retry throttled API requests, report process failures correctly, and keep login available when the browser cannot open.
+- 62d961a: Protect webhook secrets in debug output, prevent GraphQL cache reuse across tokens, and harden GraphiQL and local command execution.
+- bcbaec8: Explain which access is missing when a token can't manage dev stores, instead of printing a raw GraphQL 401 with the query and a stack trace.
+- 349478a: Preserve graceful shutdown and child-process cleanup on Windows.
+
 ## 4.9.0
 
 ### Minor Changes

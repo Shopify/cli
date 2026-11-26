@@ -9,13 +9,17 @@ import {
   ensureNoServiceAccountToken,
   isServiceAccountTokenSet,
   findSessionIdByAlias,
+  logout,
   setCurrentSessionAlias,
   setLastSeenUserId,
 } from './session.js'
 
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
+import {AbortError, shouldReportErrorAsUnexpected} from './error.js'
+import {getAppAutomationToken, getIdentityTokenInformation} from './environment.js'
 import {shopifyFetch} from './http.js'
+import * as fqdnModule from './context/fqdn.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {
   ensureAuthenticated,
   setCommandSessionId,
@@ -24,15 +28,16 @@ import {
 } from '../../private/node/session.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {automationTokenVariable} from '../../private/node/session/automation-token.js'
-import {ApplicationToken} from '../../private/node/session/schema.js'
+import {ApplicationToken, Session} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
+  revokeRefreshToken,
 } from '../../private/node/session/exchange.js'
 import {resolvePermanentStoreFqdn} from '../../private/node/session/permanent-store-domain.js'
 
-import {vi, describe, expect, test} from 'vitest'
+import {vi, describe, expect, test, afterEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -329,6 +334,30 @@ describe('ensureAuthenticatedTheme', () => {
     expect(resolvePermanentStoreFqdn).toHaveBeenCalledWith('renamed-store.myshopify.com')
     expect(got).toEqual({token: 'shptka_password', storeFqdn: 'abc123-xy.myshopify.com'})
   })
+
+  // Synthetic passwords with a line break, an arrow-key escape sequence, the dots that hide a password, and letters
+  // outside ASCII. An HTTP client refuses each one in a request header.
+  test.each([
+    'shptka_0000\n0000',
+    '\u001b[Cshptka_00000000',
+    '\u2022\u2022\u2022\u2022\u2022\u2022',
+    'shptka_\u0160\u0172',
+  ])('rejects a password with a character that a request header cannot carry (%j)', async (password) => {
+    // When
+    const error = await ensureAuthenticatedThemes('mystore.myshopify.com', password).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(
+      "The password for mystore.myshopify.com contains a character that isn't allowed.",
+    )
+    const {message, tryMessage, nextSteps} = error as AbortError
+    expect(`${message} ${tryMessage} ${nextSteps}`).not.toContain(password)
+    expect(setLastSeenAuthMethod).not.toHaveBeenCalled()
+    expect(setLastSeenUserIdAfterAuth).not.toHaveBeenCalled()
+    expect(resolvePermanentStoreFqdn).not.toHaveBeenCalled()
+  })
 })
 
 describe('ensureAuthenticatedBusinessPlatform', () => {
@@ -463,8 +492,8 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
-    // App commands keep the exchange's default Business Platform scopes.
-    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
+    // No fixed scopes, so a service account with Dev store management gets the scope that store lookups need.
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token', [])
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
@@ -511,5 +540,171 @@ describe('ensureAuthenticatedAdminAsApp', () => {
 
     // Then
     await expect(got).rejects.toThrow('Failed to get access token for app client123 on store mystore.myshopify.com')
+  })
+
+  test('normalizes the store before sending the client secret', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    const got = await ensureAuthenticatedAdminAsApp('mystore', 'client123', 'secret456')
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://mystore.myshopify.com/admin/oauth/access_token',
+      expect.anything(),
+      'slow-request',
+    )
+    expect(got).toEqual({token: 'app_access_token', storeFqdn: 'mystore.myshopify.com'})
+  })
+
+  test('only sends the client secret to a Shopify store domain', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    await ensureAuthenticatedAdminAsApp('evil.attacker.test', 'client123', 'secret456')
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://evil.attacker.test.myshopify.com/admin/oauth/access_token',
+      expect.anything(),
+      'slow-request',
+    )
+  })
+
+  test.each(['evil.attacker.test:8443', 'mystore.myshopify.com:8443', 'user@mystore.myshopify.com'])(
+    'rejects %s without sending the client secret',
+    async (store) => {
+      // When
+      const got = ensureAuthenticatedAdminAsApp(store, 'client123', 'secret456')
+
+      // Then
+      await expect(got).rejects.toThrow(`Invalid store value: ${store}`)
+      expect(shopifyFetch).not.toHaveBeenCalled()
+    },
+  )
+})
+
+describe('logout', () => {
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
+  })
+
+  function sessionWithRefreshToken(refreshToken: string, userId: string): Session {
+    return {
+      identity: {accessToken: `access-${userId}`, refreshToken, expiresAt: futureDate, scopes: [], userId},
+      applications: {},
+    }
+  }
+
+  test('revokes every stored refresh token for the current Identity host before removing local data', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue({
+      'fqdn.com': {
+        'user-1': sessionWithRefreshToken('refresh-1', 'user-1'),
+        'user-2': sessionWithRefreshToken('refresh-2', 'user-2'),
+      },
+      'other.fqdn.com': {
+        'user-other': sessionWithRefreshToken('refresh-other', 'user-other'),
+      },
+    })
+    vi.mocked(revokeRefreshToken).mockResolvedValue(true)
+    const output = mockAndCaptureOutput()
+
+    // When
+    await logout()
+
+    // Then
+    expect(revokeRefreshToken).toHaveBeenCalledTimes(2)
+    expect(revokeRefreshToken).toHaveBeenCalledWith('refresh-1')
+    expect(revokeRefreshToken).toHaveBeenCalledWith('refresh-2')
+    expect(revokeRefreshToken).not.toHaveBeenCalledWith('refresh-other')
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+    const removeOrder = vi.mocked(sessionStore.remove).mock.invocationCallOrder[0]!
+    for (const revokeOrder of vi.mocked(revokeRefreshToken).mock.invocationCallOrder) {
+      expect(removeOrder).toBeGreaterThan(revokeOrder)
+    }
+    expect(output.debug()).not.toContain("Couldn't revoke your CLI tokens at Shopify")
+    expect(output.warn()).toBe('')
+  })
+
+  test('removes local data and logs the failure once at debug level when revocation fails', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue({
+      'fqdn.com': {
+        'user-1': sessionWithRefreshToken('refresh-1', 'user-1'),
+        'user-2': sessionWithRefreshToken('refresh-2', 'user-2'),
+      },
+    })
+    vi.mocked(revokeRefreshToken).mockResolvedValue(false)
+    const output = mockAndCaptureOutput()
+
+    // When
+    await logout()
+
+    // Then
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+    expect(output.debug().split("Couldn't revoke your CLI tokens at Shopify").length - 1).toBe(1)
+    expect(output.debug()).not.toContain('refresh-')
+    expect(output.warn()).toBe('')
+  })
+
+  test('removes local data when reading sessions throws', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockRejectedValue(new Error('boom'))
+
+    // When
+    const got = logout()
+
+    // Then
+    await expect(got).rejects.toThrow('boom')
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+  })
+
+  test('does not revoke the refresh token supplied through the environment', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue({
+      'fqdn.com': {
+        'user-env': sessionWithRefreshToken('refresh-env', 'user-env'),
+        'user-1': sessionWithRefreshToken('refresh-1', 'user-1'),
+      },
+    })
+    vi.mocked(getIdentityTokenInformation).mockReturnValue({accessToken: 'a', refreshToken: 'refresh-env', userId: 'u'})
+    vi.mocked(revokeRefreshToken).mockResolvedValue(true)
+
+    // When
+    await logout()
+
+    // Then
+    expect(revokeRefreshToken).toHaveBeenCalledOnce()
+    expect(revokeRefreshToken).toHaveBeenCalledWith('refresh-1')
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+  })
+
+  test('makes no revocation request when there are no stored sessions', async () => {
+    // Given
+    vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue('fqdn.com')
+    vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
+    const output = mockAndCaptureOutput()
+
+    // When
+    await logout()
+
+    // Then
+    expect(revokeRefreshToken).not.toHaveBeenCalled()
+    expect(sessionStore.remove).toHaveBeenCalledOnce()
+    expect(output.debug()).not.toContain("Couldn't revoke your CLI tokens at Shopify")
+    expect(output.warn()).toBe('')
   })
 })

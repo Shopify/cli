@@ -15,6 +15,8 @@ export default class BulkCancel extends AppLinkedCommand {
 
   static descriptionWithMarkdown = 'Cancels a running bulk operation by ID.'
 
+  static jsonOutputSchema = cancelBulkOperationJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
@@ -32,10 +34,6 @@ export default class BulkCancel extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => normalizeStoreFqdn(input),
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return cancelBulkOperationJsonOutputSchema
   }
 
   async run(): Promise<AppLinkedCommandOutput> {

@@ -1,5 +1,10 @@
 import {validateUrl} from '../../app/validation/common.js'
-import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {
+  CustomTransformationConfig,
+  TransformationConfig,
+  appConfigTransform,
+  createConfigExtensionSpecification,
+} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -35,13 +40,36 @@ const AppAccessSchema = BaseSchemaWithoutHandle.extend({
 
 export const AppAccessSpecIdentifier = 'app_access'
 
-const AppAccessTransformConfig: TransformationConfig = {
+const AppAccessFieldMapping: TransformationConfig = {
   access: 'access',
   scopes: 'access_scopes.scopes',
   required_scopes: 'access_scopes.required_scopes',
   optional_scopes: 'access_scopes.optional_scopes',
   use_legacy_install_flow: 'access_scopes.use_legacy_install_flow',
   redirect_url_allowlist: 'auth.redirect_urls',
+}
+
+/**
+ * The platform stores Shop scopes (e.g. `shop_app:oauth`) in a separate `shop_scopes` field, split out of
+ * `scopes` when a version is created. Locally they live in `access_scopes.scopes`, so fold them back in.
+ * Without this, `config link` writes a TOML without the Shop scopes and the next deploy removes them.
+ *
+ * @param remoteContent - The app_access module config as returned by the platform
+ * @returns The config with `shop_scopes` merged into `scopes` and removed
+ */
+function mergeShopScopesIntoScopes(remoteContent: {[key: string]: unknown}): {[key: string]: unknown} {
+  const {shop_scopes: shopScopes, ...rest} = remoteContent
+  const shopScopesString = typeof shopScopes === 'string' ? normalizeDelimitedString(shopScopes) : undefined
+  if (!shopScopesString) return rest
+
+  const platformScopes = typeof rest.scopes === 'string' ? rest.scopes : ''
+  return {...rest, scopes: normalizeDelimitedString([platformScopes, shopScopesString].join(','))}
+}
+
+const AppAccessTransformConfig: CustomTransformationConfig = {
+  forward: (content) => appConfigTransform(content, AppAccessFieldMapping),
+  reverse: (content) =>
+    appConfigTransform(mergeShopScopesIntoScopes(content as {[key: string]: unknown}), AppAccessFieldMapping, true),
 }
 
 const appAccessSpec = createConfigExtensionSpecification({

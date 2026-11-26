@@ -1,5 +1,10 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
-import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
+import {
+  debugLogRequestInfo,
+  errorHandler,
+  isMfaRequiredError,
+  requestIdFromClientError,
+} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
@@ -25,6 +30,7 @@ import {
   ClientError,
 } from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {parse} from 'graphql'
 
 // to replace TVariable type when there graphql query has no variables
 export type Exact<T extends Record<string, unknown>> = {[K in keyof T]: T[K]}
@@ -215,11 +221,23 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       }
     : undefined
 
+  const handleErrors = responseOptions?.handleErrors !== false
+  // Retrying a transient server error is only safe when the request has no side effects.
+  const retryTransientServerErrors = Boolean(behaviour.retryTransientServerErrors) && isQueryOnly(queryAsString)
+
   const request = () =>
     retryAwareRequest(
-      {request: rawGraphQLRequest, url, ...behaviour},
-      responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+      {request: rawGraphQLRequest, url, ...behaviour, retryTransientServerErrors},
+      handleErrors ? errorHandler(api) : undefined,
     )
+
+  // `retryAwareRequest` hands a 401 back raw so the token can be refreshed and the request repeated. Once that is
+  // settled, the error goes through the same handler as every other failed response: a raw graphql-request error
+  // carries the whole request, query text included, and would otherwise reach the user as a CLI bug.
+  const unauthorizedError = (error: unknown): unknown => {
+    if (!handleErrors || !(error instanceof ClientError) || error.response.status !== 401) return error
+    return errorHandler(api)(error, requestIdFromClientError(error))
+  }
 
   const executeWithTimer = () =>
     runWithTimer('cmd_all_timing_network_ms')(async () => {
@@ -227,14 +245,23 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       try {
         response = await request()
       } catch (error) {
-        if (error instanceof ClientError && error.response.status === 401 && tokenRefreshUnauthorizedHandlerFunction) {
+        if (
+          error instanceof ClientError &&
+          error.response.status === 401 &&
+          !isMfaRequiredError(error) &&
+          tokenRefreshUnauthorizedHandlerFunction
+        ) {
           if (await tokenRefreshUnauthorizedHandlerFunction()) {
-            response = await request()
+            try {
+              response = await request()
+            } catch (retryError) {
+              throw unauthorizedError(retryError)
+            }
           } else {
-            throw error
+            throw unauthorizedError(error)
           }
         } else {
-          throw error
+          throw unauthorizedError(error)
         }
       }
 
@@ -276,6 +303,24 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
 
 function graphQLCachePrincipalHash(url: string, token: string | undefined): string {
   return sha256(JSON.stringify([url, token ?? ''])).toString('hex')
+}
+
+/**
+ * Whether a GraphQL document only contains query operations (no mutations or subscriptions).
+ *
+ * @param queryAsString - The GraphQL document as a string.
+ * @returns True when every operation in the document is a query. False if it can't be parsed.
+ */
+function isQueryOnly(queryAsString: string): boolean {
+  try {
+    const operations = parse(queryAsString).definitions.filter(
+      (definition) => definition.kind === 'OperationDefinition',
+    )
+    return operations.length > 0 && operations.every((operation) => operation.operation === 'query')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) {

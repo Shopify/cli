@@ -1,9 +1,5 @@
-import {cliFixture} from './cli.js'
-import {authStatePaths} from './auth-state.js'
 import {BROWSER_TIMEOUT} from './constants.js'
-import {addLoadtestHeader} from '../helpers/loadtest-header.js'
-import {chromium, type Locator, type Page} from '@playwright/test'
-import * as fs from 'fs'
+import type {Locator, Page} from '@playwright/test'
 
 // ---------------------------------------------------------------------------
 // Shared browser context type
@@ -20,7 +16,7 @@ export interface BrowserContext {
 /**
  * Records the HTTP status of the most recent main-frame document response per
  * page. Populated by a `response` listener attached when the page is created
- * (see fixture below). Read via `getLastPageStatus(page)`.
+ * (see `trackMainFrameStatus`). Read via `getLastPageStatus(page)`.
  *
  * A WeakMap lets the entry be garbage-collected with the page — no manual
  * cleanup required.
@@ -39,43 +35,6 @@ export function trackMainFrameStatus(page: Page): void {
 export function getLastPageStatus(page: Page): number | undefined {
   return lastMainFrameStatus.get(page)
 }
-
-// ---------------------------------------------------------------------------
-// Fixture
-// ---------------------------------------------------------------------------
-
-/**
- * Worker-scoped fixture providing a persistent Playwright browser page.
- *
- * The browser launches once per worker and stays open for the entire run.
- * Downstream fixtures (auth) and tests use `browserPage` for any browser-based
- * actions: OAuth login, dashboard navigation, app uninstall/deletion, etc.
- *
- * Fixture chain: envFixture → cliFixture → browserFixture
- */
-export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
-  browserPage: [
-    // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
-      const storageStatePath = authStatePaths().storageStatePath
-      const hasValidStorageState = Boolean(
-        process.env.E2E_ACCOUNT_EMAIL && process.env.E2E_ACCOUNT_PASSWORD && fs.existsSync(storageStatePath),
-      )
-      const context = await browser.newContext({
-        ...(hasValidStorageState ? {storageState: storageStatePath} : {}),
-      })
-      await addLoadtestHeader(context)
-      context.setDefaultTimeout(BROWSER_TIMEOUT.max)
-      context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
-      const page = await context.newPage()
-      trackMainFrameStatus(page)
-      await use(page)
-      await browser.close()
-    },
-    {scope: 'worker'},
-  ],
-})
 
 // ---------------------------------------------------------------------------
 // Browser helpers

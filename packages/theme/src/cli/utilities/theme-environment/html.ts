@@ -1,5 +1,5 @@
 import {getErrorPage} from './hot-reload/error-page.js'
-import {render} from './storefront-renderer.js'
+import {isExitPageRequest, render} from './storefront-renderer.js'
 import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
 import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
 import {injectStandardEventsInspector} from './standard-events.js'
@@ -21,7 +21,11 @@ let themeIdMismatchRedirects = 0
 /** The maximum number of consecutive theme ID mismatch redirects before aborting */
 const MAX_THEME_ID_MISMATCH_REDIRECTS = 5
 
-export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandler {
+export function getHtmlHandler(
+  theme: Theme,
+  ctx: DevServerContext,
+  onFatalError?: (error: AbortError) => void,
+): EventHandler {
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
@@ -72,11 +76,16 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
 
         logRequestLine(event, response, ctx)
 
-        return patchRenderingResponse(ctx, response, (body) => {
-          assertThemeId(response, body, String(theme.id))
-          themeIdMismatchRedirects = 0
-          return handleHotReloadScriptInjection(body, ctx)
-        })
+        return patchRenderingResponse(
+          ctx,
+          response,
+          (body) => {
+            assertThemeId(response, body, String(theme.id))
+            themeIdMismatchRedirects = 0
+            return handleHotReloadScriptInjection(body, ctx)
+          },
+          {keepExternalRedirects: isExitPageRequest({method: event.method, path: browserPathname})},
+        )
       })
       .catch(async (error) => {
         /**
@@ -94,7 +103,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
           if (ctx.session.refresh) {
             themeIdMismatchRedirects++
             if (themeIdMismatchRedirects > MAX_THEME_ID_MISMATCH_REDIRECTS) {
-              renderFatalError(new AbortError(error.getMessage()))
+              const fatalError = new AbortError(error.getMessage())
+              if (onFatalError) {
+                onFatalError(fatalError)
+                return new Response(fatalError.message, {status: 502})
+              }
+              renderFatalError(fatalError)
               process.exit(1)
             }
 

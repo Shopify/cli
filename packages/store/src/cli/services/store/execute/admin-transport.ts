@@ -1,10 +1,11 @@
+import {storeExecuteJsonOutputSchema, type StoreExecuteResult} from './types.js'
 import {
   classifyAdminApiError,
   isGraphQLClientErrorLike,
   throwIfStoredStoreAuthIsInvalid,
   ABORTED_FETCH_MESSAGE_FRAGMENTS,
 } from '../admin-errors.js'
-import {adminUrl} from '@shopify/cli-kit/node/api/admin'
+import {AdminServerError, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -13,7 +14,6 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
-import type {StoreExecuteResult} from './types.js'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 
@@ -65,10 +65,7 @@ export async function fetchPublicApiVersions(input: {
     // Not in `classifyAdminApiError`, which `runAdminStoreGraphQLOperation` also calls. There a
     // 5xx can carry GraphQL errors about the user's own query, which must stay visible.
     if (isGraphQLClientErrorLike(error) && typeof error.response.status === 'number' && error.response.status >= 500) {
-      throw new AbortError(
-        `Couldn't read the supported API versions for ${input.adminSession.storeFqdn}: the Admin API returned a server error (HTTP ${error.response.status}).`,
-        'This is a problem on the Shopify side, not with your command. Wait a moment and run it again.',
-      )
+      throw new AdminServerError(input.adminSession.storeFqdn, error.response.status)
     }
 
     throw error
@@ -83,14 +80,22 @@ export async function runAdminStoreGraphQLOperation(input: {
     return await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
-        return graphqlRequest<StoreExecuteResult>({
+        let extensions: unknown
+        const data = await graphqlRequest<StoreExecuteResult['data']>({
           query: input.request.query,
           api: 'Admin',
           url: adminUrl(input.context.adminSession.storeFqdn, input.context.version, input.context.adminSession),
           token: input.context.adminSession.token,
           variables: input.request.parsedVariables,
-          responseOptions: {handleErrors: false},
+          responseOptions: {
+            handleErrors: false,
+            onResponse: (response) => {
+              extensions = response.extensions
+            },
+          },
         })
+        // Keep response metadata separate from query fields, including aliases named `extensions`.
+        return storeExecuteJsonOutputSchema.validate({data, ...(extensions === undefined ? {} : {extensions})})
       },
       renderOptions: {stdout: process.stderr},
     })
@@ -104,8 +109,13 @@ export async function runAdminStoreGraphQLOperation(input: {
     if (classified) throw classified
 
     if (isGraphQLClientErrorLike(error) && error.response.errors) {
-      const details = {errors: error.response.errors}
-      const graphQLError = new AbortError('GraphQL operation failed.', JSON.stringify(details, null, 2))
+      const {errors, extensions, data} = error.response
+      const details = {
+        errors,
+        ...(extensions === undefined ? {} : {extensions}),
+        ...(data === undefined ? {} : {data}),
+      }
+      const graphQLError = new AbortError('GraphQL operation failed.', JSON.stringify({errors}, null, 2))
       graphQLError.details = details
       throw graphQLError
     }

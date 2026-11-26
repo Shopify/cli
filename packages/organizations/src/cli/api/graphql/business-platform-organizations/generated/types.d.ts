@@ -30,6 +30,12 @@ export type Scalars = {
   BusinessUserID: { input: any; output: any; }
   /** The ID for a BusinessUsersImport. */
   BusinessUsersImportID: { input: any; output: any; }
+  /** The ID for a CoMarketingAttachment. */
+  CoMarketingAttachmentID: { input: any; output: any; }
+  /** The ID for a CoMarketingBudgetLine. */
+  CoMarketingBudgetLineID: { input: any; output: any; }
+  /** A decimal number serialized as a string. Unlike Decimal, a null variable passes through as null. */
+  CoMarketingNullableDecimal: { input: any; output: any; }
   /** The ID for a CollaboratorRelationship. */
   CollaboratorRelationshipID: { input: any; output: any; }
   /** A signed decimal number, which supports arbitrary precision and is serialized as a string. */
@@ -68,12 +74,8 @@ export type Scalars = {
   PersonID: { input: any; output: any; }
   /** The ID for a Principal. */
   PrincipalID: { input: any; output: any; }
-  /** The ID for a Property. */
-  PropertyID: { input: any; output: any; }
   PropertyId: { input: string; output: string; }
   PropertyPublicID: { input: string; output: string; }
-  /** The ID for a PropertyTransferRequest. */
-  PropertyTransferRequestID: { input: any; output: any; }
   /** The ID for a Role. */
   RoleID: { input: any; output: any; }
   /** The ID for a Shop. */

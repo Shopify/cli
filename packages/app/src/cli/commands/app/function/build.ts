@@ -11,9 +11,7 @@ import {renderCommandEventAsJson, runWithCommandEvents} from '@shopify/cli-kit/n
 import {Writable} from 'stream'
 
 export default class FunctionBuild extends AppUnlinkedCommand {
-  static get jsonOutputSchema() {
-    return functionBuildJsonOutputSchema
-  }
+  static jsonOutputSchema = functionBuildJsonOutputSchema
 
   static summary = 'Compile a function to wasm.'
 

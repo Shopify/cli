@@ -18,6 +18,8 @@ export default class BulkExecute extends AppLinkedCommand {
 
   With \`--watch\`, completed results are written as JSONL to stdout or \`--output-file\`. With \`--json\`, stdout contains one result object with operation details and downloaded JSONL in \`resultsJsonl\`. With \`--json --output-file\`, stdout contains only an absolute file receipt with \`path\` and \`format\`.`
 
+  static jsonOutputSchema = executeBulkOperationJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
@@ -25,10 +27,6 @@ export default class BulkExecute extends AppLinkedCommand {
     ...jsonFlag,
     ...appFlags,
     ...bulkOperationFlags,
-  }
-
-  static get jsonOutputSchema() {
-    return executeBulkOperationJsonOutputSchema
   }
 
   async run(): Promise<AppLinkedCommandOutput> {

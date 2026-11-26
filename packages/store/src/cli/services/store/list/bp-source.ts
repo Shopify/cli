@@ -1,6 +1,6 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type StoreListEntry} from './types.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {businessPlatformTokenRefreshHandler, organizationStoresRequestDoc} from '../business-platform.js'
 import {planHandle} from '../plan.js'
 import {storeTypeFilterValue, storeTypeHandle, type StoreTypeFilter} from '../store-type.js'
 import {
@@ -8,7 +8,6 @@ import {
   type ListAccessibleShopsQuery,
 } from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
 import {type ShopFilterInput} from '../../../api/graphql/business-platform-organizations/generated/types.js'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import {type Organization} from '@shopify/organizations'
 
@@ -44,10 +43,9 @@ async function fetchOrganizationStores(
 ): Promise<{entries: StoreListEntry[]; hasMore: boolean}> {
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
-  const result = await businessPlatformOrganizationsRequestDoc({
+  const result = await organizationStoresRequestDoc(organization, {
     query: ListAccessibleShops,
     token,
-    organizationId: organization.id,
     variables: {first: STORE_LIST_LIMIT, filters: shopFilters(storeType)},
     unauthorizedHandler,
   })

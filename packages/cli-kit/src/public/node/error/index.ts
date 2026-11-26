@@ -3,6 +3,7 @@ import {flushStdout, OutputMessage, stringifyMessage, TokenizedString} from '../
 import {tokenItemToString, type InlineToken, type TokenItem} from '../../../private/node/ui/components/token-item.js'
 import {hasRateLimitCode} from '../../../private/node/analytics/graphql-error-codes.js'
 import {isGatewayErrorStatus} from '../../../private/node/api/status-checks.js'
+import {NEW_LOGIN_LABEL} from '../../../private/node/session/constants.js'
 
 import {Errors} from '@oclif/core'
 
@@ -89,6 +90,19 @@ export class AbortError extends FatalError {
   }
 }
 
+/** An API refused a session that didn't use multi-factor authentication. */
+export class MfaRequiredError extends AbortError {
+  constructor(requestId?: string) {
+    const message =
+      'This action requires you to log in with a secure method, like a passkey or two-step authentication.'
+    super(
+      requestId ? `${message}\n\nRequest ID: ${requestId}` : message,
+      `Set up a passkey or two-step authentication for your Shopify account if you haven't already, sign out of Shopify in your browser, then run \`shopify auth login\` and select '${NEW_LOGIN_LABEL}'.`,
+    )
+    this.code = 'MFA_REQUIRED'
+  }
+}
+
 /**
  * An external error is similar to Abort but has extra command and args attributes.
  * This is useful to represent errors coming from external commands, usually executed by execa.
@@ -150,7 +164,8 @@ export async function handler(error: unknown): Promise<unknown> {
   }
 
   const {jsonOutputEnabled} = await import('../environment.js')
-  if (jsonOutputEnabled()) {
+  const {commandEventOutputMode} = await import('../../../private/node/command-event-context.js')
+  if ((commandEventOutputMode() ?? (jsonOutputEnabled() ? 'json' : 'text')) === 'json') {
     const {renderFatalErrorAsJson} = await import('../../../private/node/json-error.js')
     renderFatalErrorAsJson(fatal)
     await flushStdout()
@@ -228,8 +243,8 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
  * HTTP 401 (unauthenticated) is not "transient" in the retry sense — it means the user's session
  * token is expired or invalid, a credential/environment condition (see issue #7891). Rate limiting
  * (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response) matches the shape
- * detected by `errorsIncludeStatus429` in `private/node/api.ts`. Gateway errors (502/503/504) are
- * also expected infrastructure failures.
+ * detected by `errorsIncludeStatus429` in `private/node/api.ts`. Gateway errors (502/503/504, and the
+ * Cloudflare edge errors 520 to 524) are also expected infrastructure failures.
  *
  * Scoped to the external `ClientError` shape only — importing the cli-kit `GraphQLClientError`
  * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.

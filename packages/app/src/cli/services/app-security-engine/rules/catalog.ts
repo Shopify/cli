@@ -387,6 +387,17 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     fix: 'Render settings as text or sanitize with a strict allowlist.',
     docsUrl: `${CHECK_DOCS_BASE_URL}/text-setting-html-smuggling`,
   },
+  {
+    id: 'SHARED_NAMESPACE_METAFIELD_RENDER',
+    title: 'Shared-namespace metafield rendered as active content',
+    severity: 'medium',
+    points: -10,
+    description:
+      'Investigates metafield and metaobject values from shared namespaces, which other installed apps can write, reaching HTML, JavaScript or URL output.',
+    fix: 'Move the field to an app-owned namespace with a declared definition, prefer typed fields such as rich text or URL, or escape the value for its context.',
+    guide: 'https://shopify.dev/docs/apps/build/metafields#metafield-ownership',
+    docsUrl: `${CHECK_DOCS_BASE_URL}/shared-namespace-metafield-render`,
+  },
 ]
 
 /** The shopify.dev page of a check, or undefined when the catalog doesn't know the ID. */

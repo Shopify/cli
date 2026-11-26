@@ -1,10 +1,12 @@
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
-import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
+import {appSecurityInstructions, deliverAppSecurityInstructions} from '../../../services/app-security-instructions.js'
 import {resolveAppSecuritySelection, resultsKey} from '../../../services/app-security-selection.js'
+import {renderSecurityInstructionsResult} from '../../../services/security-instructions/result.js'
+import {appSecurityInstructionsJsonOutputSchema} from '../../../services/security-instructions/types.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class SecurityInstructions extends BaseCommand {
@@ -12,7 +14,11 @@ export default class SecurityInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review app security check results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.
+
+The agent records its findings with \`shopify app security record\`. A suppression in those findings applies only to them, until the next \`record\`: \`record\` never changes \`shopify.app-security.json\`. To save a suppression that you approve to that file, the agent runs \`shopify app security review --suppress\`. Review and commit the file.`
+
+  static jsonOutputSchema = appSecurityInstructionsJsonOutputSchema
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -20,17 +26,20 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
     ...globalFlags,
     ...appSecuritySelectionFlags,
     copy: Flags.boolean({
-      description: 'Copy the instructions to the clipboard instead of printing them.',
+      description:
+        'Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.',
       default: false,
       exclusive: ['write'],
       env: 'SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY',
     }),
     write: Flags.string({
-      description: 'Write the instructions to a file instead of printing them.',
+      description:
+        'Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and Markdown format of the written file.',
       exclusive: ['copy'],
       parse: async (input) => resolvePath(input),
       env: 'SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE',
     }),
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
@@ -43,12 +52,13 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
       withoutAppConfig: flags['without-app-config'],
       allowPrompts: false,
     })
-    await deliverAppSecurityInstructions({
+    const instructions = appSecurityInstructions({
       appDirectory: selection.appDirectory,
       resultsKey: resultsKey(selection),
       commands: resolveAppSecurityCommands(selection, flags.path),
-      copy: flags.copy,
-      writePath: flags.write,
     })
+    const delivery = {copy: flags.copy, writePath: flags.write}
+    await deliverAppSecurityInstructions(instructions, delivery)
+    renderSecurityInstructionsResult(instructions, {selection, delivery}, flags.json ? 'json' : 'text')
   }
 }

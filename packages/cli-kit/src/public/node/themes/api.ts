@@ -19,17 +19,23 @@ import {
   MetafieldOwnerType,
   ThemeRole,
 } from '../../../cli/api/graphql/admin/generated/types.js'
-import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
+import {
+  MetafieldDefinitionsByOwnerType,
+  type MetafieldDefinitionsByOwnerTypeQuery,
+} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
+import {errorHandler, extractGraphQLErrors, requestIdFromClientError} from '../../../private/node/api/graphql.js'
+import {TrustChallengeError, withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
+import {adminRequestDoc, AdminServerError, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
 import {recordTiming, recordEvent, recordError} from '../analytics.js'
+import {isTransientServerError} from '../../../private/node/api.js'
 import {ClientError, type Variables} from 'graphql-request'
 import type {InlineToken, TokenItem} from '../ui.js'
 
@@ -41,6 +47,7 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
   recordCommandRetries: true,
+  retryTransientServerErrors: true,
 }
 const DEFAULT_THEME_ACCESS_REQUIREMENT = 'the required theme access scope'
 
@@ -69,6 +76,8 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    // A server error does not mean that the theme is missing. Callers remove their stored theme ID on `undefined`.
+    abortIfServerError(error, session)
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -239,7 +248,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
   for (let i = 0; i < filenames.length; i += batchSize) {
     const batch = filenames.slice(i, i + batchSize)
     // eslint-disable-next-line no-await-in-loop
-    const {themeFilesDelete} = await adminRequestDoc({
+    const {themeFilesDelete} = await requestThemeAdminDoc({
       query: ThemeFilesDelete,
       session,
       variables: {
@@ -329,7 +338,7 @@ async function uploadFiles(
   files: {filename: string; body: {type: OnlineStoreThemeFileBodyInputType; value: string}}[],
   session: AdminSession,
 ): Promise<ThemeFilesUpsertMutation> {
-  return adminRequestDoc({
+  return requestThemeAdminDoc({
     query: ThemeFilesUpsert,
     session,
     variables: {themeId: themeGid(themeId), files},
@@ -417,7 +426,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
   }
   recordEvent('theme-api:update-theme')
 
-  const {themeUpdate} = await adminRequestDoc({
+  const {themeUpdate} = await requestThemeAdminDoc({
     query: ThemeUpdate,
     session,
     variables: {id: composeThemeGid(id), input},
@@ -448,7 +457,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
 
 export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
   recordEvent('theme-api:publish-theme')
-  const {themePublish} = await adminRequestDoc({
+  const {themePublish} = await requestThemeAdminDoc({
     query: ThemePublish,
     session,
     variables: {id: composeThemeGid(id)},
@@ -479,7 +488,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
 
 export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
   recordEvent('theme-api:delete-theme')
-  const {themeDelete} = await adminRequestDoc({
+  const {themeDelete} = await requestThemeAdminDoc({
     query: ThemeDelete,
     session,
     variables: {id: composeThemeGid(id)},
@@ -518,7 +527,7 @@ export async function themeDuplicate(
   let requestId: string | undefined
   recordEvent('theme-api:duplicate-theme')
 
-  const {themeDuplicate} = await adminRequestDoc({
+  const {themeDuplicate} = await requestThemeAdminDoc({
     query: ThemeDuplicate,
     session,
     variables: {id: composeThemeGid(id), name},
@@ -574,13 +583,23 @@ export async function themeDuplicate(
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
   recordEvent('theme-api:fetch-metafield-definitions')
-  const {metafieldDefinitions} = await adminRequestDoc({
-    query: MetafieldDefinitionsByOwnerType,
-    session,
-    variables: {ownerType: type},
-  })
+  const definitions: MetafieldDefinitionsByOwnerTypeQuery['metafieldDefinitions']['nodes'] = []
+  let after: string | null = null
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const {metafieldDefinitions}: MetafieldDefinitionsByOwnerTypeQuery = await requestThemeReadDoc({
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: type, after},
+    })
+    definitions.push(...metafieldDefinitions.nodes)
+    if (!metafieldDefinitions.pageInfo.hasNextPage) break
+    const endCursor: string | null | undefined = metafieldDefinitions.pageInfo.endCursor
+    if (!endCursor || endCursor === after) unexpectedGraphQLError('Failed to paginate metafield definitions')
+    after = endCursor
+  }
 
-  return metafieldDefinitions.nodes.map((definition) => ({
+  return definitions.map((definition) => ({
     key: definition.key,
     namespace: definition.namespace,
     name: definition.name,
@@ -594,7 +613,7 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
 
 export async function passwordProtected(session: AdminSession): Promise<boolean> {
   recordEvent('theme-api:check-password-protection')
-  const {onlineStore} = await adminRequestDoc({
+  const {onlineStore} = await requestThemeReadDoc({
     query: OnlineStorePasswordProtection,
     session,
   })
@@ -611,21 +630,83 @@ function unexpectedGraphQLError(message: string): never {
   throw recordError(new AbortError(message))
 }
 
+/**
+ * Whether the error ends a Trust Battery challenge on a theme request. A caller that
+ * retries theme requests must rethrow it, or the user is asked to verify again for
+ * each attempt.
+ *
+ * @param error - The error to check.
+ * @returns True when the error ends a Trust Battery challenge.
+ */
+export function isTrustChallengeError(error: unknown): boolean {
+  return error instanceof TrustChallengeError
+}
+
 async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
   options: AdminRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   try {
-    const response = await adminRequestDoc(options)
+    const response = await withTrustChallengeRetry(() => adminRequestDoc(options))
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    abortIfServerError(error, options.session)
     throw error
   }
 }
 
-function abortIfMissingThemeAccessScope(error: unknown): void {
-  if (!(error instanceof ClientError)) return
+/**
+ * Requests a theme read with transient retries. A server error gets the Shopify-side theme error;
+ * any other API failure gets the default Admin API error mapping.
+ *
+ * @param options - The Admin API request, without response options or request behaviour.
+ * @returns The response data.
+ */
+async function requestThemeReadDoc<TResult, TVariables extends Variables>(
+  options: Omit<AdminRequestOptions<TResult, TVariables>, 'responseOptions' | 'preferredBehaviour'>,
+): Promise<TResult> {
+  try {
+    return await requestThemeAdminDoc({
+      ...options,
+      responseOptions: {handleErrors: false},
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    })
+  } catch (error) {
+    throw error instanceof ClientError ? errorHandler('Admin')(error, clientErrorRequestId(error)) : error
+  }
+}
 
+/**
+ * Turns a Shopify-side failure of a theme request into an `AbortError`, so it does not reach the
+ * error reporter as a CLI bug. It covers every HTTP 5xx, and a transient server error that still
+ * fails after its retries. Theme requests set `handleErrors: false`, so the GraphQL error handler
+ * does not map these errors for them.
+ *
+ * @param error - The error thrown by the Admin API request.
+ * @param session - The session of the request, for the store name in the message.
+ */
+function abortIfServerError(error: unknown, session: AdminSession): void {
+  if (!(error instanceof ClientError)) return
+  const {status} = error.response
+  if (status < 500 && !isTransientServerError(error)) return
+
+  throw recordError(
+    new AdminServerError(session.storeFqdn, status >= 500 ? status : undefined, clientErrorRequestId(error)),
+  )
+}
+
+function clientErrorRequestId(error: ClientError): string | undefined {
+  const errors: unknown = error.response.errors
+  if (Array.isArray(errors)) {
+    for (const entry of errors) {
+      const requestId = (entry as {extensions?: {requestId?: unknown}} | undefined)?.extensions?.requestId
+      if (typeof requestId === 'string') return requestId
+    }
+  }
+  return requestIdFromClientError(error)
+}
+
+function abortIfMissingThemeAccessScope(error: unknown): void {
   const requiredAccess = getThemeAccessRequirementForAccessDeniedError(error)
   if (!requiredAccess) return
 
@@ -650,8 +731,17 @@ function abortIfMissingThemeAccessScope(error: unknown): void {
     [
       'For',
       {command: 'theme push'},
-      'and',
+      {char: ','},
       {command: 'theme dev'},
+      {char: ','},
+      {command: 'theme publish'},
+      {char: ','},
+      {command: 'theme delete'},
+      {char: ','},
+      {command: 'theme rename'},
+      {char: ','},
+      'and',
+      {command: 'theme duplicate'},
       {char: ','},
       'add both the',
       {command: 'read_themes'},
@@ -674,11 +764,10 @@ function abortIfMissingThemeAccessScope(error: unknown): void {
   )
 }
 
-function getThemeAccessRequirementForAccessDeniedError(error: ClientError): string | undefined {
-  const graphQLErrors = error.response.errors
-  if (!Array.isArray(graphQLErrors)) return undefined
-
-  const accessDeniedError = graphQLErrors.find((graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED')
+function getThemeAccessRequirementForAccessDeniedError(error: unknown): string | undefined {
+  const accessDeniedError = extractGraphQLErrors(error).find(
+    (graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED',
+  )
   if (!accessDeniedError) return undefined
 
   const requiredAccess = accessDeniedError.extensions?.requiredAccess

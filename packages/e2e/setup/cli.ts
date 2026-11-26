@@ -40,11 +40,16 @@ export interface SpawnedProcess {
 
 export interface CLIProcess {
   /** Execute a CLI command non-interactively via execa */
-  exec(args: string[], opts?: {cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number}): Promise<ExecResult>
+  exec(
+    args: string[],
+    opts?: {cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number; quiet?: boolean},
+  ): Promise<ExecResult>
   /** Execute the create-app binary non-interactively via execa */
   execCreateApp(args: string[], opts?: {cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number}): Promise<ExecResult>
   /** Spawn an interactive CLI command via node-pty */
   spawn(args: string[], opts?: {cwd?: string; env?: NodeJS.ProcessEnv}): Promise<SpawnedProcess>
+  /** Stop all owned interactive processes before resetting their remote state. */
+  stopAll(): Promise<void>
 }
 
 /**
@@ -59,9 +64,9 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
     // When DEBUG=1, tee the subprocess streams to the parent so the CLI's
     // info/success boxes and progress messages appear live, while still
     // letting execa buffer and return the captured output.
-    const runExeca = (bin: string, args: string[], execaOpts: ExecaOptions) => {
+    const runExeca = (bin: string, args: string[], execaOpts: ExecaOptions, quiet = false) => {
       const subprocess = execa('node', [bin, ...args], execaOpts)
-      if (process.env.DEBUG === '1') {
+      if (process.env.DEBUG === '1' && !quiet) {
         subprocess.stdout?.pipe(process.stdout, {end: false})
         subprocess.stderr?.pipe(process.stderr, {end: false})
       }
@@ -69,6 +74,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
     }
 
     const cli: CLIProcess = {
+      async stopAll() {
+        for (const proc of spawnedProcesses) proc.kill()
+        await Promise.all(spawnedProcesses.map((proc) => proc.waitForExit(CLI_TIMEOUT.short)))
+      },
       async exec(args, opts = {}) {
         const timeout = opts.timeout ?? CLI_TIMEOUT.medium
         const execaOpts: ExecaOptions = {
@@ -81,7 +90,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         cliLog.log(env, `exec: node ${executables.cli}`)
         cliLog.log(env, args.join(' '))
 
-        const result = await runExeca(executables.cli, args, execaOpts)
+        const result = await runExeca(executables.cli, args, execaOpts, opts.quiet)
 
         return {
           stdout: result.stdout ?? '',
@@ -154,17 +163,20 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         })
 
         let exitCode: number | undefined
-        let exitResolve: ((code: number) => void) | undefined
+        const exitListeners = new Set<(code: number) => void>()
 
         ptyProcess.onExit(({exitCode: code}) => {
           exitCode = code
-          if (exitResolve) {
-            exitResolve(code)
-          }
+          for (const listener of exitListeners) listener(code)
+          exitListeners.clear()
           // Reject any remaining output waiters. reject() removes each waiter
           // from outputWaiters, so iterate over a snapshot to avoid skipping.
           for (const waiter of [...outputWaiters]) {
-            waiter.reject(new Error(`Process exited (code ${code}) while waiting for output: "${waiter.text}"`))
+            waiter.reject(
+              new Error(
+                `Process exited (code ${code}) while waiting for output: "${waiter.text}"\n\nCaptured output:\n${stripAnsi(output)}`,
+              ),
+            )
           }
         })
 
@@ -247,17 +259,20 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
 
             return new Promise<number>((resolve, reject) => {
               const timer = setTimeout(() => {
+                exitListeners.delete(onExit)
                 reject(new Error(`Timed out after ${timeoutMs}ms waiting for process exit`))
               }, timeoutMs)
 
-              exitResolve = (code) => {
+              const onExit = (code: number) => {
                 clearTimeout(timer)
                 resolve(code)
               }
+              exitListeners.add(onExit)
             })
           },
 
           kill() {
+            if (exitCode !== undefined) return
             try {
               ptyProcess.kill()
               // eslint-disable-next-line no-catch-all/no-catch-all
@@ -276,11 +291,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       },
     }
 
-    await use(cli)
-
-    // Teardown: kill all spawned processes
-    for (const proc of spawnedProcesses) {
-      proc.kill()
+    try {
+      await use(cli)
+    } finally {
+      await cli.stopAll()
     }
   },
 })

@@ -1,7 +1,7 @@
 import {deleteDevStoreJsonOutputSchema} from './types.js'
 import {deleteDevStore, toOrganizationsShopifyShopId} from './dev.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedBusinessPlatform, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -13,6 +13,7 @@ vi.mock('@shopify/cli-kit/node/api/business-platform', () => ({
 
 vi.mock('@shopify/cli-kit/node/session', () => ({
   ensureAuthenticatedBusinessPlatform: vi.fn(),
+  isServiceAccountTokenSet: vi.fn(),
 }))
 
 vi.mock('@shopify/cli-kit/node/ui', () => ({
@@ -268,6 +269,19 @@ describe('deleteDevStore', () => {
       expect.objectContaining({headline: expect.stringContaining('deleted successfully')}),
     )
     expect(renderWarning).not.toHaveBeenCalled()
+  })
+
+  test('explains the missing dev store access when the Organizations API refuses a service account', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(
+      Object.assign(new Error('The Business Platform GraphQL API responded unsuccessfully with the HTTP status 401.'), {
+        statusCode: 401,
+      }),
+    )
+
+    await expect(deleteDevStore(defaultOptions)).rejects.toThrow(
+      "This service account can't manage dev stores in Test Org.",
+    )
   })
 })
 

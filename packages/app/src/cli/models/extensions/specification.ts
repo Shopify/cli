@@ -422,7 +422,7 @@ function resolveReverseAppConfigTransform<T>(
  * @returns the transformed object
  */
 
-function appConfigTransform(
+export function appConfigTransform(
   content: object,
   config: TransformationConfig | CustomTransformationConfig,
   reverse = false,

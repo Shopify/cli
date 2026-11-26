@@ -1,78 +1,21 @@
-import {checkFolderIsValidApp} from '../../models/app/loader.js'
-import {logs, Format} from '../../services/logs.js'
-import {appFlags} from '../../flags.js'
-import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
-import {storeContext} from '../../services/store-context.js'
-import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
-export default class Logs extends AppLinkedCommand {
-  static summary = 'Stream detailed logs for your Shopify app.'
+export default class Logs extends Command {
+  static hidden = true
 
-  static descriptionWithMarkdown = `
-  Opens a real-time stream of detailed app logs from the selected app and store.
-  Use the \`--source\` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the \`shopify app logs sources\` command to view a list of sources.
-  Use the \`--status\` argument to filter on status, either \`success\` or \`failure\`.
-  \`\`\`
-  shopify app logs --status=success --source=extension.discount-function
-  \`\`\`
-  `
+  static strict = false
 
-  static description = this.descriptionForHelp()
+  static summary = 'App logs were removed in Shopify CLI 5.0.'
 
-  static flags = {
-    ...globalFlags,
-    ...appFlags,
-    ...jsonFlag,
-    store: Flags.string({
-      char: 's',
-      description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
-      env: 'SHOPIFY_FLAG_STORE',
-      multiple: true,
-      parse: async (input) => normalizeStoreFqdn(input),
-    }),
-    source: Flags.string({
-      description: 'Filters output to the specified log source.',
-      env: 'SHOPIFY_FLAG_SOURCE',
-      multiple: true,
-    }),
-    status: Flags.string({
-      description: 'Filters output to the specified status (success or failure).',
-      options: ['success', 'failure'],
-      env: 'SHOPIFY_FLAG_STATUS',
-    }),
-  }
+  static flags = {...globalFlags, ...jsonFlag}
 
-  public async run(): Promise<AppLinkedCommandOutput> {
-    const {flags} = await this.parse(Logs)
-
-    await checkFolderIsValidApp(flags.path)
-
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-
-    const primaryStore = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store?.[0],
-      forceReselectStore: flags.reset,
-    })
-
-    const logOptions = {
-      ...appContextResult,
-      primaryStore,
-      storeFqdns: flags.store,
-      sources: flags.source,
-      status: flags.status,
-      format: (flags.json ? 'json' : 'text') as Format,
-    }
-
-    await logs(logOptions)
-    return {app: appContextResult.app}
+  async run(): Promise<void> {
+    // Skip parsing so legacy flags and the removed sources subcommand receive the migration guidance.
+    throw new AbortError(
+      '`shopify app logs` and `shopify app logs sources` were removed in Shopify CLI 5.0. ' +
+        'To see Function logs, run `shopify app dev`.',
+    )
   }
 }

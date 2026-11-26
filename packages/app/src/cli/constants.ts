@@ -6,6 +6,7 @@ export const environmentVariableNames = {
   templatesJsonPath: 'SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH',
   mkcertBinaryPath: 'SHOPIFY_CLI_MKCERT_BINARY',
   disableMinificationOnDev: 'SHOPIFY_CLI_DISABLE_MINIFICATION_ON_DEV',
+  appClientSecret: 'SHOPIFY_CLI_APP_CLIENT_SECRET',
 }
 
 export const configurationFileNames = {

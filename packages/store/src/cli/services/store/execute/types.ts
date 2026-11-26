@@ -3,8 +3,18 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 export const storeExecuteJsonOutputSchema = defineJsonOutputSchema({
   name: 'StoreExecuteResult',
-  // The caller's query owns the response fields, including aliases and nested values.
-  schema: zod.record(zod.unknown()).nullable(),
+  schema: zod
+    .object({
+      data: zod
+        .record(zod.unknown())
+        .nullable()
+        .describe('GraphQL response data, preserving query fields and aliases.'),
+      extensions: zod
+        .record(zod.unknown())
+        .optional()
+        .describe('Response-level GraphQL metadata, when returned by the API.'),
+    })
+    .strict(),
 })
 
 export type StoreExecuteResult = InferJsonOutputSchema<typeof storeExecuteJsonOutputSchema>

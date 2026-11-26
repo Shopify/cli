@@ -1,7 +1,8 @@
-import {autocorrectStatus} from '../../../services/constants.js'
-import {isAutocorrectEnabled} from '../../../services/conf.js'
+import {getAutocorrectStatus} from '../../../services/autocorrect/index.js'
+import {presentAutocorrectResult} from '../../../services/autocorrect/result.js'
+import {autocorrectJsonOutputSchema} from '../../../services/autocorrect/types.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class AutocorrectStatus extends Command {
   static summary = 'Check whether autocorrect is enabled or disabled. On by default.'
@@ -13,13 +14,18 @@ export default class AutocorrectStatus extends Command {
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 `
 
+  static jsonOutputSchema = autocorrectJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
+  static flags = {
+    ...globalFlags,
+    ...jsonFlag,
+  }
+
   async run(): Promise<void> {
-    if (isAutocorrectEnabled()) {
-      renderInfo({body: autocorrectStatus.on})
-    } else {
-      renderInfo({body: autocorrectStatus.off})
-    }
+    const {flags} = await this.parse(AutocorrectStatus)
+    const result = getAutocorrectStatus()
+    presentAutocorrectResult(result, flags.json ? 'json' : 'text')
   }
 }

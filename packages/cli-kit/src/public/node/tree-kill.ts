@@ -70,12 +70,22 @@ function adaptedTreeKill(
   switch (process.platform) {
     case 'win32': {
       // Security: Use spawn instead of exec to avoid shell injection when killing processes on Windows
-      const taskkill = spawn('taskkill', ['/pid', rootPid, '/T', '/F'])
+      // Exclude the querying PowerShell process as well as the root when only children should stop.
+      const command = killRoot ? 'taskkill' : 'powershell.exe'
+      const args = killRoot
+        ? ['/pid', rootPid, '/T', '/F']
+        : [
+            '-NoProfile',
+            '-NonInteractive',
+            '-Command',
+            `Get-CimInstance Win32_Process -Filter "ParentProcessId = ${rootPid} AND ProcessId <> $PID" -ErrorAction Stop | ForEach-Object { taskkill /pid $_.ProcessId /T /F | Out-Null }`,
+          ]
+      const taskkill = spawn(command, args)
       taskkill.on('close', (code: number) => {
         if (code === 0) {
           callback()
         } else {
-          callback(new Error(`taskkill exited with code ${code}`))
+          callback(new Error(`${command} exited with code ${code}`))
         }
       })
       break

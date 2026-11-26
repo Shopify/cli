@@ -76,9 +76,9 @@ describe('framework and surface detection', () => {
       unknown.scan.checks_executed.find((execution) => execution.id === 'MISSING_COMPLIANCE_WEBHOOKS'),
     ).toMatchObject({status: 'executed'})
     expect(unknown.issues.some((issue) => issue.id === 'MISSING_COMPLIANCE_WEBHOOKS')).toBe(true)
-    expect(
-      unknown.scan.checks_executed.find((execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT')?.status,
-    ).toBe('unsupported_framework')
+    expect(unknown.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')?.status).toBe(
+      'unsupported_framework',
+    )
   })
 
   test('owns expiring-token applicability and unresolved handoff at runtime', async () => {
@@ -278,8 +278,7 @@ describe('framework and surface detection', () => {
     )
     expect(genericReactRouter.detection.framework).toBe('unknown')
     expect(
-      genericReactRouter.scan.checks_executed.find((execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT')
-        ?.status,
+      genericReactRouter.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')?.status,
     ).toBe('unsupported_framework')
 
     const unsupportedStatuses = await Promise.all(
@@ -287,11 +286,174 @@ describe('framework and surface detection', () => {
         const unsupported = await scan(
           await app({'shopify.app.toml': appConfig(), [`app/server.${extension}`]: 'def route; end'}),
         )
-        return unsupported.scan.checks_executed.find((execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT')
-          ?.status
+        return unsupported.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')?.status
       }),
     )
     expect(unsupportedStatuses).toEqual(Array.from({length: 4}, () => 'unsupported_framework'))
+  })
+
+  test('gives an Express app deterministic findings from framework-agnostic rules', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': JSON.stringify({dependencies: {express: '^4.19.2', '@shopify/shopify-api': '^11.0.0'}}),
+      'server.js': `import express from 'express'
+
+const app = express()
+
+app.get('/auth', async (req, res) => {
+  const shop = req.query.shop
+  if (!/myshopify\\.com/.test(shop)) return res.status(400).send('Invalid shop')
+  console.log('Installed', session.accessToken)
+  return res.json({shop})
+})
+`,
+    })
+
+    const result = await scan(directory)
+
+    expect(result.detection).toMatchObject({framework: 'unknown', surface: 'unknown'})
+    expect(result.issues.map((issue) => issue.id)).toEqual(
+      expect.arrayContaining(['CREDENTIAL_LOG_LEAKAGE', 'WEAK_SHOP_VALIDATION']),
+    )
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'CREDENTIAL_LOG_LEAKAGE')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+    })
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'WEAK_SHOP_VALIDATION')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+    })
+    // Checks that read React Router's route semantics stay gated to React Router apps.
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')?.status).toBe(
+      'unsupported_framework',
+    )
+  })
+
+  test('accepts an anchored shop-domain check in an app without React Router', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': JSON.stringify({dependencies: {express: '^4.19.2'}}),
+      'server.js': `import express from 'express'
+
+const app = express()
+
+app.get('/auth', (req, res) => {
+  const shop = req.query.shop
+  if (!/^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$/.test(shop)) return res.status(400).send('Invalid shop')
+  return res.json({shop})
+})
+`,
+    })
+
+    const result = await scan(directory)
+
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'WEAK_SHOP_VALIDATION')).toMatchObject({
+      status: 'executed',
+      findings: 0,
+    })
+    expect(result.issues.filter((issue) => issue.id === 'WEAK_SHOP_VALIDATION')).toEqual([])
+  })
+
+  test('keeps widened rules unresolved when the app source language is unsupported', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'app/controllers/x_controller.rb': `class X
+  def index
+    Rails.logger.info(session[:access_token])
+  end
+end
+`,
+    })
+
+    const result = await scan(directory)
+
+    expect(result.detection).toMatchObject({framework: 'unknown', surface: 'unknown'})
+    for (const id of [
+      'CREDENTIAL_LOG_LEAKAGE',
+      'REQUEST_CONTROLLED_ADMIN_CONTEXT',
+      'UNSAFE_INNERHTML',
+      'WEAK_SHOP_VALIDATION',
+    ]) {
+      expect(
+        result.scan.checks_executed.find((execution) => execution.id === id),
+        id,
+      ).toMatchObject({
+        status: 'unresolved',
+        applicable: true,
+        reason: {code: 'unsupported_language', message: expect.stringContaining('ruby')},
+      })
+    }
+    expect(result.scan.coverage_gaps).toContainEqual(
+      expect.objectContaining({code: 'unresolved_check', check_id: 'WEAK_SHOP_VALIDATION'}),
+    )
+    expect(result.scan.coverage_gaps).toContainEqual(expect.objectContaining({code: 'unsupported_language'}))
+    expect(
+      result.scan.checks_executed.find((execution) => execution.id === 'APP_PROXY_LIQUID_INJECTION'),
+    ).toMatchObject({status: 'not_applicable', reason: {code: 'capability_absent'}})
+
+    const configOnly = await scan(await app({'shopify.app.toml': appConfig()}))
+    expect(configOnly.scan.checks_executed.find((execution) => execution.id === 'WEAK_SHOP_VALIDATION')).toMatchObject({
+      status: 'not_applicable',
+      reason: {code: 'no_relevant_files'},
+    })
+  })
+
+  test('keeps widened rules unresolved when unsupported app source sits beside supported files they do not read', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'app/controllers/x_controller.rb': 'class X\nend\n',
+      'public/404.html': '<html><body>The page you were looking for does not exist.</body></html>\n',
+    })
+
+    const result = await scan(directory)
+
+    for (const id of [
+      'CREDENTIAL_LOG_LEAKAGE',
+      'DEPRECATED_SCRIPT_TAG_SCOPE',
+      'REQUEST_CONTROLLED_ADMIN_CONTEXT',
+      'UNSAFE_INNERHTML',
+      'WEAK_SHOP_VALIDATION',
+    ]) {
+      expect(
+        result.scan.checks_executed.find((execution) => execution.id === id),
+        id,
+      ).toMatchObject({
+        status: 'unresolved',
+        applicable: true,
+        reason: {code: 'unsupported_language', message: expect.stringMatching(/: ruby\.$/)},
+      })
+    }
+  })
+
+  test('keeps a React Router template free of findings from the widened rules', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': reactPackage,
+      'app/shopify.server.ts': 'export default shopifyApp({})',
+      'app/routes/app._index.tsx': `export const loader = async ({request}) => {
+  const {session} = await authenticate.admin(request)
+  return {shop: session.shop}
+}
+`,
+    })
+
+    const result = await scan(directory)
+
+    expect(result.detection.framework).toBe('react_router')
+    expect(
+      result.issues.filter((issue) => issue.id === 'CREDENTIAL_LOG_LEAKAGE' || issue.id === 'WEAK_SHOP_VALIDATION'),
+    ).toEqual([])
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'CREDENTIAL_LOG_LEAKAGE')).toMatchObject({
+      status: 'executed',
+      findings: 0,
+    })
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'WEAK_SHOP_VALIDATION')).toMatchObject({
+      status: 'executed',
+      findings: 0,
+    })
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')?.status).toBe(
+      'executed',
+    )
   })
 
   test('detects server template formats as source languages', async () => {

@@ -10,7 +10,8 @@ import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watch
 import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
 
@@ -82,9 +83,9 @@ export interface ExtensionDevOptions {
   storeFqdn: string
 
   /**
-   * Id of the store where the extension wants to be previewed
+   * Id of the store where the extension wants to be previewed. Unknown when a service account runs dev.
    */
-  storeId: string
+  storeId?: string
 
   /**
    * List of granted approval scopes belonging to the parent app
@@ -162,7 +163,15 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       switch (event.type) {
         case EventType.Created:
           payloadOptions.extensions.push(event.extension)
-          if (!payloadOptions.checkoutCartUrl) {
+          if (!payloadOptions.checkoutCartUrl && isServiceAccountTokenSet()) {
+            // A service account can't look up a product for the cart, and stopping here would end the dev session.
+            if (event.extension.shouldFetchCartUrl()) {
+              outputWarn(
+                `${event.extension.localIdentifier} can't be previewed without a cart. Restart dev with --checkout-cart-url, in the format "/cart/{productVariantID}:{productQuantity}".`,
+                payloadOptions.stderr,
+              )
+            }
+          } else if (!payloadOptions.checkoutCartUrl) {
             const cartUrl = await buildCartURLIfNeeded(payloadOptions.extensions, payloadOptions.storeFqdn)
             // eslint-disable-next-line require-atomic-updates
             payloadOptions.checkoutCartUrl = cartUrl

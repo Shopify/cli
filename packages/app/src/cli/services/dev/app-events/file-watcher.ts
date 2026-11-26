@@ -18,6 +18,24 @@ const EXTENSION_CREATION_CHECK_INTERVAL_IN_MS = 200
 const FILE_DELETE_TIMEOUT_IN_MS = 500
 
 /**
+ * Exclude these paths before chokidar traverses them to avoid allocating watchers
+ * or polling files whose events would be discarded later.
+ */
+const ALWAYS_IGNORED_PATHS = [
+  // Dependencies and version control
+  '**/node_modules/**',
+  '**/.git/**',
+  // Files the CLI writes itself: dev and deploy bundles, certificates, app security results
+  '**/.shopify/**',
+  // macOS Finder metadata
+  '**/.DS_Store',
+  // Editor swap and backup files
+  '**/*.swp',
+  '**/*.swo',
+  '**/*~',
+]
+
+/**
  * Event emitted by the file watcher
  *
  * Includes the type of the event, the path of the file that triggered the event and the extension handle that owns the file.
@@ -118,13 +136,25 @@ export class FileWatcher {
 
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
+    const cargoProjects = new Map<string, boolean>()
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: ['**/node_modules/**', '**/.git/**'],
+      ignored: [
+        ...ALWAYS_IGNORED_PATHS,
+        (path: string) => {
+          const normalizedPath = normalizePath(path)
+          const isFunctionOutput = this.app.realExtensions.some((extension) => {
+            if (!extension.isFunctionExtension) return false
+            const directory = normalizePath(joinPath(extension.directory, dirname(extension.outputRelativePath)))
+            return normalizedPath === directory || normalizedPath.startsWith(`${directory}/`)
+          })
+          return isFunctionOutput || isInCargoTargetDirectory(normalizedPath, cargoProjects)
+        },
+      ],
       persistent: true,
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', this.handleFileEvent)
+    this.watcher.on('all', this.onWatcherCreated(this.watcher, this.handleFileEvent))
     this.addAbortListener()
 
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
@@ -138,6 +168,11 @@ export class FileWatcher {
     this.extensionPaths.forEach((path) => {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
+  }
+
+  /** Lets subclasses observe native startup and set the file event listener's async context. */
+  protected onWatcherCreated(_watcher: FSWatcher, listener: (event: string, path: string) => void) {
+    return listener
   }
 
   private addAbortListener() {
@@ -429,4 +464,23 @@ export class FileWatcher {
       .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
     return ignore.default().add(gitIgnoreContent)
   }
+}
+
+/**
+ * Match Cargo output even when a descendant is supplied as an explicit watch path.
+ * A sibling Cargo.toml distinguishes build output from source folders named target.
+ */
+function isInCargoTargetDirectory(path: string, cargoProjects: Map<string, boolean>): boolean {
+  const segments = path.split('/')
+  for (let index = segments.length - 1; index > 0; index--) {
+    if (segments[index] !== 'target') continue
+    const projectDirectory = segments.slice(0, index).join('/')
+    let isCargoProject = cargoProjects.get(projectDirectory)
+    if (isCargoProject === undefined) {
+      isCargoProject = fileExistsSync(joinPath(projectDirectory, 'Cargo.toml'))
+      cargoProjects.set(projectDirectory, isCargoProject)
+    }
+    if (isCargoProject) return true
+  }
+  return false
 }

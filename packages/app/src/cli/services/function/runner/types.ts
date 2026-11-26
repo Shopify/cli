@@ -22,9 +22,7 @@ export const functionRunJsonOutputSchema = defineJsonOutputSchema({
       output: nativeValueSchema().describe(
         'Native Function output, including the runner-specific invalid-output representation.',
       ),
-      success: zod
-        .boolean()
-        .describe('False for a completed Function execution that failed; the command exits nonzero.'),
+      success: zod.boolean().describe('False for a completed Function execution that failed.'),
     })
     .passthrough()
     .describe('The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.'),

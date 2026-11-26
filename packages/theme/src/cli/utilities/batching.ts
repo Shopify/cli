@@ -16,6 +16,13 @@ export interface Task {
   task: () => Promise<void>
 }
 
+/** Waits for every operation to stop before propagating a failure. */
+export async function waitForAll(promises: Promise<unknown>[]): Promise<void> {
+  const results = await Promise.allSettled(promises)
+  const failure = results.find((result) => result.status === 'rejected')
+  if (failure) throw failure.reason
+}
+
 export function batchedTasks<TItem>(
   items: TItem[],
   batchSize: number,

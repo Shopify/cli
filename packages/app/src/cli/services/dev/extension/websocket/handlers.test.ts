@@ -13,7 +13,10 @@ import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import WebSocket, {RawData, WebSocketServer} from 'ws'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {IncomingMessage} from 'http'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {createServer, IncomingMessage} from 'http'
+import {EventEmitter} from 'events'
+import {AddressInfo} from 'net'
 import {Duplex} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/ui/components', () => ({
@@ -117,6 +120,54 @@ describe('getConnectionDoneHandler()', () => {
     getConnectionDoneHandler(wss, options)(ws)
     expect(ws.on).toHaveBeenCalledWith('message', expect.anything())
   })
+  test('on client connection registers an error handler that logs the error without throwing', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const ws = Object.assign(new EventEmitter(), {send: vi.fn()}) as unknown as WebSocket
+    const output = mockAndCaptureOutput()
+
+    getConnectionDoneHandler(wss, options)(ws)
+
+    expect(() => ws.emit('error', new RangeError('Max payload size exceeded'))).not.toThrow()
+    expect(output.debug()).toContain('Websocket connection error: Max payload size exceeded')
+  })
+  test('closes a client that sends an oversized frame and keeps notifying the other clients', async () => {
+    const options = getMockSetupWebSocketConnectionOptions()
+    const httpServer = createServer()
+    const wss = new WebSocketServer({noServer: true, clientTracking: true, maxPayload: 1024})
+    httpServer.on('upgrade', websocketUpgradeHandler(wss, options))
+    await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve))
+    const url = `ws://127.0.0.1:${(httpServer.address() as AddressInfo).port}/extensions`
+
+    const connectClient = async () => {
+      const client = new WebSocket(url)
+      await new Promise((resolve) => client.once('message', resolve))
+      return client
+    }
+
+    try {
+      const listeningClient = await connectClient()
+      const badClient = await connectClient()
+
+      const badClientCloseCode = new Promise((resolve) => badClient.once('close', resolve))
+      badClient.send('a'.repeat(2048))
+      await expect(badClientCloseCode).resolves.toBe(1009)
+
+      const dispatchingClient = await connectClient()
+      const receivedDispatch = new Promise((resolve) => {
+        listeningClient.once('message', (data: RawData) => resolve(JSON.parse(data.toString())))
+      })
+      dispatchingClient.send(JSON.stringify({event: 'dispatch', data: {type: 'focus'}}))
+
+      await expect(receivedDispatch).resolves.toMatchObject({event: 'dispatch', data: {type: 'focus'}})
+
+      listeningClient.terminate()
+      dispatchingClient.terminate()
+    } finally {
+      wss.close()
+      await new Promise((resolve) => httpServer.close(resolve))
+    }
+  })
 })
 describe('getOnMessageHandler()', () => {
   test('on an incomming update message updates the app and the extensions', () => {
@@ -218,6 +269,115 @@ describe('getOnMessageHandler()', () => {
 
     // Verify no client messages were sent since this was a log event
     wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
+
+  test('ignores an incoming message that is not JSON', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = Buffer.from('not json') as unknown as RawData
+
+    expect(() => getOnMessageHandler(wss, options)(data)).not.toThrow()
+
+    expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
+    expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()
+    wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
+
+  test.each(
+    [
+      null,
+      true,
+      42,
+      'message',
+      [],
+      {},
+      {event: 'log'},
+      {event: 'log', data: null},
+      {event: 'log', data: []},
+      {event: 'log', data: {}},
+      {event: 'log', data: {type: 42, message: 'message', extensionName: 'extension'}},
+      {event: 'log', data: {type: 'info', message: {}, extensionName: 'extension'}},
+      {event: 'log', data: {type: 'info', message: 'message'}},
+      {event: 'log', data: {type: 'info', message: 'message', extensionName: null}},
+      {event: 'update'},
+      {event: 'update', data: null},
+      {event: 'update', data: []},
+      {event: 'update', data: {app: 'app'}},
+      {event: 'update', data: {app: {apiKey: 42}}},
+      {event: 'update', data: {extensions: {}}},
+      {event: 'update', data: {extensions: [null]}},
+      {event: 'update', data: {extensions: [{}]}},
+      {event: 'update', data: {extensions: [{uuid: 'extension', extensionPoints: [null]}]}},
+      {event: 'update', data: {extensions: [{uuid: 'extension', extensionPoints: [{}]}]}},
+      {event: 'dispatch'},
+      {event: 'dispatch', data: null},
+      {event: 'dispatch', data: {type: 42}},
+      {event: 'dispatch', data: {type: 'focus', payload: [null]}},
+    ].map((message) => [message]),
+  )('ignores an incoming message with an invalid shape: %j', (message) => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = Buffer.from(JSON.stringify(message))
+
+    expect(() => getOnMessageHandler(wss, options)(data)).not.toThrow()
+
+    expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
+    expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()
+    expect(useConcurrentOutputContext).not.toHaveBeenCalled()
+    wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
+
+  test.each(
+    [undefined, null, [], ['target'], [{target: 'target', resource: {url: 'https://example.com'}}]].map(
+      (extensionPoints) => [extensionPoints],
+    ),
+  )('preserves valid extension update fields with extension points: %j', (extensionPoints) => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const app = {apiKey: 'test-app-api-key', title: 'Updated app'}
+    const extension = {uuid: 'extension', development: {status: 'success'}}
+    const extensions = extensionPoints === undefined ? [extension] : [{...extension, extensionPoints}]
+
+    getOnMessageHandler(wss, options)(Buffer.from(JSON.stringify({event: 'update', data: {app, extensions}})))
+
+    expect(options.payloadStore.updateApp).toHaveBeenCalledWith(app)
+    expect(options.payloadStore.updateExtensions).toHaveBeenCalledWith(extensions)
+  })
+
+  test('preserves additional fields in a valid dispatch message', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const message = {
+      event: 'dispatch',
+      metadata: 'additional message field',
+      data: {type: 'focus', payload: [{uuid: 'extension'}], additional: 'additional payload field'},
+    }
+
+    getOnMessageHandler(wss, options)(Buffer.from(JSON.stringify(message)))
+
+    const outgoingMessage = {
+      ...message,
+      version: '3',
+      data: {
+        ...message.data,
+        extensions: [],
+        store: 'test.store',
+        app: {appId: 'Test app', apiKey: 'test-app-api-key'},
+      },
+    }
+    wss.clients.forEach((ws) => expect(ws.send).toHaveBeenCalledWith(JSON.stringify(outgoingMessage)))
+  })
+
+  test('propagates an unexpected error from the payload store', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const error = new TypeError('Unexpected payload store error')
+    vi.mocked(options.payloadStore.updateApp).mockImplementationOnce(() => {
+      throw error
+    })
+    const data = Buffer.from(JSON.stringify({event: 'update', data: {app: {apiKey: 'test-app-api-key'}}}))
+
+    expect(() => getOnMessageHandler(wss, options)(data)).toThrow(error)
   })
 })
 

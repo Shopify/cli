@@ -20,6 +20,8 @@ Use \`--json\` to output every operation and its per-shop results as structured 
 
 Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.`
 
+  static jsonOutputSchema = migrationStatusJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -29,10 +31,6 @@ Run the command from an app project. By default, it uses the Client ID from the 
   ]
 
   static flags = {...statusFlags, ...jsonFlag}
-
-  static get jsonOutputSchema() {
-    return migrationStatusJsonOutputSchema
-  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Status)

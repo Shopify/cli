@@ -1,8 +1,13 @@
 import {render} from './storefront-renderer.js'
 import {DevServerRenderContext, DevServerSession} from './types.js'
 import {describe, expect, test, vi} from 'vitest'
+import {fetch as cliKitFetch, Response as NodeFetchResponse} from '@shopify/cli-kit/node/http'
 
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/http')>()),
+  fetch: vi.fn(),
+}))
 vi.stubGlobal('fetch', vi.fn())
 
 const session: DevServerSession = {
@@ -282,6 +287,137 @@ describe('render', () => {
         redirect: 'manual',
       }),
     )
+  })
+
+  describe('exit page', () => {
+    const exitPageContext: DevServerRenderContext = {
+      ...context,
+      path: '/url',
+      query: [
+        ['q', 'https://example.com/'],
+        ['trigger', 'click'],
+      ],
+      headers: {
+        ...context.headers,
+        accept: 'text/html',
+        referer: 'http://127.0.0.1:9292/products/1',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'same-origin',
+      },
+    }
+
+    test('renders with the CLI fetch so the request keeps its navigation fetch metadata', async () => {
+      // Given
+      vi.mocked(cliKitFetch).mockResolvedValue(
+        new NodeFetchResponse(null, {
+          status: 302,
+          headers: [
+            ['Location', 'https://example.com/'],
+            ['Set-Cookie', 'a=1; Path=/'],
+            ['Set-Cookie', 'b=2; Path=/'],
+          ],
+        }),
+      )
+
+      // When
+      const response = await render(session, exitPageContext)
+
+      // Then
+      expect(fetch).not.toHaveBeenCalled()
+      expect(cliKitFetch).toHaveBeenCalledWith(
+        'https://store.myshopify.com/url?_fd=0&pb=0&q=https%3A%2F%2Fexample.com%2F&trigger=click',
+        {
+          method: 'GET',
+          redirect: 'manual',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token_111222333',
+            Cookie:
+              'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
+            referer: 'http://127.0.0.1:9292/products/1',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+          }),
+        },
+        'slow-request',
+      )
+      expect(response).toBeInstanceOf(Response)
+      expect(response.status).toEqual(302)
+      expect(response.headers.get('Location')).toEqual('https://example.com/')
+      expect(response.headers.getSetCookie()).toEqual(['a=1; Path=/', 'b=2; Path=/'])
+    })
+
+    test('returns the page body as a web Response', async () => {
+      // Given
+      vi.mocked(cliKitFetch).mockResolvedValue(
+        new NodeFetchResponse('<html>Leave the store?</html>', {
+          status: 200,
+          headers: {'Content-Type': 'text/html; charset=utf-8', 'x-request-id': 'abc'},
+        }),
+      )
+
+      // When
+      const response = await render(session, exitPageContext)
+
+      // Then
+      expect(response).toBeInstanceOf(Response)
+      expect(response.status).toEqual(200)
+      expect(response.headers.get('x-request-id')).toEqual('abc')
+      expect(response.headers.get('Content-Type')).toBeNull()
+      await expect(response.text()).resolves.toEqual('<html>Leave the store?</html>')
+    })
+
+    test('renders a localized exit page with a GET, even with in-memory templates', async () => {
+      // Given
+      vi.mocked(cliKitFetch).mockResolvedValue(new NodeFetchResponse(null, {status: 200}))
+
+      // When
+      await render(session, {
+        ...exitPageContext,
+        path: '/fr-ca/url',
+        replaceTemplates: {'sections/header.liquid': '<div>hello</div>'},
+        replaceExtensionTemplates: {'blocks/block.liquid': '<div>hello</div>'},
+      })
+
+      // Then
+      expect(fetch).not.toHaveBeenCalled()
+      expect(cliKitFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/store\.myshopify\.com\/fr-ca\/url\?/),
+        expect.objectContaining({method: 'GET', redirect: 'manual'}),
+        'slow-request',
+      )
+      expect(vi.mocked(cliKitFetch).mock.calls[0]?.[1]).not.toHaveProperty('body')
+    })
+
+    test('throws a fetch error when the request fails', async () => {
+      // Given
+      vi.mocked(cliKitFetch).mockRejectedValue(new Error('socket hang up'))
+
+      // When/Then
+      await expect(render(session, exitPageContext)).rejects.toMatchObject({
+        statusCode: 502,
+        cause: expect.objectContaining({message: 'socket hang up'}),
+        data: {url: expect.stringMatching(/^https:\/\/store\.myshopify\.com\/url\?/)},
+      })
+    })
+
+    test.each<[DevServerRenderContext['method'], string]>([
+      ['GET', '/pages/url'],
+      ['GET', '/url-shortener'],
+      ['GET', '/products/url'],
+      ['POST', '/url'],
+    ])('renders %s %s with the global fetch', async (method, path) => {
+      // Given
+      vi.mocked(fetch).mockResolvedValue(new Response())
+
+      // When
+      await render(session, {...exitPageContext, method, path})
+
+      // Then
+      expect(cliKitFetch).not.toHaveBeenCalled()
+      expect(fetch).toHaveBeenCalledOnce()
+    })
   })
 
   test('renders using query parameters', async () => {

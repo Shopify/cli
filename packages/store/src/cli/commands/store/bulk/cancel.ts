@@ -14,6 +14,8 @@ export default class StoreBulkCancel extends StoreCommand {
 
   Run \`shopify store auth\` first to create stored auth for the store.`
 
+  static jsonOutputSchema = cancelBulkOperationJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com --id 123456789']
@@ -23,10 +25,6 @@ export default class StoreBulkCancel extends StoreCommand {
     ...jsonFlag,
     store: storeFlags.store,
     id: requiredBulkOperationIdFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return cancelBulkOperationJsonOutputSchema
   }
 
   async run(): Promise<void> {

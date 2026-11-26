@@ -1,7 +1,8 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
+import {getAppAutomationToken, getIdentityTokenInformation} from './environment.js'
 import {AbortError, BugError} from './error.js'
+import {identityFqdn, normalizeStoreFqdn} from './context/fqdn.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {automationTokenVariable} from '../../private/node/session/automation-token.js'
@@ -10,6 +11,7 @@ import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
+  revokeRefreshToken,
 } from '../../private/node/session/exchange.js'
 import {
   AdminAPIScope,
@@ -188,7 +190,10 @@ ${outputToken.json(appManagementScopes)}
   const envToken = getAppAutomationToken()
   if (envToken) {
     const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(envToken)
-    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
+    // Request no explicit scopes, as ensureAuthenticatedBusinessPlatform does. App commands also call the
+    // organizations API to find and list stores, which admits the token only with an organization scope such as
+    // organization.store-management. Only some tokens hold it, so naming it would fail the exchange for the others.
+    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken, [])
 
     return {
       appManagementToken: appManagmentToken.accessToken,
@@ -296,6 +301,7 @@ export async function ensureAuthenticatedThemes(
 ${outputToken.json(scopes)}
 `)
   if (password) {
+    validateThemePassword(password, store)
     const session = {token: password, storeFqdn: store}
     const themeAccess = isThemeAccessSession(session)
     setLastSeenAuthMethod(themeAccess ? 'theme_access_token' : 'custom_app_token')
@@ -304,6 +310,27 @@ ${outputToken.json(scopes)}
     return session
   }
   return ensureAuthenticatedAdmin(store, scopes, options)
+}
+
+/**
+ * Rejects a password with a character outside printable ASCII, which no Theme Access password or Admin API token has.
+ * The password goes into a request header. The HTTP client refuses most of these characters before the request leaves
+ * the machine, with an error that repeats the password, and the store rejects the rest.
+ *
+ * @param password - Password generated from the Theme Access app, or an Admin API access token.
+ * @param store - Store the password is for.
+ * @throws AbortError when the password has a character outside printable ASCII.
+ */
+function validateThemePassword(password: string, store: string): void {
+  if (/^[\x20-\x7E]*$/.test(password)) return
+
+  throw new AbortError(
+    `The password for ${store} contains a character that isn't allowed.`,
+    'A password can contain only printable ASCII characters. Line breaks, arrow-key presses, and the dots that hide a password often get into a password when it is copied.',
+    [
+      'Copy the password again from the Theme Access app, or the Admin API access token again from your app, and run the command again.',
+    ],
+  )
 }
 
 /**
@@ -378,12 +405,25 @@ export function ensureNoServiceAccountToken(): void {
 }
 
 /**
- * Logout from Shopify.
+ * Logout from Shopify. Revokes the stored tokens at Identity, best effort, then removes local session data.
  *
  * @returns A promise that resolves when the logout is complete.
  */
-export function logout(): Promise<void> {
-  return sessionStore.remove()
+export async function logout(): Promise<void> {
+  let revokeFailed = false
+  try {
+    const sessions = await sessionStore.fetch()
+    const envRefreshToken = getIdentityTokenInformation()?.refreshToken
+    const refreshTokens = Object.values(sessions?.[await identityFqdn()] ?? {})
+      .map((session) => session.identity.refreshToken)
+      .filter((token) => token !== envRefreshToken)
+    const results = await Promise.all(refreshTokens.map((token) => revokeRefreshToken(token)))
+    revokeFailed = results.includes(false)
+  } finally {
+    await sessionStore.remove()
+  }
+  if (revokeFailed)
+    outputDebug("Couldn't revoke your CLI tokens at Shopify. They were still removed from this machine.")
 }
 
 /**
@@ -391,7 +431,8 @@ export function logout(): Promise<void> {
  *
  * See `ensureAuthenticatedAdmin` for access on behalf of a user.
  *
- * @param storeFqdn - Store fqdn to request auth for.
+ * @param storeFqdn - Store handle or domain, normalized with `normalizeStoreFqdn`. Unsupported URL components are
+ * rejected before the client secret is sent.
  * @param clientId - Client ID of the app.
  * @param clientSecret - Client secret of the app.
  * @returns The access token for the Admin API.
@@ -401,13 +442,14 @@ export async function ensureAuthenticatedAdminAsApp(
   clientId: string,
   clientSecret: string,
 ): Promise<AdminSession> {
+  const normalizedStoreFqdn = normalizeStoreFqdn(storeFqdn)
   const bodyData = {
     client_id: clientId,
     client_secret: clientSecret,
     grant_type: 'client_credentials',
   }
   const tokenResponse = await shopifyFetch(
-    `https://${storeFqdn}/admin/oauth/access_token`,
+    `https://${normalizedStoreFqdn}/admin/oauth/access_token`,
     {
       method: 'POST',
       headers: {
@@ -424,17 +466,17 @@ export async function ensureAuthenticatedAdminAsApp(
     if (body.includes('app_not_installed')) {
       throw new AbortError(
         outputContent`App is not installed on ${outputToken.green(
-          storeFqdn,
+          normalizedStoreFqdn,
         )}. Try running ${outputToken.genericShellCommand(`shopify app dev`)} to connect your app to the shop.`,
       )
     }
     throw new AbortError(
-      `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
+      `Failed to get access token for app ${clientId} on store ${normalizedStoreFqdn}: ${tokenResponse.statusText}`,
     )
   }
   try {
     const tokenJson = JSON.parse(body) as {access_token: string}
-    return {token: tokenJson.access_token, storeFqdn}
+    return {token: tokenJson.access_token, storeFqdn: normalizedStoreFqdn}
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(

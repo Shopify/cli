@@ -1,4 +1,4 @@
-import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {cleanHeader, defaultHeaders, LOCALE_PREFIX_PATTERN} from './storefront-utils.js'
 import {buildCookies} from './storefront-renderer.js'
 import {injectStandardEventsInspector, rewriteStandardEventsRuntimeReferences} from './standard-events.js'
 import {logRequestLine} from '../log-request-line.js'
@@ -16,12 +16,13 @@ export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
 const API_COLLECT_PATH = '/api/collect'
-const CART_PATTERN = /^\/cart\//
+const CART_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/cart/`)
 // Broader than CART_PATTERN (routing) -- covers /cart, /cart.js, /cart.json for auth exclusion.
 // CART_PATTERN only matches /cart/... subpaths to avoid proxying GET /cart (the cart HTML page).
-const CART_SESSION_PATTERN = /^\/cart(\/|\.js|\.json|$)/
+const CART_SESSION_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/cart(/|\.js|\.json|$)`)
 const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
-const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
+const ACCOUNT_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/account(/login/multipass(/[^/]+)?|/logout)?/?$`)
+const LOCALIZATION_PATTERN = new RegExp(String.raw`^${LOCALE_PREFIX_PATTERN}/localization(\.json)?/?$`)
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
 const STOREFRONT_API_PATTERN = /^\/api\/(unstable|\d{4}-\d{2})\/graphql\.json/
@@ -119,7 +120,8 @@ export function canProxyRequest(event: H3Event) {
   return Boolean(extension) || acceptsType !== '*/*'
 }
 
-// Cart, checkout, and account endpoints use session-cookie auth, not Bearer tokens.
+// Cart, checkout, account, and localization endpoints use session-cookie auth
+// and respond with 401 when they receive the Bearer token.
 // CHECKOUT_PATTERN and ACCOUNT_PATTERN are reused from routing because their
 // routing and auth scopes currently align; changes to those patterns should
 // consider the auth implications here.
@@ -128,6 +130,7 @@ function needsBearerToken(path: string): boolean {
   if (CART_SESSION_PATTERN.test(pathname)) return false
   if (CHECKOUT_PATTERN.test(pathname)) return false
   if (ACCOUNT_PATTERN.test(pathname)) return false
+  if (LOCALIZATION_PATTERN.test(pathname)) return false
   return true
 }
 
@@ -213,8 +216,9 @@ export async function patchRenderingResponse(
   ctx: DevServerContext,
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
+  options?: PatchResponseOptions,
 ): Promise<Response> {
-  const response = patchProxiedResponseHeaders(ctx, rawResponse)
+  const response = patchProxiedResponseHeaders(ctx, rawResponse, options)
 
   // 3xx responses should be returned
   if (response.status >= 300 && response.status < 400) {
@@ -256,7 +260,15 @@ const HOP_BY_HOP_HEADERS = [
   'host',
 ]
 
-function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response) {
+interface PatchResponseOptions {
+  /**
+   * Keep redirects to other sites absolute instead of turning them into local paths.
+   * Only the storefront exit page needs this: it redirects shoppers to another site.
+   */
+  keepExternalRedirects?: boolean
+}
+
+function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response, options?: PatchResponseOptions) {
   const response = new Response(rawResponse.body, rawResponse)
 
   // Node's `fetch` always decompresses the body, so we must remove these headers
@@ -283,12 +295,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
   if (locationHeader) {
-    const url = new URL(locationHeader, 'https://shopify.dev')
-    if (!CHECKOUT_PATTERN.test(url.pathname)) {
-      url.searchParams.delete('_fd')
-      url.searchParams.delete('pb')
-      response.headers.set('Location', url.href.replace(url.origin, ''))
-    }
+    response.headers.set('Location', patchLocationHeader(ctx, locationHeader, options))
   }
 
   // Cookies are set for the vanity domain, fix it for localhost:
@@ -303,6 +310,33 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   }
 
   return response
+}
+
+function patchLocationHeader(ctx: DevServerContext, locationHeader: string, options?: PatchResponseOptions) {
+  if (!options?.keepExternalRedirects) {
+    const url = new URL(locationHeader, 'https://shopify.dev')
+    if (CHECKOUT_PATTERN.test(url.pathname)) return locationHeader
+
+    return toLocalPath(url)
+  }
+
+  // Redirects to other hosts (the exit page sending a shopper to another site) stay absolute:
+  const storeOrigin = `https://${ctx.session.storeFqdn}`
+  const url = new URL(locationHeader, storeOrigin)
+  const isStoreHost = url.host === new URL(storeOrigin).host
+
+  if (isStoreHost && !CHECKOUT_PATTERN.test(url.pathname)) return toLocalPath(url)
+
+  // Browsers resolve protocol-relative URLs against the local HTTP server, so make them absolute HTTPS URLs:
+  if (!isStoreHost && locationHeader.startsWith('//')) return url.href
+
+  return locationHeader
+}
+
+function toLocalPath(url: URL) {
+  url.searchParams.delete('_fd')
+  url.searchParams.delete('pb')
+  return url.href.replace(url.origin, '')
 }
 
 /**
@@ -359,8 +393,6 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
       ...(host === ctx.session.storeFqdn ? ctx.session.crawlerSignatureHeaders : {}),
       referer: url.origin,
       Cookie: buildCookies(ctx.session, {headers}),
-      // Cart, checkout, and account endpoints use cookie-based auth.
-      // Sending a Bearer token causes SFR to select token auth, which lacks cart scopes.
       ...(ctx.type === 'theme' && needsBearerToken(event.path)
         ? {Authorization: `Bearer ${ctx.session.storefrontToken}`}
         : {}),

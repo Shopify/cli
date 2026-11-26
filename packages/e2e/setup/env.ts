@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export interface E2EEnv {
-  /** Dev store FQDN (e.g. cli-e2e-test.myshopify.com) */
+  /** Optional store override for local runs. */
   storeFqdn: string
   /** Dedicated e2e org ID for fresh-app tests (empty string if not set) */
   orgId: string
@@ -134,10 +134,11 @@ const E2E_APP_PREFIXES: Record<string, string> = {
 /**
  * Generate a short E2E app name that can be clustered by GitHub Actions run.
  */
-export function e2eRunSegment(): string {
-  const runId = process.env.GITHUB_RUN_ID
-  const runAttempt = process.env.GITHUB_RUN_ATTEMPT ?? '1'
-  return runId ? `r${BigInt(runId).toString(36)}a${runAttempt}` : 'local'
+export function e2eRunSegment(env: NodeJS.ProcessEnv = process.env): string {
+  const runId = env.GITHUB_RUN_ID
+  const runAttempt = env.GITHUB_RUN_ATTEMPT ?? '1'
+  const shardNumber = env.E2E_SHARD?.split('/')[0] ?? '1'
+  return runId ? `r${BigInt(runId).toString(36)}a${runAttempt}s${shardNumber}` : 'local'
 }
 
 export function e2eAppName(prefix: string): string {
@@ -175,6 +176,7 @@ export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
         process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared',
       )
 
+      const portBase = 3457 + workerInfo.parallelIndex * 10
       const processEnv: NodeJS.ProcessEnv = {
         ...process.env,
         ...xdgEnv,
@@ -184,6 +186,8 @@ export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
         NODE_OPTIONS: '',
         CI: '1',
         SHOPIFY_FLAG_CLIENT_ID: undefined,
+        SHOPIFY_FLAG_GRAPHIQL_PORT: String(portBase),
+        SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT: String(portBase + 2),
       }
 
       if (storeFqdn) {

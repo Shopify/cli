@@ -210,9 +210,7 @@ describe('JSON output schema flag', () => {
 })
 
 class CommandWithJsonOutput extends Command {
-  static get jsonOutputSchema() {
-    return defineJsonOutputSchema({name: 'CommandResult', schema: zod.object({value: zod.string()})})
-  }
+  static jsonOutputSchema = defineJsonOutputSchema({name: 'CommandResult', schema: zod.object({value: zod.string()})})
 
   public async run(): Promise<void> {
     throw new Error('Schema inspection must not run the command')
@@ -240,7 +238,7 @@ async function withSchemaCommand(test: (moduleURL: string) => Promise<void>): Pr
     await writeFile(
       joinPath(directory, 'commands', 'widgets', 'list.js'),
       `import {Command} from '${pathToFileURL(require.resolve('@oclif/core')).href}'
-import {z} from '${pathToFileURL(require.resolve('zod')).href}'
+import {z} from '${pathToFileURL(require.resolve('zod/v3')).href}'
 export default class extends Command {
   static aliases = ['widgets:ls']
   static jsonOutputSchema = {schema: z.object({value: z.string()})}

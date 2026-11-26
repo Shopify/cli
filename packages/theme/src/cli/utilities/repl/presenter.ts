@@ -1,10 +1,11 @@
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
+export const JSON_ERROR_MESSAGE =
+  "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid."
+
 export function presentValue(value?: unknown) {
   if (hasJsonError(value)) {
-    outputInfo(
-      "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid.",
-    )
+    outputInfo(JSON_ERROR_MESSAGE)
     return
   }
 
@@ -17,7 +18,7 @@ export function presentValue(value?: unknown) {
   renderValue(formattedOutput)
 }
 
-function hasJsonError(output: unknown): boolean {
+export function hasJsonError(output: unknown): boolean {
   if (Array.isArray(output)) {
     return output.length > 0 ? hasJsonError(output[0]) : false
   }

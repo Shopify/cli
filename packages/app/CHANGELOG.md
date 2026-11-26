@@ -1,5 +1,75 @@
 # @shopify/app
 
+## 5.1.0
+
+### Minor Changes
+
+- Run `shopify app dev --store` on a dev store with `SHOPIFY_SERVICE_ACCOUNT_TOKEN`.
+- Add `--fail-on-unresolved` to `shopify app security review`, so an unresolved check or one with no result fails the gate.
+- Run the deterministic `app security check` source rules that don't need React Router on any JavaScript or TypeScript app, and add a `WEAK_SHOP_VALIDATION` rule for shop-domain checks that aren't anchored.
+- Add `--sarif` to `shopify app security review` to print the reviewed checks as SARIF 2.1.0 for GitHub code scanning and other scanning tools.
+- Add support for suppressing app security findings.
+- `shopify app init --template node` and `--template remix` are deprecated and now show a warning. They will be removed in the next major release. Use `--template reactRouter` or a GitHub template URL instead.
+
+### Patch Changes
+
+- Stop `app security review` from calling deterministic-only checks passed, say how many checks still need the coding agent and how to run them, and print suggested commands' `--path` as an absolute path when the app is outside the working directory.
+- Report configuration lines for callback URL, ScriptTag scope, and API version findings in `app security check`, with distinct keys for insecure URLs.
+- Fix four `shopify app security check` agent prompts that could skip real issues: `MISSING_EMBEDDED_CSP` now detects embedded apps from `embedded = true`, `SSRF_REQUEST_FORGERY` and `SCRIPT_TAG_URL_INJECTION` no longer treat an https-only URL as safe, and `THEME_EXTENSION_XSS` no longer exempts `escape` in executable contexts or `textContent` on `<script>` elements
+- Report the correct source lines for API version and offline token findings after line comments in `app security check`.
+- Show a clear error instead of ENOENT when `app deploy --no-build` finds no built web pixel bundle.
+- Show `Extension initialized` instead of `Configuration accepted` when config-only extensions start in a new `app dev` session.
+- Explain the managed-install requirement before deploying Events subscriptions with legacy install flow enabled.
+- `app dev` no longer crashes when a client of the `/extensions` WebSocket sends a malformed frame.
+- Stop `app dev` from exiting when an `/extensions` WebSocket client sends invalid JSON or an invalid message shape
+- Fix `spawn ETXTBSY` errors when several CLI processes download and run the same function binary at once
+- Stop `app build` and `app function build` from crashing with `Unable to update lock within the stale threshold` when the function build lock is reported as compromised, for example on FUSE filesystems.
+- Keep app-specific webhook subscriptions with relative URIs when an extension hot reloads during `app dev`.
+- Updated dependencies
+  - @shopify/cli-kit@5.1.0
+  - @shopify/theme@5.1.0
+  - @shopify/organizations@5.1.0
+  - @shopify/plugin-cloudflare@5.1.0
+
+## 5.0.0
+
+### Major Changes
+
+- 4282952: Remove `app logs` and `app logs sources`; use `app dev` to stream Function logs and save them to `.shopify/logs`.
+
+### Minor Changes
+
+- 587b14d: Record `app dev` sessions, preview status, and JSONL logs so agents can reuse a running session.
+- 62d961a: Improve `app security check` accuracy and safely scan untrusted repositories; add `--print-instructions`, deprecate `--yes`, and require Git 2.38.0 or later for Git operations.
+- e71ac0e: Add typed JSON output to `app security` commands.
+- 5d5d91c: Let theme app extensions declare the network origins they contact with `[extensions.capabilities.network_access] allowed_sources` in `shopify.extension.toml`.
+- 62d961a: Add typed JSON output across CLI commands; update scripts for the new schemas with `--json-schema`, read `store execute` query results from `.data`, and use `--no-watch` with `app function replay --json`.
+
+### Patch Changes
+
+- 30fbfab: Reduce `app dev` file watching by excluding Cargo `target` directories, Function build output, `.shopify` files, and editor temporary files.
+- 62d961a: Fix lost Shop scopes in `app config link`, legacy Checkout and POS extension migration detection, and UI extension builds with multiple `should_render` targets.
+- adb6a43: Have coding agents run `app security` commands with `--json --no-input` and read their results instead of parsing terminal output.
+- 12cc647: Exit 0 instead of failing when you decline to scan without app configuration in `app security check`.
+- 525289f: Report clipboard failures in `app security instructions --copy` as errors, and in `app security check` as warnings, instead of crashing.
+- e3d8ebb: Report app security results files with out-of-range values as invalid.
+- 62d961a: Fix development theme previews on stores with market subfolders when using account authentication, improve Theme Access authentication, keep pulled files inside the theme directory, and support browser identity verification.
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [62d961a]
+- Updated dependencies [c86f804]
+- Updated dependencies [bcbaec8]
+- Updated dependencies [730d051]
+- Updated dependencies [87cc186]
+- Updated dependencies [62d961a]
+- Updated dependencies [e85a56f]
+- Updated dependencies [62d961a]
+- Updated dependencies [349478a]
+  - @shopify/cli-kit@5.0.0
+  - @shopify/plugin-cloudflare@5.0.0
+  - @shopify/theme@5.0.0
+  - @shopify/organizations@5.0.0
+
 ## 4.9.0
 
 ### Minor Changes

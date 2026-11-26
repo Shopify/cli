@@ -9,9 +9,11 @@ export interface AppTomlContent {
   content?: string
   /** The scopes string, if present. */
   scopes?: string
+  /** The TOML key that first declares each scope in `scopes`, as `tomlKey` writes it. */
+  scopeKeys: ReadonlyMap<string, string>
   /** API version selected by this configuration. */
   apiVersion?: string
-  /** OAuth redirect URLs. */
+  /** OAuth redirect URLs, at their indexes in `auth.redirect_urls`. */
   redirectUrls: string[]
   /** Webhook subscriptions. */
   webhooks: WebhookSubscription[]
@@ -20,6 +22,8 @@ export interface AppTomlContent {
 export interface WebhookSubscription {
   topics: string[]
   uri: string
+  /** The TOML key of `uri`, as `tomlKey` writes it. */
+  uriKey: string
 }
 
 export interface ExtensionInfo {

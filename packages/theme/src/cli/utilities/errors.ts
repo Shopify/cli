@@ -1,5 +1,5 @@
 import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -11,6 +11,7 @@ import {createError as createH3Error, type H3Error} from 'h3'
  * @param error - The error to render.
  */
 export function renderThrownError(headline: string, error: Error | AbortError) {
+  if (error instanceof AbortSilentError) return
   recordError(error)
 
   if (commandEventOutputMode() === 'json') {

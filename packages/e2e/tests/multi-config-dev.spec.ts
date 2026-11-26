@@ -1,10 +1,15 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {createApp, devDashboardAppUrl, extractClientId, injectFixtureToml} from '../setup/app.js'
+import {
+  appTestFixture as test,
+  createApp,
+  devDashboardAppUrl,
+  extractClientId,
+  injectFixtureToml,
+} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
-import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
+import {E2E_STORES, CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
-import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -14,7 +19,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('Multi-config dev', () => {
-  test('dev with -c flag loads the named config', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev with -c flag loads the named config', async ({cli, env, dashboard}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.namedConfig
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -27,7 +33,7 @@ test.describe('Multi-config dev', () => {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       // Inject the fully populated TOML as the default config
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
@@ -94,7 +100,7 @@ extensions_summary = "E2E staging app extensions"
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,
@@ -107,7 +113,8 @@ extensions_summary = "E2E staging app extensions"
     }
   })
 
-  test('dev without -c flag uses default config', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev without -c flag uses default config', async ({cli, env, dashboard}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.defaultConfig
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -120,7 +127,7 @@ extensions_summary = "E2E staging app extensions"
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
       const clientId = extractClientId(appDir)
@@ -175,7 +182,7 @@ extensions_summary = "E2E staging app extensions"
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,

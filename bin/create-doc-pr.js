@@ -6,7 +6,7 @@ import {createRequire} from 'node:module'
 import * as path from "pathe"
 import {findUp} from "find-up"
 
-import {createWorldPullRequest} from './gitstream-utils.js'
+import {createWorldPullRequest} from './delta-utils.js'
 
 const require = createRequire(import.meta.url)
 const {readFile} = require('fs-extra')

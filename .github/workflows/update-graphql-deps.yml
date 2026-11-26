@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
     # Allows manual triggering from the GitHub UI
 
+permissions:
+  contents: write
+  pull-requests: write
+
 env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
@@ -28,7 +32,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: '26.1.0'
+          node-version: '26.12.1'
       - name: Get schemas for codegen
         env:
           GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}

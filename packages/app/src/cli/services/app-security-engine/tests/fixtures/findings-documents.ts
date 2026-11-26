@@ -1,4 +1,4 @@
-import type {AgentFindingsDocument, DeterministicFindingsDocument} from '../../types.js'
+import type {AgentFindingsDocument, CheckPrecedence, DeterministicFindingsDocument, StoredFinding} from '../../types.js'
 
 /**
  * Representative stored documents, as `check` and `record` write them. Shared by the translation,
@@ -243,4 +243,45 @@ export const agentFindingsDocument: AgentFindingsDocument = {
       findings: [],
     },
   ],
+}
+
+/** A fresh stored agent result with one executed check. Keep time and precedence explicit in each scenario. */
+export function storedAgentDocument({
+  checkId,
+  findings,
+  generatedAt,
+  precedence,
+}: {
+  checkId: string
+  findings: StoredFinding[]
+  generatedAt: string
+  precedence: CheckPrecedence
+}): AgentFindingsDocument {
+  return {
+    schema_version: 1,
+    source: 'agent',
+    engine: {name: 'shopify-app-security', version: '4.9.0'},
+    generated_at: generatedAt,
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    checks: [
+      {
+        id: checkId,
+        version: 1,
+        status: 'executed',
+        snapshot: {title: checkId, severity: 'high', description: '', current_version: 1, precedence},
+        findings: structuredClone(findings),
+      },
+    ],
+  }
+}
+
+/** A fresh finding with up to two captured lines on each side of its location. */
+export function findingWithExcerpt(finding: StoredFinding, lines: string[]): StoredFinding {
+  const line = finding.location.line!
+  return {
+    ...structuredClone(finding),
+    code_excerpt: lines
+      .map((text, index) => ({line: index + 1, text}))
+      .filter((excerptLine) => Math.abs(excerptLine.line - line) <= 2),
+  }
 }

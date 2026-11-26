@@ -19,9 +19,11 @@ import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 
 import type {H3Event} from 'h3'
 
+vi.mock('@shopify/cli-kit/node/session')
 vi.mock('h3', async () => {
   const actual: any = await vi.importActual('h3')
   return {
@@ -862,6 +864,128 @@ describe('getExtensionPointMiddleware()', () => {
     expect(utilities.sendError).toHaveBeenCalledWith(event, {
       statusCode: 404,
       statusMessage: `Redirect url can't be constructed for extension with id ${extensionId} and extension target "${extensionPointTarget}"`,
+    })
+  })
+
+  test('explains that customer account previews need the store ID when it is unknown', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    const extensionId = '123abc'
+    const extensionPointTarget = 'customer-account.page.render'
+    const options = getOptions({
+      devOptions: {
+        url: 'http://mock.url',
+        storeId: undefined,
+        extensions: [
+          await testUIExtension({
+            devUUID: extensionId,
+            configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
+              extension_points: [
+                {
+                  target: extensionPointTarget,
+                },
+              ],
+            },
+          }),
+        ],
+      },
+    })
+
+    const event = getMockEvent({
+      params: {
+        extensionId,
+        extensionPointTarget,
+      },
+    })
+
+    await getExtensionPointMiddleware(options)(event)
+
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
+      statusCode: 404,
+      statusMessage: `Can't preview extension with id ${extensionId} and extension target "${extensionPointTarget}": customer account previews need the store's ID, which dev can't look up with SHOPIFY_SERVICE_ACCOUNT_TOKEN`,
+    })
+  })
+
+  test('does not blame the service account token when the store of a user has no ID', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(false)
+    const extensionId = '123abc'
+    const extensionPointTarget = 'customer-account.page.render'
+    const options = getOptions({
+      devOptions: {
+        url: 'http://mock.url',
+        storeId: undefined,
+        extensions: [
+          await testUIExtension({
+            devUUID: extensionId,
+            configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
+              extension_points: [
+                {
+                  target: extensionPointTarget,
+                },
+              ],
+            },
+          }),
+        ],
+      },
+    })
+
+    const event = getMockEvent({
+      params: {
+        extensionId,
+        extensionPointTarget,
+      },
+    })
+
+    await getExtensionPointMiddleware(options)(event)
+
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
+      statusCode: 404,
+      statusMessage: `Can't preview extension with id ${extensionId} and extension target "${extensionPointTarget}": customer account previews need the store's ID, which dev could not find`,
+    })
+  })
+
+  test('explains that checkout previews need a cart when there is no cart URL', async () => {
+    const extensionId = '123abc'
+    const extensionPointTarget = 'purchase.checkout.block.render'
+    const options = getOptions({
+      devOptions: {
+        url: 'http://mock.url',
+        storeFqdn: 'example.myshopify.com',
+        extensions: [
+          await testUIExtension({
+            devUUID: extensionId,
+            configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
+              extension_points: [
+                {
+                  target: extensionPointTarget,
+                },
+              ],
+            },
+          }),
+        ],
+      },
+    })
+
+    const event = getMockEvent({
+      params: {
+        extensionId,
+        extensionPointTarget,
+      },
+    })
+
+    await getExtensionPointMiddleware(options)(event)
+
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
+      statusCode: 404,
+      statusMessage: `Can't preview extension with id ${extensionId} and extension target "${extensionPointTarget}" without a cart. Restart dev with --checkout-cart-url, in the format "/cart/{productVariantID}:{productQuantity}"`,
     })
   })
 

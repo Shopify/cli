@@ -1,9 +1,9 @@
 import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
+import {MissingBuildOutputError} from '../errors.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {copyFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {copyFile, fileExists, glob, mkdir} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
@@ -31,16 +31,27 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   // If the final output path is the same as the local one: don't copy the results and don't generate manifests.
   if (resolvePath(localOutputDir) === resolvePath(bundleOutputDir)) return
 
-  // Nothing was built, usually `deploy --no-build`. A developer condition, not a
-  // CLI defect, so keep it out of crash reporting.
+  // Nothing was built, usually `deploy --no-build`.
   if (!(await fileExists(localOutputDir))) {
-    throw new AbortError(
-      `Couldn't find the build output at ${localOutputDir}`,
-      'If you passed --no-build, build the app first. Otherwise check that building the extension produces files at that path.',
-    )
+    throw new MissingBuildOutputError(localOutputDir)
   }
 
-  await copyFile(localOutputDir, bundleOutputDir)
+  // Source maps stay in the extension's local output directory and are excluded
+  // from deploy bundles. Copying them here can race with another extension in
+  // the same folder moving its map back to that directory after its build.
+  const filesToCopy = await glob('**/*', {
+    cwd: localOutputDir,
+    absolute: true,
+    ignore: ['**/*.js.map'],
+  })
+
+  await Promise.all(
+    filesToCopy.map(async (filePath) => {
+      const outputPath = joinPath(bundleOutputDir, relativePath(localOutputDir, filePath))
+      await mkdir(dirname(outputPath))
+      await copyFile(filePath, outputPath)
+    }),
+  )
 
   if (!step.config?.generatesAssetsManifest) return
 

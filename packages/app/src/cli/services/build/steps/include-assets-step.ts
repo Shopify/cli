@@ -3,7 +3,7 @@ import {copyByPattern} from './include-assets/copy-by-pattern.js'
 import {copySourceEntry} from './include-assets/copy-source-entry.js'
 import {copyConfigKeyEntry} from './include-assets/copy-config-key-entry.js'
 import {joinPath, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
-import {z} from 'zod'
+import {z} from 'zod/v3'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
 export type {IncludeAssetsConfig}

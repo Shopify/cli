@@ -342,6 +342,68 @@ describe('dev proxy', () => {
       expect(patchedResponse.headers.get('Location')).toBe('/foo?bar=1')
     })
 
+    const exitPage = {keepExternalRedirects: true}
+
+    test.each([
+      ['a relative path', '/foo?_fd=0&pb=0&bar=1', '/foo?bar=1', undefined],
+      ['the store domain over http', 'http://my-store.myshopify.com/foo?pb=0', '/foo', undefined],
+      ['an uppercase store domain', 'https://MY-STORE.myshopify.com/foo', '/foo', undefined],
+      ['a protocol-relative store domain', '//my-store.myshopify.com/foo?_fd=0&bar=1', '/foo?bar=1', undefined],
+      ['a market domain', 'https://mystore.fr/products/new', '/products/new', undefined],
+      ['another site', 'https://example.com/path?_fd=0&pb=0&q=1', '/path?q=1', undefined],
+      ['a protocol-relative host', '//other.example.com/foo', '/foo', undefined],
+      ['a relative path on the exit page', '/foo?_fd=0&pb=0&bar=1', '/foo?bar=1', exitPage],
+      ['the store domain over http on the exit page', 'http://my-store.myshopify.com/foo?pb=0', '/foo', exitPage],
+      ['an uppercase store domain on the exit page', 'https://MY-STORE.myshopify.com/foo', '/foo', exitPage],
+      [
+        'a protocol-relative store domain on the exit page',
+        '//my-store.myshopify.com/foo?_fd=0&bar=1',
+        '/foo?bar=1',
+        exitPage,
+      ],
+    ])('rewrites a Location header with %s to a local path', async (_, location, expected, options) => {
+      const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
+
+      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse, undefined, options)
+
+      expect(patchedResponse.status).toBe(302)
+      expect(patchedResponse.headers.get('Location')).toBe(expected)
+    })
+
+    test.each([
+      ['a store checkout', 'https://my-store.myshopify.com/checkouts/cn/abc123', undefined],
+      ['a store checkout on the exit page', 'https://my-store.myshopify.com/checkouts/cn/abc123', exitPage],
+      ['another site on the exit page', 'https://example.com/path?_fd=0&pb=0&q=1', exitPage],
+      ['another site on a subdomain on the exit page', 'https://checkout.jplhomer.org/', exitPage],
+      [
+        'a host that starts with the store domain on the exit page',
+        'https://my-store.myshopify.com.example.com/foo',
+        exitPage,
+      ],
+    ])('keeps a Location header to %s unchanged', async (_, location, options) => {
+      const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
+
+      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse, undefined, options)
+
+      expect(patchedResponse.status).toBe(302)
+      expect(patchedResponse.headers.get('Location')).toBe(location)
+    })
+
+    test.each([
+      ['//example.com/foo', 'https://example.com/foo'],
+      ['//checkout.jplhomer.org/path?_fd=0&pb=0&q=1', 'https://checkout.jplhomer.org/path?_fd=0&pb=0&q=1'],
+    ])(
+      'makes a protocol-relative Location header to another site HTTPS on the exit page (%s)',
+      async (location, expected) => {
+        const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
+
+        const patchedResponse = await patchRenderingResponse(ctx, redirectResponse, undefined, exitPage)
+
+        expect(patchedResponse.status).toBe(302)
+        expect(patchedResponse.headers.get('Location')).toBe(expected)
+      },
+    )
+
     test('returns 3xx responses without reading or patching the body', async () => {
       const localCtx = {
         ...ctx,
@@ -432,6 +494,19 @@ describe('dev proxy', () => {
       expect(canProxyRequest(productsJsonEvent)).toBeTruthy()
     })
 
+    test.each(['/fr/cart/change?id=1&quantity=0', '/en-us/cart/add?id=1'])(
+      'should proxy Cart requests under a locale or market subfolder (%s)',
+      (path) => {
+        const event = createH3Event('GET', path)
+        expect(canProxyRequest(event)).toBeTruthy()
+      },
+    )
+
+    test('should not proxy the Cart page under a locale or market subfolder', () => {
+      const event = createH3Event('GET', '/en-us/cart', {accept: 'text/html'})
+      expect(canProxyRequest(event)).toBeFalsy()
+    })
+
     test('should proxy Checkout requests as they are not supported by the SFR client', () => {
       const event = createH3Event('GET', '/checkouts/xyz')
       expect(canProxyRequest(event)).toBeTruthy()
@@ -500,6 +575,11 @@ describe('dev proxy', () => {
 
     test('should proxy /account/logout requests', () => {
       const event = createH3Event('GET', '/account/logout')
+      expect(canProxyRequest(event)).toBeTruthy()
+    })
+
+    test('should proxy /account requests under a locale or market subfolder', () => {
+      const event = createH3Event('GET', '/fr/account')
       expect(canProxyRequest(event)).toBeTruthy()
     })
   })
@@ -652,6 +732,39 @@ describe('dev proxy', () => {
 
     test('sends Bearer token for non-CDN paths that are not cart/checkout/account', async () => {
       const event = createH3Event('GET', '/products/some-product')
+      await proxyStorefrontRequest(event, tokenCtx)
+      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const headers = init.headers as Record<string, string>
+      expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
+    })
+
+    test.each(['/localization', '/localization.json', '/fr/localization', '/en-us/localization'])(
+      'does NOT send Bearer token for the localization form (%s)',
+      async (path) => {
+        const event = createH3Event('POST', path)
+        await proxyStorefrontRequest(event, tokenCtx)
+        const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+        const headers = init.headers as Record<string, string>
+        expect(headers.Authorization).toBeUndefined()
+      },
+    )
+
+    test.each([
+      ['POST', '/en-us/cart/add.js'],
+      ['POST', '/zh-hans-cn/cart/add.js'],
+      ['GET', '/fr/cart.js'],
+      ['POST', '/en-us/cart'],
+      ['GET', '/fr/account/logout'],
+    ])('does NOT send Bearer token for %s %s under a locale or market subfolder', async (method, path) => {
+      const event = createH3Event(method, path)
+      await proxyStorefrontRequest(event, tokenCtx)
+      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const headers = init.headers as Record<string, string>
+      expect(headers.Authorization).toBeUndefined()
+    })
+
+    test.each(['/fr/products/some-product', '/pages/localization'])('sends Bearer token for %s', async (path) => {
+      const event = createH3Event('GET', path)
       await proxyStorefrontRequest(event, tokenCtx)
       const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
       const headers = init.headers as Record<string, string>

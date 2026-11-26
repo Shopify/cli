@@ -1,7 +1,7 @@
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {sanitizeURL} from './urls.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
-import {AbortError} from '../../../public/node/error.js'
+import {AbortError, MfaRequiredError} from '../../../public/node/error.js'
 
 import {ClientError, Variables} from 'graphql-request'
 
@@ -122,8 +122,29 @@ function friendlyAppErrorMessage(appError: any): string | undefined {
   return undefined
 }
 
+const MFA_REQUIRED_MARKER = '[TFA]'
+
+/**
+ * Whether a request was refused because the session didn't use multi-factor authentication.
+ *
+ * Business Platform and the Admin API answer such a request with HTTP 401 and a `[TFA]` marker in the body.
+ * A refreshed token keeps the session's authentication methods, so refreshing it can't satisfy the requirement.
+ *
+ * @param error - The error thrown by graphql-request.
+ * @returns True when the response is a 401 that carries the `[TFA]` marker.
+ */
+export function isMfaRequiredError(error: unknown): boolean {
+  if (!(error instanceof ClientError) || error.response.status !== 401) return false
+
+  const {errors, error: bodyError} = error.response as {errors?: unknown; error?: unknown}
+  return [errors, bodyError].some((value) => JSON.stringify(value ?? '').includes(MFA_REQUIRED_MARKER))
+}
+
 export function errorHandler(api: string): (error: unknown, requestId?: string) => unknown {
   return (error: unknown, requestId?: string) => {
+    if (isMfaRequiredError(error)) {
+      return new MfaRequiredError(requestId)
+    }
     if (error instanceof ClientError) {
       const {status} = error.response
 
@@ -134,6 +155,9 @@ export function errorHandler(api: string): (error: unknown, requestId?: string) 
         errorMessage = extractedMessages
       } else if (extractedMessages && status >= 500) {
         errorMessage = `The ${api} GraphQL API responded with HTTP status ${status}: ${extractedMessages}`
+      } else if (error.response.errors === undefined) {
+        // A 401 from an API gateway, for example, has no GraphQL body to quote.
+        errorMessage = `The ${api} GraphQL API responded unsuccessfully with the HTTP status ${status}.`
       } else {
         errorMessage = stringifyMessage(outputContent`
 The ${outputToken.raw(api)} GraphQL API responded unsuccessfully with${
@@ -158,4 +182,27 @@ ${outputToken.json(error.response.errors)}
       return error
     }
   }
+}
+
+/**
+ * Reads the `x-request-id` header of a failed GraphQL response.
+ *
+ * @param error - The error thrown by graphql-request.
+ * @returns The request ID, or undefined when the response has none.
+ */
+export function requestIdFromClientError(error: ClientError): string | undefined {
+  try {
+    // graphql-request types the response without headers, but it carries the fetch Response's headers.
+    const headers = (error.response as {headers?: {get?: (name: string) => string | null}}).headers
+    return headers?.get?.('x-request-id') ?? undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+}
+
+export function extractGraphQLErrors(error: unknown): NonNullable<ClientError['response']['errors']> {
+  if (error instanceof ClientError) return Array.isArray(error.response.errors) ? error.response.errors : []
+  if (error instanceof GraphQLClientError) return Array.isArray(error.errors) ? error.errors : []
+  return []
 }

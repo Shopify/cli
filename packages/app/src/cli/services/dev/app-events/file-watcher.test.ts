@@ -9,10 +9,10 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
-import chokidar from 'chokidar'
+import chokidar, {FSWatcher} from 'chokidar'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 
 // Mock the import extractor - will be configured per test
@@ -21,6 +21,8 @@ vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractImportPathsRecursively: vi.fn(() => []),
   extractJSImports: vi.fn(() => []),
 }))
+
+const realChokidarWatch = chokidar.watch.bind(chokidar)
 
 // Helper to mock watchedFiles for extensions
 function mockExtensionWatchedFiles(extension: any, files: string[] = []) {
@@ -221,7 +223,16 @@ describe('file-watcher events', () => {
 
       // Then
       expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, 'shopify.app.toml'), joinPath(dir, 'extensions')], {
-        ignored: ['**/node_modules/**', '**/.git/**'],
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/.shopify/**',
+          '**/.DS_Store',
+          '**/*.swp',
+          '**/*.swo',
+          '**/*~',
+          expect.any(Function),
+        ],
         ignoreInitial: true,
         persistent: true,
       })
@@ -709,6 +720,167 @@ describe('file-watcher events', () => {
 
       expect(fileExistsSync(extDir)).toBe(true)
       expect(fileExistsSync(joinPath(extDir, '**'))).toBe(false)
+    })
+  })
+
+  test('chokidar excludes build output and temporary files while preserving source and imports', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // Given
+      const files = [
+        // Rust function: Cargo's target directory is build output
+        'extensions/rust-function/Cargo.toml',
+        'extensions/rust-function/src/main.rs',
+        'extensions/rust-function/target/debug/build/output.rlib',
+        'extensions/rust-function/target/release/build/output.rlib',
+        'extensions/rust-function/target/wasm32-wasip1/release/rust-function.wasm',
+        'extensions/rust-function/target/wasm32-wasi/release/rust-function.wasm',
+        'extensions/rust-function/target/rust-analyzer/flycheck0/stdout',
+        'extensions/rust-function/target/.rustc_info.json',
+        'extensions/rust-function/target/custom-profile/output.wasm',
+        'extensions/rust-function/target/aarch64-unknown-linux-gnu/debug/output.rlib',
+        'extensions/js-function/src/index.js',
+        'extensions/js-function/dist/function.js',
+        'extensions/js-function/dist/index.wasm',
+        'workspace/Cargo.toml',
+        'workspace/target/custom-profile/output.wasm',
+        // UI extension: a source folder named target, and dist, stay watched
+        'extensions/ui-extension/src/target/index.js',
+        'extensions/ui-extension/src/target/debug/index.js',
+        'extensions/ui-extension/target/release/index.js',
+        'extensions/rust-function/src/target/debug/source.rs',
+        'shared/target/release/index.js',
+        'extensions/ui-extension/dist/main.js',
+        'extensions/ui-extension/generated/main.js',
+        'extensions/ui-extension/.DS_Store',
+        'extensions/ui-extension/src/index.js.swp',
+        'extensions/ui-extension/src/index.js.swo',
+        'extensions/ui-extension/src/index.js~',
+        'extensions/.shopify/dev-bundle/output.js',
+      ]
+      await Promise.all(
+        files.map(async (file) => {
+          await mkdir(dirname(joinPath(dir, file)))
+          await writeFile(joinPath(dir, file), '')
+        }),
+      )
+      const configPath = joinPath(dir, 'shopify.app.toml')
+      await writeFile(configPath, '')
+
+      const rustFunction = await testFunctionExtension({dir: joinPath(dir, 'extensions/rust-function')})
+      const jsFunction = await testFunctionExtension({dir: joinPath(dir, 'extensions/js-function')})
+      const uiExtension = await testUIExtension({directory: joinPath(dir, 'extensions/ui-extension')})
+      mockExtensionWatchedFiles(uiExtension, [
+        joinPath(dir, 'shared/target/release/index.js'),
+        joinPath(dir, 'workspace/Cargo.toml'),
+        joinPath(dir, 'workspace/target/custom-profile/output.wasm'),
+      ])
+      const app = testAppLinked({
+        allExtensions: [rustFunction, jsFunction, uiExtension],
+        directory: dir,
+        configPath,
+      })
+
+      let watcher: FSWatcher | undefined
+      let ready = false
+      let watcherError: Error | undefined
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths, options) => {
+        const realWatcher = realChokidarWatch(paths, options)
+        realWatcher.once('ready', () => {
+          ready = true
+        })
+        realWatcher.on('error', (error) => {
+          watcherError = error
+        })
+        watcher = realWatcher
+        return realWatcher
+      })
+
+      // When
+      const abortController = new AbortController()
+      const fileWatcher = new FileWatcher(app, {...outputOptions, signal: abortController.signal})
+      try {
+        await fileWatcher.start()
+        await vi.waitFor(() => {
+          if (watcherError) throw watcherError
+          expect(ready).toBe(true)
+        })
+
+        // Then
+        const watched = Object.entries(watcher!.getWatched()).flatMap(([directory, names]) =>
+          names.map((name) => normalizePath(joinPath(directory, name)).replace(`${normalizePath(dir)}/`, '')),
+        )
+
+        expect(watched).toEqual(
+          expect.arrayContaining([
+            'extensions/rust-function/Cargo.toml',
+            'extensions/rust-function/src/main.rs',
+            'extensions/js-function/src/index.js',
+            'workspace/Cargo.toml',
+            'extensions/ui-extension/src/target/index.js',
+            'extensions/ui-extension/src/target/debug/index.js',
+            'extensions/ui-extension/target/release/index.js',
+            'extensions/rust-function/src/target/debug/source.rs',
+            'shared/target/release/index.js',
+            'extensions/ui-extension/dist/main.js',
+            'extensions/ui-extension/generated/main.js',
+          ]),
+        )
+        for (const ignored of [
+          'extensions/rust-function/target',
+          'extensions/js-function/dist',
+          'workspace/target',
+          'extensions/ui-extension/.DS_Store',
+          'extensions/ui-extension/src/index.js.swp',
+          'extensions/ui-extension/src/index.js.swo',
+          'extensions/ui-extension/src/index.js~',
+          'extensions/.shopify',
+        ]) {
+          expect(watched.filter((path) => path === ignored || path.startsWith(`${ignored}/`))).toEqual([])
+        }
+      } finally {
+        abortController.abort()
+        await watcher?.close()
+      }
+    })
+  })
+
+  test('app reloads refresh Function output ignores without restarting the watcher', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const existingFunction = await testFunctionExtension({dir: joinPath(directory, 'extensions/existing-function')})
+      const newFunction = await testFunctionExtension({dir: joinPath(directory, 'extensions/new-function')})
+      const app = testAppLinked({
+        allExtensions: [existingFunction],
+        directory,
+        configPath: joinPath(directory, 'shopify.app.toml'),
+      })
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      const watchSpy = vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      const abortController = new AbortController()
+      const fileWatcher = new FileWatcher(app, {...outputOptions, signal: abortController.signal})
+
+      try {
+        await fileWatcher.start()
+        const ignoredPaths = watchSpy.mock.calls[0]![1]!.ignored as (string | ((path: string) => boolean))[]
+        const ignoreBuildOutput = ignoredPaths.find((pattern) => typeof pattern === 'function') as (
+          path: string,
+        ) => boolean
+        const existingOutput = joinPath(existingFunction.directory, 'dist/function.js')
+        const newOutput = joinPath(newFunction.directory, 'dist/function.js')
+        expect(ignoreBuildOutput(existingOutput)).toBe(true)
+        expect(ignoreBuildOutput(newOutput)).toBe(false)
+
+        fileWatcher.updateApp(testAppLinked({...app, allExtensions: [newFunction]}))
+
+        expect(ignoreBuildOutput(newOutput)).toBe(true)
+        expect(ignoreBuildOutput(existingOutput)).toBe(false)
+        expect(ignoreBuildOutput(joinPath(newFunction.directory, 'src/index.js'))).toBe(false)
+        expect(watchSpy).toHaveBeenCalledTimes(1)
+      } finally {
+        abortController.abort()
+      }
     })
   })
 

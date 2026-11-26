@@ -3,11 +3,18 @@ import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {outputWarn, unstyled} from '@shopify/cli-kit/node/output'
+import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/hooks/postrun', () => ({waitForPostRunHookAndExit: vi.fn()}))
 vi.mock('./ui/components/DevSessionUI.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()
@@ -19,6 +26,247 @@ afterEach(() => {
 
 describe('ui', () => {
   describe('renderDev', () => {
+    test('separates CLI messages while preserving line endings and subprocess bytes', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      const abortController = new AbortController()
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await renderDev({
+          processes: [
+            {
+              prefix: 'app-logs',
+              action: async (output, errorOutput) => {
+                await Promise.all(
+                  [output, errorOutput].map(async (stream) => {
+                    stream.write('')
+                    outputWarn('Error while polling app logs.', stream)
+                    outputWarn('Retrying in 5 seconds.', stream)
+                    stream.write('Existing line ending\r\n')
+                    stream.write('636166c3a9', 'hex')
+                    const unicode = Buffer.from('éclair\n')
+                    stream.write(unicode.subarray(0, 1))
+                    await new Promise<void>((resolve, reject) =>
+                      stream.write(unicode.subarray(1), (error) => (error ? reject(error) : resolve())),
+                    )
+                  }),
+                )
+                abortController.abort()
+              },
+            },
+          ],
+          previewUrl: 'https://example.com',
+          app: {id: '123', developerPlatformClient},
+          abortController,
+          shopFqdn: 'dev-store.myshopify.com',
+          devSessionStatusManager: new DevSessionStatusManager(),
+        })
+        const expected = 'Error while polling app logs.\nRetrying in 5 seconds.\nExisting line ending\r\ncafé\néclair\n'
+        expect(unstyled(stdout())).toBe(`\nPreview URL: https://example.com\n${expected}`)
+        expect(unstyled(stderr())).toBe(expected)
+      })
+    })
+
+    test('streams many JSON processes without exceeding target listener limits and removes listeners on release', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runWithCommandEvents({outputMode: 'json', sink: () => {}}, async () => {
+            const instance = await acquireDevInstance({command: 'app dev', directory, logOutput: process.stdout})
+            const abortController = new AbortController()
+            const targets = new Set<Writable>()
+            const sources = Array.from({length: 20}, (_, index) => `process-${index}`)
+            const running = renderDev({
+              processes: sources.map((source) => ({
+                prefix: source,
+                action: async (targetStdout, targetStderr) => {
+                  targets.add(targetStdout)
+                  targets.add(targetStderr)
+                  instance.tee(targetStdout, {source}).write('stdout message\n')
+                  instance.tee(targetStderr, {source}).write('stderr message\n')
+                },
+              })),
+              previewUrl: 'https://example.com',
+              app: {id: '123', developerPlatformClient},
+              abortController,
+              shopFqdn: 'dev-store.myshopify.com',
+              devSessionStatusManager: new DevSessionStatusManager(),
+            })
+            try {
+              for (const target of targets) {
+                expect(target.listenerCount('error')).toBeLessThanOrEqual(target.getMaxListeners())
+              }
+            } finally {
+              abortController.abort()
+              await running
+              await instance.release()
+            }
+            for (const target of targets) expect(target.listenerCount('error')).toBe(0)
+            expect(stdout()).toBe(await readFile(instance.paths.logFile))
+            const events = stdout()
+              .trim()
+              .split('\n')
+              .map((line) => JSON.parse(line))
+            expect(events).toHaveLength(sources.length * 2)
+            for (const source of sources) {
+              expect(events.filter((event) => event.source === source).map((event) => event.message)).toEqual([
+                'stdout message',
+                'stderr message',
+              ])
+            }
+            expect(stderr()).toBe('')
+          })
+        })
+      })
+    })
+
+    test('streams session output after setup, under load, and through shutdown with a TTY', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+      vi.mocked(DevSessionUI).mockClear()
+      await inTemporaryDirectory(async (directory) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runWithCommandEvents(
+            {
+              outputMode: 'json',
+              sink: () => {},
+            },
+            async () => {
+              const instance = await acquireDevInstance({
+                command: 'app dev',
+                directory,
+                logOutput: process.stdout,
+              })
+              const abortController = new AbortController()
+              const completed = vi.fn()
+              const burstSize = 1000
+              let lateOutput: Writable | undefined
+              const running = renderDev({
+                processes: [
+                  {
+                    prefix: 'web',
+                    action: async (targetStdout, targetStderr) => {
+                      const childStdout = instance.tee(targetStdout, {
+                        source: 'web',
+                        stringWritesAreMessages: true,
+                      })
+                      const childStderr = instance.tee(targetStderr, {
+                        source: 'web',
+                        stringWritesAreMessages: true,
+                      })
+                      childStdout.write('Starting without a newline')
+                      useConcurrentOutputContext({outputPrefix: 'discount'}, () => {
+                        childStdout.write('\u001b[32mBuilding function\u001b[0m')
+                        childStdout.write('Building types')
+                      })
+                      const unicode = Buffer.from('éclair\r\n')
+                      childStderr.write(unicode.subarray(0, 1))
+                      childStderr.write(unicode.subarray(1))
+                      for (let index = 0; index < burstSize; index++) childStdout.write(Buffer.from(`line ${index}\n`))
+                      lateOutput = childStdout
+                    },
+                  },
+                ],
+                previewUrl: 'https://example.com',
+                app: {id: '123', developerPlatformClient},
+                abortController,
+                shopFqdn: 'dev-store.myshopify.com',
+                devSessionStatusManager: new DevSessionStatusManager(),
+              }).then(completed)
+              try {
+                await vi.waitFor(() => expect(stdout()).toContain(`line ${burstSize - 1}`))
+                expect(completed).not.toHaveBeenCalled()
+                lateOutput?.write('After setup')
+                await vi.waitFor(() => expect(stdout()).toContain('After setup'))
+                lateOutput?.write(Buffer.from('Last partial line'))
+                abortController.abort()
+                await running
+              } finally {
+                abortController.abort()
+                await running
+                await instance.release()
+              }
+              expect(stdout()).toBe(await readFile(instance.paths.logFile))
+              const events = stdout()
+                .trim()
+                .split('\n')
+                .map((line) => JSON.parse(line))
+              events.forEach((event) => {
+                expect(event).not.toHaveProperty('type')
+                expect(event).not.toHaveProperty('stream')
+              })
+              expect(events).toHaveLength(burstSize + 6)
+              const messages = events.map((event) => event.message)
+              expect(messages).toEqual(
+                expect.arrayContaining([
+                  'Starting without a newline',
+                  'Building function',
+                  'Building types',
+                  'éclair',
+                  'After setup',
+                  'Last partial line',
+                ]),
+              )
+              expect(messages.filter((message) => message.startsWith('line '))).toEqual(
+                Array.from({length: burstSize}, (_, index) => `line ${index}`),
+              )
+              expect(events).toEqual(
+                expect.arrayContaining([
+                  expect.objectContaining({source: 'discount', message: 'Building function'}),
+                  expect.objectContaining({source: 'web', message: 'éclair'}),
+                ]),
+              )
+              expect(vi.mocked(DevSessionUI)).not.toHaveBeenCalled()
+              expect(stdout()).not.toContain('\u001b')
+              expect(stderr()).toBe('')
+            },
+          )
+        })
+      })
+    })
+
+    test.each(['text', 'json'] as const)(
+      'a %s process failure aborts and waits for the other processes to stop',
+      async (mode) => {
+        vi.mocked(terminalSupportsPrompting).mockReturnValue(mode === 'json')
+        const abortController = new AbortController()
+        const failure = new Error('Process failed')
+        let stopped = false
+        const signalListeners = process.listenerCount('SIGTERM')
+        const shutdownListeners = process.listenerCount('shopify:signal')
+        await withCapturedStandardStreams(async () => {
+          await expect(
+            runWithCommandEvents({outputMode: mode, sink: () => {}}, () =>
+              renderDev({
+                processes: [
+                  {
+                    prefix: 'failed',
+                    action: async () => {
+                      throw failure
+                    },
+                  },
+                  {
+                    prefix: 'watcher',
+                    action: async (_stdout, _stderr, signal) => {
+                      await new Promise<void>((resolve) =>
+                        signal.addEventListener('abort', () => resolve(), {once: true}),
+                      )
+                      await new Promise((resolve) => setTimeout(resolve, 5))
+                      stopped = true
+                    },
+                  },
+                ],
+                previewUrl: 'https://example.com',
+                app: {id: '123', developerPlatformClient},
+                abortController,
+                shopFqdn: 'dev-store.myshopify.com',
+                devSessionStatusManager: new DevSessionStatusManager(),
+              }),
+            ),
+          ).rejects.toBe(failure)
+        })
+        expect(stopped).toBe(true)
+        expect(process.listenerCount('SIGTERM')).toBe(signalListeners)
+        expect(process.listenerCount('shopify:signal')).toBe(shutdownListeners)
+      },
+    )
+
     test("doesn't use ink when terminal doesn't support TTY", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       const concurrentProcess = {
@@ -27,7 +275,8 @@ describe('ui', () => {
       }
       const abortController = new AbortController()
 
-      await renderDev({
+      const completed = vi.fn()
+      const running = renderDev({
         processes: [concurrentProcess],
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
@@ -35,12 +284,17 @@ describe('ui', () => {
         abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
-      })
+      }).then(completed)
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(completed).not.toHaveBeenCalled()
+      abortController.abort()
+      await running
 
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
         1,
-        process.stdout,
-        process.stderr,
+        expect.any(Writable),
+        expect.any(Writable),
         abortController.signal,
       )
     })
@@ -48,9 +302,12 @@ describe('ui', () => {
     test("shows preview and GraphiQL URLs when terminal doesn't support TTY", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const abortController = new AbortController()
       const concurrentProcess = {
         prefix: 'prefix',
-        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+        action: vi.fn(async () => {
+          abortController.abort()
+        }),
       }
 
       await renderDev({
@@ -58,7 +315,7 @@ describe('ui', () => {
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
         app: {id: '123', developerPlatformClient},
-        abortController: new AbortController(),
+        abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
       })

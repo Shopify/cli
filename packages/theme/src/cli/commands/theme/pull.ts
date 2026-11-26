@@ -16,9 +16,7 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type PullFlags = InferredFlags<typeof Pull.flags>
 export default class Pull extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themePullJsonOutputSchema
-  }
+  static jsonOutputSchema = themePullJsonOutputSchema
 
   static summary = 'Download your remote theme files locally.'
 

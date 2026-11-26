@@ -3,7 +3,7 @@ import {type ListAccessibleShopsQuery} from '../../../api/graphql/business-platf
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedBusinessPlatform, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {type Organization} from '@shopify/organizations'
 
@@ -273,5 +273,18 @@ describe('listBusinessPlatformStores', () => {
       noPrompt: undefined,
       allowAutomationToken: true,
     })
+  })
+
+  test('explains the missing dev store access when the Organizations API refuses a service account', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(
+      Object.assign(new Error('The Business Platform GraphQL API responded unsuccessfully with the HTTP status 401.'), {
+        statusCode: 401,
+      }),
+    )
+
+    await expect(listBusinessPlatformStores({token: 'bp-token', organization})).rejects.toThrow(
+      "This service account can't manage dev stores in Acme.",
+    )
   })
 })

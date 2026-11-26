@@ -6,8 +6,7 @@ import {
   PollStoreCreationQuery,
 } from '../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
 import {Organization} from '../../models/organization.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {businessPlatformTokenRefreshHandler, organizationStoresRequestDoc} from '../business-platform.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -60,10 +59,9 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
   const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
-  const mutationResult = await businessPlatformOrganizationsRequestDoc({
+  const mutationResult = await organizationStoresRequestDoc(org, {
     query: CreateAppDevelopmentStore,
     token,
-    organizationId: org.id,
     variables: {
       shopName: name,
       priceLookupKey: DEV_STORE_PLANS[plan],
@@ -93,33 +91,43 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
     title: outputContent`Waiting for store to be ready`,
     task: async (updateStatus) => {
       const startTime = Date.now()
+      let sawStatus = false
       while (true) {
         if (Date.now() - startTime > POLL_TIMEOUT_MS) {
-          throw new AbortError('Store creation timed out after 5 minutes.')
+          if (sawStatus) {
+            throw new AbortError('Store creation timed out after 5 minutes.')
+          }
+          throw new AbortError('Store creation timed out after 5 minutes without reporting a status.', null, [
+            `Check whether ${shopDomain} was created with \`shopify store list\` before trying again.`,
+          ])
         }
 
         // eslint-disable-next-line no-await-in-loop
-        const pollResult = await businessPlatformOrganizationsRequestDoc({
+        const pollResult = await organizationStoresRequestDoc(org, {
           query: PollStoreCreation,
           token,
-          organizationId: org.id,
           variables: {shopDomain},
           unauthorizedHandler,
         })
 
+        // Business Platform serves this query from a read replica, which can lag
+        // behind the write that created the store. Until the replica catches up,
+        // the store creation record is missing and the status is empty, so treat
+        // that as still pending and keep polling until the timeout, as the admin's
+        // store creation flow does.
         const status = pollResult.organization?.storeCreation?.status
-        if (!status) {
-          throw new AbortError('Unable to determine store creation status.')
+        if (status) {
+          sawStatus = true
+
+          if (status === 'COMPLETE') {
+            return
+          }
+          if (status === 'FAILED' || status === 'TIMED_OUT' || status === 'USER_ERROR') {
+            throw new AbortError(`Store creation failed with status: ${status}`)
+          }
         }
 
-        if (status === 'COMPLETE') {
-          return
-        }
-        if (status === 'FAILED' || status === 'TIMED_OUT' || status === 'USER_ERROR') {
-          throw new AbortError(`Store creation failed with status: ${status}`)
-        }
-
-        updateStatus(outputContent`${friendlyStatus(status)}`)
+        updateStatus(outputContent`${status ? friendlyStatus(status) : 'Waiting for store creation to start'}`)
 
         // eslint-disable-next-line no-await-in-loop
         await sleep(POLL_INTERVAL_SECONDS)

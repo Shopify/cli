@@ -10,12 +10,13 @@ import {
 import {showReusedDevValues} from './context.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
+import {devClientSecret} from './dev/client-secret.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {renderDev} from './dev/ui.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
-import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
+import {DevSessionStatus, DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -26,7 +27,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {ports} from '../constants.js'
+import {environmentVariableNames, ports} from '../constants.js'
 import {generateCertificate} from '../utilities/mkcert.js'
 import {throwUidMappingError} from '../prompts/uid-mapping-error.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
@@ -34,11 +35,15 @@ import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
-import {getBackendPort} from '@shopify/cli-kit/node/environment'
+import {getBackendPort, getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {withDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {basename} from '@shopify/cli-kit/node/path'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -63,26 +68,50 @@ export interface DevOptions {
   graphiqlPort?: number
   graphiqlKey?: string
   installMkcert?: boolean
+  /** The running-instance record for this session: its log receives every process's output. */
+  devInstance?: DevInstance
+}
+
+/** Runs app development while the configuration's dev instance is owned. */
+export function withDevSession<T>(
+  {app, remoteApp, json = false}: Pick<DevOptions, 'app' | 'remoteApp'> & {json?: boolean},
+  execute: (instance: DevInstance) => T | Promise<T>,
+): Promise<T> {
+  return withDevInstance(
+    {
+      command: 'app dev',
+      directory: app.directory,
+      key: basename(app.configPath),
+      details: {configPath: app.configPath, appName: remoteApp.title, clientId: remoteApp.apiKey},
+      logOutput: json ? process.stdout : undefined,
+    },
+    execute,
+  )
 }
 
 export async function dev(commandOptions: DevOptions) {
-  const config = await prepareForDev(commandOptions)
-  await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, graphiqlUrl, previewUrl, devSessionStatusManager} = await setupDevProcesses(config)
-  await actionsBeforeLaunchingDevProcesses(config)
-  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config, devSessionStatusManager})
-}
-
-async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
-  const {app, remoteApp, developerPlatformClient, store, specifications, tunnel} = commandOptions
-
-  // Be optimistic about tunnel creation and do it as early as possible
+  const abortController = new AbortController()
   let tunnelClient: TunnelClient | undefined
 
-  if (tunnel.mode === 'auto') {
-    const tunnelPort = await getAvailableTCPPort()
-    tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
+  try {
+    if (commandOptions.tunnel.mode === 'auto') {
+      const tunnelPort = await getAvailableTCPPort()
+      tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
+      abortController.signal.addEventListener('abort', () => tunnelClient?.stopTunnel(), {once: true})
+    }
+
+    const config = await prepareForDev(commandOptions, tunnelClient)
+    await actionsBeforeSettingUpDevProcesses(config)
+    const {processes, graphiqlUrl, previewUrl, devSessionStatusManager} = await setupDevProcesses(config)
+    await actionsBeforeLaunchingDevProcesses(config)
+    await launchDevProcesses({processes, previewUrl, graphiqlUrl, config, devSessionStatusManager, abortController})
+  } finally {
+    abortController.abort()
   }
+}
+
+async function prepareForDev(commandOptions: DevOptions, tunnelClient?: TunnelClient): Promise<DevConfig> {
+  const {app, remoteApp, developerPlatformClient, store, specifications, tunnel} = commandOptions
 
   const remoteConfiguration = await fetchAppRemoteConfiguration(
     remoteApp,
@@ -91,6 +120,13 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteApp.flags,
   )
   remoteApp.configuration = remoteConfiguration
+
+  // Before anything changes remotely, so dev without a usable secret stops before it updates the app URLs.
+  const apiSecret = await devClientSecret({
+    remoteApp,
+    hasWebs: app.webs.length > 0,
+    graphiqlEnabled: !isTruthy(getEnvironmentVariables()[environmentVariableNames.disableGraphiQLExplorer]),
+  })
 
   showReusedDevValues({
     app,
@@ -103,7 +139,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   // If the dev_store_url is set in the app configuration, keep updating it.
   // If not, `store-context.ts` will take care of caching it in the hidden config.
-  if (app.configuration.build?.dev_store_url) {
+  // A service account's store is checked only when the dev session starts, so it isn't saved.
+  if (app.configuration.build?.dev_store_url && !isServiceAccountTokenSet()) {
     app.configuration.build = {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
@@ -164,7 +201,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   return {
     storeFqdn: store.shopDomain,
-    storeId: store.shopId,
+    storeId: store.shopId || undefined,
     remoteApp,
     remoteAppUpdated: remoteApp.apiKey !== previousAppId,
     localApp: app,
@@ -174,6 +211,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey: commandOptions.graphiqlKey,
+    apiSecret,
   }
 }
 
@@ -320,24 +358,50 @@ async function launchDevProcesses({
   graphiqlUrl,
   config,
   devSessionStatusManager,
+  abortController,
 }: {
   processes: DevProcesses
   previewUrl: string
   graphiqlUrl: string | undefined
   config: DevConfig
   devSessionStatusManager: DevSessionStatusManager
+  abortController: AbortController
 }) {
-  const abortController = new AbortController()
+  const devInstance = config.commandOptions.devInstance
   const processesForTaskRunner: OutputProcess[] = processes.map((process) => {
     const outputProcess: OutputProcess = {
       prefix: process.prefix,
       action: async (stdout, stderr, signal) => {
         const fn = process.function as DevProcessFunction<typeof process.options>
-        return fn({stdout, stderr, abortSignal: signal}, process.options)
+        const processStdout = devInstance
+          ? devInstance.tee(stdout, {source: process.prefix, stringWritesAreMessages: true})
+          : stdout
+        const processStderr = devInstance
+          ? devInstance.tee(stderr, {source: process.prefix, stringWritesAreMessages: true})
+          : stderr
+        return fn({stdout: processStdout, stderr: processStderr, abortSignal: signal}, process.options)
       },
     }
     return outputProcess
   })
+
+  if (devInstance) {
+    const urls = {
+      storeFqdn: config.storeFqdn,
+      previewUrl,
+      graphiqlUrl,
+      appUrl: config.localApp.devApplicationURLs?.applicationUrl,
+      localUrl: config.network.proxyUrl,
+    }
+    await devInstance.update({
+      status: 'running',
+      details: {...urls, preview: previewStatus(devSessionStatusManager.status)},
+    })
+    await devInstance.log({source: 'app dev', level: 'info', message: `Preview URL: ${previewUrl}`})
+    if (graphiqlUrl) {
+      await devInstance.log({source: 'app dev', level: 'info', message: `GraphiQL URL (Admin API): ${graphiqlUrl}`})
+    }
+  }
 
   const developerPlatformClient = config.developerPlatformClient
   const app = {
@@ -345,20 +409,58 @@ async function launchDevProcesses({
     developerPlatformClient,
   }
 
-  return renderDev({
-    processes: processesForTaskRunner,
-    previewUrl,
-    graphiqlUrl,
-    app,
-    abortController,
-    shopFqdn: config.storeFqdn,
-    devSessionStatusManager,
-    appURL: config.localApp.devApplicationURLs?.applicationUrl,
-    appName: config.remoteApp.title,
-    organizationName: config.commandOptions.organization.businessName,
-    configPath: config.localApp.configPath,
-    localURL: config.network.proxyUrl,
-  })
+  let lastStatusMessage: DevSessionStatus['statusMessage']
+  const persistStatus = (status: DevSessionStatus) => {
+    const writes = [devInstance?.update({details: {preview: previewStatus(status)}})]
+    const message = status.statusMessage
+    if (message && (message.message !== lastStatusMessage?.message || message.type !== lastStatusMessage?.type)) {
+      writes.push(
+        devInstance?.log({
+          source: 'app dev',
+          level: message.type === 'error' ? 'error' : 'info',
+          message: message.message,
+        }),
+      )
+    }
+    lastStatusMessage = message
+    Promise.all(writes).catch((error: Error) => {
+      outputDebug(`Failed to save dev status: ${error.message}`)
+    })
+  }
+  if (devInstance) {
+    devSessionStatusManager.on('dev-session-update', persistStatus)
+    persistStatus(devSessionStatusManager.status)
+  }
+  const stopOnLostLock = () => abortController.abort(devInstance?.abortSignal.reason)
+  try {
+    devInstance?.abortSignal.throwIfAborted()
+    devInstance?.abortSignal.addEventListener('abort', stopOnLostLock, {once: true})
+    await renderDev({
+      processes: processesForTaskRunner,
+      previewUrl,
+      graphiqlUrl,
+      app,
+      abortController,
+      shopFqdn: config.storeFqdn,
+      devSessionStatusManager,
+      appURL: config.localApp.devApplicationURLs?.applicationUrl,
+      appName: config.remoteApp.title,
+      organizationName: config.commandOptions.organization.businessName,
+      configPath: config.localApp.configPath,
+      localURL: config.network.proxyUrl,
+    })
+    devInstance?.abortSignal.throwIfAborted()
+  } finally {
+    devInstance?.abortSignal.removeEventListener('abort', stopOnLostLock)
+    if (devInstance) devSessionStatusManager.off('dev-session-update', persistStatus)
+  }
+}
+
+function previewStatus({isReady, statusMessage, errors}: DevSessionStatus) {
+  let state = isReady ? 'ready' : 'starting'
+  if (isReady && statusMessage?.type === 'loading') state = 'updating'
+  if (statusMessage?.type === 'error') state = 'error'
+  return {state, message: statusMessage?.message ?? null, errors: errors ?? []}
 }
 
 async function logMetadataForDev(options: {

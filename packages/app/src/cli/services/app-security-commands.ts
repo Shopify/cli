@@ -1,6 +1,6 @@
 import {selectedConfigFileName, type AppSecuritySelection} from './app-security-selection.js'
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
-import {cwd, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {cwd, isSubpath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {realpathSync} from 'node:fs'
 import type {AppSecurityScope} from './app-security-engine/index.js'
 
@@ -18,6 +18,7 @@ export interface AppSecurityCommand {
 
 export interface AppSecurityCommands {
   scan: AppSecurityCommand
+  instructions: AppSecurityCommand
   record: AppSecurityCommand
   review: AppSecurityCommand
   clean: AppSecurityCommand
@@ -35,10 +36,17 @@ function realPathOrResolved(path: string): string {
   }
 }
 
-/** `--path` is left out when it is the working directory, so the commands read the same wherever the app is. */
+/**
+ * `--path` is left out when it is the working directory, and relative only when the app is inside it: a path that
+ * climbs out of the working directory is long and easy to mistype, so it stays absolute.
+ */
 function pathArguments(path: string): AppSecurityArgument[] {
-  if (realPathOrResolved(path) === realPathOrResolved(cwd())) return []
-  return [{flag: '--path', value: relativePath(cwd(), path)}]
+  const workingDirectory = realPathOrResolved(cwd())
+  const appDirectory = realPathOrResolved(path)
+  if (appDirectory === workingDirectory) return []
+  const belowWorkingDirectory = isSubpath(workingDirectory, appDirectory, {native: true})
+  const value = belowWorkingDirectory ? relativePath(workingDirectory, appDirectory) : resolvePath(path)
+  return [{flag: '--path', value}]
 }
 
 function selectionArguments(selection: AppSecuritySelection): AppSecurityArgument[] {
@@ -61,8 +69,10 @@ function scopeArguments(scope: AppSecurityScope): AppSecurityArgument[] {
 }
 
 /**
- * The commands that repeat the run, relative to the working directory. `path` is the `--path` that was typed.
+ * The commands that repeat the run. `path` is the `--path` that was typed.
  * Only `check` takes the scope, so it's the only command that repeats it: rerunning it gathers the same files.
+ * Standalone `instructions` start the agent with an unscoped scan, so a scoped run's instructions come from
+ * `check --print-instructions` with the same scope.
  */
 export function resolveAppSecurityCommands(
   selection: AppSecuritySelection,
@@ -78,8 +88,14 @@ export function resolveAppSecurityCommands(
     ...selectionArguments(selection),
   ]
 
+  const scopeArgs = scopeArguments(scope)
+  const scanArgs = [...subcommandArgs('check'), ...scopeArgs]
+  const instructionsArgs =
+    scopeArgs.length === 0 ? subcommandArgs('instructions') : [...scanArgs, '--print-instructions']
+
   return {
-    scan: {command, args: [...subcommandArgs('check'), ...scopeArguments(scope)]},
+    scan: {command, args: scanArgs},
+    instructions: {command, args: instructionsArgs},
     record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
     review: {command, args: subcommandArgs('review')},
     clean: {command, args: subcommandArgs('clean')},

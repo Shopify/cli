@@ -1,11 +1,12 @@
 import {openAppGraphiQL} from './graphiql.js'
 import {createClientCredentialsTokenProvider} from '../dev/processes/graphiql-token-provider.js'
-import {testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testOrganizationApp, testOrganizationAppWithoutClientSecret} from '../../models/app/app.test-data.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../dev/processes/graphiql-token-provider.js')
 vi.mock('@shopify/cli-kit/node/graphiql/session')
@@ -28,6 +29,10 @@ describe('openAppGraphiQL', () => {
     mockedCreateTokenProvider.mockReturnValue({
       getToken: async () => 'client-credentials-token',
     })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   test('starts GraphiQL with app context and a client credentials token provider', async () => {
@@ -63,6 +68,16 @@ describe('openAppGraphiQL', () => {
     )
   })
 
+  test("doesn't start GraphiQL when the App Management API returns no client secret", async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'automation-token')
+    const remoteApp = testOrganizationAppWithoutClientSecret()
+
+    await expect(openAppGraphiQL({remoteApp, store: 'shop.myshopify.com'})).rejects.toThrow(AbortError)
+
+    expect(mockedCreateTokenProvider).not.toHaveBeenCalled()
+    expect(mockedRunGraphiQLSession).not.toHaveBeenCalled()
+  })
+
   test('passes optional GraphiQL URL parameters to the shared session runner', async () => {
     const remoteApp = testOrganizationApp({apiSecretKeys: [{secret: 'secret'}]})
 
@@ -71,12 +86,14 @@ describe('openAppGraphiQL', () => {
       store: 'shop.myshopify.com',
       variables: '{"id":1}',
       apiVersion: '2024-10',
+      outputFormat: 'json',
     })
 
     expect(mockedRunGraphiQLSession).toHaveBeenCalledWith(
       expect.objectContaining({
         variables: '{"id":1}',
         apiVersion: '2024-10',
+        outputFormat: 'json',
       }),
     )
   })

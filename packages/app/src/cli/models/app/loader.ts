@@ -782,7 +782,9 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
 
     // Create 1 extension instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
-      return this.createExtensionInstance(specification.identifier, subscription, configPath, directory)
+      const instance = await this.createExtensionInstance(specification.identifier, subscription, configPath, directory)
+      instance?.resolveUIDWithApplicationUrl(appConfiguration.application_url)
+      return instance
     })
 
     return instances

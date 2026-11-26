@@ -140,3 +140,12 @@ describe('DevSessionStatusManager', () => {
     })
   })
 })
+
+test('keeps current errors during an update and clears them after success', () => {
+  const manager = new DevSessionStatusManager()
+  manager.setMessage('BUILD_ERROR', ['discount: Invalid input'])
+  manager.setMessage('CHANGE_DETECTED')
+  expect(manager.status.errors).toEqual(['discount: Invalid input'])
+  manager.setMessage('UPDATED')
+  expect(manager.status.errors).toEqual([])
+})
