@@ -329,6 +329,22 @@ describe('fetchPublicApiVersions', () => {
     )
   })
 
+  test('caches the version list for a day', async () => {
+    vi.mocked(graphqlRequest).mockResolvedValue({publicApiVersions: [{handle: '2025-10', supported: true}]})
+
+    await fetchPublicApiVersions({adminSession, session})
+
+    expect(graphqlRequest).toHaveBeenCalledWith(expect.objectContaining({cacheOptions: {cacheTTL: {hours: 24}}}))
+  })
+
+  test('skips the cache when useCache is false', async () => {
+    vi.mocked(graphqlRequest).mockResolvedValue({publicApiVersions: [{handle: '2025-10', supported: true}]})
+
+    await fetchPublicApiVersions({adminSession, session, useCache: false})
+
+    expect(vi.mocked(graphqlRequest).mock.lastCall?.[0]).not.toHaveProperty('cacheOptions')
+  })
+
   test('clears stored auth and prompts re-auth when the version request returns 401', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue(makeClientErrorLike(401, 'Unauthorized'))
 
